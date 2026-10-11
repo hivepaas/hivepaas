@@ -34,6 +34,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc/sslproviderdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/vulnignoreuc/vulnignoredto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
 
@@ -104,6 +105,10 @@ func (h *Handler) UpdateSettingStatus(
 		r := basicauthdto.NewUpdateBasicAuthStatusReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.BasicAuthUC.UpdateBasicAuthStatus(reqCtx, auth, r) }
+	case base.ResourceTypeVulnIgnore:
+		r := vulnignoredto.NewUpdateVulnIgnoreStatusReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.VulnIgnoreUC.UpdateVulnIgnoreStatus(reqCtx, auth, r) }
 
 	case base.ResourceTypeKeyAuth:
 		r := keyauthdto.NewUpdateKeyAuthStatusReq()

@@ -35,6 +35,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc/sslproviderdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/vulnignoreuc/vulnignoredto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
 
@@ -117,6 +118,10 @@ func (h *Handler) DeleteSetting(
 		r := basicauthdto.NewDeleteBasicAuthReq()
 		r.Scope, r.ID = scope, itemID
 		req, ucFunc = r, func() (any, error) { return h.BasicAuthUC.DeleteBasicAuth(reqCtx, auth, r) }
+	case base.ResourceTypeVulnIgnore:
+		r := vulnignoredto.NewDeleteVulnIgnoreReq()
+		r.Scope, r.ID = scope, itemID
+		req, ucFunc = r, func() (any, error) { return h.VulnIgnoreUC.DeleteVulnIgnore(reqCtx, auth, r) }
 
 	case base.ResourceTypeKeyAuth:
 		r := keyauthdto.NewDeleteKeyAuthReq()

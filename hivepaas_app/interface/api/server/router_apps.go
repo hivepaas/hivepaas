@@ -16,6 +16,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
 	appContainerHandler := s.handlerRegistry.appContainerHandler
 	appMetricsHandler := s.handlerRegistry.appMetricsHandler
+	appImageScanHandler := s.handlerRegistry.appImageScanHandler
 
 	{ // List apps from `projects/projectID/apps`
 		projectGroup.GET("/apps", appHandler.ListAppInProject)
@@ -101,6 +102,18 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		backupSnapshotGroup.GET("/:itemID/entries", appSettingsHandler.ListBackupSnapshotEntries)
 		backupSnapshotGroup.GET("/:itemID/download", appSettingsHandler.DownloadBackupSnapshotFile)
 		backupSnapshotGroup.POST("/:itemID/restore", appSettingsHandler.RestoreBackupSnapshot)
+	}
+
+	{ // Vulnerability ignores
+		vulnIgnoreGroup := appGroup.Group("/:appID/vulnerability-ignores")
+		vulnIgnoreGroup.GET("/:itemID", appSettingsHandler.GetVulnIgnore)
+		vulnIgnoreGroup.GET("", appSettingsHandler.ListVulnIgnore)
+		vulnIgnoreGroup.POST("", appSettingsHandler.CreateVulnIgnore)
+		vulnIgnoreGroup.PUT("/:itemID", appSettingsHandler.UpdateVulnIgnore)
+		vulnIgnoreGroup.PUT("/:itemID/status", appSettingsHandler.UpdateVulnIgnoreStatus)
+		vulnIgnoreGroup.DELETE("/:itemID", appSettingsHandler.DeleteVulnIgnore)
+		vulnIgnoreGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypeVulnIgnore))
 	}
 
 	{ // Secrets
@@ -221,6 +234,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/:appID/resource-metrics", appMetricsHandler.GetAppResourceMetrics)
 		appGroup.GET("/:appID/route-metrics", appMetricsHandler.GetAppRouteMetrics)
 		appGroup.GET("/:appID/dependency-metrics", appMetricsHandler.GetAppDependencyMetrics)
+	}
+
+	{ // Image scan
+		appGroup.GET("/:appID/image-scan", appImageScanHandler.GetAppImageScan)
+		appGroup.POST("/:appID/image-scan", appImageScanHandler.ScanAppImages)
 	}
 
 	{ // Terminal

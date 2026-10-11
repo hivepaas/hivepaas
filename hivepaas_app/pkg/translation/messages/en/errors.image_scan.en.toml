@@ -1,0 +1,6 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_image_scan.go.
+# Adding or removing an error there means editing this file.
+
+ERR_IMAGE_SCAN_OFF = "Image scanning is switched off"
+ERR_IMAGE_SCAN_NOT_READY = "The image scanner is not ready"
+ERR_IMAGE_SCAN_FAILED = "The image could not be scanned"

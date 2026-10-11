@@ -69,7 +69,11 @@ func deriveItems(state *clusterState) []*attentionservice.Item {
 		items = append(items, item)
 	}
 	items = append(items, nodeItems(state)...)
+	return sortItems(items)
+}
 
+// sortItems puts the most severe first, then by subject.
+func sortItems(items []*attentionservice.Item) []*attentionservice.Item {
 	slices.SortStableFunc(items, func(a, b *attentionservice.Item) int {
 		return cmp.Or(
 			cmp.Compare(severityRank(a.Severity), severityRank(b.Severity)),

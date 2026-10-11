@@ -22,6 +22,14 @@ const (
 	SchedJobTypeRegistryAuthRenewal SchedJobType = "registry-auth-renewal"
 )
 
+// SchedJobTypeImageScan scans again every image apps run: the vulnerability DB
+// knows today what it did not yesterday. Image scanning's settings make its
+// job; no request may ask for one. It is a variable, not a constant: swag lists
+// a type's constants as the values a request may send, and one no client can
+// send would raise the API level - and refuse every older CLI's writes - for
+// nothing.
+var SchedJobTypeImageScan SchedJobType = "image-scan"
+
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,

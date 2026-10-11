@@ -14333,6 +14333,390 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/vulnerability-ignores" : {
+      "get" : {
+        "description" : "Lists vulnerability ignores",
+        "operationId" : "listProjectVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.ListVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists vulnerability ignores",
+        "tags" : [ "Project settings" ]
+      },
+      "post" : {
+        "description" : "Creates a vulnerability ignore",
+        "operationId" : "createProjectVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a vulnerability ignore",
+        "tags" : [ "Project settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/vulnerability-ignores/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes vulnerability ignore",
+        "operationId" : "deleteProjectVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.DeleteVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes vulnerability ignore",
+        "tags" : [ "Project settings" ]
+      },
+      "get" : {
+        "description" : "Gets vulnerability ignore details",
+        "operationId" : "getProjectVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.GetVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets vulnerability ignore details",
+        "tags" : [ "Project settings" ]
+      },
+      "put" : {
+        "description" : "Updates vulnerability ignore",
+        "operationId" : "updateProjectVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore",
+        "tags" : [ "Project settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/vulnerability-ignores/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates vulnerability ignore status",
+        "operationId" : "updateProjectVulnIgnoreStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore status",
+        "tags" : [ "Project settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{kind}/{itemID}/usages" : {
       "get" : {
         "description" : "Lists what still references one of the project's settings: the apps, projects and settings that\nuse it. Deleting a setting they use fails with ERR_SETTING_IN_USE. kind is the settings group, as in\nits other routes, such as ssh-keys, secrets or config-files.",
@@ -20497,6 +20881,134 @@
         "tags" : [ "Apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/image-scan" : {
+      "get" : {
+        "description" : "The images the app's tasks ran when last scanned, each with its last scan; the findings no\nignore of the app's scopes sets aside, the worst first; those one does, each with its ignore;\nand the app's scan queued or running, if any.",
+        "operationId" : "getAppImageScan",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appimagescandto.GetAppImageScanResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what an app's images carry",
+        "tags" : [ "Apps" ]
+      },
+      "post" : {
+        "description" : "Queues a scan of the images the app's tasks run, scanning again those scanned within the hour.\nA scan of the app queued before and not started yet is the one answered.",
+        "operationId" : "scanAppImages",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appimagescandto.ScanAppImagesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Scans an app's images now",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings" : {
       "get" : {
         "description" : "Gets app kind settings",
@@ -25854,6 +26366,486 @@
         },
         "summary" : "Gets terminal info",
         "tags" : [ "Apps" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/vulnerability-ignores" : {
+      "get" : {
+        "description" : "Lists vulnerability ignores",
+        "operationId" : "listAppVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.ListVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists vulnerability ignores",
+        "tags" : [ "App settings" ]
+      },
+      "post" : {
+        "description" : "Creates a vulnerability ignore",
+        "operationId" : "createAppVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a vulnerability ignore",
+        "tags" : [ "App settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/vulnerability-ignores/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes vulnerability ignore",
+        "operationId" : "deleteAppVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.DeleteVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes vulnerability ignore",
+        "tags" : [ "App settings" ]
+      },
+      "get" : {
+        "description" : "Gets vulnerability ignore details",
+        "operationId" : "getAppVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.GetVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets vulnerability ignore details",
+        "tags" : [ "App settings" ]
+      },
+      "put" : {
+        "description" : "Updates vulnerability ignore",
+        "operationId" : "updateAppVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore",
+        "tags" : [ "App settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/vulnerability-ignores/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates vulnerability ignore status",
+        "operationId" : "updateAppVulnIgnoreStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore status",
+        "tags" : [ "App settings" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/{kind}/{itemID}/usages" : {
@@ -36810,6 +37802,438 @@
         "tags" : [ "Project env tasks" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/vulnerability-ignores" : {
+      "get" : {
+        "description" : "Lists vulnerability ignores",
+        "operationId" : "listProjectEnvVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.ListVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists vulnerability ignores",
+        "tags" : [ "Project env settings" ]
+      },
+      "post" : {
+        "description" : "Creates a vulnerability ignore",
+        "operationId" : "createProjectEnvVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a vulnerability ignore",
+        "tags" : [ "Project env settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/vulnerability-ignores/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes vulnerability ignore",
+        "operationId" : "deleteProjectEnvVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.DeleteVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes vulnerability ignore",
+        "tags" : [ "Project env settings" ]
+      },
+      "get" : {
+        "description" : "Gets vulnerability ignore details",
+        "operationId" : "getProjectEnvVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.GetVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets vulnerability ignore details",
+        "tags" : [ "Project env settings" ]
+      },
+      "put" : {
+        "description" : "Updates vulnerability ignore",
+        "operationId" : "updateProjectEnvVulnIgnore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore",
+        "tags" : [ "Project env settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/vulnerability-ignores/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates vulnerability ignore status",
+        "operationId" : "updateProjectEnvVulnIgnoreStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore status",
+        "tags" : [ "Project env settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/{kind}/{itemID}/usages" : {
       "get" : {
         "description" : "Lists what still references one of the env's settings: the apps, projects and settings that use\nit. Deleting a setting they use fails with ERR_SETTING_IN_USE. kind is the settings group, as in its\nother routes, such as ssh-keys, secrets or config-files.",
@@ -44963,6 +46387,341 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/settings/vulnerability-ignores" : {
+      "get" : {
+        "description" : "Lists vulnerability ignores",
+        "operationId" : "listSettingVulnIgnore",
+        "parameters" : [ {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.ListVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists vulnerability ignores",
+        "tags" : [ "Global settings" ]
+      },
+      "post" : {
+        "description" : "Creates a vulnerability ignore",
+        "operationId" : "createSettingVulnIgnore",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.CreateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a vulnerability ignore",
+        "tags" : [ "Global settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/vulnerability-ignores/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes vulnerability ignore",
+        "operationId" : "deleteSettingVulnIgnore",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.DeleteVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes vulnerability ignore",
+        "tags" : [ "Global settings" ]
+      },
+      "get" : {
+        "description" : "Gets vulnerability ignore details",
+        "operationId" : "getSettingVulnIgnore",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.GetVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets vulnerability ignore details",
+        "tags" : [ "Global settings" ]
+      },
+      "put" : {
+        "description" : "Updates vulnerability ignore",
+        "operationId" : "updateSettingVulnIgnore",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore",
+        "tags" : [ "Global settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/vulnerability-ignores/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates vulnerability ignore status",
+        "operationId" : "updateSettingVulnIgnoreStatus",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/vulnignoredto.UpdateVulnIgnoreStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates vulnerability ignore status",
+        "tags" : [ "Global settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/settings/{kind}/{itemID}/usages" : {
       "get" : {
         "description" : "Lists what still references a setting: the apps, projects and settings that use it. Deleting\na setting they use fails with ERR_SETTING_IN_USE. kind is the settings group, as in its other\nroutes: access-tokens, acme-dns-providers, backup-repos, basic-auth, cloud-storages, emails,\ngithub-apps, im-services, key-auth, notifications, oauth, registry-auth, repo-webhooks,\nsched-jobs, ssh-keys, ssl-certs or ssl-providers.",
@@ -47041,6 +48800,191 @@
         "summary" : "Executes the cleanup",
         "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/image-scan" : {
+      "get" : {
+        "description" : "Gets image scanning's settings - the addon and its daily scan - and what runs: Trivy's server,\nthe runner on the nodes, and the vulnerability DB of the last scan.",
+        "operationId" : "getSystemImageScanSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.GetImageScanSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets image scanning settings",
+        "tags" : [ "System settings" ]
+      },
+      "put" : {
+        "description" : "Switches image scanning on - Trivy's server and a runner on every node are made - or off -\nboth are removed, the results kept - and sets its daily scan.",
+        "operationId" : "updateSystemImageScanSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/imagescandto.UpdateImageScanSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.UpdateImageScanSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates image scanning settings",
+        "tags" : [ "System settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/image-scan/apps" : {
+      "get" : {
+        "description" : "Every scanned app with its images and their findings counted by severity, after ignores; the\nworst first, by fixable CRITICAL then fixable HIGH.",
+        "operationId" : "listSystemImageScanApps",
+        "parameters" : [ {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.ListImageScanAppsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists every app's images and what they carry",
+        "tags" : [ "System settings" ]
+      }
+    },
+    "/system/settings/image-scan/exec" : {
+      "post" : {
+        "description" : "Scans again what every app runs, as the daily scan does.",
+        "operationId" : "executeSystemImageScan",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.ExecuteImageScanResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Runs the daily image scan now",
+        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/logging" : {
@@ -52807,6 +54751,317 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appimagescandto.AppImageScanResp" : {
+        "properties" : {
+          "enabled" : {
+            "description" : "Enabled says image scanning is switched on.",
+            "type" : "boolean"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "findings" : {
+            "description" : "Findings are those no ignore sets aside, the worst first; Ignored, the\nrest, each with its ignore.",
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.FindingResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "ignored" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.IgnoredFindingResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "images" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.ImageResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "scannedAt" : {
+            "description" : "ScannedAt is when the app's images were last looked for, and Error why\nnone could be scanned then. Nil before the first scan.",
+            "type" : "string"
+          },
+          "summary" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
+            } ],
+            "description" : "Summary counts the findings of every image, after ignores.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.ScanTaskResp"
+            } ],
+            "description" : "Task is the app's scan not ended yet: queued or running.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "enabled", "findings", "ignored", "images", "summary" ],
+        "type" : "object"
+      },
+      "appimagescandto.CountResp" : {
+        "properties" : {
+          "fixable" : {
+            "type" : "integer"
+          },
+          "total" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "fixable", "total" ],
+        "type" : "object"
+      },
+      "appimagescandto.FindingResp" : {
+        "properties" : {
+          "fixedVersion" : {
+            "type" : "string"
+          },
+          "imageId" : {
+            "type" : "string"
+          },
+          "installedVersion" : {
+            "type" : "string"
+          },
+          "pkgName" : {
+            "type" : "string"
+          },
+          "pkgPath" : {
+            "type" : "string"
+          },
+          "pkgType" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "$ref" : "#/components/schemas/base.VulnSeverity"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "vulnId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "imageId", "installedVersion", "pkgName", "pkgType", "severity", "vulnId" ],
+        "type" : "object"
+      },
+      "appimagescandto.GetAppImageScanResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.AppImageScanResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appimagescandto.IgnoreRefResp" : {
+        "properties" : {
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "package" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "$ref" : "#/components/schemas/base.ObjectScopeType"
+          },
+          "setBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "reason", "scope" ],
+        "type" : "object"
+      },
+      "appimagescandto.IgnoredFindingResp" : {
+        "properties" : {
+          "fixedVersion" : {
+            "type" : "string"
+          },
+          "ignore" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.IgnoreRefResp"
+            } ],
+            "nullable" : true
+          },
+          "imageId" : {
+            "type" : "string"
+          },
+          "installedVersion" : {
+            "type" : "string"
+          },
+          "pkgName" : {
+            "type" : "string"
+          },
+          "pkgPath" : {
+            "type" : "string"
+          },
+          "pkgType" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "$ref" : "#/components/schemas/base.VulnSeverity"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "vulnId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "ignore", "imageId", "installedVersion", "pkgName", "pkgType", "severity", "vulnId" ],
+        "type" : "object"
+      },
+      "appimagescandto.ImageResp" : {
+        "properties" : {
+          "dbUpdatedAt" : {
+            "type" : "string"
+          },
+          "error" : {
+            "description" : "Error is why the last scan failed; the findings are the scan's before.",
+            "type" : "string"
+          },
+          "imageId" : {
+            "type" : "string"
+          },
+          "imageRef" : {
+            "type" : "string"
+          },
+          "osEosl" : {
+            "description" : "OSEOSL says the OS is past its support: its packages get no fixes.",
+            "type" : "boolean"
+          },
+          "osFamily" : {
+            "type" : "string"
+          },
+          "osName" : {
+            "type" : "string"
+          },
+          "platform" : {
+            "type" : "string"
+          },
+          "scannedAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.ImageScanStatus"
+          },
+          "summary" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
+            } ],
+            "nullable" : true
+          },
+          "trivyVersion" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "imageId", "imageRef", "osEosl", "scannedAt", "status", "summary", "updatedAt" ],
+        "type" : "object"
+      },
+      "appimagescandto.ScanAppImagesDataResp" : {
+        "properties" : {
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Task is the scan: the one just queued, or one queued before that has not\nstarted yet.",
+            "nullable" : true,
+            "type" : "object"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "appimagescandto.ScanAppImagesResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.ScanAppImagesDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appimagescandto.ScanTaskResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.TaskStatus"
+          }
+        },
+        "required" : [ "id", "status" ],
+        "type" : "object"
+      },
+      "appimagescandto.SummaryResp" : {
+        "properties" : {
+          "critical" : {
+            "$ref" : "#/components/schemas/appimagescandto.CountResp"
+          },
+          "high" : {
+            "$ref" : "#/components/schemas/appimagescandto.CountResp"
+          },
+          "ignored" : {
+            "description" : "Ignored is how many were set aside, of every severity.",
+            "type" : "integer"
+          },
+          "low" : {
+            "$ref" : "#/components/schemas/appimagescandto.CountResp"
+          },
+          "medium" : {
+            "$ref" : "#/components/schemas/appimagescandto.CountResp"
+          },
+          "unknown" : {
+            "$ref" : "#/components/schemas/appimagescandto.CountResp"
+          }
+        },
+        "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
         "type" : "object"
       },
       "appmetricsdto.AppDependencyAppResp" : {
@@ -60457,6 +62712,11 @@
         "type" : "string",
         "x-enum-varnames" : [ "IMServiceKindSlack", "IMServiceKindDiscord", "IMServiceKindTelegram", "IMServiceKindLark" ]
       },
+      "base.ImageScanStatus" : {
+        "enum" : [ "done", "failed" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "ImageScanStatusDone", "ImageScanStatusFailed" ]
+      },
       "base.LoggingBackendType" : {
         "enum" : [ "victoria-logs" ],
         "type" : "string",
@@ -60540,9 +62800,9 @@
         "x-enum-varnames" : [ "ResourceCapSecretReveal", "ResourceCapAPIKeyCreate" ]
       },
       "base.ResourceType" : {
-        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-features", "app-placement", "audit-log", "backup-repo", "backup-repo-cleanup", "basic-auth", "capability", "cloud-storage", "cluster", "cluster-node", "cluster-network", "cluster-volume", "command-pipe", "command-template", "config-file", "deployment", "domain", "domain-settings", "email", "file", "github-app", "image", "image-build", "im-service", "key-auth", "logging", "mcp", "module", "notification", "oauth", "periodic-job", "port", "project", "project-env", "registry", "registry-auth", "repo", "repo-webhook", "sched-job", "secret", "security-settings", "setting", "setting-mount", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sys-error", "system-backup", "system-cleanup", "system-status", "task", "user" ],
+        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-features", "app-placement", "audit-log", "backup-repo", "backup-repo-cleanup", "basic-auth", "capability", "cloud-storage", "cluster", "cluster-node", "cluster-network", "cluster-volume", "command-pipe", "command-template", "config-file", "deployment", "domain", "domain-settings", "email", "file", "github-app", "image", "image-build", "image-scan", "im-service", "key-auth", "logging", "mcp", "module", "notification", "oauth", "periodic-job", "port", "project", "project-env", "registry", "registry-auth", "repo", "repo-webhook", "sched-job", "secret", "security-settings", "setting", "setting-mount", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sys-error", "system-backup", "system-cleanup", "system-status", "task", "user", "vulnerability-ignore" ],
         "type" : "string",
-        "x-enum-varnames" : [ "ResourceTypeAccessToken", "ResourceTypeAcmeDnsProvider", "ResourceTypeAPIKey", "ResourceTypeApp", "ResourceTypeAppFeatures", "ResourceTypeAppPlacement", "ResourceTypeAuditLog", "ResourceTypeBackupRepo", "ResourceTypeBackupRepoCleanup", "ResourceTypeBasicAuth", "ResourceTypeCapability", "ResourceTypeCloudStorage", "ResourceTypeCluster", "ResourceTypeClusterNode", "ResourceTypeClusterNetwork", "ResourceTypeClusterVolume", "ResourceTypeCommandPipe", "ResourceTypeCommandTemplate", "ResourceTypeConfigFile", "ResourceTypeDeployment", "ResourceTypeDomain", "ResourceTypeDomainSettings", "ResourceTypeEmail", "ResourceTypeFile", "ResourceTypeGithubApp", "ResourceTypeImage", "ResourceTypeImageBuild", "ResourceTypeIMService", "ResourceTypeKeyAuth", "ResourceTypeLogging", "ResourceTypeMCP", "ResourceTypeModule", "ResourceTypeNotification", "ResourceTypeOAuth", "ResourceTypePeriodicJob", "ResourceTypePort", "ResourceTypeProject", "ResourceTypeProjectEnv", "ResourceTypeRegistry", "ResourceTypeRegistryAuth", "ResourceTypeRepo", "ResourceTypeRepoWebhook", "ResourceTypeSchedJob", "ResourceTypeSecret", "ResourceTypeSecuritySettings", "ResourceTypeSetting", "ResourceTypeSettingMount", "ResourceTypeSSHKey", "ResourceTypeSSLCert", "ResourceTypeSSLProvider", "ResourceTypeSSLRenewal", "ResourceTypeRegistryAuthRenewal", "ResourceTypeSysError", "ResourceTypeSystemBackup", "ResourceTypeSystemCleanup", "ResourceTypeSystemStatus", "ResourceTypeTask", "ResourceTypeUser" ]
+        "x-enum-varnames" : [ "ResourceTypeAccessToken", "ResourceTypeAcmeDnsProvider", "ResourceTypeAPIKey", "ResourceTypeApp", "ResourceTypeAppFeatures", "ResourceTypeAppPlacement", "ResourceTypeAuditLog", "ResourceTypeBackupRepo", "ResourceTypeBackupRepoCleanup", "ResourceTypeBasicAuth", "ResourceTypeCapability", "ResourceTypeCloudStorage", "ResourceTypeCluster", "ResourceTypeClusterNode", "ResourceTypeClusterNetwork", "ResourceTypeClusterVolume", "ResourceTypeCommandPipe", "ResourceTypeCommandTemplate", "ResourceTypeConfigFile", "ResourceTypeDeployment", "ResourceTypeDomain", "ResourceTypeDomainSettings", "ResourceTypeEmail", "ResourceTypeFile", "ResourceTypeGithubApp", "ResourceTypeImage", "ResourceTypeImageBuild", "ResourceTypeImageScan", "ResourceTypeIMService", "ResourceTypeKeyAuth", "ResourceTypeLogging", "ResourceTypeMCP", "ResourceTypeModule", "ResourceTypeNotification", "ResourceTypeOAuth", "ResourceTypePeriodicJob", "ResourceTypePort", "ResourceTypeProject", "ResourceTypeProjectEnv", "ResourceTypeRegistry", "ResourceTypeRegistryAuth", "ResourceTypeRepo", "ResourceTypeRepoWebhook", "ResourceTypeSchedJob", "ResourceTypeSecret", "ResourceTypeSecuritySettings", "ResourceTypeSetting", "ResourceTypeSettingMount", "ResourceTypeSSHKey", "ResourceTypeSSLCert", "ResourceTypeSSLProvider", "ResourceTypeSSLRenewal", "ResourceTypeRegistryAuthRenewal", "ResourceTypeSysError", "ResourceTypeSystemBackup", "ResourceTypeSystemCleanup", "ResourceTypeSystemStatus", "ResourceTypeTask", "ResourceTypeUser", "ResourceTypeVulnIgnore" ]
       },
       "base.SSHKeyKind" : {
         "enum" : [ "git", "github", "gitlab", "gitea", "bitbucket", "gogs" ],
@@ -60603,9 +62863,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired", "SettingStatusMissing" ]
       },
       "base.SettingType" : {
-        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service" ],
+        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService" ]
+        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore" ]
       },
       "base.SubjectType" : {
         "enum" : [ "app", "cluster", "deployment", "network", "node", "project", "project-env", "user" ],
@@ -60628,9 +62888,9 @@
         "x-enum-varnames" : [ "TaskTargetTypeSchedJob", "TaskTargetTypePeriodicJob" ]
       },
       "base.TaskType" : {
-        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load" ],
+        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load", "task:image-scan" ],
         "type" : "string",
-        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad" ]
+        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad", "TaskTypeImageScan" ]
       },
       "base.TemplatesRef" : {
         "properties" : {
@@ -60664,6 +62924,11 @@
         "enum" : [ "active", "pending", "disabled" ],
         "type" : "string",
         "x-enum-varnames" : [ "UserStatusActive", "UserStatusPending", "UserStatusDisabled" ]
+      },
+      "base.VulnSeverity" : {
+        "enum" : [ "CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "VulnSeverityCritical", "VulnSeverityHigh", "VulnSeverityMedium", "VulnSeverityLow", "VulnSeverityUnknown" ]
       },
       "base.WebhookKind" : {
         "enum" : [ "github", "gitlab", "gitea", "bitbucket", "gogs" ],
@@ -64877,6 +67142,9 @@
             "description" : "CanAct is whether the user may change what the item is about, beyond\nlooking at it: the screen it leads to lets them act.",
             "type" : "boolean"
           },
+          "criticalFixable" : {
+            "type" : "integer"
+          },
           "desired" : {
             "type" : "integer"
           },
@@ -64885,7 +67153,7 @@
             "type" : "string"
           },
           "kind" : {
-            "description" : "Kind is app-not-running, app-restarting, node-down or node-overcommitted.",
+            "description" : "Kind is app-not-running, app-restarting, app-vulnerable, node-down or\nnode-overcommitted.",
             "type" : "string"
           },
           "lastError" : {
@@ -65291,6 +67559,10 @@
             "type" : "object"
           },
           "traefikImage" : {
+            "type" : "string"
+          },
+          "trivyImage" : {
+            "description" : "TrivyImage is what image scanning runs, when it is switched on: Trivy's\nserver and the runner on every node, which must be one version.",
             "type" : "string"
           },
           "victoriaLogsImage" : {
@@ -66434,6 +68706,316 @@
         "type" : "object"
       },
       "imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.ExecuteImageScanDataResp" : {
+        "properties" : {
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "imagescandto.ExecuteImageScanResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ExecuteImageScanDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.GetImageScanSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ImageScanSettingsResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.ImageScanAppResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "nullable" : true
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "images" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.ImageResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "project" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "nullable" : true
+          },
+          "projectEnv" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "nullable" : true
+          },
+          "scannedAt" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "images", "project", "projectEnv", "scannedAt", "summary" ],
+        "type" : "object"
+      },
+      "imagescandto.ImageScanSettingsResp" : {
+        "properties" : {
+          "cpuLimit" : {
+            "description" : "CPULimit and MemoryLimit are read off the runner's service, where they\nlive. With no runner they are what a new one would get.",
+            "type" : "number"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "dbRepository" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "javaDbRepository" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "memoryLimit" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "notification" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.BaseEventNotificationResp"
+            } ],
+            "nullable" : true
+          },
+          "scannerStatus" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ScannerStatusResp"
+            } ],
+            "description" : "ScannerStatus is what runs, as opposed to what was configured. It is not\ncalled Status: BaseSettingResp has one.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "schedule" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ScheduleResp"
+            } ],
+            "nullable" : true
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.SettingStatus"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/base.SettingType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpuLimit", "createdAt", "dbRepository", "enabled", "id", "inheritable", "javaDbRepository", "kind", "memoryLimit", "name", "nextRuns", "notification", "scannerStatus", "schedule", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "imagescandto.ListImageScanAppsResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/imagescandto.ImageScanAppResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ListMeta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.ScannerStatusResp" : {
+        "properties" : {
+          "dbUpdatedAt" : {
+            "type" : "string"
+          },
+          "image" : {
+            "type" : "string"
+          },
+          "lastScanAt" : {
+            "type" : "string"
+          },
+          "nodes" : {
+            "type" : "integer"
+          },
+          "runnerAppId" : {
+            "type" : "string"
+          },
+          "runnerNodes" : {
+            "description" : "RunnerNodes is on how many of Nodes the runner runs.",
+            "type" : "integer"
+          },
+          "serverAppId" : {
+            "type" : "string"
+          },
+          "serverRunning" : {
+            "type" : "boolean"
+          },
+          "trivyVersion" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "image", "nodes", "runnerNodes", "serverRunning" ],
+        "type" : "object"
+      },
+      "imagescandto.ScheduleReq" : {
+        "properties" : {
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "imagescandto.ScheduleResp" : {
+        "properties" : {
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "imagescandto.UpdateImageScanSettingsReq" : {
+        "properties" : {
+          "cpuLimit" : {
+            "description" : "CPULimit and MemoryLimit are what every scan runs under: the runner's.\nThey live on its service, not in the settings. Zero is the default.",
+            "type" : "number"
+          },
+          "dbRepository" : {
+            "description" : "DBRepository and JavaDBRepository are OCI repositories of a mirror Trivy\nfetches its DBs from; empty for Trivy's own.",
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "javaDbRepository" : {
+            "type" : "string"
+          },
+          "memoryLimit" : {
+            "type" : "string"
+          },
+          "notification" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.BaseEventNotificationReq"
+            } ],
+            "nullable" : true
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/imagescandto.ScheduleReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "cpuLimit", "dbRepository", "default", "enabled", "inheritable", "javaDbRepository", "memoryLimit", "notification", "schedule", "updateVer" ],
+        "type" : "object"
+      },
+      "imagescandto.UpdateImageScanSettingsResp" : {
         "properties" : {
           "meta" : {
             "allOf" : [ {
@@ -78636,6 +81218,239 @@
           }
         },
         "required" : [ "device", "extraOptions", "gid", "mode", "size", "uid" ],
+        "type" : "object"
+      },
+      "vulnignoredto.CreateVulnIgnoreReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "description" : "ExpireAt is when the ignore stops applying; null for never, and at most a\nyear away.",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "package" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "vulnId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "default", "expireAt", "inheritable", "package", "reason", "vulnId" ],
+        "type" : "object"
+      },
+      "vulnignoredto.CreateVulnIgnoreResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.DeleteVulnIgnoreResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.GetVulnIgnoreResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/vulnignoredto.VulnIgnoreResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.ListVulnIgnoreResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/vulnignoredto.VulnIgnoreResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ListMeta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.UpdateVulnIgnoreReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "description" : "ExpireAt is when the ignore stops applying; null for never, and at most a\nyear away.",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "package" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "vulnId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "default", "expireAt", "inheritable", "package", "reason", "updateVer", "vulnId" ],
+        "type" : "object"
+      },
+      "vulnignoredto.UpdateVulnIgnoreResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.UpdateVulnIgnoreStatusReq" : {
+        "properties" : {
+          "default" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "inheritable" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "status" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/base.SettingStatus"
+            } ],
+            "nullable" : true
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "vulnignoredto.UpdateVulnIgnoreStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "vulnignoredto.VulnIgnoreResp" : {
+        "properties" : {
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "package" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string"
+          },
+          "setBy" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.SettingStatus"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/base.SettingType"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          },
+          "vulnId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "id", "inheritable", "kind", "name", "reason", "scope", "status", "type", "updateVer", "updatedAt", "vulnId" ],
         "type" : "object"
       },
       "webhookdto.HandleRepoWebhookReq" : {

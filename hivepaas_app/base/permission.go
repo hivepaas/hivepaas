@@ -43,6 +43,7 @@ const (
 	ResourceTypeGithubApp           ResourceType = "github-app"
 	ResourceTypeImage               ResourceType = "image"
 	ResourceTypeImageBuild          ResourceType = "image-build"
+	ResourceTypeImageScan           ResourceType = "image-scan"
 	ResourceTypeIMService           ResourceType = "im-service"
 	ResourceTypeKeyAuth             ResourceType = "key-auth"
 	ResourceTypeLogging             ResourceType = "logging"
@@ -74,6 +75,7 @@ const (
 	ResourceTypeSystemStatus        ResourceType = "system-status"
 	ResourceTypeTask                ResourceType = "task"
 	ResourceTypeUser                ResourceType = "user"
+	ResourceTypeVulnIgnore          ResourceType = "vulnerability-ignore"
 )
 
 type ResourceModule string

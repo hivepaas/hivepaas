@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appimagescanhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
@@ -81,6 +82,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
@@ -123,6 +125,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskbackuprestore"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdatafileload"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskimagescan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingmountrefresh"
@@ -134,6 +137,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appimagescanuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
@@ -183,6 +187,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/vulnignoreuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
@@ -193,6 +198,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/imagescanuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryauthrenewaluc"
@@ -254,6 +260,7 @@ var Provides = []any{
 	taskschedjobexec.NewExecutor,
 	tasksettingsrevert.NewExecutor,
 	tasksslobtain.NewExecutor,
+	taskimagescan.NewExecutor,
 	taskbackuprestore.NewExecutor,
 	taskdatafileload.NewExecutor,
 	tasksettingmountrefresh.NewExecutor,
@@ -270,6 +277,7 @@ var Provides = []any{
 	appdeploymenthandler.New,
 	apphandler.New,
 	appmetricshandler.New,
+	appimagescanhandler.New,
 	apppreviewhandler.New,
 	appsettingshandler.New,
 	apptemplatehandler.New,
@@ -310,6 +318,7 @@ var Provides = []any{
 	appdeploymentuc.New,
 	appfeaturesettingsuc.New,
 	appmetricsuc.New,
+	appimagescanuc.New,
 	appplacementsettingsuc.New,
 	apppreviewuc.New,
 	appsettingsuc.New,
@@ -320,6 +329,7 @@ var Provides = []any{
 	backuprepouc.New,
 	backupsnapshotuc.New,
 	basicauthuc.New,
+	vulnignoreuc.New,
 	keyauthuc.New,
 	binobjectuc.New,
 	builduc.New,
@@ -340,6 +350,7 @@ var Provides = []any{
 	imserviceuc.New,
 	logginguc.New,
 	registryuc.New,
+	imagescanuc.New,
 	networkuc.New,
 	nodeuc.New,
 	notificationuc.New,
@@ -411,6 +422,7 @@ var Provides = []any{
 	hpappserviceimpl.New,
 	functionserviceimpl.New,
 	imagebuildserviceimpl.New,
+	imagescanserviceimpl.New,
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
 	registryauthserviceimpl.New,
@@ -451,6 +463,7 @@ var Provides = []any{
 	repository.NewAuditLogRepo,
 	repository.NewAppRepo,
 	repository.NewBinObjectRepo,
+	repository.NewImageScanRepo,
 	repository.NewDataMigrationRepo,
 	repository.NewEncryptionKeyRepo,
 	repository.NewDeploymentRepo,

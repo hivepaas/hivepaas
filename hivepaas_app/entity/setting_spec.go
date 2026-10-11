@@ -175,6 +175,10 @@ var (
 		reason: "backup history, rediscovered by scanning the repository"})
 	_ = registerSpecPolicy(base.SettingTypeApp, skipSpecPolicy{
 		reason: "a declared type with no parser and no rows"})
+	_ = registerSpecPolicy(base.SettingTypeImageScan, skipSpecPolicy{
+		reason: "image scanning is switched on where it runs, and fetches its DB there"})
+	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, skipSpecPolicy{
+		reason: "an ignore answers the scans of the installation it was written on"})
 
 	_ = registerSpecPolicy(base.SettingTypeClusterNetwork, clusterSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeClusterVolume, clusterSpecPolicy{})

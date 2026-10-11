@@ -24,6 +24,8 @@ const cacheTTL = 30 * time.Second
 
 type service struct {
 	appRepo       repository.AppRepo
+	imageScanRepo repository.ImageScanRepo
+	settingRepo   repository.SettingRepo
 	dockerManager docker.Manager
 
 	mu      sync.Mutex
@@ -36,8 +38,14 @@ type service struct {
 // list in registry/provides.go.
 //
 //nolint:ireturn // the constructor of a service returns its interface
-func New(appRepo repository.AppRepo, dockerManager docker.Manager) attentionservice.Service {
-	return &service{appRepo: appRepo, dockerManager: dockerManager, nowFunc: time.Now}
+func New(
+	appRepo repository.AppRepo,
+	imageScanRepo repository.ImageScanRepo,
+	settingRepo repository.SettingRepo,
+	dockerManager docker.Manager,
+) attentionservice.Service {
+	return &service{appRepo: appRepo, imageScanRepo: imageScanRepo, settingRepo: settingRepo,
+		dockerManager: dockerManager, nowFunc: time.Now}
 }
 
 func (s *service) Items(ctx context.Context, db database.IDB) ([]*attentionservice.Item, error) {
@@ -53,6 +61,11 @@ func (s *service) Items(ctx context.Context, db database.IDB) ([]*attentionservi
 		return nil, err
 	}
 	items := deriveItems(state)
+	vulnerable, err := s.vulnerableItems(ctx, db, state.apps, now)
+	if err != nil {
+		return nil, err
+	}
+	items = sortItems(append(items, vulnerable...))
 	if items == nil {
 		items = []*attentionservice.Item{}
 	}
@@ -64,7 +77,7 @@ func (s *service) Items(ctx context.Context, db database.IDB) ([]*attentionservi
 // it, and to name the app, its project and its env as their screens do.
 func appsRead() []bunex.SelectQueryOption {
 	return []bunex.SelectQueryOption{
-		bunex.SelectColumns("id", "key", "name", "project_id", "project_env_id", "service_id", "status"),
+		bunex.SelectColumns("id", "key", "name", "project_id", "project_env_id", "parent_id", "service_id", "status"),
 		bunex.SelectWhere("app.service_id IS NOT NULL"),
 		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
 		bunex.SelectRelation("Project", bunex.SelectColumns("id", "key", "name")),

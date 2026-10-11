@@ -27,6 +27,7 @@ const (
 	timeoutSSLObtain      = 15 * time.Minute
 
 	timeoutSettingMountRefresh = 15 * time.Minute
+	timeoutImageScan           = 15 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -56,6 +57,9 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// One service update per app that mounts the changed setting, each a
 	// restart that converges on its own: a fan-out, as the labels sweep is.
 	base.TaskTypeSettingMountRefresh: timeoutSettingMountRefresh,
+	// One scan per image the app runs, each at most ten minutes in Trivy and
+	// most under twenty seconds: an app runs one image on a platform.
+	base.TaskTypeImageScan: timeoutImageScan,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

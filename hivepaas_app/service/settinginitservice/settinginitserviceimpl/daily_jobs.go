@@ -42,6 +42,11 @@ var dailyJobs = []dailyJob{
 		data, err := s.AsBackupRepoCleanup()
 		return scheduleOf(data, err, func() *entity.SchedJobSchedule { return &data.Schedule })
 	}},
+	{base.SettingTypeImageScan, entity.ImageScanDailyHour, 0, func(s *entity.Setting) (*entity.SchedJobSchedule,
+		entity.SettingData, error) {
+		data, err := s.AsImageScanSettings()
+		return scheduleOf(data, err, func() *entity.SchedJobSchedule { return &data.Schedule })
+	}},
 }
 
 func scheduleOf(data entity.SettingData, err error, schedule func() *entity.SchedJobSchedule) (

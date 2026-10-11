@@ -1,0 +1,139 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.75.0",
+    "Server": {
+      "Version": "0.75.0",
+      "VulnerabilityDB": {
+        "Version": 2,
+        "NextUpdate": "2026-10-11T12:33:35.352381125Z",
+        "UpdatedAt": "2026-10-10T12:33:35.352381306Z",
+        "DownloadedAt": "2026-10-10T18:04:59.460727005Z"
+      }
+    }
+  },
+  "ReportID": "01a12709-5e63-7c6e-9004-db46e570470a",
+  "CreatedAt": "2026-10-10T18:18:07.843816218Z",
+  "ArtifactID": "sha256:e8a0d7ca6dad24d5d6f0005dace48a3d0c28908f828d62e566add8f7777e84c1",
+  "ArtifactName": "sha256:b2bdf71a218e2b1d9a8fbdb2b5a3c8fd109a3469dc3bafd4866ec339ad9f1007",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 10855936,
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.20.10",
+      "EOSL": true
+    },
+    "ImageID": "sha256:b2bdf71a218e2b1d9a8fbdb2b5a3c8fd109a3469dc3bafd4866ec339ad9f1007",
+    "DiffIDs": [
+      "sha256:88b4fba61c4c714a2fc173ddf7e9324a257304696830bf41ad28ecc58c11c95f",
+      "sha256:238810dc8751f2033477a1a9cf40ff08b621db1ae399471a5cc78c8955fd8b31"
+    ],
+    "RepoTags": [
+      "hp-scan-jar:test"
+    ],
+    "Reference": "hp-scan-jar:test",
+    "ImageConfig": {
+      "architecture": "arm64",
+      "os": "linux"
+    }
+  },
+  "Results": [
+    {
+      "Target": "sha256:b2bdf71a218e2b1d9a8fbdb2b5a3c8fd109a3469dc3bafd4866ec339ad9f1007 (alpine 3.20.10)",
+      "Class": "os-pkgs",
+      "Type": "alpine"
+    },
+    {
+      "Target": "Java",
+      "Class": "lang-pkgs",
+      "Type": "jar",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2021-44228",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.15.0, 2.3.1, 2.12.2",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-44228",
+          "Title": "log4j-core: Remote code execution in Log4j 2.x when logs contain an attacker-controlled string value",
+          "Severity": "CRITICAL",
+          "PublishedDate": "2021-12-10T10:15:09.143Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2021-45046",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.16.0, 2.12.2, 2.3.1",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-45046",
+          "Title": "log4j-core: DoS in log4j 2.x with thread context message pattern and context lookup pattern (incomplete fix for CVE-2021-44228)",
+          "Severity": "CRITICAL",
+          "PublishedDate": "2021-12-14T19:15:07.733Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2021-45105",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.12.3, 2.17.0, 2.3.1",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-45105",
+          "Title": "log4j-core: DoS in log4j 2.x with Thread Context Map (MDC) input data contains a recursive lookup and context lookup pattern",
+          "Severity": "HIGH",
+          "PublishedDate": "2021-12-18T12:15:07.433Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2021-44832",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.3.2, 2.12.4, 2.17.1",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-44832",
+          "Title": "log4j-core: remote code execution via JDBC Appender",
+          "Severity": "MEDIUM",
+          "PublishedDate": "2021-12-28T20:15:08.4Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2025-68161",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.25.3",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-68161",
+          "Title": "Apache Log4j: Apache Log4j Core: Information disclosure via missing TLS hostname verification",
+          "Severity": "MEDIUM",
+          "PublishedDate": "2025-12-18T21:15:57.96Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-34477",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.25.4",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-34477",
+          "Title": "org.apache.logging.log4j/log4j-core: Apache Log4j Core: Man-in-the-middle attack due to incomplete hostname verification",
+          "Severity": "MEDIUM",
+          "PublishedDate": "2026-04-10T16:16:30.843Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-34480",
+          "PkgName": "org.apache.logging.log4j:log4j-core",
+          "PkgPath": "app/log4j-core-2.14.1.jar",
+          "InstalledVersion": "2.14.1",
+          "FixedVersion": "2.25.4",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-34480",
+          "Title": "org.apache.logging.log4j/log4j-core: Apache Log4j Core: Invalid XML output causes denial of service in logging",
+          "Severity": "MEDIUM",
+          "PublishedDate": "2026-04-10T16:16:31.463Z"
+        }
+      ]
+    }
+  ]
+}

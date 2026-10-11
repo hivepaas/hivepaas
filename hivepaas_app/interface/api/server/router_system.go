@@ -110,6 +110,15 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		registryGroup.POST("/rotate-credential", systemSettingsHandler.RotateRegistryCredential)
 	}
 
+	// Image scanning settings
+	{
+		imageScanGroup := systemSettingGroup.Group("/image-scan")
+		imageScanGroup.GET("", systemSettingsHandler.GetImageScanSettings)
+		imageScanGroup.PUT("", systemSettingsHandler.UpdateImageScanSettings)
+		imageScanGroup.POST("/exec", systemSettingsHandler.ExecuteImageScan)
+		imageScanGroup.GET("/apps", systemSettingsHandler.ListImageScanApps)
+	}
+
 	_ = s.registerHivePaaSRoutes(systemGroup)
 	_ = s.registerTraefikRoutes(systemGroup)
 }

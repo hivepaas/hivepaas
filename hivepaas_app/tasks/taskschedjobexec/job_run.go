@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
@@ -127,6 +128,13 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		}
 		result.skipNotification = resp.SkipResultNotification
 
+	case base.SchedJobTypeImageScan:
+		skip, err := e.scanImages(ctx, db, run, schedJob)
+		if err != nil {
+			return nil, err
+		}
+		result.skipNotification = skip
+
 	case base.SchedJobTypeDataBackup:
 		resp, err := e.dataBackupService.Backup(ctx, db, &databackupservice.BackupReq{
 			TaskExecData: run.execData,
@@ -176,4 +184,22 @@ func (e *Executor) renewRegistryAuths(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// scanImages runs the daily image scan, and says whether the job's own
+// notification is skipped: a run that succeeded sends its own report.
+func (e *Executor) scanImages(ctx context.Context, db database.Tx, run *jobRun, schedJob *entity.SchedJob) (
+	bool, error) {
+	setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]
+	if setting == nil {
+		return false, hperrors.NewNotFound("Image scan settings")
+	}
+	resp, err := e.imageScanService.RunDaily(ctx, db, &imagescanservice.DailyReq{
+		TaskExecData: run.execData,
+		Setting:      setting,
+	})
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return resp.SkipResultNotification, nil
 }

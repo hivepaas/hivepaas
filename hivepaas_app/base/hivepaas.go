@@ -41,6 +41,13 @@ const (
 	// own while apps' routes and calls are on, the image of the agent's release.
 	// The update moves it by moving the agent.
 	HivepaasOBIKey = "obi"
+
+	// Image scanning is two apps the app provisions in its hidden project when
+	// it is switched on: Trivy's server, which holds the vulnerability DB, and a
+	// runner on every node, which reads the node's images and asks the server.
+	// Both run the release's Trivy image.
+	HivepaasTrivyKey       = "trivy"
+	HivepaasTrivyRunnerKey = "trivy-runner"
 )
 
 const (

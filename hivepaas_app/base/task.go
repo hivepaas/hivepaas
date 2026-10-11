@@ -42,20 +42,26 @@ const (
 	// TaskTypeDataFileLoad feeds an app's data file to a command run in the app,
 	// on its stdin. See tasks/taskdatafileload.
 	TaskTypeDataFileLoad TaskType = "task:data-file-load"
+
+	// TaskTypeImageScan scans the images an app's tasks run for known
+	// vulnerabilities: after a deployment, or when asked. See
+	// service/imagescanservice.
+	TaskTypeImageScan TaskType = "task:image-scan"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
-		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore, TaskTypeDataFileLoad}
+		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore, TaskTypeDataFileLoad,
+		TaskTypeImageScan}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)
 	AllHivepaasTaskTypes = []TaskType{}
 	AllProjectTaskTypes  = []TaskType{TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec, TaskTypeBackupRestore,
-		TaskTypeDataFileLoad}
+		TaskTypeDataFileLoad, TaskTypeImageScan}
 	AllAppTaskTypes  = AllProjectTaskTypes
 	AllUserTaskTypes = []TaskType{}
 )

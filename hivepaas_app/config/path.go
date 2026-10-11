@@ -47,6 +47,18 @@ func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID strin
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "deployments", deploymentID))
 }
 
+// Image scanning
+
+// DashboardAppSecurityURL is an app's Security tab: what its images carry.
+func (cfg *Config) DashboardAppSecurityURL(basePath string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "security"))
+}
+
+// DashboardImageScanImagesURL lists every app's images and what they carry.
+func (cfg *Config) DashboardImageScanImagesURL() string {
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "settings/image-scanning/images"))
+}
+
 // Github Apps
 
 func (cfg *Config) DashboardGithubAppsURL(basePath string) string {

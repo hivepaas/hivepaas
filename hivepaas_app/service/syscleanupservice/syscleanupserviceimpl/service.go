@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
@@ -38,6 +39,7 @@ type service struct {
 	fileService           fileservice.Service
 	loggingService        loggingservice.Service
 	registryService       registryservice.Service
+	imageScanService      imagescanservice.Service
 
 	obiSettings   cacherepository.OBISettingsRepo
 	taskQueue     queue.TaskQueue
@@ -64,6 +66,7 @@ func New(
 	fileService fileservice.Service,
 	loggingService loggingservice.Service,
 	registryService registryservice.Service,
+	imageScanService imagescanservice.Service,
 
 	obiSettings cacherepository.OBISettingsRepo,
 	taskQueue queue.TaskQueue,
@@ -89,6 +92,7 @@ func New(
 		fileService:           fileService,
 		loggingService:        loggingService,
 		registryService:       registryService,
+		imageScanService:      imageScanService,
 
 		obiSettings:   obiSettings,
 		taskQueue:     taskQueue,

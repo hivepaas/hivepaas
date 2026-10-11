@@ -1,6 +1,8 @@
 package notificationservice
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -28,6 +30,7 @@ const (
 	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
 	TemplateSSLRenewalNotification    TemplateName = "ssl-renewal-notification"
 	TemplateSystemUpdateNotification  TemplateName = "system-update-notification"
+	TemplateImageScanNotification     TemplateName = "image-scan-notification"
 )
 
 type TemplateData interface {
@@ -231,4 +234,53 @@ type TemplateDataSystemUpdate struct {
 
 func (d TemplateDataSystemUpdate) StartedAtFormatted() string {
 	return formatDateTime(d.StartedAt)
+}
+
+//
+// IMAGE SCAN
+//
+
+// TemplateDataImageScan is the daily scan's report: the apps that run fixable
+// CRITICAL or HIGH vulnerabilities their last report did not have.
+type TemplateDataImageScan struct {
+	BaseTemplateData
+	Apps          []*ImageScanApp
+	DashboardLink string
+}
+
+// ImageScanApp is an app of the report, and what is new in it.
+type ImageScanApp struct {
+	ProjectName string
+	EnvName     string
+	AppName     string
+	// Critical and High are how many new fixable findings of each.
+	Critical int
+	High     int
+	Link     string
+}
+
+// Where is the app as its screens name it: project / env / app.
+func (a ImageScanApp) Where() string {
+	return a.ProjectName + " / " + a.EnvName + " / " + a.AppName
+}
+
+// Counts is what is new: "2 CRITICAL, 1 HIGH".
+func (a ImageScanApp) Counts() string {
+	var parts []string
+	if a.Critical > 0 {
+		parts = append(parts, fmt.Sprintf("%d CRITICAL", a.Critical))
+	}
+	if a.High > 0 {
+		parts = append(parts, fmt.Sprintf("%d HIGH", a.High))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// Lines is the apps as text, one a line, for a channel that takes no table.
+func (d TemplateDataImageScan) Lines() string {
+	lines := make([]string, 0, len(d.Apps))
+	for _, app := range d.Apps {
+		lines = append(lines, "• "+app.Where()+": "+app.Counts())
+	}
+	return strings.Join(lines, "\n")
 }

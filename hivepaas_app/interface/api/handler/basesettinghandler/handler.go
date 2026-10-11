@@ -37,7 +37,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/vulnignoreuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/imagescanuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryauthrenewaluc"
@@ -61,6 +63,7 @@ type Handler struct {
 	BackupRepoUC           *backuprepouc.UC
 	BackupSnapshotUC       *backupsnapshotuc.UC
 	BasicAuthUC            *basicauthuc.UC
+	VulnIgnoreUC           *vulnignoreuc.UC
 	KeyAuthUC              *keyauthuc.UC
 	CloudStorageUC         *cloudstorageuc.UC
 	ClusterNetworkUC       *networkuc.UC
@@ -80,6 +83,7 @@ type Handler struct {
 	LoggingUC              *logginguc.UC
 	MCPUC                  *mcpuc.UC
 	RegistryUC             *registryuc.UC
+	ImageScanUC            *imagescanuc.UC
 	NotificationUC         *notificationuc.UC
 	OAuthUC                *oauthuc.UC
 	PeriodicJobUC          *periodicjobuc.UC
@@ -109,6 +113,7 @@ func New(
 	backupRepoUC *backuprepouc.UC,
 	backupSnapshotUC *backupsnapshotuc.UC,
 	basicAuthUC *basicauthuc.UC,
+	vulnIgnoreUC *vulnignoreuc.UC,
 	keyAuthUC *keyauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
 	clusterNetworkUC *networkuc.UC,
@@ -128,6 +133,7 @@ func New(
 	loggingUC *logginguc.UC,
 	mcpUC *mcpuc.UC,
 	registryUC *registryuc.UC,
+	imageScanUC *imagescanuc.UC,
 	notificationUC *notificationuc.UC,
 	oauthUC *oauthuc.UC,
 	periodicJobUC *periodicjobuc.UC,
@@ -156,6 +162,7 @@ func New(
 		BackupRepoUC:           backupRepoUC,
 		BackupSnapshotUC:       backupSnapshotUC,
 		BasicAuthUC:            basicAuthUC,
+		VulnIgnoreUC:           vulnIgnoreUC,
 		KeyAuthUC:              keyAuthUC,
 		CloudStorageUC:         cloudStorageUC,
 		ClusterNetworkUC:       clusterNetworkUC,
@@ -175,6 +182,7 @@ func New(
 		LoggingUC:              loggingUC,
 		MCPUC:                  mcpUC,
 		RegistryUC:             registryUC,
+		ImageScanUC:            imageScanUC,
 		NotificationUC:         notificationUC,
 		OAuthUC:                oauthUC,
 		PeriodicJobUC:          periodicJobUC,

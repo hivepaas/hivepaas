@@ -121,6 +121,18 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 			projectSettingsHandler.ProjectSettingUsages(base.ResourceTypeBasicAuth))
 	}
 
+	{ // Vulnerability ignores group
+		vulnIgnoreGroup := projectGroup.Group("/:projectID/vulnerability-ignores")
+		vulnIgnoreGroup.GET("/:itemID", projectSettingsHandler.GetVulnIgnore)
+		vulnIgnoreGroup.GET("", projectSettingsHandler.ListVulnIgnore)
+		vulnIgnoreGroup.POST("", projectSettingsHandler.CreateVulnIgnore)
+		vulnIgnoreGroup.PUT("/:itemID", projectSettingsHandler.UpdateVulnIgnore)
+		vulnIgnoreGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateVulnIgnoreStatus)
+		vulnIgnoreGroup.DELETE("/:itemID", projectSettingsHandler.DeleteVulnIgnore)
+		vulnIgnoreGroup.GET("/:itemID/usages",
+			projectSettingsHandler.ProjectSettingUsages(base.ResourceTypeVulnIgnore))
+	}
+
 	{ // Key auth group
 		keyAuthGroup := projectGroup.Group("/:projectID/key-auth")
 		keyAuthGroup.GET("/:itemID", projectSettingsHandler.GetKeyAuth)

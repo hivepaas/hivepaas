@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appimagescanhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
@@ -51,6 +52,7 @@ type HandlerRegistry struct {
 	appDeploymentHandler      *appdeploymenthandler.Handler
 	appHandler                *apphandler.Handler
 	appMetricsHandler         *appmetricshandler.Handler
+	appImageScanHandler       *appimagescanhandler.Handler
 	appPreviewHandler         *apppreviewhandler.Handler
 	appSettingsHandler        *appsettingshandler.Handler
 	appTemplateHandler        *apptemplatehandler.Handler
@@ -85,6 +87,7 @@ func NewHandlerRegistry(
 	appDeploymentHandler *appdeploymenthandler.Handler,
 	appHandler *apphandler.Handler,
 	appMetricsHandler *appmetricshandler.Handler,
+	appImageScanHandler *appimagescanhandler.Handler,
 	appPreviewHandler *apppreviewhandler.Handler,
 	appSettingsHandler *appsettingshandler.Handler,
 	appTemplateHandler *apptemplatehandler.Handler,
@@ -118,6 +121,7 @@ func NewHandlerRegistry(
 		appDeploymentHandler:      appDeploymentHandler,
 		appHandler:                appHandler,
 		appMetricsHandler:         appMetricsHandler,
+		appImageScanHandler:       appImageScanHandler,
 		appPreviewHandler:         appPreviewHandler,
 		appSettingsHandler:        appSettingsHandler,
 		appTemplateHandler:        appTemplateHandler,

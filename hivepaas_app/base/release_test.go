@@ -30,6 +30,8 @@ func TestTheCompiledBetaIsReleaseJSONs(t *testing.T) {
 	assert.Equal(t, want.OBIImage, BetaVersion.OBIImage)
 	assert.NotEmpty(t, BetaVersion.OBIImage, "the agents run it")
 	assert.Equal(t, want.RegistryImage, BetaVersion.RegistryImage)
+	assert.Equal(t, want.TrivyImage, BetaVersion.TrivyImage)
+	assert.NotEmpty(t, BetaVersion.TrivyImage, "image scanning runs it")
 	assert.Equal(t, want.PlaceholderImage, BetaVersion.PlaceholderImage)
 	assert.NotEmpty(t, BetaVersion.PlaceholderImage, "a new app starts on it")
 	assert.Equal(t, want.FunctionRuntimes, BetaVersion.FunctionRuntimes)

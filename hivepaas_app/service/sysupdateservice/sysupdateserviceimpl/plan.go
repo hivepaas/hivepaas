@@ -38,6 +38,8 @@ func (s *service) PlanUpdate(
 		{base.HivepaasVictoriaLogsKey, target.VictoriaLogsImage},
 		{base.HivepaasVlagentKey, target.VlagentImage},
 		{base.HivepaasRegistryKey, target.RegistryImage},
+		{base.HivepaasTrivyKey, target.TrivyImage},
+		{base.HivepaasTrivyRunnerKey, target.TrivyImage},
 	} {
 		loaded, err := s.systemAppService.LoadApp(ctx, db, app.key)
 		if err != nil {

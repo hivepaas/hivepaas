@@ -61,6 +61,11 @@ const (
 	SettingTypeSystemCleanup       SettingType = "system-cleanup"
 	SettingTypeTraefikConfig       SettingType = "traefik-config"
 	SettingTypeTraefikService      SettingType = "traefik-service"
+	// SettingTypeImageScan is the image scanning addon and its daily scan.
+	SettingTypeImageScan SettingType = "image-scan"
+	// SettingTypeVulnerabilityIgnore sets a vulnerability aside, with a reason,
+	// for the apps of its scope.
+	SettingTypeVulnerabilityIgnore SettingType = "vulnerability-ignore"
 )
 
 var (

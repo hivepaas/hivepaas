@@ -1,0 +1,64 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.75.0",
+    "Server": {
+      "Version": "0.75.0",
+      "VulnerabilityDB": {
+        "Version": 2,
+        "NextUpdate": "2026-10-11T12:33:35.352381125Z",
+        "UpdatedAt": "2026-10-10T12:33:35.352381306Z",
+        "DownloadedAt": "2026-10-10T18:04:59.460727005Z"
+      }
+    }
+  },
+  "ReportID": "01a12707-1bd8-7d59-8708-70ad4e82c232",
+  "CreatedAt": "2026-10-10T18:15:39.73687626Z",
+  "ArtifactID": "sha256:a2b7c80d5eb96f2e0e874894335f57e161a3f0cbce2aae34f4d823831011c614",
+  "ArtifactName": "alpine:3.10",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "Size": 5604352,
+    "OS": {
+      "Family": "alpine",
+      "Name": "3.10.9",
+      "EOSL": true
+    },
+    "ImageID": "sha256:19a85ffa0ee14b7c64ca5104dc4e1c5021fa04bd6b4a692074691ce154f5d074",
+    "DiffIDs": [
+      "sha256:e484d53633e7e5ebaabbe277838af1f26c388cbcebfa32e29fae72dd4086d54d"
+    ],
+    "RepoTags": [
+      "alpine:3.10"
+    ],
+    "RepoDigests": [
+      "alpine@sha256:451eee8bedcb2f029756dc3e9d73bab0e7943c1ac55cff3a4861c52a0fdd3e98"
+    ],
+    "Reference": "alpine:3.10",
+    "ImageConfig": {
+      "architecture": "arm64",
+      "os": "linux"
+    }
+  },
+  "Results": [
+    {
+      "Target": "alpine:3.10 (alpine 3.10.9)",
+      "Class": "os-pkgs",
+      "Type": "alpine",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2021-36159",
+          "PkgID": "apk-tools@2.10.6-r0",
+          "PkgName": "apk-tools",
+          "InstalledVersion": "2.10.6-r0",
+          "FixedVersion": "2.10.7-r0",
+          "Status": "fixed",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-36159",
+          "Title": "libfetch: an out of boundary read while libfetch uses strtol to parse the relevant numbers into address bytes leads to information leak or crash",
+          "Severity": "CRITICAL",
+          "PublishedDate": "2021-08-03T14:15:08.233Z"
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,8 @@ import (
 )
 
 // updateSystemApps moves the apps HivePaaS provisions for itself to the images
-// this release names: the logging stack's two and the registry.
+// this release names: the logging stack's two, the registry, and image
+// scanning's server and runner.
 //
 // None of them is in the stack file. They are apps HivePaaS provisions in its
 // hidden project when the feature is switched on and removes when it is switched
@@ -36,6 +37,10 @@ func (s *service) updateSystemApps(
 		{What: "victoria-logs", Key: base.HivepaasVictoriaLogsKey, TargetImage: args.TargetVersion.VictoriaLogsImage},
 		{What: "vlagent", Key: base.HivepaasVlagentKey, TargetImage: args.TargetVersion.VlagentImage},
 		{What: "registry", Key: base.HivepaasRegistryKey, TargetImage: args.TargetVersion.RegistryImage},
+		// The server before its runner: a runner asks a server of its own
+		// version or a newer one, never an older one.
+		{What: "trivy", Key: base.HivepaasTrivyKey, TargetImage: args.TargetVersion.TrivyImage},
+		{What: "trivy-runner", Key: base.HivepaasTrivyRunnerKey, TargetImage: args.TargetVersion.TrivyImage},
 	}
 	for _, step := range steps {
 		if err := s.updateSystemAppImage(ctx, db, data, step); err != nil {

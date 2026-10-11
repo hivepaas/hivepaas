@@ -20,7 +20,8 @@ type HomeAttentionDataResp struct {
 // AttentionItemResp is one thing that needs attention. The fields after Subject
 // are filled by the kinds they belong to, for the screen to word.
 type AttentionItemResp struct {
-	// Kind is app-not-running, app-restarting, node-down or node-overcommitted.
+	// Kind is app-not-running, app-restarting, app-vulnerable, node-down or
+	// node-overcommitted.
 	Kind string `json:"kind"`
 	// Severity is critical or warning.
 	Severity string `json:"severity"`
@@ -41,6 +42,7 @@ type AttentionItemResp struct {
 	NodeState         string `json:"nodeState,omitempty"`
 	MemoryLimitsBytes int64  `json:"memoryLimitsBytes,omitempty"`
 	MemoryTotalBytes  int64  `json:"memoryTotalBytes,omitempty"`
+	CriticalFixable   int    `json:"criticalFixable,omitempty"`
 
 	Since *time.Time `json:"since,omitempty"`
 
@@ -62,6 +64,7 @@ func TransformAttentionItem(item *attentionservice.Item, canAct bool) *Attention
 		NodeState:         item.NodeState,
 		MemoryLimitsBytes: item.MemoryLimits,
 		MemoryTotalBytes:  item.MemoryTotal,
+		CriticalFixable:   item.CriticalFixable,
 		CanAct:            canAct,
 	}
 	if item.Scope.Type == attentionservice.ScopeApp {

@@ -29,6 +29,10 @@ const (
 	// KindNodeOvercommitted is a node whose tasks may use more memory, by their
 	// limits, than the node has: when they do, the kernel kills one of them.
 	KindNodeOvercommitted Kind = "node-overcommitted"
+	// KindAppVulnerable is an app whose image carries a CRITICAL vulnerability
+	// a fixed version exists for, which no ignore sets aside. Only CRITICAL: the
+	// list is for what cannot wait, and HIGHs would fill it.
+	KindAppVulnerable Kind = "app-vulnerable"
 )
 
 type Severity string
@@ -79,6 +83,9 @@ type Item struct {
 	NodeState    string // of a node down
 	MemoryLimits int64  // the sum of the limits of a node's tasks, in bytes
 	MemoryTotal  int64  // the node's memory, in bytes
+	// CriticalFixable is how many fixable CRITICAL vulnerabilities an app
+	// vulnerable runs.
+	CriticalFixable int
 
 	// Since is when it started, as near as can be told.
 	Since time.Time

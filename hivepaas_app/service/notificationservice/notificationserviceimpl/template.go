@@ -89,6 +89,8 @@ func (s *service) loadEmailTemplate(
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"ssl_renewal_notification.html")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"system_update_notification.html")
+	case notificationservice.TemplateImageScanNotification:
+		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"image_scan_notification.html")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -117,6 +119,8 @@ func (s *service) loadSlackTemplate(
 		tpl, err = parseJSONTemplate(slackTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = parseJSONTemplate(slackTemplateDir + "system_update_notification.tpl")
+	case notificationservice.TemplateImageScanNotification:
+		tpl, err = parseJSONTemplate(slackTemplateDir + "image_scan_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -145,6 +149,8 @@ func (s *service) loadDiscordTemplate(
 		tpl, err = parseJSONTemplate(discordTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = parseJSONTemplate(discordTemplateDir + "system_update_notification.tpl")
+	case notificationservice.TemplateImageScanNotification:
+		tpl, err = parseJSONTemplate(discordTemplateDir + "image_scan_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -173,6 +179,8 @@ func (s *service) loadTelegramTemplate(
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"system_update_notification.tpl")
+	case notificationservice.TemplateImageScanNotification:
+		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"image_scan_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -201,6 +209,8 @@ func (s *service) loadLarkTemplate(
 		tpl, err = parseJSONTemplate(larkTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = parseJSONTemplate(larkTemplateDir + "system_update_notification.tpl")
+	case notificationservice.TemplateImageScanNotification:
+		tpl, err = parseJSONTemplate(larkTemplateDir + "image_scan_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -1,4 +1,5 @@
-import { Outlet, RouterProvider, createBrowserRouter } from "react-router-dom";
+import { Outlet, createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
 
 import { ApplicationProfileInit, AuthRouteProtection } from "@application/root";
 

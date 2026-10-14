@@ -114,12 +114,7 @@ export default defineConfig(({ mode }) => {
                     experimentalMinChunkSize: 20000,
                     manualChunks(id) {
                         if (id.includes("node_modules")) {
-                            if (
-                                id.includes("/react/") ||
-                                id.includes("/react-dom/") ||
-                                id.includes("/react-router/") ||
-                                id.includes("/react-router-dom/")
-                            ) {
+                            if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/react-router/")) {
                                 return "vendor-react";
                             }
                             if (id.includes("/@xterm/") || id.includes("/prismjs/")) {

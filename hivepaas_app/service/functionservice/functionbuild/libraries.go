@@ -15,7 +15,7 @@ import (
 
 // LibrariesRepo is the repository of the images a function's test runs start
 // from. They stay on the node they were built on, and are never pushed: the
-// cluster cleanup's image prune removes them like any image no container uses.
+// cluster cleanup removes them like any image, once unused for its retention.
 const LibrariesRepo = "hivepaas-function-libs"
 
 // librariesTagLen is how much of the hash an image's tag keeps.

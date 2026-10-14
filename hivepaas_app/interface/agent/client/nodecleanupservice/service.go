@@ -71,6 +71,7 @@ func (c *grpcNodeCleanupServiceClient) NodeCleanup(
 		CleanupVolumes:    int32(req.CleanupVolumes),
 		CleanupNetworks:   int32(req.CleanupNetworks),
 		CleanupBuildCache: int32(req.CleanupBuildCache),
+		KeepImages:        req.KeepImages,
 	}
 
 	resp, err := c.protoClient.NodeCleanup(authCtx, protoReq)

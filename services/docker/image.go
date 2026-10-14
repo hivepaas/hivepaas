@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -100,6 +101,13 @@ func (m *manager) ImageInspect(
 
 type ImagePruneOption func(options *client.ImagePruneOptions)
 
+// ImagePrune removes the images no container uses: the untagged ones only, or
+// every one. Docker prunes the untagged ones only unless told otherwise, so
+// "every one" is said explicitly.
+//
+// The retention is counted from when an image was built, or, with the
+// containerd image store, from when it came to the node - never from when it
+// was last used.
 func (m *manager) ImagePrune(
 	ctx context.Context,
 	danglingOnly bool,
@@ -107,9 +115,7 @@ func (m *manager) ImagePrune(
 	options ...ImagePruneOption,
 ) (*client.ImagePruneResult, error) {
 	opts := client.ImagePruneOptions{}
-	if danglingOnly {
-		FilterAdd(&opts.Filters, "dangling", "true")
-	}
+	FilterAdd(&opts.Filters, "dangling", strconv.FormatBool(danglingOnly))
 	if generalRetention > 0 {
 		FilterAdd(&opts.Filters, "until", generalRetention.String())
 	}

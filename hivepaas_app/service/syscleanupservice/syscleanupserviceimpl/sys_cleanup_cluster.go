@@ -7,6 +7,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/nodecleanupservice"
@@ -28,18 +29,23 @@ func (s *service) sysCleanupCluster(
 		data.TaskOutput.ClusterCleanup = &entity.ClusterCleanupOutput{}
 	}
 
-	// 1. Cleanup cluster on current node (manager node)
-	managerNodeID, _ := s.dockerManager.NodeCurrentID(ctx)
-
-	resp, e := s.clusterCleanupService.Cleanup(ctx, &clustercleanupservice.ClusterCleanupReq{
-		TaskExecData:      data.TaskExecData,
+	keepImages, err := s.keptImages(ctx, data)
+	nodeReq := clustercleanupservice.ClusterCleanupReq{
 		CleanupSettings:   clusterCleanup,
 		CleanupContainers: data.CleanupClusterContainers,
 		CleanupImages:     data.CleanupClusterImages,
 		CleanupVolumes:    data.CleanupClusterVolumes,
 		CleanupNetworks:   data.CleanupClusterNetworks,
 		CleanupBuildCache: data.CleanupClusterBuildCache,
-	})
+		KeepImages:        keepImages,
+	}
+
+	// 1. Cleanup cluster on current node (manager node)
+	managerNodeID, _ := s.dockerManager.NodeCurrentID(ctx)
+
+	managerReq := nodeReq
+	managerReq.TaskExecData = data.TaskExecData
+	resp, e := s.clusterCleanupService.Cleanup(ctx, &managerReq)
 	if e != nil {
 		err = errors.Join(err, hperrors.Wrap(e))
 	}
@@ -104,15 +110,8 @@ func (s *service) sysCleanupCluster(
 		}
 
 		cleanupResp, cleanupErr := agentClient.NodeCleanup(ctx, &nodecleanupagentdto.NodeCleanupReq{
-			TaskID: taskID,
-			ClusterCleanupReq: clustercleanupservice.ClusterCleanupReq{
-				CleanupSettings:   clusterCleanup,
-				CleanupContainers: data.CleanupClusterContainers,
-				CleanupImages:     data.CleanupClusterImages,
-				CleanupVolumes:    data.CleanupClusterVolumes,
-				CleanupNetworks:   data.CleanupClusterNetworks,
-				CleanupBuildCache: data.CleanupClusterBuildCache,
-			},
+			TaskID:            taskID,
+			ClusterCleanupReq: nodeReq,
 		})
 		_ = agentClient.Close()
 
@@ -140,4 +139,18 @@ func (s *service) sysCleanupCluster(
 	}
 
 	return hperrors.Wrap(err)
+}
+
+// keptImages are what every node keeps of its images, when the run prunes
+// them: only a manager can tell. Without them, the nodes prune only the images
+// no tag names.
+func (s *service) keptImages(ctx context.Context, data *sysCleanupData) ([]string, error) {
+	if !data.SysCleanupSettings.ClusterCleanup.PruneImages || data.CleanupClusterImages == base.CleanupFlagFalse {
+		return nil, nil
+	}
+	keepImages, err := s.clusterCleanupService.KeptImages(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return keepImages, nil
 }

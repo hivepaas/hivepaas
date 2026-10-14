@@ -15,6 +15,11 @@ type ClusterCleanupReq struct {
 	CleanupVolumes    base.CleanupFlag
 	CleanupNetworks   base.CleanupFlag
 	CleanupBuildCache base.CleanupFlag
+
+	// KeepImages are the images every node keeps however long it has not used
+	// them, from KeptImages. None, from a manager of an older version, prunes
+	// only the images no tag names, as that version did.
+	KeepImages []string
 }
 
 func (req *ClusterCleanupReq) SetCleanupFlagsDefault() {

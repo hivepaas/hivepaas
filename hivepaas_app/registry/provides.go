@@ -494,6 +494,7 @@ var Provides = []any{
 	cacherepository.NewPeriodicSettingsRepo,
 	cacherepository.NewTaskControlRepo,
 	cacherepository.NewTaskInfoRepo,
+	cacherepository.NewUnusedImagesRepo,
 	cacherepository.NewUserTokenRepo,
 
 	// Agent server

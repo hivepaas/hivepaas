@@ -153,6 +153,18 @@ type ReleaseInfo struct {
 	Templates *TemplatesRef `json:"templates,omitempty"`
 }
 
+// Images are every image the release names, sorted: the system apps', OBI's,
+// the placeholder's and the function runtimes'.
+func (info *ReleaseInfo) Images() []string {
+	images := []string{info.AppImage, info.AgentImage, info.RedisImage, info.DbImage, info.TraefikImage,
+		info.VictoriaLogsImage, info.VlagentImage, info.OBIImage, info.RegistryImage, info.TrivyImage,
+		info.PlaceholderImage}
+	images = append(images, slices.Collect(maps.Values(info.FunctionRuntimes))...)
+	images = slices.DeleteFunc(images, func(image string) bool { return image == "" })
+	slices.Sort(images)
+	return slices.Compact(images)
+}
+
 // TemplatesRef pins a revision of the app templates repository.
 //
 // A commit alone does not pin content for us: the files are fetched over HTTPS

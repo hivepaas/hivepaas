@@ -16,6 +16,9 @@ message NodeCleanupReq {
   int32 cleanup_volumes = 5;
   int32 cleanup_networks = 6;
   int32 cleanup_build_cache = 7;
+  // The images the node keeps, used or not. None, from an older manager:
+  // only the images no tag names are pruned.
+  repeated string keep_images = 8;
 }
 
 message ClusterCleanupSettings {

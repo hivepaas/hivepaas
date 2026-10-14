@@ -46,6 +46,7 @@ func NodeCleanup(
 			CleanupVolumes:    base.CleanupFlag(req.GetCleanupVolumes()),
 			CleanupNetworks:   base.CleanupFlag(req.GetCleanupNetworks()),
 			CleanupBuildCache: base.CleanupFlag(req.GetCleanupBuildCache()),
+			KeepImages:        req.GetKeepImages(),
 		},
 	}
 

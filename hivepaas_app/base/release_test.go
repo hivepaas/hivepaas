@@ -83,3 +83,17 @@ func TestAnUnreadableReleaseFileStopsTheBinary(t *testing.T) {
 	assert.Panics(t, func() { compiledRelease([]byte(`{`), "beta", nil) })
 	assert.Panics(t, func() { compiledRelease([]byte(`{}`), "beta", nil) }, "beta is always released")
 }
+
+// Images lists every image once, those a release leaves unnamed left out.
+func TestReleaseImagesAreEveryImageItNames(t *testing.T) {
+	info := &ReleaseInfo{
+		AppImage:         "app:1",
+		AgentImage:       "agent:1",
+		TraefikImage:     "traefik:3",
+		OBIImage:         "obi:1",
+		PlaceholderImage: "placeholder:1",
+		FunctionRuntimes: map[string]string{"node24": "node:24", "go127": "go:1.27", "go127-build": "go:1.27"},
+	}
+	assert.Equal(t, []string{"agent:1", "app:1", "go:1.27", "node:24", "obi:1", "placeholder:1", "traefik:3"},
+		info.Images())
+}

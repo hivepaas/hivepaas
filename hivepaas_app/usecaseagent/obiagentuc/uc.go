@@ -422,8 +422,8 @@ func releaseImage() string {
 // this agent's network namespace; otherwise it is replaced.
 // The image is pulled first, while the one running still runs: a new
 // release's OBI stops the numbers only for the swap. The image the old one ran
-// is left to the system cleanup, which prunes the nodes' unused images daily -
-// or keeps them, when an administrator says so.
+// is left to the system cleanup, which removes the nodes' images once unused
+// for its retention - or keeps them, when an administrator says so.
 func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	hash := obi.ConfigHash(uc.image, uc.preflight.PerfRestricted, config)
 	if uc.agentID == "" {

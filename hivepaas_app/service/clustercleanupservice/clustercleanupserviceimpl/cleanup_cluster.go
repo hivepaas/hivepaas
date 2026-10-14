@@ -71,27 +71,6 @@ func (s *service) cleanupContainersAndServices(
 	return hperrors.Wrap(err)
 }
 
-func (s *service) cleanupImages(
-	ctx context.Context,
-	data *clusterCleanupData,
-) (err error) {
-	objectRetention := data.CleanupSettings.GeneralRetention.ToDuration()
-
-	if data.CleanupImages != base.CleanupFlagFalse && data.CleanupSettings.PruneImages {
-		resp, e := s.dockerManager.ImagePrune(ctx, false, objectRetention)
-		if e != nil {
-			data.Output.ImagesPruneError = e.Error()
-			err = errors.Join(err, e)
-		} else {
-			report := &resp.Report
-			data.Output.ImagesDeleted = len(report.ImagesDeleted)
-			data.Output.SpaceReclaimed += report.SpaceReclaimed
-		}
-	}
-
-	return hperrors.Wrap(err)
-}
-
 func (s *service) cleanupVolumes(
 	ctx context.Context,
 	data *clusterCleanupData,

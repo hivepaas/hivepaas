@@ -18,23 +18,29 @@ func (s *service) LoadObjectScopeData(
 	scope *entity.ObjectScope,
 ) (err error) {
 	requireActive := !scope.NotRequireActive
+	lock := scope.LockScopeObject
 	switch scope.ScopeType {
 	case base.ObjectScopeProject:
 		scope.Project, err = s.projectService.LoadProject(ctx, db, scope.ProjectID, requireActive,
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF project"),
+			bunex.SelectForIf(lock, "KEY SHARE OF project"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeProjectEnv:
+		if lock {
+			if err = s.lockScopeParents(ctx, db, scope.ProjectID, ""); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
 		scope.ProjectEnv, err = s.projectService.LoadProjectEnv(ctx, db, scope.ProjectID,
 			scope.ProjectEnvID, requireActive, requireActive,
 			bunex.SelectRelation("Project",
 				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			),
-			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF project_env"),
+			bunex.SelectForIf(lock, "KEY SHARE OF project_env"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -42,6 +48,11 @@ func (s *service) LoadObjectScopeData(
 		scope.Project = scope.ProjectEnv.Project
 
 	case base.ObjectScopeApp:
+		if lock {
+			if err = s.lockScopeParents(ctx, db, scope.ProjectID, scope.ProjectEnvID); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
 		scope.App, err = s.appService.LoadApp(ctx, db, scope.ProjectID, scope.AppID,
 			requireActive, requireActive,
 			bunex.SelectRelation("Project",
@@ -52,7 +63,7 @@ func (s *service) LoadObjectScopeData(
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF app"),
+			bunex.SelectForIf(lock, "KEY SHARE OF app"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -65,7 +76,7 @@ func (s *service) LoadObjectScopeData(
 
 	case base.ObjectScopeUser:
 		scope.User, err = s.userService.LoadUser(ctx, db, scope.UserID, requireActive,
-			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF user"),
+			bunex.SelectForIf(lock, "KEY SHARE OF \"user\""),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -73,6 +84,37 @@ func (s *service) LoadObjectScopeData(
 
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		return nil
+	}
+	return nil
+}
+
+// lockScopeParents takes the lock LockScopeObject asks for on the project and
+// the environment an object is in, those of the two it is given. Deleting
+// either locks it, then deletes its apps without locking them: the app's own
+// lock is no guard against that. The scope's object can not be locked with
+// them in one query - they are the nullable side of its outer joins - and
+// they are locked first, in the order the deletions lock.
+func (s *service) lockScopeParents(
+	ctx context.Context,
+	db database.IDB,
+	projectID string,
+	projectEnvID string,
+) error {
+	if projectID == "" {
+		return nil
+	}
+	_, err := s.projectService.LoadProject(ctx, db, projectID, false,
+		bunex.SelectColumns("id"), bunex.SelectFor("KEY SHARE OF project"))
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if projectEnvID == "" {
+		return nil
+	}
+	_, err = s.projectService.LoadProjectEnv(ctx, db, projectID, projectEnvID, false, false,
+		bunex.SelectColumns("id"), bunex.SelectFor("KEY SHARE OF project_env"))
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

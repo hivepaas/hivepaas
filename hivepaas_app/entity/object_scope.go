@@ -22,6 +22,13 @@ type ObjectScope struct {
 	Project    *Project
 	User       *User
 
+	// LockScopeObject has LoadObjectScopeData lock the scope's object - and the
+	// project and environment an app or an environment is in - against being
+	// deleted until the transaction ends. A key-share lock: it waits for, and
+	// holds off, the deletions, which lock what they delete first, and leaves
+	// other writes and other holders of it alone. What is written under the
+	// object meanwhile is then either seen by its deletion, and deleted with it,
+	// or refused for an object that is gone.
 	LockScopeObject  bool
 	NotRequireActive bool
 	NoInherited      bool

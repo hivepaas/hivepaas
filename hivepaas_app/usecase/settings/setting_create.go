@@ -133,6 +133,10 @@ func (uc *BaseUC) loadSettingForCreation(
 	req *CreateSettingReq,
 	data *CreateSettingData,
 ) (err error) {
+	// Held to the end of the transaction: a setting saved while its app or
+	// project is being deleted would be missed by the deletion and outlive it -
+	// a scheduled job going on running for an app that is gone.
+	req.Scope.LockScopeObject = true
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return hperrors.Wrap(err)
 	}

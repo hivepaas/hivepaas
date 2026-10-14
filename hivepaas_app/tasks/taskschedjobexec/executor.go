@@ -2,6 +2,7 @@ package taskschedjobexec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,6 +37,7 @@ type Executor struct {
 	db          *database.DB
 	redisClient rediscache.Client
 
+	settingRepo repository.SettingRepo
 	taskLogRepo repository.TaskLogRepo
 	taskRepo    repository.TaskRepo
 
@@ -58,6 +60,7 @@ func NewExecutor(
 	redisClient rediscache.Client,
 	taskQueue queue.TaskQueue,
 
+	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
 	taskRepo repository.TaskRepo,
 
@@ -78,6 +81,7 @@ func NewExecutor(
 		db:          db,
 		redisClient: redisClient,
 
+		settingRepo: settingRepo,
 		taskLogRepo: taskLogRepo,
 		taskRepo:    taskRepo,
 
@@ -149,6 +153,9 @@ func (e *Executor) loadSchedJobData(
 	data *taskData,
 ) (err error) {
 	scope, err := e.scopeService.LoadObjectScope(ctx, db, data.SchedJob.Scope, data.SchedJob.ObjectID, true)
+	if errors.Is(err, hperrors.ErrNotFound) {
+		return e.dropOrphanJob(ctx, db, data, err)
+	}
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -166,6 +173,26 @@ func (e *Executor) loadSchedJobData(
 	}
 
 	return nil
+}
+
+// dropOrphanJob ends a run of a job that outlived what it belongs to. Deleting
+// an app or a project deletes its jobs, but a job saved while the deletion ran
+// is missed by it, and goes on being scheduled for an object that is gone. The
+// deletion is finished here: the object's settings go, so the job is scheduled
+// no more and its runs still waiting are canceled as they come up. This run
+// fails, once.
+func (e *Executor) dropOrphanJob(
+	ctx context.Context,
+	db database.IDB,
+	data *taskData,
+	cause error,
+) error {
+	data.TaskNonRetryable = true
+	err := e.settingRepo.DeleteAllByObjects(ctx, db, data.SchedJob.Scope, []string{data.SchedJob.ObjectID})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return hperrors.Wrap(cause)
 }
 
 func (e *Executor) initLogStore(data *taskData) {
@@ -252,7 +279,10 @@ func (e *Executor) onPostTx(
 		_ = e.saveLogs(ctx, db, data, false)
 	}()
 
-	if !data.SkipResultNotification && (data.Task.IsDone() || data.Task.IsFailedCompletely()) {
+	// Without its scope - the job's object gone before the run could load it -
+	// there is nobody to tell and nothing to name in the message.
+	if data.Scope != nil && !data.SkipResultNotification &&
+		(data.Task.IsDone() || data.Task.IsFailedCompletely()) {
 		err := e.sendNotification(ctx, db, data)
 		if err != nil {
 			_ = data.LogStore.Add(ctx,

@@ -17,7 +17,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
@@ -42,16 +41,6 @@ type syncingRegistry struct {
 
 func (r *syncingRegistry) Sync(context.Context, database.IDB) (*registryservice.SyncResp, error) {
 	return r.resp, r.err
-}
-
-type syncingImageScan struct {
-	imagescanservice.Service
-	resp *imagescanservice.SyncResp
-	err  error
-}
-
-func (i *syncingImageScan) Sync(context.Context, database.IDB) (*imagescanservice.SyncResp, error) {
-	return i.resp, i.err
 }
 
 // updateTasks answers a system update running, or none.
@@ -134,7 +123,6 @@ type syncFixture struct {
 	db       *ownDB
 	logging  *syncingLogging
 	registry *syncingRegistry
-	scan     *syncingImageScan
 	queue    *schedulingQueue
 	cache    *obiCache
 	audit    *recordingAudit
@@ -147,11 +135,10 @@ func newSyncFixture() *syncFixture {
 		db:       db,
 		logging:  &syncingLogging{resp: &loggingservice.SyncResp{}},
 		registry: &syncingRegistry{resp: &registryservice.SyncResp{}},
-		scan:     &syncingImageScan{resp: &imagescanservice.SyncResp{}},
 		queue:    &schedulingQueue{db: db}, cache: &obiCache{}, audit: &recordingAudit{}, tasks: &updateTasks{},
 	}
-	f.svc = &service{db: db, loggingService: f.logging, registryService: f.registry, imageScanService: f.scan,
-		taskQueue: f.queue, obiSettings: f.cache, auditService: f.audit, taskRepo: f.tasks}
+	f.svc = &service{db: db, loggingService: f.logging, registryService: f.registry, taskQueue: f.queue,
+		obiSettings: f.cache, auditService: f.audit, taskRepo: f.tasks}
 	return f
 }
 
@@ -172,8 +159,6 @@ func TestSystemAppsSyncCommitsEachFeatureApartFromTheCleanup(t *testing.T) {
 	}
 	f.registry.resp = &registryservice.SyncResp{Tasks: []*entity.Task{{ID: "deploy-r"}},
 		App: &entity.SystemAppSyncOutput{Key: "registry", Name: "Registry", Action: entity.SystemAppSyncUpdated}}
-	f.scan.resp = &imagescanservice.SyncResp{Tasks: []*entity.Task{{ID: "deploy-trivy"}},
-		Apps: []*entity.SystemAppSyncOutput{{Key: "trivy", Name: "Trivy server", Action: entity.SystemAppSyncUpdated}}}
 	data := syncData(&entity.SystemCleanup{})
 	task := &taskTx{}
 
@@ -182,10 +167,10 @@ func TestSystemAppsSyncCommitsEachFeatureApartFromTheCleanup(t *testing.T) {
 	assert.NoError(t, attention)
 
 	assert.Zero(t, task.used, "nothing in the cleanup's transaction")
-	assert.Equal(t, 3, f.db.committed, "a transaction a feature")
-	assert.Len(t, data.TaskOutput.SystemApps.Apps, 5)
-	assert.Len(t, f.queue.scheduled, 3)
-	assert.Equal(t, []int{1, 2, 3}, f.queue.committedAt, "each feature's, once it committed")
+	assert.Equal(t, 2, f.db.committed, "a transaction a feature")
+	assert.Len(t, data.TaskOutput.SystemApps.Apps, 4)
+	assert.Len(t, f.queue.scheduled, 2)
+	assert.Equal(t, []int{1, 2}, f.queue.committedAt, "each feature's, once it committed")
 	assert.Equal(t, 1, f.cache.invalidated)
 	assert.Nil(t, data.OnPostTxFunc, "not left for the cleanup's commit")
 	if assert.Len(t, f.audit.entries, 2) {
@@ -218,7 +203,7 @@ func TestSystemAppsSyncRollsBackAFailingFeatureAlone(t *testing.T) {
 		assert.Equal(t, entity.SystemAppSyncFailed, apps[0].Action)
 		assert.Equal(t, "registry", apps[1].Key)
 	}
-	assert.Equal(t, 2, f.db.committed, "the registry's and image scanning's")
+	assert.Equal(t, 1, f.db.committed, "the registry's alone")
 	assert.Empty(t, f.queue.scheduled, "nothing of the failed feature is scheduled")
 }
 

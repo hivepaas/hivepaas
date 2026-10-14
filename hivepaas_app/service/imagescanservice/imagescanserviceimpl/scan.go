@@ -3,61 +3,68 @@ package imagescanserviceimpl
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/distribution/reference"
+	"github.com/moby/moby/api/types/registry"
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanrun"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 )
 
 const (
 	// trivyTimeout is what one scan may take: a cold 773 MB image took 19 s at
-	// 1 CPU, the Java DB a node fetches once a week 2.5 minutes.
+	// 1 CPU, the Java DB a volume gets once a week 2.5 minutes.
 	trivyTimeout = 10 * time.Minute
-	// execTimeout is the scan's, and room for the exec around it.
-	execTimeout = trivyTimeout + time.Minute
+	// callTimeout is a scan's on its node: Trivy's, its DBs' version, the
+	// container's start and stop, and Trivy's image pulled when the node lacks
+	// it.
+	callTimeout = trivyTimeout + 3*time.Minute
 
-	// One scan at a time on a node: the runner's memory limit is for one, and
-	// two cold scans would share it. The next waits for as long as one may take.
-	nodeLockExpiry     = execTimeout + time.Minute
-	nodeLockRetryDelay = 2 * time.Second
-	nodeLockTries      = int(execTimeout / nodeLockRetryDelay)
+	// One scan at a time per copy of the volume: Trivy's cache is a file one
+	// process opens at a time. The next waits for as long as one may take.
+	lockExpiry     = callTimeout + time.Minute
+	lockRetryDelay = 2 * time.Second
+	lockTries      = int(callTimeout / lockRetryDelay)
 
 	// freshScan is how long a scan stands for its image: after a deployment, or
 	// the daily scan, it is not done again within it unless asked.
 	freshScan = time.Hour
-
-	// javaDBMaxAge is how old the node's Java DB may be before Trivy is let
-	// renew it: it is a 935 MiB download, and Trivy's own is three days.
-	javaDBMaxAgeDays = 7
 )
 
-// imageIDPattern is an image's ID as Docker gives it: what a scan's command
-// line takes, and nothing else.
+// imageIDPattern is an image's ID as Docker gives it.
 var imageIDPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
-// runningImage is an image an app's task runs, and a node it runs on.
+// runningImage is an image an app's task runs, and the node it runs on.
 type runningImage struct {
 	ID     string
 	Ref    string
 	NodeID string
+	// Platform is the node's: os/arch, what is read of an image of several
+	// platforms. Docker 29's image inspect names no variant when there is none,
+	// and its template fails on one it does not name: arm64's is v8, the one
+	// Trivy reads for linux/arm64.
+	Platform string
+	// RemoteRef is the image's repository and digest, where a node that does not
+	// have it reads it; empty when it is in no registry.
+	RemoteRef string
 }
 
 func (s *service) ScanApp(
@@ -72,13 +79,9 @@ func (s *service) ScanApp(
 	if err != nil {
 		return nil, err
 	}
-	runner, err := s.systemAppService.LoadApp(ctx, s.db, base.HivepaasTrivyRunnerKey)
+	volume, err := s.loadVolume(ctx, s.db, cfg)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if runner == nil {
-		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
-			WithExtraDetail("The runner app is not there: save the image scanning settings again.")
+		return nil, err
 	}
 
 	now := timeutil.NowUTC()
@@ -111,10 +114,15 @@ func (s *service) ScanApp(
 	if err != nil {
 		return nil, err
 	}
-	runners := s.runningNodes(ctx, runner)
+	auth, err := s.pullAuth(ctx, req.App)
+	if err != nil {
+		_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's registry credentials could not be read, "+
+			"an image read from its registry is read without: %s", hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
+	}
 	var failed []string
 	for _, img := range images {
-		result := s.scanImage(ctx, cfg, runner, runners, img, req.Force, ignores, log)
+		result := s.scanImage(ctx, &imageScanReq{cfg: cfg, volume: volume, auth: auth, img: img, force: req.Force,
+			ignores: ignores, log: log})
 		out.Images = append(out.Images, result)
 		appScan.ImageIDs = append(appScan.ImageIDs, img.ID)
 		if result.Error != "" {
@@ -130,36 +138,37 @@ func (s *service) ScanApp(
 	return out, nil
 }
 
-// scanImage scans one image on its node and keeps what it found, or keeps that
-// it failed. An image scanned within the hour is not scanned again unless
-// forced: its counts are the scan's.
-func (s *service) scanImage(
-	ctx context.Context,
-	cfg *entity.ImageScanSettings,
-	runner *entity.App,
-	runners map[string]string,
-	img runningImage,
-	force bool,
-	ignores []*imagescanservice.Ignore,
-	log *tasklog.Store,
-) *entity.TaskImageScanImage {
+// imageScanReq is one image's scan, and what it is scanned by.
+type imageScanReq struct {
+	cfg     *entity.ImageScanSettings
+	volume  *scanVolume
+	auth    *registry.AuthConfig
+	img     runningImage
+	force   bool
+	ignores []*imagescanservice.Ignore
+	log     *tasklog.Store
+}
+
+// scanImage scans one image and keeps what it found, or keeps that it failed.
+// An image scanned within the hour is not scanned again unless forced: its
+// counts are the scan's.
+func (s *service) scanImage(ctx context.Context, req *imageScanReq) *entity.TaskImageScanImage {
+	img, log := req.img, req.log
 	result := &entity.TaskImageScanImage{ImageID: img.ID, ImageRef: img.Ref}
 	now := timeutil.NowUTC()
-	if !force {
+	if !req.force {
 		scans, err := s.imageScanRepo.ListScans(ctx, s.db, []string{img.ID}, true)
 		if err == nil && len(scans) == 1 && scans[0].Status == base.ImageScanStatusDone &&
 			now.Sub(scans[0].ScannedAt) < freshScan {
 			_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("%s (%s) was scanned at %s: not again within the hour",
 				img.Ref, shortID(img.ID), scans[0].ScannedAt.Format(time.RFC3339)), tasklog.TsNow))
 			result.Skipped = true
-			countInto(result, scans[0].Findings, ignores, now)
+			countInto(result, scans[0].Findings, req.ignores, now)
 			return result
 		}
 	}
 
-	_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanning %s (%s) on node %s", img.Ref, shortID(img.ID),
-		img.NodeID), tasklog.TsNow))
-	report, err := s.runTrivy(ctx, cfg, runner, runners[img.NodeID], img, log)
+	report, err := s.runScan(ctx, req)
 	if err != nil {
 		result.Error = hperrors.GetErrorDetail(err, "")
 		_ = log.Add(ctx, tasklog.NewErrFrame("Scan failed: "+result.Error, tasklog.TsNow))
@@ -177,7 +186,7 @@ func (s *service) scanImage(
 		result.Error = hperrors.GetErrorDetail(err, "")
 		return result
 	}
-	countInto(result, report.Findings, ignores, now)
+	countInto(result, report.Findings, req.ignores, now)
 	_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Found %d CRITICAL and %d HIGH, %d with a fix",
 		result.Critical, result.High, result.Fixable), tasklog.TsNow))
 	return result
@@ -192,104 +201,127 @@ func countInto(result *entity.TaskImageScanImage, findings []*entity.ImageScanFi
 		summary.Low.Fixable + summary.Unknown.Fixable
 }
 
-// runTrivy runs Trivy in the runner of the image's node, and reads its report.
-// Its log lines go to log; its last error is the scan's.
-func (s *service) runTrivy(
-	ctx context.Context,
-	cfg *entity.ImageScanSettings,
-	runner *entity.App,
-	containerID string,
-	img runningImage,
-	log *tasklog.Store,
-) (*imagescanservice.Report, error) {
-	if containerID == "" {
-		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
-			WithExtraDetail("The runner does not run on the image's node yet.")
-	}
-	script, err := scanScript(cfg, img.ID)
+// runScan runs the image's scan on the node the volume decides, one at a time
+// per copy of the volume, and reads what it found. Trivy's log goes to the
+// task's.
+func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanservice.Report, error) {
+	img, cfg := req.img, req.cfg
+	scanNode := req.volume.scanNode(img.NodeID)
+	auth, err := dockerConfig(req.auth, img.RemoteRef)
 	if err != nil {
 		return nil, err
 	}
+	runReq := &imagescanrun.RunReq{
+		TrivyImage:       trivyImage(),
+		ImageID:          img.ID,
+		ImageNode:        img.NodeID,
+		RemoteRef:        img.RemoteRef,
+		Platform:         img.Platform,
+		DockerConfig:     auth,
+		Volume:           req.volume.Mount,
+		CacheDir:         cacheDir(),
+		DBRepository:     cfg.DBRepository,
+		JavaDBRepository: cfg.JavaDBRepository,
+		NanoCPUs:         int64(cfg.ScanCPULimit() * 1e9), //nolint:mnd // CPUs in billionths
+		MemoryBytes:      cfg.ScanMemoryLimit().Bytes(),
+		Timeout:          trivyTimeout,
+	}
+	_ = req.log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanning %s (%s), run on node %s, on node %s",
+		img.Ref, shortID(img.ID), img.NodeID, scanNode), tasklog.TsNow))
 
-	var stdout bytes.Buffer
-	var lastErr string
-	trivyLog := tasklog.NewForwardStore("", func(ctx context.Context, frames []*tasklog.LogFrame) error {
-		for _, frame := range frames {
-			if line := lastLine(frame.Data); line != "" && frame.Type == tasklog.LogTypeErr {
-				if lastErr == "" || strings.Contains(line, "FATAL") || strings.Contains(line, "ERROR") {
-					lastErr = line
-				}
-			}
-		}
-		return log.Add(ctx, frames...)
+	var resp *imagescanrun.RunResp
+	var runErr error
+	lockErr := s.redisLock.Do(ctx, req.volume.lockKey(scanNode), lockExpiry, lockTries, lockRetryDelay, func() {
+		callCtx, cancel := context.WithTimeout(ctx, callTimeout)
+		defer cancel()
+		resp, runErr = s.scanOn(callCtx, scanNode, runReq)
 	})
-
-	var execErr error
-	lockErr := s.redisLock.Do(ctx, nodeLockKey(img.NodeID), nodeLockExpiry, nodeLockTries, nodeLockRetryDelay,
-		func() {
-			execCtx, cancel := context.WithTimeout(ctx, execTimeout)
-			defer cancel()
-			_, execErr = s.containerExecService.ContainerExec(execCtx, &containerexecservice.ContainerExecReq{
-				App:         runner,
-				ContainerID: containerID,
-				NodeID:      img.NodeID,
-				ExecOptions: func(opts *client.ExecCreateOptions) {
-					opts.AttachStdout = true
-					opts.AttachStderr = true
-					opts.Cmd = []string{"sh", "-c", script}
-					// The report is data: a TTY would not pass it through as is.
-					opts.TTY = false
-				},
-				StdoutWriter: &stdout,
-				LogStore:     trivyLog,
-			})
-		})
 	if lockErr != nil {
 		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
-			WithExtraDetail("Another scan of the node did not end in time: %v", lockErr)
+			WithExtraDetail("Another scan on the volume did not end in time: %v", lockErr)
 	}
-	if execErr != nil {
-		if lastErr != "" {
-			return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("%s", trivyMessage(lastErr))
+	if runErr != nil {
+		return nil, runErr
+	}
+	if resp.Log != "" {
+		_ = req.log.Add(ctx, tasklog.NewOutFrame(strings.TrimRight(resp.Log, "\n"), tasklog.TsNow))
+	}
+	if resp.Source == base.ImageScanSourceRegistry {
+		_ = req.log.Add(ctx, tasklog.NewOutFrame("Read from its registry: "+img.RemoteRef, tasklog.TsNow))
+	}
+	return readScan(resp, img, cfg, timeutil.NowUTC())
+}
+
+// scanOn runs a scan on a node: in this process on its own, through the node's
+// agent on another.
+func (s *service) scanOn(ctx context.Context, nodeID string, req *imagescanrun.RunReq) (
+	*imagescanrun.RunResp, error) {
+	current, err := s.dockerManager.NodeCurrentID(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	remote := nodeID != current
+	if cfg := config.Current(); cfg != nil && cfg.DevMode.Enabled && cfg.DevMode.ForceAgentLocal {
+		remote = true
+	}
+	if !remote {
+		resp, err := s.localScanner.Run(ctx, req)
+		return resp, hperrors.Wrap(err)
+	}
+	addr, err := s.agentService.GetAgentAddrForNode(ctx, nodeID)
+	if err != nil {
+		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
+			WithExtraDetail("The agent of node %s cannot be reached: %v", nodeID, err)
+	}
+	agent, err := s.newAgentClient(addr)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	defer func() { _ = agent.Close() }()
+	resp, err := agent.Run(ctx, req)
+	return resp, hperrors.Wrap(err)
+}
+
+// readScan reads what a scan's container printed into the image's scan: by
+// the image's ID on the node that runs it, where it was read, and the DB's
+// date. A container that printed no report failed with Trivy's last error.
+func readScan(resp *imagescanrun.RunResp, img runningImage, cfg *entity.ImageScanSettings, at time.Time) (
+	*imagescanservice.Report, error) {
+	if resp.OOMKilled {
+		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail(
+			"The scan ran out of its memory limit, %v: raise it in System > Image Scanning.",
+			cfg.ScanMemoryLimit())
+	}
+	out, err := imagescanservice.ParseScanOutput(resp.Output)
+	if err != nil || !out.HasReport() {
+		if line := lastErrorLine(resp.Log); line != "" {
+			return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("%s", trivyMessage(line))
 		}
-		return nil, hperrors.Wrap(execErr)
+		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).
+			WithExtraDetail("Trivy stopped with exit code %d, and said nothing more.", resp.ExitCode)
 	}
-	report, err := imagescanservice.ParseReport(stdout.Bytes(), img.Ref, timeutil.NowUTC())
+	report, err := imagescanservice.ParseReport(out.Report, img.ID, img.Ref, at)
 	if err != nil {
 		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("Trivy's report: %v", err)
+	}
+	report.Scan.Source = resp.Source
+	if updatedAt := out.DBUpdatedAt(); !updatedAt.IsZero() {
+		report.Scan.DBUpdatedAt = updatedAt
 	}
 	return report, nil
 }
 
-// scanScript is the command a scan runs in the runner: Trivy, asking the server,
-// reading the image from the node's Docker. The Java DB is renewed only once
-// the node's copy is a week old.
-func scanScript(cfg *entity.ImageScanSettings, imageID string) (string, error) {
-	if !imageIDPattern.MatchString(imageID) {
-		return "", hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("%q is not an image's ID", imageID)
+// lastErrorLine is the last FATAL or ERROR line of Trivy's log, or its last
+// line when none is.
+func lastErrorLine(log string) string {
+	lines := strings.Split(strings.TrimRight(log, "\n"), "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		if strings.Contains(lines[i], "\tFATAL\t") || strings.Contains(lines[i], "\tERROR\t") {
+			// A fatal error's message goes on over the lines after it.
+			return strings.Join(lines[i:], "\n")
+		}
 	}
-	args := []string{
-		"trivy", "image",
-		"--server", serverURL(),
-		"--token", fmt.Sprintf(`"$(cat %s)"`, tokenPath),
-		"--cache-dir", runnerCacheDir,
-		"--image-src", "docker",
-		"--scanners", "vuln",
-		"--list-all-pkgs=false",
-		"--disable-telemetry",
-		"--skip-version-check",
-		"--no-progress",
-		"--format", "json",
-		"--timeout", trivyTimeout.String(),
-		"$skip",
-	}
-	if cfg.JavaDBRepository != "" {
-		args = append(args, "--java-db-repository", executil.ArgQuote(cfg.JavaDBRepository))
-	}
-	args = append(args, imageID)
-	return fmt.Sprintf(`skip=""
-if [ -n "$(find %s/java-db/metadata.json -mtime -%d 2>/dev/null)" ]; then skip=--skip-java-db-update; fi
-exec %s`, runnerCacheDir, javaDBMaxAgeDays, strings.Join(args, " ")), nil
+	return strings.TrimSpace(lines[len(lines)-1])
 }
 
 // trivyMessage is the message of a Trivy log line, without its time and level.
@@ -300,13 +332,6 @@ func trivyMessage(line string) string {
 	}
 	return strings.TrimSpace(line)
 }
-
-func lastLine(data string) string {
-	lines := strings.Split(strings.TrimRight(data, "\n"), "\n")
-	return strings.TrimSpace(lines[len(lines)-1])
-}
-
-func nodeLockKey(nodeID string) string { return "imagescan:node:lock:" + nodeID }
 
 func shortID(imageID string) string {
 	id := strings.TrimPrefix(imageID, "sha256:")
@@ -346,16 +371,16 @@ func (s *service) appImages(ctx context.Context, app *entity.App, log *tasklog.S
 	for nodeID := range containers {
 		nodeIDs = append(nodeIDs, nodeID)
 	}
-	sort.Strings(nodeIDs)
+	slices.Sort(nodeIDs)
 	var images []runningImage
 	seen := map[string]bool{}
 	var lastErr error
 	for _, nodeID := range nodeIDs {
-		found, err := s.containerImages(ctx, nodeID, containers[nodeID])
+		found, err := s.containerImages(ctx, nodeID, containers[nodeID], log)
 		if err != nil {
 			lastErr = err
-			_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("Could not read the containers of node %s: %v",
-				nodeID, err), tasklog.TsNow))
+			_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("Could not read the containers of node %s: %s",
+				nodeID, hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
 			continue
 		}
 		for _, img := range found {
@@ -372,24 +397,58 @@ func (s *service) appImages(ctx context.Context, app *entity.App, log *tasklog.S
 }
 
 // containerImages asks a node's Docker, through its agent, which images its
-// containers were made from, and by what reference.
-func (s *service) containerImages(ctx context.Context, nodeID string, containerIDs []string) (
-	[]runningImage, error) {
+// containers were made from and by what reference, and of each image the
+// node's platform and the digests it was pulled or pushed by.
+func (s *service) containerImages(ctx context.Context, nodeID string, containerIDs []string,
+	log *tasklog.Store) ([]runningImage, error) {
+	stdout, err := s.dockerOnNode(ctx, nodeID,
+		append([]string{"docker", "inspect", "--format", "{{.Image}} {{.Config.Image}}"}, containerIDs...))
+	if err != nil {
+		return nil, err
+	}
+	images := parseContainerImages(stdout, nodeID)
+	if len(images) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]string, 0, len(images))
+	for _, img := range images {
+		ids = append(ids, img.ID)
+	}
+	stdout, err = s.dockerOnNode(ctx, nodeID, append([]string{"docker", "image", "inspect", "--format",
+		"{{.Id}} {{.Os}}/{{.Architecture}} {{json .RepoDigests}}"}, ids...))
+	if err != nil {
+		// Read on its node, an image needs neither.
+		_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("Could not read the images of node %s: %s",
+			nodeID, hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
+		return images, nil
+	}
+	details := parseImageDetails(stdout)
+	for i := range images {
+		if detail, ok := details[images[i].ID]; ok {
+			images[i].Platform = detail.platform
+			images[i].RemoteRef = repoDigestFor(images[i].Ref, detail.repoDigests)
+		}
+	}
+	return images, nil
+}
+
+// dockerOnNode runs a docker command on a node, through its agent, and answers
+// what it printed. It fails only when the command printed nothing.
+func (s *service) dockerOnNode(ctx context.Context, nodeID string, command []string) (string, error) {
 	var stdout, stderr bytes.Buffer
-	command := append([]string{"docker", "inspect", "--format", "{{.Image}} {{.Config.Image}}"}, containerIDs...)
 	resp, err := s.nodeExecService.ExecCommand(ctx, &nodeexecservice.CommandExecReq{
 		NodeID:          nodeID,
 		CommandExecOpts: &nodeexecservice.CommandExecOpts{Command: command, Stdout: &stdout, Stderr: &stderr},
 	})
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
-	images := parseContainerImages(stdout.String(), nodeID)
-	if resp.ExitCode != 0 && len(images) == 0 {
-		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).WithExtraDetail("docker inspect: %s",
-			strings.TrimSpace(stderr.String()))
+	if resp.ExitCode != 0 && strings.TrimSpace(stdout.String()) == "" {
+		return "", hperrors.Wrap(hperrors.ErrImageScanNotReady).WithExtraDetail("%s: %s",
+			strings.Join(command[:2], " "), strings.TrimSpace(stderr.String()))
 	}
-	return images, nil
+	return stdout.String(), nil
 }
 
 // parseContainerImages reads `docker inspect` lines of an image's ID and the
@@ -404,6 +463,66 @@ func parseContainerImages(out, nodeID string) []runningImage {
 		images = append(images, runningImage{ID: id, Ref: imageWithoutDigest(ref), NodeID: nodeID})
 	}
 	return images
+}
+
+// imageDetail is what a node says of an image it has.
+type imageDetail struct {
+	platform    string
+	repoDigests []string
+}
+
+// parseImageDetails reads `docker image inspect` lines of an image's ID, its
+// platform and its repo digests as JSON.
+func parseImageDetails(out string) map[string]imageDetail {
+	details := map[string]imageDetail{}
+	for _, line := range strings.Split(out, "\n") {
+		fields := strings.SplitN(strings.TrimSpace(line), " ", 3) //nolint:mnd // id, platform, digests
+		if len(fields) < 2 || !imageIDPattern.MatchString(fields[0]) {
+			continue
+		}
+		detail := imageDetail{platform: fields[1]}
+		if len(fields) == 3 { //nolint:mnd
+			_ = json.Unmarshal([]byte(fields[2]), &detail.repoDigests)
+		}
+		details[fields[0]] = detail
+	}
+	return details
+}
+
+// repoDigestFor is the digest of ref's repository among an image's repo
+// digests, or the first of them when none is that repository's: an image is
+// the same content whatever name it is read by. Empty when it has none.
+func repoDigestFor(ref string, repoDigests []string) string {
+	want := ""
+	if named, err := reference.ParseNormalizedNamed(ref); err == nil {
+		want = named.Name()
+	}
+	first := ""
+	for _, digest := range repoDigests {
+		named, err := reference.ParseNormalizedNamed(digest)
+		if err != nil {
+			continue
+		}
+		if _, canonical := named.(reference.Canonical); !canonical {
+			continue
+		}
+		if named.Name() == want {
+			return digest
+		}
+		if first == "" {
+			first = digest
+		}
+	}
+	return first
+}
+
+// imageWithoutDigest is a reference without its digest: the name and tag it
+// is shown by.
+func imageWithoutDigest(ref string) string {
+	if at := strings.LastIndex(ref, "@"); at > 0 {
+		return ref[:at]
+	}
+	return ref
 }
 
 // ignoresOf are the ignores that apply to an app.

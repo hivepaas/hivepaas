@@ -1,6 +1,9 @@
 # Scanning the images apps run
 
-Status: phase 1 approved 2026-10-11, being built.
+Status: phase 1 approved 2026-10-11 and built with a Trivy server and a runner
+on every node (ec854198, never released). Redesigned 2026-10-14, this version,
+and rebuilt the same day: no service runs while nothing is scanned; Trivy's data
+is on a volume the administrator chooses.
 
 ## Why
 
@@ -15,11 +18,32 @@ be fixed, and lets a team set aside what does not apply to them, with a reason
 and an end date. It blocks nothing: a deployment goes ahead whatever a scan
 finds. A gate is phase 3.
 
+## Why it was redesigned
+
+The first build ran Trivy's server (one replica, its DB on a volume of its
+node) and a runner on every node (an idle shell with the node's Docker socket
+and its own copy of the Java DB, that scans were commands run in). Against it:
+
+- **A runner on every node, for ever.** A container with the node's Docker
+  socket, idle on every node of the cluster whether anything is scanned or not.
+- **The Java DB on every node.** Trivy reads jars where the layers are, so in
+  client and server mode the Java DB (935 MiB to download, 1.4 GB on disk) is the
+  client's: every node running a Java image kept its own.
+- **The server's data was a volume of whichever node it ran on.** Moved to
+  another node, it fetched its DB again and left the old volume behind.
+
+The runner existed because the daily cleanup was thought to prune unused images
+daily, so a container started per scan would have pulled Trivy's image again
+every day. The cleanup in fact pruned only untagged images; since 317b9314 it
+removes images left unused for its retention and always keeps the running
+release's, Trivy's included. A container per scan is now cheap.
+
 ## What was measured
 
 On the dev machine's Docker VM, 2026-10-10 and 2026-10-11.
 
-**Trivy 0.75.0 on its own** (`trivy image`, standalone, DB local):
+**Trivy 0.75.0 standalone** (`trivy image`, DB local) - the shape this design
+uses:
 
 | Image | Size | Cold scan | Peak RAM |
 |---|---|---|---|
@@ -32,150 +56,152 @@ Warm (layers already analyzed): 0.11 - 0.15 s, 110 - 125 MiB. CPU while cold:
 25 - 40 % of a core. The app p1-f1 had 212 findings, 108 distinct IDs, 54 HIGH,
 49 with a fix, in 48 packages (Debian and `node-pkg`).
 
-**Trivy client and server**, the shape this design uses:
+From the client and server build, still true standalone:
 
 - The image is 183 MB; its `trivy` binary alone is 160 MB.
-- The server downloaded its DB (from `mirror.gcr.io/aquasec/trivy-db:2`) and
-  was listening after 19 s; the DB is 1.4 GB on disk. Idle, and while serving
-  scans, it held **72 - 82 MiB**: the DB is memory-mapped.
-- A client scan, in a fresh container each time (no cache of its own), times
-  including the container's start: the table below.
-- **The layer cache is the server's.** The client asks the server which layers
-  it lacks and analyzes only those; a second client on a fresh container was
-  warm. For the two images above the cache was 480 KB.
-- **The client copies the image to `/tmp`.** With `--image-src docker`, Trivy
-  exports the whole image to a temporary tar before reading it: a read-only
-  container with a 64 MB tmpfs failed with `no space left on device`. A scan
-  needs free disk as large as the image, for as long as it runs. That tar is
-  also why the cgroup's `memory.peak` read 958 MiB with no limit: page cache,
-  given back under a limit, as the 256 MiB run shows.
-
-| Image | Cold | Again (server knows the layers) |
-|---|---|---|
-| hivepaas-agent-dev, 412 MB | 5.0 s | 0.34 s |
-| hivepaas-devtools, 773 MB | 14.4 s; 17.1 s at 1 CPU / 512 MiB; 19.3 s at 1 CPU / 256 MiB; **killed at 128 MiB** | 0.39 s, ~40 MiB |
+- **The DB** (from `mirror.gcr.io/aquasec/trivy-db:2`) is 1.4 GB on disk.
+  Downloading it was killed at 256 MiB and took 22 - 24 s at 512 MiB.
+- **The Java DB** is needed on the first image with a jar: a 935 MiB download,
+  1.4 GB on disk, about 2.5 minutes. `--skip-java-db-update` fails without one
+  ("The first run cannot skip downloading Java DB").
+- **With `--image-src docker`, Trivy copies the image to `/tmp`** before reading
+  it: a scan needs free disk as large as the image while it runs. A scan of the
+  773 MB image ran at 256 MiB and was killed at 128 MiB.
+- **Trivy takes an image ID** with `--image-src docker`: the report's
+  `Metadata.ImageID` is the ID given, with the image's tags and repo digests.
+- `--list-all-pkgs=false` keeps the report to findings: 5 KB for `alpine:3.10`,
+  41 KB for one log4j jar.
 
 **OSV-Scanner 2.6.0**: a 315 MB image, 3 s on p1-f1, 83 distinct IDs in 20
 packages, against Trivy's 108 in 48. It sends each image's package list to
 osv.dev unless run offline with a local DB per ecosystem, and it exits 1
-whenever it finds anything.
-
-**So: Trivy.** It is what CI already uses, it works offline from a DB it
-downloads, and in client and server mode one small server holds the DB and the
-layer cache for the whole cluster while each node only reads its own images.
+whenever it finds anything. **So: Trivy**, which CI already uses and which works
+offline from a DB it downloads.
 
 ## The shape
 
 ```text
-                    hivepaas (app or worker)
-                 │ scan app A: its task's container on node N → image sha256:…
-                 ▼  (docker inspect, through node N's agent)
-     runner on node N  ◄── exec `trivy image --server …` (1 CPU / 512 MiB, the runner's)
-     │ /var/run/docker.sock: reads the image
-     │ the env's overlay network
-     ▼
-     hivepaas_scanning_trivy (trivy server: DB + layer cache)
+hivepaas (app or worker)
+  │ scan app A: its task on node N runs image sha256:…   (docker inspect, through N's agent)
+  │ the volume decides the scan's node S: its own node, or N when it is shared
+  ▼
+agent on node S ── ImageScanRun ──► container hivepaas-cont-…, image trivyImage
+                                     │ /data            the chosen volume: DB, Java DB, layer cache
+                                     │ docker.sock      only when the image is on S
+                                     │ registry auth    a file, only when it is not
+                                     ▼
+                                     stdout: the report, back over the RPC
 ```
 
-Built as two system apps in env `scanning` of the hidden `hivepaas` project,
-both on the release's Trivy image (`trivyImage` in release.json, pinned by
-digest, moved by the system updater with the other system apps): Trivy's
-server, and a runner, one task on every node, that the scans run in.
+Nothing runs between scans. A scan is a container the scan node's agent starts,
+on the release's Trivy image (`trivyImage` in release.json, pinned by digest),
+and removes when it ends.
 
-### The server: a system app
+### Where Trivy's data is
 
-An addon like logging and the registry: off until an administrator turns it
-on (System > Image Scanning). `systemappservice.Provision` creates app `trivy`,
-one replica, from a document built in Go (`imagescanserviceimpl/appdoc.go`):
+Switching scanning on requires a **volume**: a cluster volume, chosen as
+Logging's and the Registry's are. Trivy keeps everything there, under
+`hivepaas/scanning/trivy/` - where a system app of env `scanning` would keep its
+data - so the volume can hold other things: the DB, the Java DB, and the layer
+cache - what lets an image already scanned be scanned again in under half
+a second.
 
-- `sh -c 'exec trivy server --listen 0.0.0.0:4954 --cache-dir /data --token
-  "$(cat /run/hivepaas/trivy-token)"'`, plus `--db-repository` for a mirror;
-- the token a secret of the app, mounted as a file: one in an argument or an
-  environment variable would be in the service's spec;
-- a volume of its node, `hivepaas-trivy-data`, at `/data`: the DB and the
-  layer cache. A server moved to another node fetches the DB again;
-- limits 1 CPU, 1 GiB;
-- no route: the runner reaches it as `trivy`, its key, on the env's network.
+The volume's pin decides where scans run:
 
-Trivy's server keeps its DB current by itself: it checks every hour and holds
-requests while it swaps the new DB in. Upstream rebuilds the DB every 6 hours.
+| The volume | Scans run on | The image is read |
+|---|---|---|
+| **Pinned to a node** (a node, the current node) | that node | from that node's Docker when it is there; otherwise from its registry |
+| **Pinned by a node label** | a node carrying the label: the one running the image if one does, else the first by ID | the same |
+| **All nodes** (shared storage, such as NFS) | the node running the image | from that node's Docker |
 
-The DB's source is a setting, `dbRepository`, empty for Trivy's default. An
-installation without internet pushes the DB to its own registry (the internal
-zot will do) with `oras` and points `dbRepository` there; the website's page
-says how.
+- A **Tmpfs** volume is refused: it is memory, emptied when each scan's
+  container stops, so every scan would download about 3 GB.
+- A volume pinned by label on several nodes is a different directory on each:
+  each of them that scans keeps its own copy. The settings screen says so.
+- **All nodes** is the volume's own claim, as it is for apps: HivePaaS cannot
+  tell shared storage from a node's disk, and the volumes page already warns
+  about it.
+- The volume can be changed at any time. Nothing is copied: the next scan
+  downloads the DBs to the new one. The old volume is left as it is.
+- The image scan settings reference the volume while scanning is on, so it
+  cannot be deleted while scans use it. Switched off, the volume stays chosen
+  but may go: switching on again asks for one that is there.
 
-Turning it off removes both apps. The volumes and the results stay; the
-results are shown as last scanned at their time.
+### Reading an image from its registry
 
-### The scan: a command run in the runner
+With a volume pinned to node S, an app on node N runs an image S may not have.
+The scan then reads it from its registry, with `--image-src remote`, by digest,
+so what is scanned is exactly what N runs:
 
-The `trivy` binary is 160 MB, and the agent image 412 MB: bundling it, as
-kopia is, would make every installation pull it whether it scans or not. A
-container started per scan was the first plan, and would not keep: the daily
-system cleanup prunes the nodes' unused images and anonymous volumes, so each
-node would pull the 183 MB image again every day. So the runner is an app of
-its own, `trivy-runner`, global: an idle shell on every node, which keeps the
-image and the Java DB's volume in use, and which every scan of the node is a
-command run in (`containerexecservice`, through the node's agent - no new
-agent RPC).
+- the reference is the repository and digest the image on N carries: its ID
+  with the containerd image store, its repo digest for that repository with
+  Docker's own store;
+- `--platform` is N's (`os/arch`), so a multi-platform image is read for the
+  node that runs it. No variant: Docker 29's image inspect leaves it out when
+  an image has none, and a template naming it fails; `linux/arm64` reads
+  arm64's v8;
+- the credentials are those the app's deployment pulls with (its image
+  source's registry auth, or the registry its builds are pushed to), written to
+  a Docker `config.json` copied into the container before it starts, never in
+  an argument or the environment, where the container's inspect would show
+  them; ECR's are the current token HivePaaS renews;
+- Trivy asks its layer cache which layers it lacks and downloads only those, so
+  an image is downloaded once, not at every daily scan.
 
-- Its Docker socket is the app's Docker API access in host mode, a setting
-  written on it when it is made: every deployment takes a socket away from an
-  app whose access does not give one, and a template's document may not ask
-  for host mode, so the access is the way a socket survives.
-- Its volume `hivepaas-image-scan-cache` holds the Java DB, at Trivy's cache
-  dir.
-- Its limits, 1 CPU and 512 MiB by default (256 measured enough for 773 MB;
-  128 was killed), are every scan's; the settings screen sets them.
+An image whose repository has no digest on N - built there and never pushed,
+or loaded by hand - can only be read on N. On a single node S is N. In a
+cluster of more than one node, an app's builds are pushed to a registry
+(HivePaaS refuses otherwise), so this is an image someone put on N by hand: it
+is not scanned, and the app's tab says why ("on node N only, in no registry").
 
-A scan of app A, by `imagescanservice.ScanApp`:
+### The scan's container
 
-1. The running tasks of A's service, by node; on each node, `docker inspect
-   --format '{{.Image}} {{.Config.Image}}'` of their containers, through the
-   node's agent, gives the image IDs and references. One node per image ID.
-2. For each image, unless scanned within the hour (Scan now always scans): a
-   Redis lock on the node, one scan at a time there; then, in the node's
-   runner, `trivy image --server http://trivy:4954 --token "$(cat …)"
-   --image-src docker --scanners vuln --list-all-pkgs=false --disable-telemetry
-   --skip-version-check --no-progress --format json --timeout 10m [--java-db-repository …]
-   [--skip-java-db-update] <image ID>`.
-3. Its stdout is the report, parsed into the image's scan and findings and
-   written in a transaction of its own (`ReplaceScan`); its stderr is the
-   task's log. A scan that fails keeps the image's last findings and says why.
+`ImageScanRun`, a new agent RPC, as `FunctionTestRun` is: the scan node's agent
+pulls Trivy's image when it is missing, creates the container, copies the
+registry auth into it, starts it, streams back its stdout - the report - and
+gives its stderr as the log, and removes it.
 
-A scan that runs out of disk fails with Trivy's error, shown as the scan's.
+- `trivy image --cache-dir /data/trivy --scanners vuln --list-all-pkgs=false
+  --disable-telemetry --skip-version-check --no-progress --format json
+  --timeout 10m [--db-repository …] [--java-db-repository …]
+  [--skip-java-db-update] (--image-src docker <image ID> | --image-src remote
+  --platform … <repository@digest>)`.
+- The volume at `/data`, mounted as an app's would be (a managed volume carries
+  its driver and options, so the node builds it when it does not have it).
+- The Docker socket only for `--image-src docker`; the copy of the image Trivy
+  makes goes to the container's own `/tmp`, on the node's disk.
+- Limits: 1 CPU and 512 MiB by default, set on the settings screen. 512 is what
+  a DB download takes; a scan alone took 256 for a 773 MB image.
+- Labeled a temporary resource: the cleanup removes one left behind by an agent
+  that died mid-scan.
+- Its logging driver is `none`, and what it prints is read by attaching to it
+  before it starts: the collector of stored logs reads every container's
+  json-file log, and the report would land in it.
 
-Checked before building (2026-10-11):
+**The DBs.** Trivy downloads its DB when the copy on the volume is past the
+next update it announces (upstream rebuilds it every 6 hours), so the first
+scan of a day may take 20 - 30 s more. The Java DB is downloaded by the first
+scan that meets a jar; the scan passes `--skip-java-db-update` while the copy
+is under 7 days old (Trivy would renew it after 3), so it is downloaded once a
+week at most. `dbRepository` and `javaDbRepository` point them at a mirror: an
+installation without internet pushes both to its own registry with `oras`; the
+website's page says how.
 
-- **Trivy takes an image ID** with `--image-src docker`: the report's
-  `Metadata.ImageID` is the ID given, with the image's tags and repo digests.
-- **The Java DB is the client's.** The jar analyzer runs where the layers are,
-  and needs Trivy's Java DB on the first image with a jar: a 935 MiB download,
-  1.4 GB on disk, about 2.5 minutes. `--offline-scan` does not avoid it, and
-  `--skip-java-db-update` fails without one ("The first run cannot skip
-  downloading Java DB"). So each node keeps it in a volume,
-  `hivepaas-image-scan-cache`, mounted at the client's cache dir; it is fetched
-  only on a node that runs an image with jars. Trivy renews it after 3 days;
-  the scan passes `--skip-java-db-update` while the node's copy is under 7 days
-  old, so a node fetches it once a week at most. `javaDbRepository` points it
-  at a mirror, as `dbRepository` does the DB.
-- **The server's DB swap** fits: downloading the DB was killed at 256 MiB, and
-  took 22 - 24 s at 512 and 768 MiB. The 1 GiB limit stands.
-- The scan also passes `--list-all-pkgs=false` (the report is findings only:
-  5 KB for `alpine:3.10`, 41 KB for one log4j jar), `--disable-telemetry`,
-  `--skip-version-check` and `--no-progress`. A wrong token fails with
-  `twirp error unauthenticated: invalid token`.
+**One scan at a time per volume.** Trivy's cache is a bbolt file one process
+holds at a time, and on shared storage two nodes opening it at once is asking
+for corruption. Each scan takes a Redis lock named after the volume: on a pinned
+volume that serializes a node, on a shared one the cluster. Scans are short and
+few - after a deployment, and once a day - so the wait is seconds.
 
 ### Why not the alternatives
 
-- **Scan from the registry** (`--image-src remote`, at the server): no work on
-  the nodes, but a local-only image, built on a single node with no registry,
-  could not be scanned, and the server would need every registry's credentials,
-  ECR tokens included.
-- **A Swarm job per scan**: the result would have to be gathered from the job's
-  logs, and placement on the node that has the image is what the agent already
-  does.
+- **The server and the runners** (the first build): see "Why it was
+  redesigned".
+- **Always from the registry**, on the volume's node: no socket at all, but a
+  single node's local builds are in no registry, and every image would be
+  downloaded once even when the volume is shared and the node has it.
+- **A Swarm job per scan**: its result would have to be gathered from its logs,
+  and placing it is what the agent already does.
 
 ## What is scanned
 
@@ -185,7 +211,8 @@ the containerd store (as in dind). Services HivePaaS creates do not carry a
 digest, since they deploy with `QueryRegistry` off; the container says what it
 was made from. Every kind of app in a project: built from a repo, from an
 image, a function, from compose, from a template. An app whose tasks run two
-images (two platforms, a rollout) has both scanned.
+images (two platforms, a rollout) has both scanned; an image several nodes run
+is scanned once.
 
 Not in phase 1: HivePaaS's own apps. CI scans HivePaaS's images; Traefik, zot
 and the logging images are phase 2. Scan now on one is refused.
@@ -196,14 +223,13 @@ why it was not scanned again.
 ## When
 
 1. **After a deployment that ended done.** The deploy task's executor queues
-   the app's scan once the deployment committed (the deployment service cannot
-   depend on the scanner: the scanner provisions apps, which deploys them). It
-   never delays or fails the deployment.
+   the app's scan once the deployment committed. It never delays or fails the
+   deployment.
 2. **Every day.** A system job, `Image scan`, at 02:00 in the installation's
    timezone (after backup repo cleanup at 01:30, in `dailyJobs`), scans again
    every image apps run: the DB has news an image did not have yesterday.
-   Nearly all of it is warm, under half a second an image. It also removes the
-   results of images no app has run for 30 days.
+   Nearly all of it is warm: under half a second an image, plus the container's
+   start. It also removes the results of images no app has run for 30 days.
 3. **When asked:** Scan now, on the app's Security tab.
 
 Scans 1 and 3 are tasks, `task:image-scan`, the app's: they show in its tasks
@@ -263,17 +289,19 @@ create table app_image_scans (
 );
 ```
 
-A scan replaces its image's findings in one transaction; one that fails marks
-the image's scan failed and keeps its findings. The report itself is
-not kept: rows answer what phase 1 asks ("what does this app carry", "which
-apps carry CVE-X"), and a description is one link away. About 250 bytes a
-finding: 200 apps with p1-f1's 212 findings is about 10 MB.
+Unchanged from the first build. A scan replaces its image's findings in one
+transaction; one that fails marks the image's scan failed and keeps its
+findings. The report itself is not kept: rows answer what phase 1 asks ("what
+does this app carry", "which apps carry CVE-X"), and a description is one link
+away. About 250 bytes a finding: 200 apps with p1-f1's 212 findings is about
+10 MB.
 
 ## Setting findings aside
 
-A team decides a finding does not apply to them - the package is in the image,
-its code never runs. That is a setting, `vulnerability-ignore`, at any scope a
-secret can have (global, project, env, app) and inherited down the same way:
+Unchanged. A team decides a finding does not apply to them - the package is in
+the image, its code never runs. That is a setting, `vulnerability-ignore`, at
+any scope a secret can have (global, project, env, app) and inherited down the
+same way:
 
 ```json
 { "vulnId": "CVE-2025-1234", "package": "libxml2",
@@ -300,7 +328,8 @@ is fixable CRITICAL and HIGH.
 
 - **The app's Security tab**, after Metrics:
   - the image (reference, short ID, platform), the OS, and a warning when the OS
-    is past its support; when it was scanned, its status, and Scan now;
+    is past its support; when it was scanned, where it was read (on its node,
+    or from its registry), its status, and Scan now;
   - counts by severity, each with its fixable part;
   - the findings by package: installed and fixed version, the IDs (each a link),
     the highest severity; Fixable only on by default; Ignore… on a row opens a
@@ -312,19 +341,22 @@ is fixable CRITICAL and HIGH.
 - **Home > Needs attention**: a new kind, `app-vulnerable` (warning), for an app
   with a fixable CRITICAL. Only CRITICAL, so the list does not fill with HIGHs.
 - **System > Image Scanning**, beside Logging and Registry, three tabs:
-  - Configuration: on/off, DB source, the scan's CPU and memory, the daily job's
-    schedule and notification;
-  - Images: every app's image, its project and env, CRITICAL and HIGH with their
+  - Configuration: on/off, **the volume** (required; the picker leaves Tmpfs
+    out, and says where scans will run for the one chosen), DB sources, the
+    scan's CPU and memory, the daily job's schedule and notification;
+  - Apps: every app's image, its project and env, CRITICAL and HIGH with their
     fixable part, last scanned, status;
-  - Actions: the server's state, its DB's date, Run the daily scan now.
+  - Actions: the volume and where scans run, Trivy's image, the DB's date (the
+    last scan's), the last scan and its error, and Run the daily scan now.
 
 ## Notification
 
-The daily job's result notification, through the channels it is given (default
-ones by default), as the system cleanup's is. It is sent only when a run found
-something new: an app with a fixable CRITICAL or HIGH that its previous scan did
-not have, after ignores. It lists them by app. New template
-`image_scan_notification` for email, Slack, Discord, Telegram and Lark.
+Unchanged. The daily job's result notification, through the channels it is
+given (default ones by default), as the system cleanup's is. It is sent only
+when a run found something new: an app with a fixable CRITICAL or HIGH that its
+previous scan did not have, after ignores. It lists them by app, with the
+`image_scan_notification` template for email, Slack, Discord, Telegram and
+Lark.
 
 A scan after a deployment notifies nobody in phase 1: the app's header and the
 attention list show it at once, and the next daily run reports it.
@@ -336,7 +368,7 @@ operations: the API level is unchanged.
 
 | Operation | What |
 |---|---|
-| `GET` / `PUT /system/settings/image-scan` | the addon and the daily scan: `enabled`, `dbRepository`, `javaDbRepository`, `schedule`, `notification`, `cpuLimit` and `memoryLimit` (the runner's); GET adds `scannerStatus` - server running, runner nodes, image, the DB's date, the last scan |
+| `GET` / `PUT /system/settings/image-scan` | `enabled`, **`volume`** (required when enabled), `dbRepository`, `javaDbRepository`, `schedule`, `notification`, `cpuLimit` and `memoryLimit` (the scan container's); GET adds `scannerStatus`: the volume's name and pin, the nodes scans run on, Trivy's image, the DB's date, the last scan and its error |
 | `POST /system/settings/image-scan/exec` | run the daily scan now: its task |
 | `GET /system/settings/image-scan/apps` | every scanned app, its images and counts, the worst first (paged) |
 | `GET /projects/:projectID/:projectEnv/apps/:appID/image-scan` | the Security tab: images, counts, findings, those ignored with their ignore, the scan pending |
@@ -348,35 +380,86 @@ Permissions: the addon and the apps list, the `image-scan` resource of the
 system module; reading an app's results, reading the app; Scan now, writing
 it.
 
-## Building it, in order
+## Rebuilding it, in order
 
-1. Check what this design assumes (done, above).
-2. Entities, migration, the `vulnerability-ignore` setting.
-3. `imagescanservice`: the addon (Apply, Sync, Status), the scan, the daily
-   run, its notification; the attention kind.
-4. API, swagger.
-5. Dashboard: System > Image Scanning, the Security tab, the badge, the
-   attention kind.
-6. Website: a page on image scanning, its air-gapped DB.
-7. e2e, level 2, in the dind env (it needs the internet for the DB): turn it on;
-   deploy an image with known fixable findings and an EOSL OS (`alpine:3.10`:
-   CVE-2021-36159 in apk-tools, CRITICAL, fixed in 2.10.7-r0); the tab and badge
-   show them; ignore one and the count drops; Scan now; the daily run; turn it
-   off and the results stay.
+Done 2026-10-14, in this order. None of the first build was released, so
+nothing is migrated: what it made on the dind env - apps `trivy` and
+`trivy-runner`, volumes `hivepaas-trivy-data` and `hivepaas-image-scan-cache` -
+was removed by hand. Its settings request changed, but the operation was never
+released either: its fingerprint was dropped from `api-level.json` so that the
+change counts as the operation's addition, and the API level stays 2.
 
-Tried on the dind env (2026-10-11), through the API: switched on, both apps
-ran as designed - the runner global, with the host socket and the cache
-volume; the server fetched its DB. A deployment of `alpine:3.10` queued its
-scan; Scan now found CVE-2021-36159 and the EOSL OS in 0.3 s; ignores at the
-app and at the project set it aside; the daily run skipped the image scanned
-within the hour; switched off, both apps went and the results stayed.
+1. **Check what this design assumes.** Done on the dind env (Docker 29.9,
+   containerd store, arm64), 2026-10-14, Trivy 0.75.0, a fresh volume:
+   - **Standalone, on a volume**: the first scan of `alpine:3.10` downloaded the
+     DB and scanned in 25 s; it passed at 512, 384 and **256 MiB** (the server's
+     DB swap had been killed at 256). 512 stays the default.
+   - **The DB's date is not in the standalone report** (`Trivy` holds only
+     `Version`). `trivy version --format json --cache-dir …` gives
+     `VulnerabilityDB.UpdatedAt` (and `JavaDB` once there): the container runs
+     it after the scan, and prints both in one JSON object on stdout.
+   - **`--image-src remote` by digest** took 3 s and 36 MiB (no copy of the
+     image is made); the second scan logged no missing layer and downloaded
+     nothing. **`--platform` is needed every time**: without it Trivy reads
+     `linux/amd64` even on an arm64 node, and an arm64-only index fails ("no
+     child with platform linux/amd64").
+   - **The report's `Metadata.ImageID`, read remotely, is the config's digest**,
+     not the ID the node gives (the index's, with the containerd store): results
+     are keyed by the node's ID, as given to the scan.
+   - **Credentials**: a password-protected registry refused the scan
+     (`UNAUTHORIZED`), then accepted it with a `config.json` copied into the
+     container, as a directory under `/tmp`, before it started, and
+     `DOCKER_CONFIG` pointing there. A plain-HTTP registry needs `--insecure`:
+     passed when the node's Docker lists the registry as insecure. The internal
+     registry is HTTPS, on its domain.
+   - **A second Trivy on the same cache fails** after 5 s: "cache may be in use
+     by another process: timeout". The lock per volume is what prevents it.
+   - A warm scan, container started and removed: 2 - 3 s.
+2. **Take out** the server and the runner: their documents (`appdoc.go`), the
+   system apps' provisioning and sync, the token, the host access, env
+   `scanning`, and the system updater's steps for them. `trivyImage` stays in
+   release.json; the updater no longer pre-pulls it - the agent pulls it when a
+   scan needs it, and the cleanup keeps it.
+3. **Settings**: `volume`, validated (exists, not Tmpfs), referenced; the status
+   as above.
+4. **`ImageScanRun`**: the agent RPC and the container.
+5. **The scan**: the scan node from the volume, the source (`docker` or
+   `remote`), the reference, platform and credentials, the lock per volume.
+6. API, swagger.
+7. Dashboard: the volume on Configuration, Actions' status; the Security tab
+   says where an image was read. The rest stays.
+8. Website: the image scanning page: the volume, where scans run, the
+   registry read, the air-gapped DBs.
+9. e2e, level 2 (rows 2.121 - 2.123), in the dind env: the test makes a volume
+   pinned to the node; the rest as before - `alpine:3.10` (CVE-2021-36159 in
+   apk-tools, CRITICAL, fixed in 2.10.7-r0, and an EOSL OS), ignore, Scan now,
+   the daily run, switched off with the results kept. They pass in 2.2 minutes
+   (7 with the server and the runners).
 
-## Decided (2026-10-11)
+Tried on the dind env, through the API: switched on without a volume, and with
+a Tmpfs one, refused with the reason; with one pinned to the node, Scan now
+started the container through the node's agent, which fetched the DB onto the
+volume (`hivepaas/scanning/trivy/db`, 1.5 GB) and scanned in 20 s; the next
+scan took 0.6 s; no container was left; the volume could not be deleted while
+scanning was on, and could once it was off. Read from a registry - a node
+without the image - is covered by the measurements above and by unit tests: a
+single-node env always has the image it runs.
+
+## Decided
+
+2026-10-11:
 
 1. Ignores at all four scopes: global, project, env, app.
 2. The attention list for fixable CRITICAL only.
 3. No notification from a scan after a deployment in phase 1.
 4. HivePaaS's own apps left to phase 2.
+
+2026-10-14:
+
+5. No service runs between scans: a container per scan, started by the scan
+   node's agent; the Docker socket only in it, only to read a local image.
+6. Trivy's data on a volume the administrator must choose; its pin decides
+   where scans run; Tmpfs refused; the volume can be changed freely.
 
 ## Later
 
@@ -386,3 +469,5 @@ within the hour; switched off, both apps went and the results stayed.
 - **Phase 3**: a gate, per project: a deployment whose image has a fixable
   CRITICAL is refused, or held for approval; a scan of a built image before it
   rolls out.
+- Several images in one container, if a daily run over many images spends
+  too long starting containers.

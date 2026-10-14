@@ -53,6 +53,8 @@ type Manager interface {
 		*client.ContainerListResult, error)
 	ServiceContainerList(ctx context.Context, serviceID string, options ...ContainerListOption) (
 		*client.ContainerListResult, error)
+	ContainerAttach(ctx context.Context, containerID string, options ...ContainerAttachOption) (
+		*client.ContainerAttachResult, error)
 	ContainerInspect(ctx context.Context, containerID string, options ...ContainerInspectOption) (
 		*client.ContainerInspectResult, error)
 	ContainerInspectMulti(ctx context.Context, containerIDs []string, options ...ContainerInspectOption) (

@@ -4,3 +4,4 @@
 ERR_IMAGE_SCAN_OFF = "Image scanning is switched off"
 ERR_IMAGE_SCAN_NOT_READY = "The image scanner is not ready"
 ERR_IMAGE_SCAN_FAILED = "The image could not be scanned"
+ERR_IMAGE_SCAN_SETTINGS_INVALID = "The image scanning settings are not valid"

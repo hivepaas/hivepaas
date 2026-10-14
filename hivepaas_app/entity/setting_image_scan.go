@@ -14,17 +14,12 @@ import (
 const (
 	CurrentImageScanSettingsVersion = 1
 
-	// The limits a scan runs under: those of the runner, the container on each
-	// node every scan of that node runs in. A cold scan of a 773 MB image fitted
-	// in 256 MiB and was killed at 128; 512 leaves room.
+	// The limits a scan's container runs under. A cold scan of a 773 MB image
+	// fitted in 256 MiB and was killed at 128; downloading the DB fitted in 256
+	// too. 512 leaves room.
 	DefaultImageScanCPULimit    = 1.0
 	DefaultImageScanMemoryLimit = 512 * unit.MB
 	MinImageScanMemoryLimit     = 256 * unit.MB
-
-	// The server's limits. It holds the DB memory-mapped, about 80 MiB, and
-	// needs about 512 MiB while it swaps in a new one.
-	DefaultImageScanServerCPULimit    = 1.0
-	DefaultImageScanServerMemoryLimit = 1 * unit.GB
 
 	// ImageScanDailyHour is the time of day the daily scan runs at, in the
 	// installation's timezone: after the other daily jobs, in the quiet hours.
@@ -53,10 +48,19 @@ func (s *imageScanSettingsParser) New() SettingData {
 }
 
 // ImageScanSettings is image scanning's configuration: the addon, and the daily
-// scan. It is global, and until Enabled is set nothing is provisioned and
-// nothing is scanned.
+// scan. It is global, and until Enabled is set nothing is scanned.
 type ImageScanSettings struct {
 	Enabled bool `json:"enabled,omitempty"`
+
+	// Volume is the cluster volume Trivy keeps its DBs and its layer cache on,
+	// required while scanning is on. Its pin decides where scans run: on its
+	// node, or, for one every node reaches, on the node running the image.
+	Volume ObjectID `json:"volume,omitzero"`
+
+	// CPULimit and MemoryLimit are what each scan's container runs under; zero
+	// for the defaults.
+	CPULimit    float64       `json:"cpuLimit,omitempty"`
+	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 
 	// DBRepository and JavaDBRepository are where Trivy fetches its DBs from:
 	// empty for Trivy's own, an OCI repository of a mirror for an installation
@@ -68,19 +72,31 @@ type ImageScanSettings struct {
 	// it found something new.
 	Schedule     SchedJobSchedule       `json:"schedule"`
 	Notification *BaseEventNotification `json:"notification,omitempty"`
+}
 
-	// ServerAppID and RunnerAppID are the apps the addon made, written back by
-	// it for the dashboard to link to. They are not the client's.
-	ServerAppID string `json:"serverAppId,omitempty"`
-	RunnerAppID string `json:"runnerAppId,omitempty"`
+// ScanCPULimit and ScanMemoryLimit are what a scan's container runs under: the
+// settings', or the defaults.
+func (s *ImageScanSettings) ScanCPULimit() float64 {
+	return gofn.If(s.CPULimit > 0, s.CPULimit, DefaultImageScanCPULimit)
+}
+
+func (s *ImageScanSettings) ScanMemoryLimit() unit.DataSize {
+	return gofn.If(s.MemoryLimit > 0, s.MemoryLimit, DefaultImageScanMemoryLimit)
 }
 
 func (s *ImageScanSettings) GetType() base.SettingType {
 	return base.SettingTypeImageScan
 }
 
+// GetRefObjectIDs reports the volume while scanning is on, which keeps it from
+// being deleted while scans use it, and the notification's targets. Switched
+// off, the volume is kept chosen but may go: switching on again asks for one
+// that is there.
 func (s *ImageScanSettings) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
+	if s.Enabled && s.Volume.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Volume.ID)
+	}
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
 	}

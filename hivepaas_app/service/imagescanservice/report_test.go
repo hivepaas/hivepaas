@@ -24,7 +24,7 @@ func readFixture(t *testing.T, name string) []byte {
 // An OS package's finding: the image, its OS past support, and the DB it was
 // matched against.
 func TestParseReportOfAnOSPackage(t *testing.T) {
-	r, err := ParseReport(readFixture(t, "alpine-3.10.json"), "alpine:3.10", scannedAt)
+	r, err := ParseReport(readFixture(t, "alpine-3.10.json"), "", "alpine:3.10", scannedAt)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -56,7 +56,7 @@ func TestParseReportOfAnOSPackage(t *testing.T) {
 // A jar's findings carry where the jar is; an image asked for by its ID is
 // shown by its tag.
 func TestParseReportOfAJar(t *testing.T) {
-	r, err := ParseReport(readFixture(t, "log4j-jar.json"),
+	r, err := ParseReport(readFixture(t, "log4j-jar.json"), "",
 		"sha256:b2bdf71a218e2b1d9a8fbdb2b5a3c8fd109a3469dc3bafd4866ec339ad9f1007", scannedAt)
 	if !assert.NoError(t, err) {
 		return
@@ -86,7 +86,7 @@ func TestParseReportKeepsOneOfEachFinding(t *testing.T) {
 			{"VulnerabilityID":"CVE-1","PkgName":"libc6","InstalledVersion":"1","Severity":"HIGH"},
 			{"VulnerabilityID":"CVE-1","PkgName":"libc6","InstalledVersion":"1","Severity":"HIGH"},
 			{"VulnerabilityID":"CVE-2","PkgName":"libc6","InstalledVersion":"1","Severity":"NEGLIGIBLE"}]}]}`)
-	r, err := ParseReport(data, "", scannedAt)
+	r, err := ParseReport(data, "", "", scannedAt)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -100,8 +100,36 @@ func TestParseReportKeepsOneOfEachFinding(t *testing.T) {
 
 // A report that names no image is no scan.
 func TestParseReportWithoutAnImage(t *testing.T) {
-	_, err := ParseReport([]byte(`{"Results":[]}`), "x", scannedAt)
+	_, err := ParseReport([]byte(`{"Results":[]}`), "", "x", scannedAt)
 	assert.Error(t, err)
-	_, err = ParseReport([]byte(`not json`), "x", scannedAt)
+	_, err = ParseReport([]byte(`not json`), "", "x", scannedAt)
 	assert.Error(t, err)
+}
+
+// Read from its registry, an image's report names its config's digest: the
+// scan is kept by the ID the node running it gives it.
+func TestParseReportKeepsTheNodesImageID(t *testing.T) {
+	data := []byte(`{"Metadata":{"ImageID":"sha256:config"},"Results":[]}`)
+	r, err := ParseReport(data, "sha256:index", "alpine:3.10", scannedAt)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "sha256:index", r.Scan.ImageID)
+	}
+}
+
+// What a scan's container prints: the exit code, the report, and the DB's
+// date from trivy version, which a standalone report lacks.
+func TestParseScanOutput(t *testing.T) {
+	out, err := ParseScanOutput([]byte(`{"exitCode":0,"version":{"Version":"0.75.0","VulnerabilityDB":` +
+		`{"UpdatedAt":"2026-10-14T07:11:52Z"}},"report":{"Metadata":{"ImageID":"sha256:a"}}}`))
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.True(t, out.HasReport())
+	assert.Equal(t, time.Date(2026, 10, 14, 7, 11, 52, 0, time.UTC), out.DBUpdatedAt())
+
+	out, err = ParseScanOutput([]byte(`{"exitCode":1,"version":null,"report":null}`))
+	if assert.NoError(t, err) {
+		assert.False(t, out.HasReport())
+		assert.True(t, out.DBUpdatedAt().IsZero())
+	}
 }

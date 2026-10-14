@@ -44,6 +44,9 @@ type ImageResp struct {
 	// OSEOSL says the OS is past its support: its packages get no fixes.
 	OSEOSL bool                 `json:"osEosl"`
 	Status base.ImageScanStatus `json:"status"`
+	// Source is where the last scan read the image: on the node running it, or
+	// from its registry when scans run on another node.
+	Source base.ImageScanSource `json:"source,omitempty"`
 	// Error is why the last scan failed; the findings are the scan's before.
 	Error        string       `json:"error,omitempty"`
 	ScannedAt    time.Time    `json:"scannedAt"`
@@ -94,6 +97,7 @@ func TransformImage(scan *entity.ImageScan, summary imagescanservice.Summary) *I
 		OSName:       scan.OSName,
 		OSEOSL:       scan.OSEOSL,
 		Status:       scan.Status,
+		Source:       scan.Source,
 		Error:        scan.Error,
 		ScannedAt:    scan.ScannedAt,
 		UpdatedAt:    scan.UpdatedAt,

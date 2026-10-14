@@ -471,7 +471,7 @@
     "PUT /system/settings/backup": "3e041ecf4806586240c2012084eee3b22ce5deb92f2fd6a1f4f23b7c579ca6d0",
     "PUT /system/settings/backup-repo-cleanup": "4d24cd4ad810de17a66368aade14e1b5b7cc61f01d666f00d0e4e8456bddf7d7",
     "PUT /system/settings/cleanup": "0d7b9f7e7b15e3956c1efb997238c21e3b6fedd21eb06566bef563f5c006ed26",
-    "PUT /system/settings/image-scan": "b718db399e5a3d22520a50b587f04114867c473e672fdbc3e84485b3433a5f3d",
+    "PUT /system/settings/image-scan": "83a3c478fdd937addaeb5f02cf483bb6acad6572f25a2873be4902b489418a58",
     "PUT /system/settings/logging": "d1d3efb95e9e8b28bbc2f7840de6cee94960ecbb1d8b0e3fe4f1eaf28a5ba8b1",
     "PUT /system/settings/logging/performance": "303a0bc75f463e32b0dbeaa8add05904efa53770158acc739834d8242002cdb7",
     "PUT /system/settings/mcp": "7fe105192eb5a627fb178f78bbbb6fff27adf155aa0feafac49f4d5fb95d134f",

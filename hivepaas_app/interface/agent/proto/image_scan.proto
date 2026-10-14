@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service ImageScanService {
+  // ImageScanRun scans an image on the agent's node, in a container of its own.
+  rpc ImageScanRun(ImageScanRunReq) returns (ImageScanRunResp);
+}
+
+message ImageScanRunReq {
+  string trivy_image = 1;
+  // The image's ID as the node running it gives it, and that node.
+  string image_id = 2;
+  string image_node = 3;
+  // The image's repository and digest, read when this node lacks the image;
+  // empty when it is in no registry. platform is the running node's.
+  string remote_ref = 4;
+  string platform = 5;
+  // A Docker config.json with the registry's credentials; empty for none.
+  bytes docker_config = 6;
+  // The mount of the volume Trivy's data is on: a Docker mount, as JSON.
+  bytes volume_mount = 7;
+  string cache_dir = 8;
+  string db_repository = 9;
+  string java_db_repository = 10;
+  int64 nano_cpus = 11;
+  int64 memory_bytes = 12;
+  int64 timeout_seconds = 13;
+}
+
+message ImageScanRunResp {
+  string source = 1;
+  // What the container printed: Trivy's exit code, report and DB version.
+  bytes output = 2;
+  string log = 3;
+  bool log_truncated = 4;
+  bool oom_killed = 5;
+  int64 exit_code = 6;
+}

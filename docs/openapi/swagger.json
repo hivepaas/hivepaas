@@ -54976,6 +54976,13 @@
           "scannedAt" : {
             "type" : "string"
           },
+          "source" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/base.ImageScanSource"
+            } ],
+            "description" : "Source is where the last scan read the image: on the node running it, or\nfrom its registry when scans run on another node.",
+            "type" : "object"
+          },
           "status" : {
             "$ref" : "#/components/schemas/base.ImageScanStatus"
           },
@@ -62712,6 +62719,11 @@
         "type" : "string",
         "x-enum-varnames" : [ "IMServiceKindSlack", "IMServiceKindDiscord", "IMServiceKindTelegram", "IMServiceKindLark" ]
       },
+      "base.ImageScanSource" : {
+        "enum" : [ "node", "registry" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "ImageScanSourceNode", "ImageScanSourceRegistry" ]
+      },
       "base.ImageScanStatus" : {
         "enum" : [ "done", "failed" ],
         "type" : "string",
@@ -67562,7 +67574,7 @@
             "type" : "string"
           },
           "trivyImage" : {
-            "description" : "TrivyImage is what image scanning runs, when it is switched on: Trivy's\nserver and the runner on every node, which must be one version.",
+            "description" : "TrivyImage is what image scanning runs, when it is switched on: each\nscan's container, which the scan node's agent pulls when it lacks it.",
             "type" : "string"
           },
           "victoriaLogsImage" : {
@@ -68811,7 +68823,7 @@
       "imagescandto.ImageScanSettingsResp" : {
         "properties" : {
           "cpuLimit" : {
-            "description" : "CPULimit and MemoryLimit are read off the runner's service, where they\nlive. With no runner they are what a new one would get.",
+            "description" : "CPULimit and MemoryLimit are what each scan's container runs under: the\ndefaults where none were set.",
             "type" : "number"
           },
           "createdAt" : {
@@ -68892,6 +68904,13 @@
           },
           "updatedAt" : {
             "type" : "string"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Volume is the cluster volume Trivy keeps its data on.",
+            "type" : "object"
           }
         },
         "required" : [ "cpuLimit", "createdAt", "dbRepository", "enabled", "id", "inheritable", "javaDbRepository", "kind", "memoryLimit", "name", "nextRuns", "notification", "scannerStatus", "schedule", "status", "type", "updateVer", "updatedAt" ],
@@ -68916,6 +68935,34 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "imagescandto.ScanVolumeResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "missing" : {
+            "description" : "Missing says the volume is gone: no scan can run.",
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
+          "nodeName" : {
+            "type" : "string"
+          },
+          "shared" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "id" ],
+        "type" : "object"
+      },
       "imagescandto.ScannerStatusResp" : {
         "properties" : {
           "dbUpdatedAt" : {
@@ -68924,30 +68971,25 @@
           "image" : {
             "type" : "string"
           },
+          "lastError" : {
+            "description" : "LastError is the last scan's, when it failed.",
+            "type" : "string"
+          },
           "lastScanAt" : {
             "type" : "string"
           },
-          "nodes" : {
-            "type" : "integer"
-          },
-          "runnerAppId" : {
-            "type" : "string"
-          },
-          "runnerNodes" : {
-            "description" : "RunnerNodes is on how many of Nodes the runner runs.",
-            "type" : "integer"
-          },
-          "serverAppId" : {
-            "type" : "string"
-          },
-          "serverRunning" : {
-            "type" : "boolean"
-          },
           "trivyVersion" : {
             "type" : "string"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ScanVolumeResp"
+            } ],
+            "description" : "Volume is the chosen volume and where it has scans run; absent when none\nis chosen.",
+            "type" : "object"
           }
         },
-        "required" : [ "image", "nodes", "runnerNodes", "serverRunning" ],
+        "required" : [ "image" ],
         "type" : "object"
       },
       "imagescandto.ScheduleReq" : {
@@ -68977,7 +69019,7 @@
       "imagescandto.UpdateImageScanSettingsReq" : {
         "properties" : {
           "cpuLimit" : {
-            "description" : "CPULimit and MemoryLimit are what every scan runs under: the runner's.\nThey live on its service, not in the settings. Zero is the default.",
+            "description" : "CPULimit and MemoryLimit are what each scan's container runs under. Zero\nis the default.",
             "type" : "number"
           },
           "dbRepository" : {
@@ -69010,9 +69052,17 @@
           },
           "updateVer" : {
             "type" : "integer"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is the cluster volume Trivy keeps its DBs and its layer cache on,\nrequired while scanning is on.",
+            "nullable" : true,
+            "type" : "object"
           }
         },
-        "required" : [ "cpuLimit", "dbRepository", "default", "enabled", "inheritable", "javaDbRepository", "memoryLimit", "notification", "schedule", "updateVer" ],
+        "required" : [ "cpuLimit", "dbRepository", "default", "enabled", "inheritable", "javaDbRepository", "memoryLimit", "notification", "schedule", "updateVer", "volume" ],
         "type" : "object"
       },
       "imagescandto.UpdateImageScanSettingsResp" : {

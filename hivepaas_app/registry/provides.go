@@ -215,6 +215,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagescanagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
@@ -504,6 +505,7 @@ var Provides = []any{
 	containeragentuc.New,
 	dockerapiagentuc.New,
 	functionagentuc.New,
+	imagescanagentuc.New,
 	imagebuildagentuc.New,
 	nodeagentuc.New,
 	reposerveragentuc.New,

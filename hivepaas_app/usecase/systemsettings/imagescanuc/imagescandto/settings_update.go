@@ -12,12 +12,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
 const (
 	repositoryMaxLen = 255
+	idMaxLen         = 100
 
 	// The daily scan's interval: no more often than every six hours, which is
 	// how often the DB is rebuilt, and no less than weekly.
@@ -43,14 +43,17 @@ type UpdateImageScanSettingsReq struct {
 
 type ImageScanSettingsBaseReq struct {
 	Enabled bool `json:"enabled"`
+	// Volume is the cluster volume Trivy keeps its DBs and its layer cache on,
+	// required while scanning is on.
+	Volume *basedto.ObjectIDReq `json:"volume"`
 	// DBRepository and JavaDBRepository are OCI repositories of a mirror Trivy
 	// fetches its DBs from; empty for Trivy's own.
 	DBRepository     string                            `json:"dbRepository"`
 	JavaDBRepository string                            `json:"javaDbRepository"`
 	Schedule         ScheduleReq                       `json:"schedule"`
 	Notification     *basedto.BaseEventNotificationReq `json:"notification"`
-	// CPULimit and MemoryLimit are what every scan runs under: the runner's.
-	// They live on its service, not in the settings. Zero is the default.
+	// CPULimit and MemoryLimit are what each scan's container runs under. Zero
+	// is the default.
 	CPULimit    float64       `json:"cpuLimit"`
 	MemoryLimit unit.DataSize `json:"memoryLimit"`
 }
@@ -72,6 +75,9 @@ func (req *ImageScanSettingsBaseReq) ToEntity() *entity.ImageScanSettings {
 	}
 	return &entity.ImageScanSettings{
 		Enabled:          req.Enabled,
+		Volume:           entity.ObjectID{ID: req.Volume.ToIDString()},
+		CPULimit:         req.CPULimit,
+		MemoryLimit:      req.MemoryLimit,
 		DBRepository:     req.DBRepository,
 		JavaDBRepository: req.JavaDBRepository,
 		Schedule: entity.SchedJobSchedule{
@@ -80,19 +86,6 @@ func (req *ImageScanSettingsBaseReq) ToEntity() *entity.ImageScanSettings {
 		},
 		Notification: req.Notification.ToEntity(),
 	}
-}
-
-// ScanResources is what the runner is to run under: what was asked, the
-// default in place of a zero.
-func (req *ImageScanSettingsBaseReq) ScanResources() *systemappservice.Resources {
-	res := &systemappservice.Resources{CPULimit: req.CPULimit, MemoryLimit: req.MemoryLimit.Bytes()}
-	if res.CPULimit == 0 {
-		res.CPULimit = entity.DefaultImageScanCPULimit
-	}
-	if res.MemoryLimit == 0 {
-		res.MemoryLimit = entity.DefaultImageScanMemoryLimit.Bytes()
-	}
-	return res
 }
 
 func (req *UpdateImageScanSettingsReq) ModifyRequest() error {
@@ -132,6 +125,11 @@ func (req *UpdateImageScanSettingsReq) Validate() hperrors.ValidationErrors {
 		maxInterval, "schedule.interval")...)
 	validators = append(validators, basedto.ValidateTime(&req.Schedule.InitialTime, true,
 		time.Now().Add(-timeutil.Dur365Days), time.Time{}, "schedule.initialTime")...)
+	if req.Volume != nil {
+		validators = append(validators, vld.StrLen(&req.Volume.ID, 0, idMaxLen).OnError(
+			vld.SetField("volume.id", nil),
+		))
+	}
 	validators = append(validators, req.Notification.Validate("notification")...)
 	validators = append(validators, basedto.ValidateNumber(&req.MemoryLimit, false,
 		entity.MinImageScanMemoryLimit, maxMemoryLimit, "memoryLimit")...)

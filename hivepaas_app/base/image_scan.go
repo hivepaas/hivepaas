@@ -36,6 +36,18 @@ const (
 	ImageScanStatusFailed ImageScanStatus = "failed"
 )
 
+// ImageScanSource is where a scan read its image.
+type ImageScanSource string
+
+const (
+	// ImageScanSourceNode is the Docker of the node the scan ran on, which runs
+	// the image.
+	ImageScanSourceNode ImageScanSource = "node"
+	// ImageScanSourceRegistry is the image's registry, by digest: the node the
+	// scans run on does not have it.
+	ImageScanSourceRegistry ImageScanSource = "registry"
+)
+
 // ImageScanTrigger is what asked for a scan.
 type ImageScanTrigger string
 

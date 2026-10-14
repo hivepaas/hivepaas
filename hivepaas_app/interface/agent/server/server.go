@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagescanagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
@@ -24,6 +25,7 @@ type AgentServer struct {
 	agentproto.UnimplementedFileServiceServer
 	agentproto.UnimplementedFunctionServiceServer
 	agentproto.UnimplementedImageBuildServiceServer
+	agentproto.UnimplementedImageScanServiceServer
 	agentproto.UnimplementedNodeCleanupServiceServer
 	agentproto.UnimplementedNodeServiceServer
 	agentproto.UnimplementedRepoServerServiceServer
@@ -34,6 +36,7 @@ type AgentServer struct {
 	fileAgentUC        *fileagentuc.UC
 	functionAgentUC    *functionagentuc.UC
 	imageBuildAgentUC  *imagebuildagentuc.UC
+	imageScanAgentUC   *imagescanagentuc.UC
 	nodeAgentUC        *nodeagentuc.UC
 	nodeCleanupAgentUC *nodecleanupagentuc.UC
 	repoServerAgentUC  *reposerveragentuc.UC
@@ -47,6 +50,7 @@ func NewAgentServer(
 	fileAgentUC *fileagentuc.UC,
 	functionAgentUC *functionagentuc.UC,
 	imageBuildAgentUC *imagebuildagentuc.UC,
+	imageScanAgentUC *imagescanagentuc.UC,
 	nodeAgentUC *nodeagentuc.UC,
 	nodeCleanupAgentUC *nodecleanupagentuc.UC,
 	repoServerAgentUC *reposerveragentuc.UC,
@@ -60,6 +64,7 @@ func NewAgentServer(
 		fileAgentUC:        fileAgentUC,
 		functionAgentUC:    functionAgentUC,
 		imageBuildAgentUC:  imageBuildAgentUC,
+		imageScanAgentUC:   imageScanAgentUC,
 		nodeAgentUC:        nodeAgentUC,
 		nodeCleanupAgentUC: nodeCleanupAgentUC,
 		repoServerAgentUC:  repoServerAgentUC,

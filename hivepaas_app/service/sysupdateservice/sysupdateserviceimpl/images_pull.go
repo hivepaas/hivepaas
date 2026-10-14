@@ -56,7 +56,6 @@ func (s *service) pullAllImages(
 		args.TargetVersion.VictoriaLogsImage,
 		args.TargetVersion.VlagentImage,
 		args.TargetVersion.RegistryImage,
-		args.TargetVersion.TrivyImage,
 	}
 
 	tasks := make([]func(context.Context) error, 0, len(images))

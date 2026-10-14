@@ -19,7 +19,10 @@ type ImageScan struct {
 	// what the scan does not find may still be there.
 	OSEOSL bool `bun:"os_eosl" json:"osEosl,omitempty"`
 
-	Status       base.ImageScanStatus `json:"status"`
+	Status base.ImageScanStatus `json:"status"`
+	// Source is where the scan read the image: on its node, or from its
+	// registry.
+	Source       base.ImageScanSource `bun:",nullzero" json:"source,omitempty"`
 	Error        string               `bun:",nullzero" json:"error,omitempty"`
 	TrivyVersion string               `bun:",nullzero" json:"trivyVersion,omitempty"`
 	// DBUpdatedAt is when the vulnerability DB the scan was matched against

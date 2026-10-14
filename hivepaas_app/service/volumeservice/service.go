@@ -33,6 +33,12 @@ type Service interface {
 	DescribeAppMounts(ctx context.Context, db database.IDB, app *entity.App,
 		mounts []mount.Mount) ([]*AppMountDesc, error)
 
+	// BuildVolumeMount turns a global cluster volume into a docker mount of the
+	// whole volume at target, for a container HivePaaS runs that is no app's - a
+	// scan's. It refuses a volume that reaches the Docker socket, as an app's
+	// mount does.
+	BuildVolumeMount(ctx context.Context, db database.IDB, volumeID string, target string) (*VolumeMount, error)
+
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
 	// RemoveAppStorage deletes the directories an app kept its data in, inside the

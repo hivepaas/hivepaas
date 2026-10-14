@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -25,9 +26,10 @@ func TestUpdateImageScanSettingsDefaults(t *testing.T) {
 	assert.Empty(t, req.Validate())
 	assert.Equal(t, timeutil.Duration(timeutil.Day), req.Schedule.Interval)
 	assert.Equal(t, entity.ImageScanDailyHour, req.Schedule.InitialTime.In(timeutil.Location()).Hour())
-	res := req.ScanResources()
-	assert.Equal(t, entity.DefaultImageScanCPULimit, res.CPULimit)
-	assert.Equal(t, entity.DefaultImageScanMemoryLimit.Bytes(), res.MemoryLimit)
+	cfg := req.ToEntity()
+	assert.Equal(t, entity.DefaultImageScanCPULimit, cfg.ScanCPULimit())
+	assert.Equal(t, entity.DefaultImageScanMemoryLimit, cfg.ScanMemoryLimit())
+	assert.Empty(t, cfg.Volume.ID)
 
 	for _, repo := range []string{"mirror.local:5000/aquasec/trivy-db:2", "ghcr.io/aquasecurity/trivy-db",
 		"registry.example.com/a/b/c"} {
@@ -46,4 +48,18 @@ func TestUpdateImageScanSettingsBounds(t *testing.T) {
 		Schedule: ScheduleReq{Interval: timeutil.Duration(8 * timeutil.Day)}}).Validate())
 	assert.NotEmpty(t, updateReq(ImageScanSettingsBaseReq{MemoryLimit: 128 * unit.MB}).Validate())
 	assert.Empty(t, updateReq(ImageScanSettingsBaseReq{MemoryLimit: 256 * unit.MB, CPULimit: 0.5}).Validate())
+}
+
+// The volume and the limits are stored as asked.
+func TestUpdateImageScanSettingsToEntity(t *testing.T) {
+	req := updateReq(ImageScanSettingsBaseReq{Enabled: true, Volume: &basedto.ObjectIDReq{ID: "vol1"},
+		CPULimit: 0.5, MemoryLimit: 768 * unit.MB})
+	assert.Empty(t, req.Validate())
+	cfg := req.ToEntity()
+	assert.Equal(t, "vol1", cfg.Volume.ID)
+	assert.Equal(t, 0.5, cfg.ScanCPULimit())
+	assert.Equal(t, 768*unit.MB, cfg.ScanMemoryLimit())
+	assert.Equal(t, []string{"vol1"}, cfg.GetRefObjectIDs().RefSettingIDs, "the volume cannot go while scans use it")
+	cfg.Enabled = false
+	assert.Empty(t, cfg.GetRefObjectIDs().RefSettingIDs, "switched off, it may")
 }

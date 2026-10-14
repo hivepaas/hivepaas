@@ -2,8 +2,7 @@ package imagescanserviceimpl
 
 import (
 	"context"
-
-	"github.com/moby/moby/api/types/swarm"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -12,37 +11,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 )
 
-// Status reads what runs. What cannot be read - a node list Docker does not
-// answer - is left out rather than failing the screen.
+// Status reads where scans run and what the last one used. What cannot be
+// read - a node Docker does not name - is left out rather than failing the
+// screen.
 func (s *service) Status(ctx context.Context, db database.IDB) (*imagescanservice.Status, error) {
-	status := &imagescanservice.Status{Image: trivyImage(), ScanResources: defaultScanResources()}
+	status := &imagescanservice.Status{Image: trivyImage()}
 	_, cfg, err := s.Settings(ctx, db)
 	if err != nil {
 		return nil, err
 	}
-	status.Enabled = cfg != nil && cfg.Enabled
-
-	server, err := s.systemAppService.LoadApp(ctx, db, base.HivepaasTrivyKey)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	runner, err := s.systemAppService.LoadApp(ctx, db, base.HivepaasTrivyRunnerKey)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if server != nil {
-		status.ServerAppID = server.ID
-		status.ServerRunning = len(s.runningNodes(ctx, server)) > 0
-	}
-	if runner != nil {
-		status.RunnerAppID = runner.ID
-		status.RunnerNodes = len(s.runningNodes(ctx, runner))
-		if res, err := s.systemAppService.ReadResources(ctx, runner); err == nil && res != nil {
-			status.ScanResources = *res
+	if cfg != nil {
+		status.Enabled = cfg.Enabled
+		if cfg.Volume.ID != "" {
+			if status.Volume, err = s.volumeStatus(ctx, db, cfg.Volume.ID); err != nil {
+				return nil, err
+			}
 		}
-	}
-	if nodes, err := s.dockerManager.NodeList(ctx); err == nil {
-		status.Nodes = len(nodes.Items)
 	}
 
 	latest, err := s.imageScanRepo.LatestScan(ctx, db)
@@ -52,28 +36,38 @@ func (s *service) Status(ctx context.Context, db database.IDB) (*imagescanservic
 	if latest != nil {
 		status.LastScanAt, status.DBUpdatedAt, status.TrivyVersion = latest.ScannedAt, latest.DBUpdatedAt,
 			latest.TrivyVersion
+		if latest.Status == base.ImageScanStatusFailed {
+			status.LastError = latest.Error
+		}
 	}
 	return status, nil
 }
 
-// runningNodes are the nodes an app's service has a task running on, by the
-// container each runs; none when it cannot be read.
-func (s *service) runningNodes(ctx context.Context, app *entity.App) map[string]string {
-	running := map[string]string{}
-	if app.ServiceID == "" {
-		return running
-	}
-	tasks, err := s.dockerManager.ServiceTaskList(ctx, app.ServiceID, []swarm.TaskState{swarm.TaskStateRunning})
+func (s *service) volumeStatus(ctx context.Context, db database.IDB, volumeID string) (
+	*imagescanservice.VolumeStatus, error) {
+	status := &imagescanservice.VolumeStatus{ID: volumeID}
+	setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(), base.SettingTypeClusterVolume,
+		volumeID, false)
 	if err != nil {
-		return running
-	}
-	for i := range tasks.Items {
-		task := &tasks.Items[i]
-		if task.Status.State != swarm.TaskStateRunning || task.Status.ContainerStatus == nil ||
-			task.Status.ContainerStatus.ContainerID == "" {
-			continue
+		if errors.Is(err, hperrors.ErrNotFound) {
+			status.Missing = true
+			return status, nil
 		}
-		running[task.NodeID] = task.Status.ContainerStatus.ContainerID
+		return nil, hperrors.Wrap(err)
 	}
-	return running
+	vol, err := setting.AsClusterVolume()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	status.Name, status.NodeID, status.NodeLabel = setting.Name, vol.NodeID, vol.NodeLabel
+	status.Shared = !vol.IsPinned()
+	if vol.NodeID != "" {
+		if node, err := s.dockerManager.NodeInspect(ctx, vol.NodeID); err == nil {
+			status.NodeName = node.Node.Description.Hostname
+			if node.Node.Spec.Name != "" {
+				status.NodeName = node.Node.Spec.Name
+			}
+		}
+	}
+	return status, nil
 }

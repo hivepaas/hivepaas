@@ -160,6 +160,27 @@ func (m *manager) ContainerInspectMulti(
 	return allResults, allErrors
 }
 
+type ContainerAttachOption func(*client.ContainerAttachOptions)
+
+// ContainerAttach attaches to a container's streams. Attached before the
+// container starts, it gets all of its output, whatever its logging driver -
+// one that keeps nothing included. The caller closes the connection.
+func (m *manager) ContainerAttach(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerAttachOption,
+) (*client.ContainerAttachResult, error) {
+	opts := client.ContainerAttachOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerAttach(ctx, containerID, opts)
+	if err != nil {
+		return nil, hperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
 type ContainerLogsOption func(*client.ContainerLogsOptions)
 
 func (m *manager) ContainerLogs(

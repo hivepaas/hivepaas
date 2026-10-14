@@ -15,7 +15,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/imagescanuc/imagescandto"
 )
@@ -24,14 +23,14 @@ const (
 	currentSettingType   = base.SettingTypeImageScan
 	imageScanSettingName = "Image scanning settings"
 	imageScanJobName     = "Image scan job"
-	// A daily scan that failed - the server fetching its DB - is run again
-	// once, a few minutes later.
+	// A daily scan that failed - a node that could not be reached - is run
+	// again once, a few minutes later.
 	imageScanJobMaxRetry   = 1
 	imageScanJobRetryDelay = timeutil.Duration(5 * time.Minute)
 )
 
-// UpdateImageScanSettings stores the configuration, makes the cluster match it
-// and schedules the daily scan by it.
+// UpdateImageScanSettings stores the configuration and schedules the daily scan
+// by it. Nothing runs between scans, so nothing else is made or removed.
 func (uc *UC) UpdateImageScanSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -40,7 +39,6 @@ func (uc *UC) UpdateImageScanSettings(
 	req.Type = currentSettingType
 	req.Auth = auth
 	updateData := &updateSettingData{NewSettings: req.ToEntity()}
-	var applied *imagescanservice.SettingApplyResp
 
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: imageScanSettingName,
@@ -49,48 +47,27 @@ func (uc *UC) UpdateImageScanSettings(
 			return uc.loadSettingData(ctx, db, req, updateData)
 		},
 		PrepareUpdate: func(
-			_ context.Context,
-			_ database.Tx,
+			ctx context.Context,
+			db database.Tx,
 			_ *settings.UpdateUniqueSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
+			if err := uc.imageScanService.Validate(ctx, db, updateData.NewSettings); err != nil {
+				return hperrors.Wrap(err)
+			}
 			return hperrors.Wrap(pData.Setting.SetData(updateData.NewSettings))
 		},
 		AfterPersisting: func(
 			ctx context.Context,
 			db database.Tx,
 			_ *settings.UpdateUniqueSettingData,
-			pData *settings.PersistingSettingData,
+			_ *settings.PersistingSettingData,
 		) error {
-			if err := uc.saveJob(ctx, db, updateData); err != nil {
-				return err
-			}
-			// Make the cluster match what was just saved. Apply is idempotent, so
-			// a failure here leaves a stored configuration the next save retries.
-			applyResp, applyErr := uc.imageScanService.Apply(ctx, db, &imagescanservice.SettingApplyReq{
-				Setting:       pData.Setting,
-				TriggerUserID: auth.UserID(),
-				ScanResources: req.ScanResources(),
-			})
-			applied = applyResp
-			return hperrors.Wrap(applyErr)
+			return uc.saveJob(ctx, db, updateData)
 		},
 	})
 	if err != nil {
-		// The records went with the transaction; what provisioning made in docker
-		// did not, and nothing else would take it down.
-		if applied != nil && applied.Cleanup != nil {
-			err = errors.Join(err, applied.Cleanup(context.WithoutCancel(ctx)))
-		}
 		return nil, hperrors.Wrap(err)
-	}
-
-	// A task can be picked up only once its row exists, which is once the
-	// transaction has committed.
-	if applied != nil && len(applied.Tasks) > 0 {
-		if err = uc.taskQueue.ScheduleTask(ctx, applied.Tasks...); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
 	}
 	return &imagescandto.UpdateImageScanSettingsResp{}, nil
 }
@@ -135,8 +112,6 @@ func (uc *UC) loadSettingData(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	// What the addon wrote is the server's, not the client's.
-	data.NewSettings.ServerAppID, data.NewSettings.RunnerAppID = current.ServerAppID, current.RunnerAppID
 	data.JobScheduleChanges = !current.Schedule.Equal(&data.NewSettings.Schedule)
 
 	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,

@@ -59,19 +59,24 @@ type Report struct {
 }
 
 // ParseReport reads a Trivy report into a scan of an image and its findings.
-// imageRef is the reference the image was asked for by, shown when the report
-// names no tag of its own.
-func ParseReport(data []byte, imageRef string, scannedAt time.Time) (*Report, error) {
+// imageID is the image's ID as the node running it gives it, which the scan is
+// kept by: read from its registry, the report names the config's digest
+// instead. Empty takes the report's. imageRef is the reference the image was
+// asked for by, shown when the report names no tag of its own.
+func ParseReport(data []byte, imageID, imageRef string, scannedAt time.Time) (*Report, error) {
 	var r trivyReport
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if r.Metadata.ImageID == "" {
+	if imageID == "" {
+		imageID = r.Metadata.ImageID
+	}
+	if imageID == "" {
 		return nil, hperrors.Wrap(hperrors.ErrInfraInternal).WithParam("Error", "the report names no image")
 	}
 
 	scan := &entity.ImageScan{
-		ImageID:      r.Metadata.ImageID,
+		ImageID:      imageID,
 		ImageRef:     imageRef,
 		Status:       base.ImageScanStatusDone,
 		TrivyVersion: r.Trivy.Version,
@@ -129,4 +134,40 @@ func severityOf(s string) base.VulnSeverity {
 		}
 	}
 	return base.VulnSeverityUnknown
+}
+
+// ScanOutput is what a scan's container prints: Trivy's exit code, its report,
+// and what `trivy version` says of the DBs it used - which a standalone report
+// does not.
+type ScanOutput struct {
+	ExitCode int             `json:"exitCode"`
+	Report   json.RawMessage `json:"report"`
+	Version  *struct {
+		VulnerabilityDB *struct {
+			UpdatedAt time.Time `json:"UpdatedAt"`
+		} `json:"VulnerabilityDB"`
+	} `json:"version"`
+}
+
+// ParseScanOutput reads what a scan's container printed.
+func ParseScanOutput(data []byte) (*ScanOutput, error) {
+	var out ScanOutput
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &out, nil
+}
+
+// DBUpdatedAt is when the vulnerability DB the scan used was built; zero when
+// the container could not say.
+func (out *ScanOutput) DBUpdatedAt() time.Time {
+	if out.Version == nil || out.Version.VulnerabilityDB == nil {
+		return time.Time{}
+	}
+	return out.Version.VulnerabilityDB.UpdatedAt
+}
+
+// HasReport says Trivy finished and printed its report.
+func (out *ScanOutput) HasReport() bool {
+	return out.ExitCode == 0 && len(out.Report) > 0 && string(out.Report) != "null"
 }

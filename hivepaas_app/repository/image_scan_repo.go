@@ -120,6 +120,7 @@ func (repo *imageScanRepo) ReplaceScan(ctx context.Context, db database.IDB, sca
 		Set("os_name = EXCLUDED.os_name").
 		Set("os_eosl = EXCLUDED.os_eosl").
 		Set("status = EXCLUDED.status").
+		Set("source = EXCLUDED.source").
 		Set("error = EXCLUDED.error").
 		Set("trivy_version = EXCLUDED.trivy_version").
 		Set("db_updated_at = EXCLUDED.db_updated_at").

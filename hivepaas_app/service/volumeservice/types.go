@@ -210,3 +210,10 @@ type AppStorageState struct {
 func (s *AppStorageState) HasData() bool {
 	return s != nil && s.Checked && s.Exists && !s.Empty
 }
+
+// VolumeMount is a volume's mount, with the volume it was built from.
+type VolumeMount struct {
+	Setting *entity.Setting
+	Volume  *entity.ClusterVolume
+	Mount   mount.Mount
+}

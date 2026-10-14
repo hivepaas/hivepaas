@@ -37,10 +37,6 @@ func (s *service) updateSystemApps(
 		{What: "victoria-logs", Key: base.HivepaasVictoriaLogsKey, TargetImage: args.TargetVersion.VictoriaLogsImage},
 		{What: "vlagent", Key: base.HivepaasVlagentKey, TargetImage: args.TargetVersion.VlagentImage},
 		{What: "registry", Key: base.HivepaasRegistryKey, TargetImage: args.TargetVersion.RegistryImage},
-		// The server before its runner: a runner asks a server of its own
-		// version or a newer one, never an older one.
-		{What: "trivy", Key: base.HivepaasTrivyKey, TargetImage: args.TargetVersion.TrivyImage},
-		{What: "trivy-runner", Key: base.HivepaasTrivyRunnerKey, TargetImage: args.TargetVersion.TrivyImage},
 	}
 	for _, step := range steps {
 		if err := s.updateSystemAppImage(ctx, db, data, step); err != nil {

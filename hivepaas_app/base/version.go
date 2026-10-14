@@ -110,8 +110,8 @@ type ReleaseInfo struct {
 	// The configuration HivePaaS writes for it is the configuration this version
 	// of zot accepts, so a bump is the trigger to re-check that.
 	RegistryImage string `json:"registryImage"`
-	// TrivyImage is what image scanning runs, when it is switched on: Trivy's
-	// server and the runner on every node, which must be one version.
+	// TrivyImage is what image scanning runs, when it is switched on: each
+	// scan's container, which the scan node's agent pulls when it lacks it.
 	TrivyImage string `json:"trivyImage,omitempty"`
 	// PlaceholderImage is what a new app runs until its first deployment: an
 	// image whose own command waits and stops on a signal, so the app is given

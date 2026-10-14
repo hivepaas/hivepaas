@@ -38,13 +38,15 @@ type GetImageScanSettingsResp struct {
 type ImageScanSettingsResp struct {
 	*settings.BaseSettingResp
 
-	Enabled          bool                               `json:"enabled"`
+	Enabled bool `json:"enabled"`
+	// Volume is the cluster volume Trivy keeps its data on.
+	Volume           *basedto.ObjectIDResp              `json:"volume,omitempty"`
 	DBRepository     string                             `json:"dbRepository"`
 	JavaDBRepository string                             `json:"javaDbRepository"`
 	Schedule         *ScheduleResp                      `json:"schedule"`
 	Notification     *basedto.BaseEventNotificationResp `json:"notification"`
-	// CPULimit and MemoryLimit are read off the runner's service, where they
-	// live. With no runner they are what a new one would get.
+	// CPULimit and MemoryLimit are what each scan's container runs under: the
+	// defaults where none were set.
 	CPULimit    float64       `json:"cpuLimit"`
 	MemoryLimit unit.DataSize `json:"memoryLimit"`
 
@@ -61,19 +63,31 @@ type ScheduleResp struct {
 	InitialTime time.Time         `json:"initialTime"`
 }
 
-// ScannerStatusResp is what runs: the server, the runner on the nodes, and
-// the DB of the last scan.
+// ScannerStatusResp is where scans run, and what the last one used.
 type ScannerStatusResp struct {
-	ServerAppID   string `json:"serverAppId,omitempty"`
-	RunnerAppID   string `json:"runnerAppId,omitempty"`
-	ServerRunning bool   `json:"serverRunning"`
-	// RunnerNodes is on how many of Nodes the runner runs.
-	RunnerNodes  int        `json:"runnerNodes"`
-	Nodes        int        `json:"nodes"`
-	Image        string     `json:"image"`
-	TrivyVersion string     `json:"trivyVersion,omitempty"`
-	DBUpdatedAt  *time.Time `json:"dbUpdatedAt,omitempty"`
-	LastScanAt   *time.Time `json:"lastScanAt,omitempty"`
+	// Volume is the chosen volume and where it has scans run; absent when none
+	// is chosen.
+	Volume       *ScanVolumeResp `json:"volume,omitempty"`
+	Image        string          `json:"image"`
+	TrivyVersion string          `json:"trivyVersion,omitempty"`
+	DBUpdatedAt  *time.Time      `json:"dbUpdatedAt,omitempty"`
+	LastScanAt   *time.Time      `json:"lastScanAt,omitempty"`
+	// LastError is the last scan's, when it failed.
+	LastError string `json:"lastError,omitempty"`
+}
+
+// ScanVolumeResp is the volume Trivy's data is on. A volume pinned to a node
+// has every scan run there; one pinned by a label, on a node carrying it; a
+// shared one, on the node running each image.
+type ScanVolumeResp struct {
+	ID   string `json:"id"`
+	Name string `json:"name,omitempty"`
+	// Missing says the volume is gone: no scan can run.
+	Missing   bool   `json:"missing,omitempty"`
+	NodeID    string `json:"nodeId,omitempty"`
+	NodeName  string `json:"nodeName,omitempty"`
+	NodeLabel string `json:"nodeLabel,omitempty"`
+	Shared    bool   `json:"shared,omitempty"`
 }
 
 func TransformImageScanSettings(
@@ -101,6 +115,10 @@ func TransformImageScanSettings(
 		}
 	}
 	resp.Enabled = cfg.Enabled
+	if cfg.Volume.ID != "" {
+		resp.Volume = &basedto.ObjectIDResp{ID: cfg.Volume.ID}
+	}
+	resp.CPULimit, resp.MemoryLimit = cfg.ScanCPULimit(), cfg.ScanMemoryLimit()
 	resp.DBRepository, resp.JavaDBRepository = cfg.DBRepository, cfg.JavaDBRepository
 	resp.Schedule = &ScheduleResp{Interval: cfg.Schedule.Interval, InitialTime: cfg.Schedule.InitialTime}
 	resp.Notification = basedto.TransformBaseEventNotification(cfg.Notification, refObjects)
@@ -109,18 +127,16 @@ func TransformImageScanSettings(
 	}
 
 	if status != nil {
-		resp.CPULimit = status.ScanResources.CPULimit
-		resp.MemoryLimit = unit.DataSize(status.ScanResources.MemoryLimit)
 		resp.ScannerStatus = &ScannerStatusResp{
-			ServerAppID:   status.ServerAppID,
-			RunnerAppID:   status.RunnerAppID,
-			ServerRunning: status.ServerRunning,
-			RunnerNodes:   status.RunnerNodes,
-			Nodes:         status.Nodes,
-			Image:         status.Image,
-			TrivyVersion:  status.TrivyVersion,
-			DBUpdatedAt:   timeOrNil(status.DBUpdatedAt),
-			LastScanAt:    timeOrNil(status.LastScanAt),
+			Image:        status.Image,
+			TrivyVersion: status.TrivyVersion,
+			DBUpdatedAt:  timeOrNil(status.DBUpdatedAt),
+			LastScanAt:   timeOrNil(status.LastScanAt),
+			LastError:    status.LastError,
+		}
+		if vol := status.Volume; vol != nil {
+			resp.ScannerStatus.Volume = &ScanVolumeResp{ID: vol.ID, Name: vol.Name, Missing: vol.Missing,
+				NodeID: vol.NodeID, NodeName: vol.NodeName, NodeLabel: vol.NodeLabel, Shared: vol.Shared}
 		}
 	}
 	return resp, nil

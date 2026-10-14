@@ -39,7 +39,7 @@ type systemAppsSync struct {
 }
 
 // sysSyncSystemApps brings the apps HivePaaS runs for itself - the registry,
-// the logging stack, image scanning - to their settings, and checks OBI on the nodes. Each
+// the logging stack - to their settings, and checks OBI on the nodes. Each
 // feature syncs in a transaction of its own, apart from the cleanup's: one that
 // fails is rolled back alone - with what it made in docker - and the other goes
 // on; and the settings a feature locks, as a save does, are held for its sync
@@ -72,7 +72,6 @@ func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *
 	}{
 		{"logging", s.syncLogging},
 		{"registry", s.syncRegistry},
-		{"image scanning", s.syncImageScan},
 	} {
 		synced, err := s.syncInOwnTransaction(ctx, data, feature.sync)
 		if err != nil {
@@ -156,14 +155,6 @@ func (s *service) syncRegistry(ctx context.Context, tx database.Tx) (*systemApps
 		synced.apps = []*entity.SystemAppSyncOutput{resp.App}
 	}
 	return synced, hperrors.Wrap(err)
-}
-
-func (s *service) syncImageScan(ctx context.Context, tx database.Tx) (*systemAppsSync, error) {
-	resp, err := s.imageScanService.Sync(ctx, tx)
-	if resp == nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &systemAppsSync{apps: resp.Apps, tasks: resp.Tasks, cleanup: resp.Cleanup}, hperrors.Wrap(err)
 }
 
 // auditRemovals records each app the sync removed - one the settings no longer

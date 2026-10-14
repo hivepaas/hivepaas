@@ -133,12 +133,19 @@ func (q *taskQueue) executeTask(
 		return rescheduleAt
 	}
 
-	// Post transaction event
-	if taskData != nil && taskData.OnPostTxFunc != nil {
-		taskData.OnPostTxFunc()
-	}
-
+	q.runPostTx(taskData)
 	return rescheduleAt
+}
+
+// runPostTx runs what an execution left for after its transaction. It runs on
+// the scheduler's goroutine, past the recover around the execution, where a
+// panic takes the whole process down with it: it is contained and logged.
+func (q *taskQueue) runPostTx(taskData *queue.TaskExecData) {
+	if taskData == nil || taskData.OnPostTxFunc == nil {
+		return
+	}
+	defer safego.RecoverWithLogger(q.logger, "task post-tx: "+string(taskData.Task.Type))
+	taskData.OnPostTxFunc()
 }
 
 // settleTask is where an execution leaves its task: canceled, whatever error

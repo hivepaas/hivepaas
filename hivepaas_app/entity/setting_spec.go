@@ -98,6 +98,20 @@ func (clusterSpecPolicy) Decide(setting *Setting) SpecDecision {
 
 func (clusterSpecPolicy) Strip(SettingData) {}
 
+// vulnerabilityIgnoreSpecPolicy exports an ignore as it is, who wrote it
+// included, unless it has expired: one past its ExpireAt sets nothing aside
+// any more.
+type vulnerabilityIgnoreSpecPolicy struct{}
+
+func (vulnerabilityIgnoreSpecPolicy) Decide(setting *Setting) SpecDecision {
+	if !setting.ExpireAt.IsZero() && !time.Now().Before(setting.ExpireAt) {
+		return SpecDecision{Reason: "expired: it sets nothing aside any more"}
+	}
+	return SpecDecision{Export: true}
+}
+
+func (vulnerabilityIgnoreSpecPolicy) Strip(SettingData) {}
+
 // appRoutingSpecPolicy clears the reset flag, which is a command rather than
 // configuration: importing Reset: true performs a reset.
 type appRoutingSpecPolicy struct{}
@@ -177,8 +191,7 @@ var (
 		reason: "a declared type with no parser and no rows"})
 	_ = registerSpecPolicy(base.SettingTypeImageScan, skipSpecPolicy{
 		reason: "image scanning is switched on where it runs, and fetches its DB there"})
-	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, skipSpecPolicy{
-		reason: "an ignore answers the scans of the installation it was written on"})
+	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, vulnerabilityIgnoreSpecPolicy{})
 
 	_ = registerSpecPolicy(base.SettingTypeClusterNetwork, clusterSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeClusterVolume, clusterSpecPolicy{})

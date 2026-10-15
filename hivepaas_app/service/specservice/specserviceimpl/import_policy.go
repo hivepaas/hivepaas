@@ -63,6 +63,8 @@ var importPolicies = map[base.SettingType]importPolicy{
 	base.SettingTypeSSLProvider:     {},
 	base.SettingTypeScript:          {},
 	base.SettingTypeSecret:          {},
+	// An ignore applies when results are read: its row is all there is.
+	base.SettingTypeVulnerabilityIgnore: {},
 
 	base.SettingTypeSSLCert: {afterCommit: func(s *service, settings []*entity.Setting) error {
 		// Traefik reads certificates from files, not from the database.
@@ -82,14 +84,13 @@ var importPolicies = map[base.SettingType]importPolicy{
 	base.SettingTypeBackupRepo: {
 		skip: "writing it initializes the repository, which import does not do yet",
 	},
-	base.SettingTypeLogging:             {skip: reasonRunsAService},
-	base.SettingTypeMCP:                 {skip: reasonLetsAIClientsIn},
-	base.SettingTypeRegistry:            {skip: reasonRunsAService},
-	base.SettingTypeImageScan:           {skip: reasonNeverExported},
-	base.SettingTypeVulnerabilityIgnore: {skip: reasonNeverExported},
-	base.SettingTypeTraefikConfig:       {skip: reasonRunsAService},
-	base.SettingTypeTraefikService:      {skip: reasonRunsAService},
-	base.SettingTypeHivePaaSService:     {skip: reasonRunsAService},
+	base.SettingTypeLogging:         {skip: reasonRunsAService},
+	base.SettingTypeMCP:             {skip: reasonLetsAIClientsIn},
+	base.SettingTypeRegistry:        {skip: reasonRunsAService},
+	base.SettingTypeImageScan:       {skip: reasonNeverExported},
+	base.SettingTypeTraefikConfig:   {skip: reasonRunsAService},
+	base.SettingTypeTraefikService:  {skip: reasonRunsAService},
+	base.SettingTypeHivePaaSService: {skip: reasonRunsAService},
 	base.SettingTypeClusterNetwork: {
 		skip: "a network is created with an env's first app, under this installation's name",
 	},

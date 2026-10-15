@@ -2,6 +2,7 @@ package entity
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -106,4 +107,19 @@ func TestStripKeepsSystemSpecificValues(t *testing.T) {
 	volume := &ClusterVolume{Managed: true, NodeID: "node-1", Driver: "local"}
 	SpecPolicyFor(base.SettingTypeClusterVolume).Strip(volume)
 	assert.Equal(t, "node-1", volume.NodeID, "the node id is valid on the same installation")
+}
+
+// An ignore goes with the spec of its scope, who wrote it included; one that
+// expired sets nothing aside and stays behind.
+func TestSpecExportDecisionOfAVulnerabilityIgnore(t *testing.T) {
+	ignore := &Setting{Type: base.SettingTypeVulnerabilityIgnore, Scope: base.ObjectScopeProject}
+	assert.True(t, SpecExportDecision(ignore).Export)
+
+	ignore.ExpireAt = time.Now().Add(time.Hour)
+	assert.True(t, SpecExportDecision(ignore).Export, "not expired yet")
+
+	ignore.ExpireAt = time.Now().Add(-time.Hour)
+	d := SpecExportDecision(ignore)
+	assert.False(t, d.Export)
+	assert.Contains(t, d.Reason, "expired")
 }

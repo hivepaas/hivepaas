@@ -23,3 +23,4 @@ export * from "./copy-id-menu-button";
 export * from "./cron-timezone-note";
 export * from "./browser-timezone-note";
 export * from "./error-boundary";
+export * from "./beta-badge";

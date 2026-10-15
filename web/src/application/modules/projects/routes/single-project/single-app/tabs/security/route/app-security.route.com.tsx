@@ -9,7 +9,7 @@ import invariant from "tiny-invariant";
 import type { VulnFinding } from "~/projects/api/services";
 import { AppImageScanCommands, AppImageScanQueries } from "~/projects/data";
 
-import { AppLoader } from "@application/shared/components";
+import { AppLoader, BetaBadge } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
@@ -76,6 +76,7 @@ export function AppSecurityRoute() {
                     <h3 className="flex items-center gap-2 text-base font-semibold">
                         <ShieldCheck className="size-4.5 text-muted-foreground" />
                         Image vulnerabilities
+                        <BetaBadge />
                     </h3>
                     <span className="text-[13px] text-muted-foreground">
                         {scanning

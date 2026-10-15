@@ -1,7 +1,7 @@
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Navigate, Outlet, type RouteObject, useParams } from "react-router";
 
-import { AppNavigate } from "@application/shared/components";
+import { AppNavigate, BetaBadge } from "@application/shared/components";
 import { ModuleTitle } from "@application/shared/components/module-title";
 import { ConditionalModule } from "@application/shared/permissions";
 
@@ -295,7 +295,10 @@ export const systemSettingsRouter: RouteObject = {
                 return {
                     element: (
                         <ConditionalModule id={MODULE_IDS.System}>
-                            <ModuleTitle title="Image Scanning">
+                            <ModuleTitle
+                                title="Image Scanning"
+                                badge={<BetaBadge />}
+                            >
                                 <ImageScanningLayout>
                                     <Outlet />
                                 </ImageScanningLayout>

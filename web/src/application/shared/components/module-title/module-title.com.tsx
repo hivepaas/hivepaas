@@ -1,9 +1,9 @@
-import React, { type PropsWithChildren } from "react";
+import React, { type PropsWithChildren, type ReactNode } from "react";
 
 import { moduleHeaderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 
-export function ModuleTitle({ title, children }: Props) {
+export function ModuleTitle({ title, badge, children }: Props) {
     return (
         <div className="flex flex-col gap-2 sm:gap-4">
             <div className={cn(moduleHeaderBox)}>
@@ -16,6 +16,7 @@ export function ModuleTitle({ title, children }: Props) {
                         <span className="text-amber-500/50 dark:text-amber-400/50 font-mono font-normal select-none">
                             /
                         </span>
+                        {badge}
                     </h1>
                 </div>
             </div>
@@ -26,4 +27,6 @@ export function ModuleTitle({ title, children }: Props) {
 
 type Props = PropsWithChildren<{
     title: string;
+    /** Shown after the title: a BetaBadge for a feature being tried out. */
+    badge?: ReactNode;
 }>;

@@ -85,7 +85,9 @@ func (s *service) ScanApp(
 	}
 	volume, err := s.loadVolume(ctx, s.db, cfg)
 	if err != nil {
-		return nil, err
+		// No scan can run - the volume is gone, or no node carries its label:
+		// the app says why, keeping what it ran last.
+		return s.scanSubject(ctx, &subject{id: req.App.ID, imagesErr: err}, &imageScanReq{cfg: cfg, log: log})
 	}
 	ignores, err := s.ignoresOf(ctx, s.db, req.App)
 	if err != nil {

@@ -88,6 +88,9 @@ type ScanVolumeResp struct {
 	NodeName  string `json:"nodeName,omitempty"`
 	NodeLabel string `json:"nodeLabel,omitempty"`
 	Shared    bool   `json:"shared,omitempty"`
+	// Problem is why no scan can run on the volume now: no ready node carries
+	// its label.
+	Problem string `json:"problem,omitempty"`
 }
 
 func TransformImageScanSettings(
@@ -136,7 +139,8 @@ func TransformImageScanSettings(
 		}
 		if vol := status.Volume; vol != nil {
 			resp.ScannerStatus.Volume = &ScanVolumeResp{ID: vol.ID, Name: vol.Name, Missing: vol.Missing,
-				NodeID: vol.NodeID, NodeName: vol.NodeName, NodeLabel: vol.NodeLabel, Shared: vol.Shared}
+				NodeID: vol.NodeID, NodeName: vol.NodeName, NodeLabel: vol.NodeLabel, Shared: vol.Shared,
+				Problem: vol.Problem}
 		}
 	}
 	return resp, nil

@@ -3,6 +3,7 @@ package imagescanserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -67,6 +68,12 @@ func (s *service) volumeStatus(ctx context.Context, db database.IDB, volumeID st
 	}
 	status.Name, status.NodeID, status.NodeLabel = setting.Name, vol.NodeID, vol.NodeLabel
 	status.Shared = !vol.IsPinned()
+	if vol.NodeID == "" && vol.NodeLabel != "" {
+		// What cannot be read leaves the screen as it is, as a node's name does.
+		if nodes, err := s.agentService.NodeIDsWithLabel(ctx, vol.NodeLabel); err == nil && len(nodes) == 0 {
+			status.Problem = fmt.Sprintf("No ready node carries the label %q: no scan can run.", vol.NodeLabel)
+		}
+	}
 	if vol.NodeID != "" {
 		if node, err := s.dockerManager.NodeInspect(ctx, vol.NodeID); err == nil {
 			status.NodeName = node.Node.Description.Hostname

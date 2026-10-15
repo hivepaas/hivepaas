@@ -69304,6 +69304,10 @@
           "nodeName" : {
             "type" : "string"
           },
+          "problem" : {
+            "description" : "Problem is why no scan can run on the volume now: no ready node carries\nits label.",
+            "type" : "string"
+          },
           "shared" : {
             "type" : "boolean"
           }

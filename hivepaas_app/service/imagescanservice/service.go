@@ -84,6 +84,9 @@ type VolumeStatus struct {
 	// Shared says every node reaches the volume: each scan runs on the node
 	// running its image.
 	Shared bool
+	// Problem is why no scan can run on the volume now: no ready node carries
+	// its label.
+	Problem string
 }
 
 type RecordScanReq struct {

@@ -64,8 +64,11 @@ func (s *service) RunDaily(
 		}
 		_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("--- %s / %s / %s", app.Project.Name,
 			app.ProjectEnv.Name, app.Name), tasklog.TsNow))
-		scanErr := volumeErr
-		if scanErr == nil {
+		var scanErr error
+		if volumeErr != nil {
+			// The app says why it was not scanned, as a scan of its own would.
+			_, scanErr = s.scanSubject(ctx, &subject{id: app.ID, imagesErr: volumeErr}, with)
+		} else {
 			_, scanErr = s.scanApp(ctx, app, imagescanservice.IgnoresOf(app, ignoreSettings), with)
 		}
 		if scanErr != nil {

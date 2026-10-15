@@ -38,16 +38,7 @@ func TestAFlowAgainstARealServer(t *testing.T) {
 		image = "crccheck/hello-world:latest"
 	}
 
-	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "hivepaas-flow-test", Version: "1"}, nil)
-	session, err := client.Connect(context.Background(), &mcpsdk.StreamableClientTransport{
-		Endpoint:   os.Getenv("HP_TEST_MCP_URL"),
-		HTTPClient: &http.Client{Transport: bearerTransport{token: os.Getenv("HP_TEST_MCP_KEY")}},
-	}, nil)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	defer func() { _ = session.Close() }()
-	f := &flow{t: t, session: session}
+	f := newFlow(t)
 
 	name := fmt.Sprintf("mcp-flow-%d", time.Now().Unix())
 	inEnv := map[string]any{"project": place[0], "env": place[1]}
@@ -99,6 +90,22 @@ type flow struct {
 	session *mcpsdk.ClientSession
 }
 
+// newFlow connects to the server HP_TEST_MCP_URL names, with HP_TEST_MCP_KEY;
+// the session closes when the test ends.
+func newFlow(t *testing.T) *flow {
+	t.Helper()
+	client := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "hivepaas-flow-test", Version: "1"}, nil)
+	session, err := client.Connect(context.Background(), &mcpsdk.StreamableClientTransport{
+		Endpoint:   os.Getenv("HP_TEST_MCP_URL"),
+		HTTPClient: &http.Client{Transport: bearerTransport{token: os.Getenv("HP_TEST_MCP_KEY")}},
+	}, nil)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	t.Cleanup(func() { _ = session.Close() })
+	return &flow{t: t, session: session}
+}
+
 func (f *flow) call(tool string, args map[string]any) (string, bool) {
 	f.t.Helper()
 	res, err := f.session.CallTool(context.Background(), &mcpsdk.CallToolParams{Name: tool, Arguments: args})
@@ -125,8 +132,14 @@ func (f *flow) planAndApply(tool string, args map[string]any) json.RawMessage {
 	if err := json.Unmarshal([]byte(f.read(tool, args)), &plan); err != nil || plan.PlanToken == "" {
 		f.t.Fatalf("%s: no plan to apply: %v %s", tool, err, plan.Plan)
 	}
+	return f.apply(tool, plan.PlanToken)
+}
+
+// apply applies a plan's token, and answers what the endpoint did.
+func (f *flow) apply(tool, token string) json.RawMessage {
+	f.t.Helper()
 	var applied applyAnswer
-	raw := f.read("apply_plan", map[string]any{"planToken": plan.PlanToken})
+	raw := f.read("apply_plan", map[string]any{"planToken": token})
 	if err := json.Unmarshal([]byte(raw), &applied); err != nil {
 		f.t.Fatalf("apply_plan of %s: %v", tool, err)
 	}
@@ -138,7 +151,13 @@ func (f *flow) planAndApply(tool string, args map[string]any) json.RawMessage {
 // waitFor reads a deployment or a task until its status is one of final.
 func (f *flow) waitFor(tool string, args map[string]any, final ...string) string {
 	f.t.Helper()
-	deadline := time.Now().Add(4 * time.Minute)
+	return f.waitForWithin(4*time.Minute, tool, args, final...)
+}
+
+// waitForWithin is waitFor, waiting up to within.
+func (f *flow) waitForWithin(within time.Duration, tool string, args map[string]any, final ...string) string {
+	f.t.Helper()
+	deadline := time.Now().Add(within)
 	for {
 		var answer struct {
 			Data struct {
@@ -152,7 +171,7 @@ func (f *flow) waitFor(tool string, args map[string]any, final ...string) string
 			}
 		}
 		if time.Now().After(deadline) {
-			f.t.Fatalf("%s: still %q after 4m", tool, answer.Data.Status)
+			f.t.Fatalf("%s: still %q after %s", tool, answer.Data.Status, within)
 		}
 		time.Sleep(3 * time.Second)
 	}

@@ -37,8 +37,12 @@ export default defineConfig({
     testDir: "tests",
     fullyParallel: true,
     // The dev server builds the pages as they are opened: more at once than two,
-    // and a page outwaits the assertion that it loaded.
-    workers: isDevServer(env.baseURL) ? 2 : undefined,
+    // and a page outwaits the assertion that it loaded. Levels 1 and 2 deploy
+    // and build on one installation - the throwaway's backend and swarm all in
+    // one dind - which half of a big machine's cores outrun: at 16 workers its
+    // lists answered in 3-6 seconds and its builds missed their 3 minutes. Two,
+    // as many as CI's runner gives; --workers still says otherwise.
+    workers: isDevServer(env.baseURL) || !levelZeroOnly ? 2 : undefined,
     forbidOnly: !!process.env["CI"],
     retries: process.env["CI"] ? 1 : 0,
     reporter: [["list"], ["html", { open: "never" }]],

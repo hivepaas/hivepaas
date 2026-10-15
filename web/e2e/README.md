@@ -24,6 +24,10 @@ HP_E2E_BASE_URL=http://localhost:10100 yarn test
 yarn env:down
 ```
 
+Two tests run at a time there, as on CI's runner: the whole installation is one
+dind, and more at once - half a big machine's cores - slows it past what the
+tests wait for. `--workers` overrides it.
+
 Without `HP_E2E_BASE_URL` the tests go to the local backend, and there levels 1
 and 2 are left out - the run says so: they never make, deploy or remove
 anything on a developer's own installation. The dashboard's dev server,

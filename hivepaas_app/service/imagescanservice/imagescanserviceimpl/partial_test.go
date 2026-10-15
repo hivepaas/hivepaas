@@ -122,3 +122,19 @@ func TestAWhollyReadAppRunsWhatWasRead(t *testing.T) {
 	assert.Equal(t, []string{imageA}, repo.written.ImageIDs)
 	assert.Empty(t, repo.written.Error)
 }
+
+// A scan is started only with the time to end: its task's deadline would cut
+// Trivy mid-run once the wait for the volume had eaten the time.
+func TestAScanIsStartedOnlyWithTheTimeToEnd(t *testing.T) {
+	assert.NoError(t, timeLeftFor(context.Background()), "no deadline")
+
+	ctx, cancel := context.WithTimeout(context.Background(), callTimeout+time.Minute)
+	defer cancel()
+	assert.NoError(t, timeLeftFor(ctx))
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	err := timeLeftFor(ctx)
+	assert.ErrorIs(t, err, hperrors.ErrImageScanNotReady)
+	assert.Contains(t, hperrors.GetErrorDetail(err, ""), "scanned on the next run")
+}

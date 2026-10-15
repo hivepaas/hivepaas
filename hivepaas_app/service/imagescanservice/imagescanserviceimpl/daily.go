@@ -51,6 +51,11 @@ func (s *service) RunDaily(
 		return nil, hperrors.Wrap(err)
 	}
 
+	// The volume is read once for every app and part, as the settings and the
+	// ignores are; one that cannot be read leaves each of them not scanned.
+	volume, volumeErr := s.loadVolume(ctx, s.db, cfg)
+	with := &imageScanReq{cfg: cfg, volume: volume, log: log}
+
 	var news []*notificationservice.ImageScanApp
 	failed := 0
 	for _, app := range apps {
@@ -59,10 +64,14 @@ func (s *service) RunDaily(
 		}
 		_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("--- %s / %s / %s", app.Project.Name,
 			app.ProjectEnv.Name, app.Name), tasklog.TsNow))
-		if _, err = s.ScanApp(ctx, &imagescanservice.ScanAppReq{App: app, Trigger: base.ImageScanTriggerDaily,
-			LogStore: log}); err != nil {
+		scanErr := volumeErr
+		if scanErr == nil {
+			_, scanErr = s.scanApp(ctx, app, imagescanservice.IgnoresOf(app, ignoreSettings), with)
+		}
+		if scanErr != nil {
 			failed++
-			_ = log.Add(ctx, tasklog.NewWarnFrame("Not scanned: "+hperrors.GetErrorDetail(err, ""), tasklog.TsNow))
+			_ = log.Add(ctx, tasklog.NewWarnFrame("Not scanned: "+hperrors.GetErrorDetail(scanErr, ""),
+				tasklog.TsNow))
 		}
 		item, err := s.reportNew(ctx, app, imagescanservice.IgnoresOf(app, ignoreSettings))
 		if err != nil {
@@ -75,7 +84,7 @@ func (s *service) RunDaily(
 
 	// HivePaaS's own parts: they are fixed by updating HivePaaS, so what they
 	// run is shown, never notified.
-	parts, partsFailed, err := s.runDailyComponents(ctx, cfg, ignoreSettings, log)
+	parts, partsFailed, err := s.runDailyComponents(ctx, ignoreSettings, with, volumeErr)
 	if err != nil {
 		return nil, err
 	}
@@ -107,15 +116,14 @@ func (s *service) RunDaily(
 
 // runDailyComponents scans HivePaaS's parts for the daily run. A volume that
 // cannot be read fails them alone: the apps had their own say.
-func (s *service) runDailyComponents(ctx context.Context, cfg *entity.ImageScanSettings,
-	ignoreSettings []*entity.Setting, log *tasklog.Store) (scanned, failed int, err error) {
-	volume, err := s.loadVolume(ctx, s.db, cfg)
-	if err != nil {
-		_ = log.Add(ctx, tasklog.NewWarnFrame("HivePaaS's parts not scanned: "+hperrors.GetErrorDetail(err, ""),
-			tasklog.TsNow))
+func (s *service) runDailyComponents(ctx context.Context, ignoreSettings []*entity.Setting, with *imageScanReq,
+	volumeErr error) (scanned, failed int, err error) {
+	if volumeErr != nil {
+		_ = with.log.Add(ctx, tasklog.NewWarnFrame("HivePaaS's parts not scanned: "+
+			hperrors.GetErrorDetail(volumeErr, ""), tasklog.TsNow))
 		return 0, 0, nil
 	}
-	return s.scanComponents(ctx, ignoreSettings, &imageScanReq{cfg: cfg, volume: volume, log: log})
+	return s.scanComponents(ctx, ignoreSettings, with)
 }
 
 // scannedApps selects the apps scanned every day: those with a service, of

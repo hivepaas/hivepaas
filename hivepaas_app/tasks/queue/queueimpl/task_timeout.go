@@ -27,7 +27,7 @@ const (
 	timeoutSSLObtain      = 15 * time.Minute
 
 	timeoutSettingMountRefresh = 15 * time.Minute
-	timeoutImageScan           = 15 * time.Minute
+	timeoutImageScan           = 30 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -58,7 +58,10 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// restart that converges on its own: a fan-out, as the labels sweep is.
 	base.TaskTypeSettingMountRefresh: timeoutSettingMountRefresh,
 	// One scan per image the app runs, each at most ten minutes in Trivy and
-	// most under twenty seconds: an app runs one image on a platform.
+	// most under twenty seconds: an app runs one image on a platform. A scan
+	// may first wait its own length for another on the volume - the daily
+	// one, a cold Java DB - so one wait and one scan fit, with room; a scan
+	// with no time left to end is not started (imagescanserviceimpl's runLocked).
 	base.TaskTypeImageScan: timeoutImageScan,
 
 	// NOTE: the types below keep the long ceiling on purpose.

@@ -83,18 +83,25 @@ func (s *service) ScanApp(
 	if err != nil {
 		return nil, err
 	}
-	images, imagesErr := s.appImages(ctx, req.App, log)
 	ignores, err := s.ignoresOf(ctx, s.db, req.App)
 	if err != nil {
 		return nil, err
 	}
-	auth, err := s.pullAuth(ctx, req.App)
+	return s.scanApp(ctx, req.App, ignores, &imageScanReq{cfg: cfg, volume: volume, force: req.Force, log: log})
+}
+
+// scanApp scans the images an app runs with the settings, the volume and the
+// ignores its caller read: the daily scan reads them once for every app.
+func (s *service) scanApp(ctx context.Context, app *entity.App, ignores []*imagescanservice.Ignore,
+	with *imageScanReq) (*entity.TaskImageScanOutput, error) {
+	images, imagesErr := s.appImages(ctx, app, with.log)
+	auth, err := s.pullAuth(ctx, app)
 	if err != nil {
-		_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's registry credentials could not be read, "+
+		_ = with.log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's registry credentials could not be read, "+
 			"an image read from its registry is read without: %s", hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
 	}
-	return s.scanSubject(ctx, &subject{id: req.App.ID, images: images, imagesErr: imagesErr, ignores: ignores,
-		auth: auth}, &imageScanReq{cfg: cfg, volume: volume, force: req.Force, log: log})
+	return s.scanSubject(ctx, &subject{id: app.ID, images: images, imagesErr: imagesErr, ignores: ignores,
+		auth: auth}, with)
 }
 
 // subject is what a scan is of: an app, or a part of HivePaaS.
@@ -285,6 +292,9 @@ func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode st
 	var resp *imagescanrun.RunResp
 	var runErr error
 	lockErr := s.redisLock.Do(ctx, volume.lockKey(scanNode), lockExpiry, lockTries, lockRetryDelay, func() {
+		if runErr = timeLeftFor(ctx); runErr != nil {
+			return
+		}
 		callCtx, cancel := context.WithTimeout(ctx, callTimeout)
 		defer cancel()
 		resp, runErr = s.scanOn(callCtx, scanNode, runReq)
@@ -294,6 +304,23 @@ func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode st
 			WithExtraDetail("Another scan on the volume did not end in time: %v", lockErr)
 	}
 	return resp, runErr
+}
+
+// timeLeftFor says whether a scan has the time to end before ctx's deadline.
+// One that has not is not started - its task's deadline would cut Trivy mid-
+// run, after the wait for the volume had eaten the time - but left to the
+// next run, which a failed task is.
+func timeLeftFor(ctx context.Context) error {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return nil
+	}
+	if left := time.Until(deadline); left < callTimeout {
+		return hperrors.Wrap(hperrors.ErrImageScanNotReady).WithExtraDetail(
+			"%v is left of the task, and a scan may take %v: it is scanned on the next run.",
+			left.Truncate(time.Second), callTimeout)
+	}
+	return nil
 }
 
 // scanOn runs a scan on a node: in this process on its own, through the node's

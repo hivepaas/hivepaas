@@ -28,6 +28,8 @@ message ImageScanRunReq {
   int64 nano_cpus = 11;
   int64 memory_bytes = 12;
   int64 timeout_seconds = 13;
+  // Empty for a scan's report; cyclonedx for the image's SBOM.
+  string format = 14;
 }
 
 message ImageScanRunResp {

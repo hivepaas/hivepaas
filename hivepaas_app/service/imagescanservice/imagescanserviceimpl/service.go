@@ -49,6 +49,7 @@ type service struct {
 	nodeExecService     nodeexecservice.Service
 	notificationService notificationservice.Service
 	registryAuthService registryauthservice.Service
+	systemAppService    systemappservice.Service
 	volumeService       volumeservice.Service
 
 	dockerManager docker.Manager
@@ -73,6 +74,7 @@ func New(
 	nodeExecService nodeexecservice.Service,
 	notificationService notificationservice.Service,
 	registryAuthService registryauthservice.Service,
+	systemAppService systemappservice.Service,
 	volumeService volumeservice.Service,
 	dockerManager docker.Manager,
 	redisLock rediscache.Lock,
@@ -88,6 +90,7 @@ func New(
 		nodeExecService:     nodeExecService,
 		notificationService: notificationService,
 		registryAuthService: registryAuthService,
+		systemAppService:    systemAppService,
 		volumeService:       volumeService,
 		dockerManager:       dockerManager,
 		redisLock:           redisLock,

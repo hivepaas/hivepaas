@@ -15,26 +15,28 @@ const javaDBMaxAgeDays = 7
 // Script is what the scan's container runs: Trivy on the image, then trivy
 // version, for the DB's date a standalone report does not carry, and both in
 // one JSON object on the standard output - imagescanservice.ScanOutput. It
-// exits with Trivy's code.
+// exits with Trivy's code. An SBOM is the image's packages alone: no scanner,
+// so no DB.
 func Script(req *RunReq, source base.ImageScanSource, insecure bool) string {
 	cacheDir := executil.ArgQuote(req.CacheDir)
 	args := []string{
 		"trivy", "image",
 		"--cache-dir", cacheDir,
-		"--scanners", "vuln",
-		"--list-all-pkgs=false",
 		"--disable-telemetry",
 		"--skip-version-check",
 		"--no-progress",
-		"--format", "json",
 		"--timeout", req.Timeout.String(),
-		"$skip",
 	}
-	if req.DBRepository != "" {
-		args = append(args, "--db-repository", executil.ArgQuote(req.DBRepository))
-	}
-	if req.JavaDBRepository != "" {
-		args = append(args, "--java-db-repository", executil.ArgQuote(req.JavaDBRepository))
+	if req.Format == FormatCycloneDX {
+		args = append(args, "--format", "cyclonedx")
+	} else {
+		args = append(args, "--scanners", "vuln", "--list-all-pkgs=false", "--format", "json", "$skip")
+		if req.DBRepository != "" {
+			args = append(args, "--db-repository", executil.ArgQuote(req.DBRepository))
+		}
+		if req.JavaDBRepository != "" {
+			args = append(args, "--java-db-repository", executil.ArgQuote(req.JavaDBRepository))
+		}
 	}
 	if source == base.ImageScanSourceNode {
 		args = append(args, "--image-src", "docker", req.ImageID)

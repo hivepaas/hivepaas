@@ -10146,6 +10146,55 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/image-scan" : {
+      "get" : {
+        "description" : "The project's scanned apps, each with its images and their counts after the ignores of its\nscopes, the worst first: by fixable CRITICAL, then fixable HIGH. Only the envs and the apps the\ncaller may read are listed. enabled says whether image scanning is on.",
+        "operationId" : "getProjectImageScan",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appimagescandto.GetProjectImageScanResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what the images of a project's apps carry",
+        "tags" : [ "Projects" ]
+      }
+    },
     "/projects/{projectID}/key-auth" : {
       "get" : {
         "description" : "Lists key auth settings",
@@ -21006,6 +21055,80 @@
           }
         },
         "summary" : "Scans an app's images now",
+        "tags" : [ "Apps" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/image-scan/sbom" : {
+      "get" : {
+        "description" : "The image's packages as CycloneDX JSON, read as a scan reads the image - on the same node,\nwith the same volume - and not kept: a few seconds once the image was scanned. Only an image\nthe app's tasks run now.",
+        "operationId" : "getAppImageSBOM",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "the image's ID, as the app's Security tab lists it",
+          "in" : "query",
+          "name" : "imageId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/vnd.cyclonedx+json" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/vnd.cyclonedx+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/vnd.cyclonedx+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Downloads the SBOM of an image an app runs",
         "tags" : [ "Apps" ]
       }
     },
@@ -48987,6 +49110,95 @@
         "tags" : [ "System settings" ]
       }
     },
+    "/system/settings/image-scan/hivepaas" : {
+      "get" : {
+        "description" : "HivePaaS's parts the daily scan found running - the app, the agent, the database, Redis,\nTraefik, the registry, the logging backend and collector, OBI - each with its images and their\nfindings counted by severity, after the global ignores, in HivePaaS's order.",
+        "operationId" : "listSystemImageScanComponents",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.ListImageScanComponentsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what HivePaaS's own parts run and carry",
+        "tags" : [ "System settings" ]
+      }
+    },
+    "/system/settings/image-scan/hivepaas/{component}" : {
+      "get" : {
+        "description" : "The images the part ran when last scanned, its findings no global ignore sets aside, the worst\nfirst, and those one does, each with its ignore.",
+        "operationId" : "getSystemImageScanComponent",
+        "parameters" : [ {
+          "description" : "the part's key: app, agent, db, redis, traefik, registry, vlagent…",
+          "in" : "path",
+          "name" : "component",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/imagescandto.GetImageScanComponentResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what a part of HivePaaS runs and carries",
+        "tags" : [ "System settings" ]
+      }
+    },
     "/system/settings/logging" : {
       "get" : {
         "description" : "Gets logging settings",
@@ -54819,6 +55031,21 @@
         "required" : [ "fixable", "total" ],
         "type" : "object"
       },
+      "appimagescandto.EnvRefResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "key", "name" ],
+        "type" : "object"
+      },
       "appimagescandto.FindingResp" : {
         "properties" : {
           "fixedVersion" : {
@@ -54876,6 +55103,24 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "appimagescandto.GetProjectImageScanResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.ProjectImageScanDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appimagescandto.IgnoreRefResp" : {
         "properties" : {
           "expireAt" : {
@@ -54883,6 +55128,10 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "description" : "Inheritable says the apps of the scope's children have it too; a global\none that is not applies to HivePaaS's own parts alone.",
+            "type" : "boolean"
           },
           "package" : {
             "type" : "string"
@@ -54897,7 +55146,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "id", "reason", "scope" ],
+        "required" : [ "id", "inheritable", "reason", "scope" ],
         "type" : "object"
       },
       "appimagescandto.IgnoredFindingResp" : {
@@ -55002,6 +55251,22 @@
         "required" : [ "imageId", "imageRef", "osEosl", "scannedAt", "status", "summary", "updatedAt" ],
         "type" : "object"
       },
+      "appimagescandto.ProjectImageScanDataResp" : {
+        "properties" : {
+          "apps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.ScannedAppResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "enabled" ],
+        "type" : "object"
+      },
       "appimagescandto.ScanAppImagesDataResp" : {
         "properties" : {
           "task" : {
@@ -55044,6 +55309,49 @@
           }
         },
         "required" : [ "id", "status" ],
+        "type" : "object"
+      },
+      "appimagescandto.ScannedAppResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "nullable" : true
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "images" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.ImageResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "project" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "nullable" : true
+          },
+          "projectEnv" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.EnvRefResp"
+            } ],
+            "nullable" : true
+          },
+          "scannedAt" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "images", "project", "projectEnv", "scannedAt", "summary" ],
         "type" : "object"
       },
       "appimagescandto.SummaryResp" : {
@@ -68729,6 +69037,36 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "imagescandto.ComponentImageScanResp" : {
+        "properties" : {
+          "component" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ComponentRefResp"
+            } ],
+            "nullable" : true
+          },
+          "scan" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.AppImageScanResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "component", "scan" ],
+        "type" : "object"
+      },
+      "imagescandto.ComponentRefResp" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "key", "name" ],
+        "type" : "object"
+      },
       "imagescandto.ExecuteImageScanDataResp" : {
         "properties" : {
           "task" : {
@@ -68746,6 +69084,24 @@
           "data" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/imagescandto.ExecuteImageScanDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.GetImageScanComponentResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ComponentImageScanResp"
             } ],
             "nullable" : true
           },
@@ -68777,47 +69133,17 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "imagescandto.ImageScanAppResp" : {
+      "imagescandto.ImageScanComponentsDataResp" : {
         "properties" : {
-          "app" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
-            } ],
-            "nullable" : true
-          },
-          "error" : {
-            "type" : "string"
-          },
-          "images" : {
+          "components" : {
             "items" : {
-              "$ref" : "#/components/schemas/appimagescandto.ImageResp"
+              "$ref" : "#/components/schemas/imagescandto.ScannedComponentResp"
             },
             "nullable" : true,
             "type" : "array"
-          },
-          "project" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
-            } ],
-            "nullable" : true
-          },
-          "projectEnv" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
-            } ],
-            "nullable" : true
-          },
-          "scannedAt" : {
-            "type" : "string"
-          },
-          "summary" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
-            } ],
-            "nullable" : true
           }
         },
-        "required" : [ "app", "images", "project", "projectEnv", "scannedAt", "summary" ],
+        "required" : [ "components" ],
         "type" : "object"
       },
       "imagescandto.ImageScanSettingsResp" : {
@@ -68920,7 +69246,7 @@
         "properties" : {
           "data" : {
             "items" : {
-              "$ref" : "#/components/schemas/imagescandto.ImageScanAppResp"
+              "$ref" : "#/components/schemas/appimagescandto.ScannedAppResp"
             },
             "nullable" : true,
             "type" : "array"
@@ -68928,6 +69254,24 @@
           "meta" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/basedto.ListMeta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "imagescandto.ListImageScanComponentsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ImageScanComponentsDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
             } ],
             "nullable" : true
           }
@@ -68961,6 +69305,37 @@
           }
         },
         "required" : [ "id" ],
+        "type" : "object"
+      },
+      "imagescandto.ScannedComponentResp" : {
+        "properties" : {
+          "component" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/imagescandto.ComponentRefResp"
+            } ],
+            "nullable" : true
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "images" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appimagescandto.ImageResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "scannedAt" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appimagescandto.SummaryResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "component", "images", "scannedAt", "summary" ],
         "type" : "object"
       },
       "imagescandto.ScannerStatusResp" : {

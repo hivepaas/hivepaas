@@ -39,6 +39,7 @@ func ImageScanRun(
 		NanoCPUs:         req.GetNanoCpus(),
 		MemoryBytes:      req.GetMemoryBytes(),
 		Timeout:          time.Duration(req.GetTimeoutSeconds()) * time.Second,
+		Format:           req.GetFormat(),
 	})
 	if err != nil {
 		return nil, hperrors.ToGRPCError(err) //nolint:wrapcheck

@@ -117,6 +117,8 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		imageScanGroup.PUT("", systemSettingsHandler.UpdateImageScanSettings)
 		imageScanGroup.POST("/exec", systemSettingsHandler.ExecuteImageScan)
 		imageScanGroup.GET("/apps", systemSettingsHandler.ListImageScanApps)
+		imageScanGroup.GET("/hivepaas", systemSettingsHandler.ListImageScanComponents)
+		imageScanGroup.GET("/hivepaas/:component", systemSettingsHandler.GetImageScanComponent)
 	}
 
 	_ = s.registerHivePaaSRoutes(systemGroup)

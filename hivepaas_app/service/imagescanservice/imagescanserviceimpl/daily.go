@@ -73,18 +73,26 @@ func (s *service) RunDaily(
 		}
 	}
 
+	// HivePaaS's own parts: they are fixed by updating HivePaaS, so what they
+	// run is shown, never notified.
+	parts, partsFailed, err := s.runDailyComponents(ctx, cfg, ignoreSettings, log)
+	if err != nil {
+		return nil, err
+	}
+
 	deletedApps, deletedImages, err := s.imageScanRepo.DeleteGone(ctx, s.db,
 		timeutil.NowUTC().Add(-resultsKeptFor))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanned %d apps, %d not; removed the results of %d "+
-		"apps gone and %d images no app runs", len(apps)-failed, failed, deletedApps, deletedImages), tasklog.TsNow))
-	if len(apps) > 0 && failed == len(apps) {
+	_ = log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanned %d apps, %d not, and %d of HivePaaS's parts, %d "+
+		"not; removed the results of %d apps gone and %d images no app runs", len(apps)-failed, failed,
+		parts-partsFailed, partsFailed, deletedApps, deletedImages), tasklog.TsNow))
+	if total := len(apps) + parts; total > 0 && failed+partsFailed == total {
 		// Nothing scanned is the scanner's failure, not the apps': the job's own
 		// notification says so.
 		return &imagescanservice.DailyResp{}, hperrors.Wrap(hperrors.ErrImageScanFailed).
-			WithExtraDetail("No app could be scanned.")
+			WithExtraDetail("No image could be scanned.")
 	}
 
 	if len(news) > 0 {
@@ -95,6 +103,19 @@ func (s *service) RunDaily(
 		}
 	}
 	return resp, nil
+}
+
+// runDailyComponents scans HivePaaS's parts for the daily run. A volume that
+// cannot be read fails them alone: the apps had their own say.
+func (s *service) runDailyComponents(ctx context.Context, cfg *entity.ImageScanSettings,
+	ignoreSettings []*entity.Setting, log *tasklog.Store) (scanned, failed int, err error) {
+	volume, err := s.loadVolume(ctx, s.db, cfg)
+	if err != nil {
+		_ = log.Add(ctx, tasklog.NewWarnFrame("HivePaaS's parts not scanned: "+hperrors.GetErrorDetail(err, ""),
+			tasklog.TsNow))
+		return 0, 0, nil
+	}
+	return s.scanComponents(ctx, ignoreSettings, &imageScanReq{cfg: cfg, volume: volume, log: log})
 }
 
 // scannedApps selects the apps scanned every day: those with a service, of

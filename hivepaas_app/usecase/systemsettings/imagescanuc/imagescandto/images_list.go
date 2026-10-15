@@ -1,8 +1,6 @@
 package imagescandto
 
 import (
-	"time"
-
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -28,18 +26,6 @@ func (req *ListImageScanAppsReq) Validate() hperrors.ValidationErrors {
 }
 
 type ListImageScanAppsResp struct {
-	Meta *basedto.ListMeta   `json:"meta"`
-	Data []*ImageScanAppResp `json:"data"`
-}
-
-// ImageScanAppResp is an app and what its images carry, in counts. The apps
-// come the worst first: by fixable CRITICAL, then fixable HIGH.
-type ImageScanAppResp struct {
-	App        *basedto.NamedObjectResp     `json:"app"`
-	Project    *basedto.NamedObjectResp     `json:"project"`
-	ProjectEnv *basedto.NamedObjectResp     `json:"projectEnv"`
-	ScannedAt  time.Time                    `json:"scannedAt"`
-	Error      string                       `json:"error,omitempty"`
-	Summary    *appimagescandto.SummaryResp `json:"summary"`
-	Images     []*appimagescandto.ImageResp `json:"images"`
+	Meta *basedto.ListMeta                 `json:"meta"`
+	Data []*appimagescandto.ScannedAppResp `json:"data"`
 }

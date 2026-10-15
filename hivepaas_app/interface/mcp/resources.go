@@ -140,7 +140,9 @@ func addPrompts(s *mcpsdk.Server, a access) {
 			"failed, get_app_deployment_logs.\n" +
 			"3. get_app_logs with grep /error|exception|fatal|panic/ and duration 1h; then the last " +
 			"100 lines without grep, for what happened just before.\n" +
-			"4. If the cause is outside the app - a node down, memory - list_attention and list_nodes.\n\n" +
+			"4. If the cause is outside the app - a node down, memory - list_attention and list_nodes.\n" +
+			"5. If it is the image itself - old, or a package with a known flaw - get_app_vulnerabilities " +
+			"says what it carries and what fixes it.\n\n" +
 			"Then say what is wrong, quote the lines that show it, and what to change. " + debugEnding(a)), nil
 	})
 

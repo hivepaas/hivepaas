@@ -239,6 +239,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	{ // Image scan
 		appGroup.GET("/:appID/image-scan", appImageScanHandler.GetAppImageScan)
 		appGroup.POST("/:appID/image-scan", appImageScanHandler.ScanAppImages)
+		appGroup.GET("/:appID/image-scan/sbom", appImageScanHandler.GetAppImageSBOM)
 	}
 
 	{ // Terminal

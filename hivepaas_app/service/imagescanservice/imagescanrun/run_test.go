@@ -53,7 +53,7 @@ func TestScript(t *testing.T) {
 	script := Script(req, base.ImageScanSourceNode, false)
 	for _, part := range []string{
 		`find /data/hivepaas/scanning/trivy/java-db/metadata.json -mtime -7`, `skip=--skip-java-db-update`,
-		"trivy image --cache-dir /data/hivepaas/scanning/trivy --scanners vuln --list-all-pkgs=false",
+		"trivy image --cache-dir /data/hivepaas/scanning/trivy", "--scanners vuln --list-all-pkgs=false",
 		"--disable-telemetry", "--skip-version-check", "--no-progress", "--format json", "--timeout 10m0s",
 		"$skip", "--java-db-repository mirror.local:5000/aquasec/trivy-java-db:1",
 		"--image-src docker " + imageID + " > /tmp/report.json",
@@ -65,6 +65,13 @@ func TestScript(t *testing.T) {
 	}
 	assert.NotContains(t, script, "--platform")
 	assert.NotContains(t, script, "--db-repository ")
+
+	req.Format = FormatCycloneDX
+	script = Script(req, base.ImageScanSourceNode, false)
+	assert.Contains(t, script, "--format cyclonedx")
+	assert.NotContains(t, script, "--scanners", "an SBOM needs no DB")
+	assert.NotContains(t, script, "--java-db-repository")
+	req.Format = ""
 
 	req.RemoteRef, req.Platform = "registry.local:5000/shop/api@"+indexDigest, "linux/arm64/v8"
 	script = Script(req, base.ImageScanSourceRegistry, true)
@@ -80,6 +87,7 @@ func TestRunReqIsValidated(t *testing.T) {
 		func(r *RunReq) { r.RemoteRef, r.Platform = "alpine:3.10", "linux/amd64" },
 		func(r *RunReq) { r.RemoteRef, r.Platform = "alpine@"+indexDigest, "linux/amd64; id" },
 		func(r *RunReq) { r.Volume = mount.Mount{} },
+		func(r *RunReq) { r.Format = "spdx; id" },
 	} {
 		req := scanReq()
 		change(req)

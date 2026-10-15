@@ -30,6 +30,9 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	// Settings import
 	projectGroup.POST("/:projectID/settings-import", projectSettingsHandler.ImportSettings)
 
+	// What the images of the project's apps carry: its Security tab.
+	projectGroup.GET("/:projectID/image-scan", s.handlerRegistry.appImageScanHandler.GetProjectImageScan)
+
 	{ // Spec
 		specGroup := projectGroup.Group("/:projectID/spec")
 		specGroup.POST("/export", specHandler.ExportProjectSpec)

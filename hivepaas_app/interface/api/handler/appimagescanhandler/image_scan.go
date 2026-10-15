@@ -1,6 +1,7 @@
 package appimagescanhandler
 
 import (
+	"mime"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -83,4 +84,44 @@ func (h *Handler) ScanAppImages(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, resp)
+}
+
+// GetAppImageSBOM Downloads the SBOM of an image an app runs
+// @Summary Downloads the SBOM of an image an app runs
+// @Description The image's packages as CycloneDX JSON, read as a scan reads the image - on the same node,
+// @Description with the same volume - and not kept: a few seconds once the image was scanned. Only an image
+// @Description the app's tasks run now.
+// @Tags    Apps
+// @Produce application/vnd.cyclonedx+json
+// @Id      getAppImageSBOM
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   imageId query string true "the image's ID, as the app's Security tab lists it"
+// @Success 200 {file} binary
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/image-scan/sbom [get]
+func (h *Handler) GetAppImageSBOM(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appimagescandto.NewGetAppImageSBOMReq()
+	req.ProjectID, req.ProjectEnvID, req.AppID = projectID, projectEnvID, appID
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appImageScanUC.GetAppImageSBOM(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": resp.FileName}))
+	ctx.Data(http.StatusOK, "application/vnd.cyclonedx+json", resp.Content)
 }

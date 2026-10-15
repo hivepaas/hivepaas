@@ -159,3 +159,72 @@ func (h *Handler) imageScanAuth(ctx *gin.Context, action base.ActionType) (*base
 		ResourceType:    base.ResourceTypeImageScan,
 	})
 }
+
+// ListImageScanComponents Lists what HivePaaS's own parts run and carry
+// @Summary Lists what HivePaaS's own parts run and carry
+// @Description HivePaaS's parts the daily scan found running - the app, the agent, the database, Redis,
+// @Description Traefik, the registry, the logging backend and collector, OBI - each with its images and their
+// @Description findings counted by severity, after the global ignores, in HivePaaS's order.
+// @Tags    System settings
+// @Produce json
+// @Id      listSystemImageScanComponents
+// @Success 200 {object} imagescandto.ListImageScanComponentsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /system/settings/image-scan/hivepaas [get]
+func (h *Handler) ListImageScanComponents(ctx *gin.Context) {
+	auth, err := h.imageScanAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := imagescandto.NewListImageScanComponentsReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.ImageScanUC.ListImageScanComponents(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// GetImageScanComponent Gets what a part of HivePaaS runs and carries
+// @Summary Gets what a part of HivePaaS runs and carries
+// @Description The images the part ran when last scanned, its findings no global ignore sets aside, the worst
+// @Description first, and those one does, each with its ignore.
+// @Tags    System settings
+// @Produce json
+// @Id      getSystemImageScanComponent
+// @Param   component path string true "the part's key: app, agent, db, redis, traefik, registry, vlagent…"
+// @Success 200 {object} imagescandto.GetImageScanComponentResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /system/settings/image-scan/hivepaas/{component} [get]
+func (h *Handler) GetImageScanComponent(ctx *gin.Context) {
+	auth, err := h.imageScanAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := imagescandto.NewGetImageScanComponentReq()
+	req.Component = ctx.Param("component")
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.ImageScanUC.GetImageScanComponent(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

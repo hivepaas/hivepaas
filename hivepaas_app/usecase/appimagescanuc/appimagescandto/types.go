@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 )
@@ -86,6 +87,9 @@ type IgnoreRefResp struct {
 	Reason   string               `json:"reason"`
 	SetBy    string               `json:"setBy,omitempty"`
 	ExpireAt *time.Time           `json:"expireAt,omitempty"`
+	// Inheritable says the apps of the scope's children have it too; a global
+	// one that is not applies to HivePaaS's own parts alone.
+	Inheritable bool `json:"inheritable"`
 }
 
 func TransformImage(scan *entity.ImageScan, summary imagescanservice.Summary) *ImageResp {
@@ -136,6 +140,8 @@ func TransformIgnoreRef(ignore *imagescanservice.Ignore) *IgnoreRefResp {
 		Package: ignore.Data.Package,
 		Reason:  ignore.Data.Reason,
 		SetBy:   ignore.Data.SetBy,
+
+		Inheritable: ignore.Setting.Inheritable,
 	}
 	if !ignore.Setting.ExpireAt.IsZero() {
 		resp.ExpireAt = &ignore.Setting.ExpireAt
@@ -161,4 +167,24 @@ func boolInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// ScannedAppResp is an app and what its images carry, in counts: a row of
+// System > Image Scanning > Apps and of a project's Security tab, which list
+// the worst first, by fixable CRITICAL, then fixable HIGH.
+type ScannedAppResp struct {
+	App        *basedto.NamedObjectResp `json:"app"`
+	Project    *basedto.NamedObjectResp `json:"project"`
+	ProjectEnv *EnvRefResp              `json:"projectEnv"`
+	ScannedAt  time.Time                `json:"scannedAt"`
+	Error      string                   `json:"error,omitempty"`
+	Summary    *SummaryResp             `json:"summary"`
+	Images     []*ImageResp             `json:"images"`
+}
+
+// EnvRefResp is an app's env: its key is what an app's address names.
+type EnvRefResp struct {
+	ID   string `json:"id"`
+	Key  string `json:"key"`
+	Name string `json:"name"`
 }

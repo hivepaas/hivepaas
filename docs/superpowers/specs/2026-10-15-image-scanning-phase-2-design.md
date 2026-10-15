@@ -30,9 +30,12 @@ images carry, as System > Image Scanning > Apps shows them - the worst first,
 CRITICAL and HIGH with their fixable part, last scanned, status - each a link
 to the app's Security tab. A Beta badge, as the app's tab has.
 
-- `GET /projects/:projectID/image-scan/apps` (paged): the apps of the project,
-  as `GET /system/settings/image-scan/apps` answers them. Reading the project is
-  enough.
+- `GET /projects/:projectID/image-scan`: `data.apps`, the apps of the project
+  as `GET /system/settings/image-scan/apps` answers them, and `data.enabled`,
+  whether scanning is on, which a project's members cannot read in System
+  settings. Not paged - a project has a screenful of apps - so the switch can
+  sit in `data` beside them. Reading the project is enough; a grant on some of
+  its envs or apps lists theirs alone, as the project's apps list does.
 - While scanning is off, the tab says so, and still lists what was found.
 - The project's apps list gets nothing new: the app header's badge already
   says it on each app.
@@ -108,10 +111,12 @@ Two tools, as the existing ones are made:
 
 - `get_app_vulnerabilities` (read): the app's images and counts, and its
   fixable CRITICAL and HIGH findings - package, installed and fixed version,
-  ID - the most a 64 KB answer holds; `severity` and `includeIgnored` narrow or
-  widen it.
-- `scan_app_images` (write): Scan now; answers the task, which the existing
-  `get_task` follows.
+  ID - the most a 64 KB answer holds; `severity`, `includeUnfixed` and
+  `includeIgnored` narrow or widen it.
+- `plan_scan_app_images` (a plan, as every change the server makes is):
+  Scan now, for a key with Write, as the endpoint needs; `apply_plan` answers
+  the task, which the existing `get_task` follows. While scanning is off there
+  is no plan.
 
 The `debug_app` prompt mentions the first.
 
@@ -141,7 +146,7 @@ All new operations; the API level is unchanged.
 
 | Operation | What |
 |---|---|
-| `GET /projects/:projectID/image-scan/apps` | the project's apps and their counts (paged) |
+| `GET /projects/:projectID/image-scan` | the project's apps and their counts, and whether scanning is on |
 | `GET /system/settings/image-scan/hivepaas` | HivePaaS's components, their images and counts |
 | `GET /system/settings/image-scan/hivepaas/:component` | a component's findings and ignored ones, as an app's |
 | `GET …/apps/:appID/image-scan/sbom?imageId=` | the image's CycloneDX SBOM |

@@ -59,8 +59,13 @@ var (
 	platformPattern = regexp.MustCompile(`^[a-z0-9]+/[a-z0-9_]+(/[a-z0-9]+)?$`)
 )
 
+// FormatCycloneDX asks for the image's SBOM, in place of its vulnerabilities.
+const FormatCycloneDX = "cyclonedx"
+
 // RunReq is a scan of one image.
 type RunReq struct {
+	// Format is empty for a scan's report, FormatCycloneDX for an SBOM.
+	Format string
 	// TrivyImage is what the container runs; pulled when the node lacks it.
 	TrivyImage string
 	// ImageID is the image's ID as the node running it gives it.
@@ -334,6 +339,9 @@ func (req *RunReq) validate() error {
 		if !platformPattern.MatchString(req.Platform) {
 			return invalid("%q is not a platform.", req.Platform)
 		}
+	}
+	if req.Format != "" && req.Format != FormatCycloneDX {
+		return invalid("%q is no format a scan writes.", req.Format)
 	}
 	if req.TrivyImage == "" || req.CacheDir == "" || req.Volume.Source == "" || req.Timeout <= 0 {
 		return invalid("The scan is missing its image, its volume or its timeout.")

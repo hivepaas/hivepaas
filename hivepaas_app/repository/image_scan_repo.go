@@ -42,7 +42,11 @@ type ImageScanRepo interface {
 
 	// DeleteGone removes what no app is there for any more: the rows of apps
 	// that were deleted, and the scans of images no app has run since before.
+	// HivePaaS's components are no apps: their rows are left alone.
 	DeleteGone(ctx context.Context, db database.IDB, before time.Time) (apps, images int, err error)
+	// DeleteComponentScansExcept removes the rows of HivePaaS's components but
+	// those of keep: the parts that run.
+	DeleteComponentScansExcept(ctx context.Context, db database.IDB, keep []string) error
 }
 
 type imageScanRepo struct {
@@ -185,6 +189,7 @@ func (repo *imageScanRepo) DeleteGone(ctx context.Context, db database.IDB, befo
 	apps, images int, err error) {
 	res, err := db.NewDelete().Model((*entity.AppImageScan)(nil)).
 		Where("NOT EXISTS (SELECT 1 FROM apps WHERE apps.id = app_image_scan.app_id AND apps.deleted_at IS NULL)").
+		Where("app_image_scan.app_id NOT LIKE ?", componentIDPrefix+"%").
 		Exec(ctx)
 	if err != nil {
 		return 0, 0, hperrors.Wrap(err)
@@ -200,4 +205,18 @@ func (repo *imageScanRepo) DeleteGone(ctx context.Context, db database.IDB, befo
 	}
 	deletedImages, _ := res.RowsAffected()
 	return int(deletedApps), int(deletedImages), nil
+}
+
+// componentIDPrefix starts the IDs HivePaaS's components are kept under:
+// imagescanservice.ComponentIDPrefix, which this package cannot import.
+const componentIDPrefix = "hivepaas:"
+
+func (repo *imageScanRepo) DeleteComponentScansExcept(ctx context.Context, db database.IDB, keep []string) error {
+	query := db.NewDelete().Model((*entity.AppImageScan)(nil)).
+		Where("app_image_scan.app_id LIKE ?", componentIDPrefix+"%")
+	if len(keep) > 0 {
+		query = query.Where("app_image_scan.app_id NOT IN (?)", bun.List(keep))
+	}
+	_, err := query.Exec(ctx)
+	return hperrors.Wrap(err)
 }

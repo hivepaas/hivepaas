@@ -8,6 +8,7 @@ func Tools() []Tool {
 		getAppDeploymentLogsTool(),
 		getTaskLogsTool(),
 		getAppSettingsTool(),
+		getAppVulnerabilitiesTool(),
 		getEnvLinkSuggestionsTool(),
 		getProjectSettingsTool(),
 		preflightInstallTool(),
@@ -26,6 +27,7 @@ func Tools() []Tool {
 		planUpdateProjectSettingsTool(),
 		planCreateSchedJobTool(),
 		planRunSchedJobTool(),
+		planScanAppImagesTool(),
 		applyPlanTool(),
 	)
 }

@@ -14,6 +14,7 @@ type UC struct {
 	db        *database.DB
 	taskQueue queue.TaskQueue
 
+	appRepo       repository.AppRepo
 	imageScanRepo repository.ImageScanRepo
 	settingRepo   repository.SettingRepo
 	taskRepo      repository.TaskRepo
@@ -26,6 +27,7 @@ func New(
 	db *database.DB,
 	taskQueue queue.TaskQueue,
 
+	appRepo repository.AppRepo,
 	imageScanRepo repository.ImageScanRepo,
 	settingRepo repository.SettingRepo,
 	taskRepo repository.TaskRepo,
@@ -36,6 +38,7 @@ func New(
 	return &UC{
 		db:               db,
 		taskQueue:        taskQueue,
+		appRepo:          appRepo,
 		imageScanRepo:    imageScanRepo,
 		settingRepo:      settingRepo,
 		taskRepo:         taskRepo,

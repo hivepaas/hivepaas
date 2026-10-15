@@ -72,6 +72,7 @@ func (c *grpcImageScanServiceClient) Run(
 		NanoCpus:         req.NanoCPUs,
 		MemoryBytes:      req.MemoryBytes,
 		TimeoutSeconds:   int64(req.Timeout / time.Second),
+		Format:           req.Format,
 	}, grpc.MaxCallRecvMsgSize(maxAnswerSize))
 	if err != nil {
 		return nil, hperrors.Wrap(err)

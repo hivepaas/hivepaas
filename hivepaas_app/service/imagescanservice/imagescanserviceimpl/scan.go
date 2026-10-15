@@ -83,33 +83,7 @@ func (s *service) ScanApp(
 	if err != nil {
 		return nil, err
 	}
-
-	now := timeutil.NowUTC()
-	appScan := &entity.AppImageScan{AppID: req.App.ID, ScannedAt: now, ImageIDs: []string{}}
-	previous, err := s.imageScanRepo.GetAppScan(ctx, s.db, req.App.ID)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return nil, hperrors.Wrap(err)
-	}
-	if previous != nil {
-		appScan.Reported = previous.Reported
-	}
-
-	out := &entity.TaskImageScanOutput{}
-	images, err := s.appImages(ctx, req.App, log)
-	if err != nil {
-		// What it ran last is still what there is to show, with why it was not
-		// scanned now.
-		if previous != nil {
-			appScan.ImageIDs = previous.ImageIDs
-		}
-		appScan.Error = hperrors.GetErrorDetail(err, "")
-		out.Error = appScan.Error
-		if upsertErr := s.imageScanRepo.UpsertAppScan(ctx, s.db, appScan); upsertErr != nil {
-			return out, hperrors.Wrap(upsertErr)
-		}
-		return out, err
-	}
-
+	images, imagesErr := s.appImages(ctx, req.App, log)
 	ignores, err := s.ignoresOf(ctx, s.db, req.App)
 	if err != nil {
 		return nil, err
@@ -119,10 +93,54 @@ func (s *service) ScanApp(
 		_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's registry credentials could not be read, "+
 			"an image read from its registry is read without: %s", hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
 	}
+	return s.scanSubject(ctx, &subject{id: req.App.ID, images: images, imagesErr: imagesErr, ignores: ignores,
+		auth: auth}, &imageScanReq{cfg: cfg, volume: volume, force: req.Force, log: log})
+}
+
+// subject is what a scan is of: an app, or a part of HivePaaS.
+type subject struct {
+	// id is the app's ID, or the component's.
+	id string
+	// images are those it runs; imagesErr why they could not be read.
+	images    []runningImage
+	imagesErr error
+	ignores   []*imagescanservice.Ignore
+	// auth is the credential its images are pulled with; nil for none.
+	auth *registry.AuthConfig
+}
+
+// scanSubject scans the images a subject runs, with the settings, the volume,
+// the force and the log of with, and keeps what it ran: one whose images could
+// not be read keeps what it ran last, with why.
+func (s *service) scanSubject(ctx context.Context, sub *subject, with *imageScanReq) (
+	*entity.TaskImageScanOutput, error) {
+	appScan := &entity.AppImageScan{AppID: sub.id, ScannedAt: timeutil.NowUTC(), ImageIDs: []string{}}
+	previous, err := s.imageScanRepo.GetAppScan(ctx, s.db, sub.id)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
+	}
+	if previous != nil {
+		appScan.Reported = previous.Reported
+	}
+
+	out := &entity.TaskImageScanOutput{}
+	if sub.imagesErr != nil {
+		if previous != nil {
+			appScan.ImageIDs = previous.ImageIDs
+		}
+		appScan.Error = hperrors.GetErrorDetail(sub.imagesErr, "")
+		out.Error = appScan.Error
+		if upsertErr := s.imageScanRepo.UpsertAppScan(ctx, s.db, appScan); upsertErr != nil {
+			return out, hperrors.Wrap(upsertErr)
+		}
+		return out, sub.imagesErr
+	}
+
 	var failed []string
-	for _, img := range images {
-		result := s.scanImage(ctx, &imageScanReq{cfg: cfg, volume: volume, auth: auth, img: img, force: req.Force,
-			ignores: ignores, log: log})
+	for _, img := range sub.images {
+		req := *with
+		req.img, req.auth, req.ignores = img, sub.auth, sub.ignores
+		result := s.scanImage(ctx, &req)
 		out.Images = append(out.Images, result)
 		appScan.ImageIDs = append(appScan.ImageIDs, img.ID)
 		if result.Error != "" {
@@ -229,19 +247,9 @@ func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanser
 	_ = req.log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanning %s (%s), run on node %s, on node %s",
 		img.Ref, shortID(img.ID), img.NodeID, scanNode), tasklog.TsNow))
 
-	var resp *imagescanrun.RunResp
-	var runErr error
-	lockErr := s.redisLock.Do(ctx, req.volume.lockKey(scanNode), lockExpiry, lockTries, lockRetryDelay, func() {
-		callCtx, cancel := context.WithTimeout(ctx, callTimeout)
-		defer cancel()
-		resp, runErr = s.scanOn(callCtx, scanNode, runReq)
-	})
-	if lockErr != nil {
-		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
-			WithExtraDetail("Another scan on the volume did not end in time: %v", lockErr)
-	}
-	if runErr != nil {
-		return nil, runErr
+	resp, err := s.runLocked(ctx, req.volume, scanNode, runReq)
+	if err != nil {
+		return nil, err
 	}
 	if resp.Log != "" {
 		_ = req.log.Add(ctx, tasklog.NewOutFrame(strings.TrimRight(resp.Log, "\n"), tasklog.TsNow))
@@ -250,6 +258,23 @@ func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanser
 		_ = req.log.Add(ctx, tasklog.NewOutFrame("Read from its registry: "+img.RemoteRef, tasklog.TsNow))
 	}
 	return readScan(resp, img, cfg, timeutil.NowUTC())
+}
+
+// runLocked runs a scan on its node, once the volume's copy there is free.
+func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode string,
+	runReq *imagescanrun.RunReq) (*imagescanrun.RunResp, error) {
+	var resp *imagescanrun.RunResp
+	var runErr error
+	lockErr := s.redisLock.Do(ctx, volume.lockKey(scanNode), lockExpiry, lockTries, lockRetryDelay, func() {
+		callCtx, cancel := context.WithTimeout(ctx, callTimeout)
+		defer cancel()
+		resp, runErr = s.scanOn(callCtx, scanNode, runReq)
+	})
+	if lockErr != nil {
+		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
+			WithExtraDetail("Another scan on the volume did not end in time: %v", lockErr)
+	}
+	return resp, runErr
 }
 
 // scanOn runs a scan on a node: in this process on its own, through the node's
@@ -342,14 +367,20 @@ func shortID(imageID string) string {
 }
 
 // appImages are the images an app's running tasks run, one node each runs on.
-// Docker is asked on each node which image a task's container was made from:
-// a service carries a tag, which may since point at another image.
 func (s *service) appImages(ctx context.Context, app *entity.App, log *tasklog.Store) ([]runningImage, error) {
 	if app.ServiceID == "" {
 		return nil, hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", app.Name).
 			WithExtraDetail("The app was never deployed.")
 	}
-	tasks, err := s.dockerManager.ServiceTaskList(ctx, app.ServiceID, []swarm.TaskState{swarm.TaskStateRunning})
+	return s.serviceImages(ctx, app.ServiceID, app.Name, log)
+}
+
+// serviceImages are the images a service's running tasks run, one node each
+// runs on. Docker is asked on each node which image a task's container was
+// made from: a service carries a tag, which may since point at another image.
+func (s *service) serviceImages(ctx context.Context, serviceID, name string, log *tasklog.Store) (
+	[]runningImage, error) {
+	tasks, err := s.dockerManager.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -363,10 +394,16 @@ func (s *service) appImages(ctx context.Context, app *entity.App, log *tasklog.S
 		containers[task.NodeID] = append(containers[task.NodeID], task.Status.ContainerStatus.ContainerID)
 	}
 	if len(containers) == 0 {
-		return nil, hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", app.Name).
-			WithExtraDetail("No task of the app is running.")
+		return nil, hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", name).
+			WithExtraDetail("No task of %s is running.", name)
 	}
+	return s.imagesOnNodes(ctx, containers, log)
+}
 
+// imagesOnNodes are the images the containers run, by node, one node each
+// runs on: the first by ID.
+func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]string, log *tasklog.Store) (
+	[]runningImage, error) {
 	nodeIDs := make([]string, 0, len(containers))
 	for nodeID := range containers {
 		nodeIDs = append(nodeIDs, nodeID)

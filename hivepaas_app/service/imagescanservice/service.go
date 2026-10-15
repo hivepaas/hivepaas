@@ -42,6 +42,17 @@ type Service interface {
 	// RunDaily scans again what every app runs, removes what no app runs any
 	// more, and notifies of what is new.
 	RunDaily(ctx context.Context, db database.IDB, req *DailyReq) (*DailyResp, error)
+
+	// SBOM is the packages of an image the app's tasks run, as CycloneDX JSON:
+	// read as a scan reads it - on the same node, with the same volume, one at
+	// a time - and not kept.
+	SBOM(ctx context.Context, req *SBOMReq) ([]byte, error)
+}
+
+type SBOMReq struct {
+	// App has its project and env loaded.
+	App     *entity.App
+	ImageID string
 }
 
 // Status is where scans run, and what the last one used.

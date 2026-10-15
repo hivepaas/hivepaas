@@ -34,9 +34,19 @@ func (s *service) vulnerableItems(ctx context.Context, db database.IDB, apps []*
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// Only the apps the person sees have their images read.
+	seen := make(map[string]bool, len(apps))
+	for _, app := range apps {
+		seen[app.ID] = true
+	}
 	var imageIDs []string
 	for _, appScan := range appScans {
-		imageIDs = append(imageIDs, appScan.ImageIDs...)
+		if seen[appScan.AppID] {
+			imageIDs = append(imageIDs, appScan.ImageIDs...)
+		}
+	}
+	if len(imageIDs) == 0 {
+		return nil, nil
 	}
 	findings, err := s.imageScanRepo.ListFindings(ctx, db, imageIDs,
 		bunex.SelectWhere("image_scan_finding.severity = ?", base.VulnSeverityCritical),

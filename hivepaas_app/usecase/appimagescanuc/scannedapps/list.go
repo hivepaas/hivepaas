@@ -69,9 +69,17 @@ func List(ctx context.Context, db database.IDB, repos Repos, filter Filter) (
 		return nil, hperrors.Wrap(err)
 	}
 
+	// Only the apps listed have their images read: a project's Security tab
+	// reads its own apps' findings, not the whole installation's.
+	listed := make(map[string]bool, len(apps))
+	for _, app := range apps {
+		listed[app.ID] = true
+	}
 	var imageIDs []string
 	for _, appScan := range appScans {
-		imageIDs = append(imageIDs, appScan.ImageIDs...)
+		if listed[appScan.AppID] {
+			imageIDs = append(imageIDs, appScan.ImageIDs...)
+		}
 	}
 	scans, err := repos.ImageScan.ListScans(ctx, db, slices.Compact(slices.Sorted(slices.Values(imageIDs))), true)
 	if err != nil {

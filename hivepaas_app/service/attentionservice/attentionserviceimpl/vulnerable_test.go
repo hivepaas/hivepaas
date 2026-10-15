@@ -1,13 +1,18 @@
 package attentionserviceimpl
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice"
 )
 
@@ -49,4 +54,50 @@ func TestVulnerableApps(t *testing.T) {
 		assert.Equal(t, 2, item.CriticalFixable)
 		assert.Equal(t, now, item.Since)
 	}
+}
+
+// scanOn is an installation with scanning on.
+type scanOn struct{ repository.SettingRepo }
+
+func (scanOn) GetSingle(context.Context, database.IDB, *entity.ObjectScope, base.SettingType, bool,
+	...bunex.SelectQueryOption) (*entity.Setting, error) {
+	setting := &entity.Setting{Type: base.SettingTypeImageScan}
+	setting.MustSetData(&entity.ImageScanSettings{Enabled: true})
+	return setting, nil
+}
+
+func (scanOn) List(context.Context, database.IDB, *entity.ObjectScope, *basedto.Paging,
+	...bunex.SelectQueryOption) ([]*entity.Setting, *basedto.PagingMeta, error) {
+	return nil, nil, nil
+}
+
+// everyScan is every app's scan, and keeps which images' findings were read.
+type everyScan struct {
+	repository.ImageScanRepo
+	read []string
+}
+
+func (r *everyScan) ListAppScans(context.Context, database.IDB, ...bunex.SelectQueryOption) (
+	[]*entity.AppImageScan, error) {
+	return []*entity.AppImageScan{
+		{AppID: "A1", ImageIDs: []string{"img1"}},
+		{AppID: "unseen", ImageIDs: []string{"img-unseen"}},
+	}, nil
+}
+
+func (r *everyScan) ListFindings(_ context.Context, _ database.IDB, imageIDs []string,
+	_ ...bunex.SelectQueryOption) ([]*entity.ImageScanFinding, error) {
+	r.read = imageIDs
+	return nil, nil
+}
+
+// Home reads the findings of the apps the person sees, not the installation's.
+func TestVulnerableItemsReadTheSeenAppsImagesOnly(t *testing.T) {
+	scans := &everyScan{}
+	s := &service{settingRepo: scanOn{}, imageScanRepo: scans}
+
+	_, err := s.vulnerableItems(context.Background(), nil, []*entity.App{vulnApp("A1", "shop")}, time.Now())
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"img1"}, scans.read)
 }

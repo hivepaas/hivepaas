@@ -87,7 +87,9 @@ func (req *VulnIgnoreBaseReq) validate() (res []vld.Validator) {
 }
 
 func NewCreateVulnIgnoreReq() *CreateVulnIgnoreReq {
-	return &CreateVulnIgnoreReq{}
+	// The body fills what is already there: left nil, a body naming none of its
+	// fields would skip validation and reach ToEntity as a nil pointer.
+	return &CreateVulnIgnoreReq{VulnIgnoreBaseReq: &VulnIgnoreBaseReq{}}
 }
 
 func (req *CreateVulnIgnoreReq) ModifyRequest() error {

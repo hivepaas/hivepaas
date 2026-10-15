@@ -81,12 +81,16 @@ type IgnoredFindingResp struct {
 // IgnoreRefResp is the ignore that sets a finding aside: enough to say why,
 // and to find it at its scope.
 type IgnoreRefResp struct {
-	ID       string               `json:"id"`
-	Scope    base.ObjectScopeType `json:"scope"`
-	Package  string               `json:"package,omitempty"`
-	Reason   string               `json:"reason"`
-	SetBy    string               `json:"setBy,omitempty"`
-	ExpireAt *time.Time           `json:"expireAt,omitempty"`
+	ID    string               `json:"id"`
+	Scope base.ObjectScopeType `json:"scope"`
+	// ObjectID is what the ignore is set on in its scope - the app, env or
+	// project. An app's own and its parent app's are both of the app scope:
+	// this tells them apart, and where to remove one.
+	ObjectID string     `json:"objectId,omitempty"`
+	Package  string     `json:"package,omitempty"`
+	Reason   string     `json:"reason"`
+	SetBy    string     `json:"setBy,omitempty"`
+	ExpireAt *time.Time `json:"expireAt,omitempty"`
 	// Inheritable says the apps of the scope's children have it too; a global
 	// one that is not applies to HivePaaS's own parts alone.
 	Inheritable bool `json:"inheritable"`
@@ -135,11 +139,12 @@ func TransformFinding(f *entity.ImageScanFinding) *FindingResp {
 
 func TransformIgnoreRef(ignore *imagescanservice.Ignore) *IgnoreRefResp {
 	resp := &IgnoreRefResp{
-		ID:      ignore.Setting.ID,
-		Scope:   ignore.Setting.Scope,
-		Package: ignore.Data.Package,
-		Reason:  ignore.Data.Reason,
-		SetBy:   ignore.Data.SetBy,
+		ID:       ignore.Setting.ID,
+		Scope:    ignore.Setting.Scope,
+		ObjectID: ignore.Setting.ObjectID,
+		Package:  ignore.Data.Package,
+		Reason:   ignore.Data.Reason,
+		SetBy:    ignore.Data.SetBy,
 
 		Inheritable: ignore.Setting.Inheritable,
 	}

@@ -55133,6 +55133,10 @@
             "description" : "Inheritable says the apps of the scope's children have it too; a global\none that is not applies to HivePaaS's own parts alone.",
             "type" : "boolean"
           },
+          "objectId" : {
+            "description" : "ObjectID is what the ignore is set on in its scope - the app, env or\nproject. An app's own and its parent app's are both of the app scope:\nthis tells them apart, and where to remove one.",
+            "type" : "string"
+          },
           "package" : {
             "type" : "string"
           },

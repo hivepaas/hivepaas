@@ -1,6 +1,7 @@
 package vulnignoredto
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -34,4 +35,22 @@ func TestCreateVulnIgnoreValidation(t *testing.T) {
 	far := time.Now().Add(2 * 365 * 24 * time.Hour)
 	assert.NotEmpty(t, createReq("CVE-2021-1", "", "r", &far).Validate(), "more than a year away")
 	assert.True(t, createReq("CVE-2021-1", "", "r", &time.Time{}).ExpireAtOrZero().IsZero())
+}
+
+// A body naming none of the ignore's fields - {} - is refused as invalid. It
+// used to pass validation and panic in ToEntity on the nil it left.
+func TestAnEmptyIgnoreBodyIsInvalidNotAPanic(t *testing.T) {
+	for _, body := range []string{`{}`, `{"updateVer": 1}`} {
+		create := NewCreateVulnIgnoreReq()
+		assert.NoError(t, json.Unmarshal([]byte(body), create))
+		assert.NoError(t, create.ModifyRequest())
+		assert.NotEmpty(t, create.Validate(), body)
+		assert.NotPanics(t, func() { create.ToEntity(nil) })
+
+		update := NewUpdateVulnIgnoreReq()
+		assert.NoError(t, json.Unmarshal([]byte(body), update))
+		assert.NoError(t, update.ModifyRequest())
+		assert.NotEmpty(t, update.Validate(), body)
+		assert.NotPanics(t, func() { update.ToEntity(nil) })
+	}
 }

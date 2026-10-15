@@ -28,6 +28,8 @@ type ImageScanRepo interface {
 		opts ...bunex.SelectQueryOption) ([]*entity.ImageScanFinding, error)
 	// LatestScan is the scan done last; nil before any.
 	LatestScan(ctx context.Context, db database.IDB) (*entity.ImageScan, error)
+	// LatestAttempt is the scan tried last, done or failed; nil before any.
+	LatestAttempt(ctx context.Context, db database.IDB) (*entity.ImageScan, error)
 	// ReplaceScan writes a scan and its findings in place of the image's last.
 	ReplaceScan(ctx context.Context, db database.IDB, scan *entity.ImageScan,
 		findings []*entity.ImageScanFinding) error
@@ -93,6 +95,23 @@ func (repo *imageScanRepo) LatestScan(ctx context.Context, db database.IDB) (*en
 	err := db.NewSelect().Model(&scans).
 		Where("image_scan.status = ?", base.ImageScanStatusDone).
 		Order("image_scan.scanned_at DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if len(scans) == 0 {
+		return nil, nil
+	}
+	return scans[0], nil
+}
+
+func (repo *imageScanRepo) LatestAttempt(ctx context.Context, db database.IDB) (*entity.ImageScan, error) {
+	var scans []*entity.ImageScan
+	// A failed scan writes its updated_at and keeps the scanned_at of the one
+	// before it: updated_at is when each was tried.
+	err := db.NewSelect().Model(&scans).
+		Order("image_scan.updated_at DESC").
 		Limit(1).
 		Scan(ctx)
 	if err != nil {

@@ -53,6 +53,10 @@ const (
 )
 
 var (
+	// outputEndTimeout is how long the container's streams may go on once it
+	// has stopped; a var, for the tests.
+	outputEndTimeout = removeTimeout
+
 	// imageIDPattern is an image's ID as Docker gives it.
 	imageIDPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 	// platformPattern is os/arch, with a variant or not: linux/arm64/v8.
@@ -196,13 +200,19 @@ func (r *Runner) runContainer(ctx context.Context, containerID string, req *RunR
 		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).
 			WithExtraDetail("The scan did not end within %v.", req.Timeout+time.Minute)
 	}
-	// The streams end with the container.
+	// The streams end with the container. Ones that have not ended by then are
+	// cut, and their copy waited for: the buffers are read only once nothing
+	// writes them, and a report cut short is no report.
 	select {
 	case err = <-copied:
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-	case <-time.After(removeTimeout):
+	case <-time.After(outputEndTimeout):
+		attached.Close()
+		<-copied
+		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).
+			WithExtraDetail("The scan's output did not end within %v of the scan.", outputEndTimeout)
 	}
 	if stdout.over {
 		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).

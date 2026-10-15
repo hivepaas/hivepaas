@@ -106,6 +106,8 @@ type node struct {
 	stderr    string
 	exitCode  int64
 	oomKilled bool
+	// stalled streams print nothing and never end, until the attach is closed.
+	stalled bool
 
 	created *client.ContainerCreateOptions
 	copied  map[string]string
@@ -165,6 +167,9 @@ func (n *node) ContainerAttach(context.Context, string, ...docker.ContainerAttac
 	conn, _ := net.Pipe()
 	resp := &client.ContainerAttachResult{}
 	resp.Conn, resp.Reader = conn, bufio.NewReader(&stream)
+	if n.stalled {
+		resp.Reader = bufio.NewReader(conn)
+	}
 	return resp, nil
 }
 
@@ -282,4 +287,19 @@ func TestBuffers(t *testing.T) {
 	_, _ = log.Write([]byte("def"))
 	assert.True(t, log.dropped)
 	assert.Equal(t, "cdef", log.String())
+}
+
+// Streams that go on once the container has stopped are cut and the scan
+// fails: the report was not read whole. Their copy is waited for first - the
+// buffers were once read while it still wrote them.
+func TestRunFailsWhenTheOutputDoesNotEnd(t *testing.T) {
+	defer func(d time.Duration) { outputEndTimeout = d }(outputEndTimeout)
+	outputEndTimeout = 50 * time.Millisecond
+	n := &node{images: map[string]bool{imageID: true, trivy: true}, stalled: true}
+
+	_, err := (&Runner{Docker: n}).Run(context.Background(), scanReq())
+
+	assert.ErrorIs(t, err, hperrors.ErrImageScanFailed)
+	assert.Contains(t, hperrors.GetErrorDetail(err, ""), "output did not end")
+	assert.True(t, n.removed, "the container is removed all the same")
 }

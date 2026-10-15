@@ -74,6 +74,7 @@ const IgnoredSchema = FindingSchema.extend({
     ignore: z.object({
         id: z.string(),
         scope: z.string().transform(value => (value === "" ? "global" : value) as "app"),
+        objectId: text,
         package: text,
         reason: text,
         setBy: text,

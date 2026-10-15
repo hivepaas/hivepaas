@@ -63,6 +63,8 @@ export type VulnIgnoreScope = "app" | "project-env" | "project" | "global";
 export interface VulnIgnoreRef {
     id: string;
     scope: VulnIgnoreScope;
+    /** What it is set on in its scope: an app's own and its parent app's are both of the app scope. */
+    objectId: string;
     package: string;
     reason: string;
     setBy: string;

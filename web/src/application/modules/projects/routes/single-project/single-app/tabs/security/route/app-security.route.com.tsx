@@ -181,7 +181,16 @@ export function AppSecurityRoute() {
                         onRemove={
                             canWrite
                                 ? ignore => {
-                                      deleteIgnore({ ...appRef, scope: ignore.scope, ignoreID: ignore.id });
+                                      // An app-scope ignore may be the parent app's, which the
+                                      // app inherits: it is removed where it is set.
+                                      const ownerAppID =
+                                          ignore.scope === "app" && ignore.objectId ? ignore.objectId : appRef.appID;
+                                      deleteIgnore({
+                                          ...appRef,
+                                          appID: ownerAppID,
+                                          scope: ignore.scope,
+                                          ignoreID: ignore.id,
+                                      });
                                   }
                                 : undefined
                         }

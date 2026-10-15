@@ -124,7 +124,11 @@ func (s *service) scanSubject(ctx context.Context, sub *subject, with *imageScan
 	}
 
 	out := &entity.TaskImageScanOutput{}
-	if sub.imagesErr != nil {
+	var unread *unreadNodes
+	if !errors.As(sub.imagesErr, &unread) || len(sub.images) == 0 {
+		unread = nil
+	}
+	if sub.imagesErr != nil && unread == nil {
 		if previous != nil {
 			appScan.ImageIDs = previous.ImageIDs
 		}
@@ -146,6 +150,21 @@ func (s *service) scanSubject(ctx context.Context, sub *subject, with *imageScan
 		if result.Error != "" {
 			failed = append(failed, fmt.Sprintf("%s: %s", shortID(img.ID), result.Error))
 		}
+	}
+	if unread != nil {
+		// What the unread nodes run is not known: the last scan's images are
+		// kept rather than taken for gone, or their findings would leave the
+		// screens, and be told as new the day the nodes answer again.
+		if previous != nil {
+			for _, imageID := range previous.ImageIDs {
+				if !slices.Contains(appScan.ImageIDs, imageID) {
+					appScan.ImageIDs = append(appScan.ImageIDs, imageID)
+				}
+			}
+		}
+		appScan.Error = unread.Error()
+		out.Error = appScan.Error
+		failed = append(failed, unread.Error())
 	}
 	if err = s.imageScanRepo.UpsertAppScan(ctx, s.db, appScan); err != nil {
 		return out, hperrors.Wrap(err)
@@ -400,8 +419,21 @@ func (s *service) serviceImages(ctx context.Context, serviceID, name string, log
 	return s.imagesOnNodes(ctx, containers, log)
 }
 
+// unreadNodes is what imagesOnNodes says when some nodes answered and some
+// did not: the images it gives are those of the nodes that answered.
+type unreadNodes struct {
+	nodeIDs []string
+	last    error
+}
+
+func (e *unreadNodes) Error() string {
+	return fmt.Sprintf("The containers of node %s could not be read (%s): what they run is kept from the "+
+		"last scan.", strings.Join(e.nodeIDs, ", "), hperrors.GetErrorDetail(e.last, ""))
+}
+
 // imagesOnNodes are the images the containers run, by node, one node each
-// runs on: the first by ID.
+// runs on: the first by ID. When some nodes cannot be read it gives the others'
+// images with an *unreadNodes, and the error alone when none can.
 func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]string, log *tasklog.Store) (
 	[]runningImage, error) {
 	nodeIDs := make([]string, 0, len(containers))
@@ -412,10 +444,12 @@ func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]str
 	var images []runningImage
 	seen := map[string]bool{}
 	var lastErr error
+	var unread []string
 	for _, nodeID := range nodeIDs {
 		found, err := s.containerImages(ctx, nodeID, containers[nodeID], log)
 		if err != nil {
 			lastErr = err
+			unread = append(unread, nodeID)
 			_ = log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("Could not read the containers of node %s: %s",
 				nodeID, hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
 			continue
@@ -429,6 +463,9 @@ func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]str
 	}
 	if len(images) == 0 && lastErr != nil {
 		return nil, lastErr
+	}
+	if len(unread) > 0 {
+		return images, &unreadNodes{nodeIDs: unread, last: lastErr}
 	}
 	return images, nil
 }

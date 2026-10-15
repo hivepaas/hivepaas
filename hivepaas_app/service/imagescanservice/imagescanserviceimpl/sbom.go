@@ -2,6 +2,7 @@ package imagescanserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -18,8 +19,10 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 	if err != nil {
 		return nil, err
 	}
+	// Some nodes unread, the image may still be on one that answered.
 	images, err := s.appImages(ctx, req.App, tasklog.NewNullStore())
-	if err != nil {
+	var unread *unreadNodes
+	if err != nil && !errors.As(err, &unread) {
 		return nil, err
 	}
 	var img *runningImage
@@ -29,6 +32,9 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 		}
 	}
 	if img == nil {
+		if unread != nil {
+			return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("%s", unread.Error())
+		}
 		return nil, hperrors.NewNotFound("Image").WithExtraDetail("The app does not run this image now.")
 	}
 	auth, err := s.pullAuth(ctx, req.App)

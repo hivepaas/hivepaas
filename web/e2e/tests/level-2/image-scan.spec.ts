@@ -5,13 +5,16 @@ import {
     createProject,
     createSettingAt,
     createVolume,
+    created,
     deleteProject,
+    deleteSettingsNamed,
     deleteVolume,
     deployImage,
     findProject,
 } from "../../support/api";
 import { appIn, appPage, deployed } from "../../support/apps";
 import { type Cleanup, e2eName, expect, test } from "../../support/fixtures";
+import { echoHook, slackMessages } from "../../support/notifications";
 
 // The first scan on a volume fetches Trivy's image and its DB, then reads the
 // image: room for all three. Scanning is one switch for the installation: the
@@ -33,7 +36,12 @@ interface ImageScanSettings {
     dbRepository: string;
     javaDbRepository: string;
     schedule: { interval: string; initialTime: string };
-    notification: { successUseDefault: boolean; failureUseDefault: boolean };
+    notification: {
+        success?: { id: string } | null;
+        successUseDefault: boolean;
+        failure?: { id: string } | null;
+        failureUseDefault: boolean;
+    };
     cpuLimit: number;
     memoryLimit: string;
 }
@@ -44,8 +52,14 @@ async function imageScanSettings(api: APIRequestContext): Promise<ImageScanSetti
     return ((await res.json()) as { data: ImageScanSettings }).data;
 }
 
-// putSettings saves the settings as they are, switched on with a volume or off.
-async function putSettings(api: APIRequestContext, enabled: boolean, volumeId?: string): Promise<void> {
+// putSettings saves the settings as they are, switched on with a volume or off,
+// and with the daily scan's notification when given.
+async function putSettings(
+    api: APIRequestContext,
+    enabled: boolean,
+    volumeId?: string,
+    notification?: ImageScanSettings["notification"],
+): Promise<void> {
     const current = await imageScanSettings(api);
     const res = await api.put("system/settings/image-scan", {
         data: {
@@ -55,7 +69,7 @@ async function putSettings(api: APIRequestContext, enabled: boolean, volumeId?: 
             dbRepository: current.dbRepository,
             javaDbRepository: current.javaDbRepository,
             schedule: { interval: current.schedule.interval },
-            notification: current.notification,
+            notification: notification ?? current.notification,
             cpuLimit: current.cpuLimit,
             memoryLimit: current.memoryLimit,
         },
@@ -460,5 +474,227 @@ test("image scanning: an ignore for HivePaaS only sets a finding of HivePaaS's i
         await page.getByRole("button", { name: "Remove", exact: true }).last().click();
         await expect(page.getByText("Ignore removed")).toBeVisible();
         await expect(page.getByTestId("finding-row").filter({ hasText: part.vulnId }).first()).toBeVisible();
+    });
+});
+
+interface ClusterNode {
+    id: string;
+    labels: Record<string, string> | null;
+    availability: string;
+    updateVer: number;
+}
+
+// theNode is the e2e env's one node, with its labels.
+async function theNode(api: APIRequestContext): Promise<ClusterNode> {
+    const res = await api.get("cluster/nodes");
+    expect(res.ok(), await res.text()).toBe(true);
+    const nodes = ((await res.json()) as { data: ClusterNode[] }).data;
+    expect(nodes, "the e2e env has one node").toHaveLength(1);
+    // The list leaves the labels out: the node's own answer has them.
+    const one = await api.get(`cluster/nodes/${nodes[0]!.id}`);
+    expect(one.ok(), await one.text()).toBe(true);
+    return ((await one.json()) as { data: ClusterNode }).data;
+}
+
+async function setNodeLabels(api: APIRequestContext, labels: Record<string, string>): Promise<void> {
+    const node = await theNode(api);
+    const res = await api.put(`cluster/nodes/${node.id}`, {
+        data: { updateVer: node.updateVer, labels, availability: node.availability },
+    });
+    expect(res.ok(), await res.text()).toBe(true);
+}
+
+// labelTheNode gives the node a label of the test's, and takes it away after.
+async function labelTheNode(api: APIRequestContext, cleanup: Cleanup, key: string): Promise<void> {
+    const before = (await theNode(api)).labels ?? {};
+    await setNodeLabels(api, { ...before, [key]: "yes" });
+    cleanup(async () => {
+        const { [key]: _, ...rest } = (await theNode(api)).labels ?? {};
+        await setNodeLabels(api, rest);
+    });
+}
+
+// pinnedVolume makes a volume pinned by a node label, or by nothing - one that
+// claims every node reaches it - and deletes it once scanning is off.
+async function pinnedVolume(
+    api: APIRequestContext,
+    cleanup: Cleanup,
+    pin: { nodeLabel: string } | "shared",
+): Promise<{ id: string; name: string }> {
+    const name = e2eName(`trivy-${Date.now().toString(36)}`);
+    const id = await created(api, "cluster/volumes", {
+        name,
+        driver: "local",
+        inheritable: true,
+        ...(pin === "shared" ? {} : pin),
+    });
+    cleanup(async () => {
+        await switchOff(api);
+        await deleteVolume(api, id);
+    });
+    return { id, name };
+}
+
+test("image scanning: a volume pinned by a node label runs scans on a node carrying it; one no node carries says so", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    cleanup(() => switchOff(api));
+    const key = `hp-e2e-scan-${Date.now().toString(36)}`;
+    await labelTheNode(api, cleanup, key);
+    const volume = await pinnedVolume(api, cleanup, { nodeLabel: `${key}=yes` });
+
+    await test.step("chosen, the volume says scans run on a node carrying its label", async () => {
+        await page.goto(SETTINGS);
+        const enabled = page.getByRole("checkbox", { name: "Enabled" });
+        if (!(await enabled.isChecked())) {
+            await enabled.click();
+        }
+        await page
+            .getByRole("group", { name: /^Data volume/ })
+            .getByRole("combobox")
+            .click();
+        await page.getByRole("option", { name: volume.name }).click();
+        await expect(page.getByTestId("image-scan-where")).toContainText(`a node carrying the label ${key}=yes`);
+        await page.getByRole("button", { name: "Save" }).click();
+        await expect(page.getByText("Image scanning settings updated")).toBeVisible();
+        await expect(page.getByTestId("image-scanner-status").getByRole("group", { name: "Scans run" })).toContainText(
+            `On a node carrying the label ${key}=yes`,
+        );
+    });
+
+    const app = await appIn(api, cleanup, "image-label");
+    await test.step("an app's image is scanned there", async () => {
+        await deployImage(api, app, OLD_ALPINE, "sleep 3600");
+        await deployed(api, app);
+        await page.goto(appPage(app, "security"));
+        await criticalShown(page);
+        await expect(page.getByTestId("scanned-image")).toContainText(OLD_ALPINE);
+    });
+
+    await test.step("a label no node carries: the status says no scan can run, and a scan says why on the app", async () => {
+        const nowhere = `${key}-nowhere=yes`;
+        // Its cleanup deletes it too: a volume of a label no node carries is on
+        // no node, and goes with nothing to remove.
+        const unreachable = await pinnedVolume(api, cleanup, { nodeLabel: nowhere });
+        await putSettings(api, true, unreachable.id);
+        const said = `No ready node carries the label "${nowhere}"`;
+
+        await page.goto(SETTINGS);
+        await expect(page.getByTestId("image-scan-volume-problem")).toContainText(`${said}: no scan can run.`);
+
+        await page.goto(appPage(app, "security"));
+        await page.getByRole("button", { name: "Scan now" }).click();
+        await expect(async () => {
+            await page.reload();
+            await expect(page.getByText(said)).toBeVisible({ timeout: 5_000 });
+        }).toPass(POLL);
+        // What it ran last stays.
+        await expect(page.getByTestId("finding-row").filter({ hasText: CVE })).toBeVisible();
+    });
+});
+
+test("image scanning: a shared volume runs each scan on the node running its image", async ({ page, api, cleanup }) => {
+    cleanup(() => switchOff(api));
+    const volume = await pinnedVolume(api, cleanup, "shared");
+    await putSettings(api, true, volume.id);
+
+    await page.goto(SETTINGS);
+    await expect(page.getByTestId("image-scanner-status").getByRole("group", { name: "Scans run" })).toContainText(
+        "On the node running each image: the volume is shared",
+    );
+
+    const app = await appIn(api, cleanup, "image-shared");
+    await deployImage(api, app, OLD_ALPINE, "sleep 3600");
+    await deployed(api, app);
+    await page.goto(appPage(app, "security"));
+    await criticalShown(page);
+    await expect(page.getByTestId("scanned-image")).toContainText(OLD_ALPINE);
+});
+
+interface ReportAttachment {
+    title: string;
+    text: string;
+}
+
+// runDaily runs the daily scan now, and waits for it to end.
+async function runDaily(api: APIRequestContext): Promise<void> {
+    const run = await api.post("system/settings/image-scan/exec", { data: {} });
+    expect(run.ok(), await run.text()).toBe(true);
+    const id = ((await run.json()) as { data: { task: { id: string } } }).data.task.id;
+    await expect
+        .poll(async () => {
+            const res = await api.get(`system/tasks/${id}`);
+            return ((await res.json()) as { data: { status: string } }).data.status;
+        }, POLL)
+        .toMatch(/^(done|failed|canceled)$/);
+}
+
+test("image scanning: the daily scan tells its notification what apps run that is new, once", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    cleanup(() => switchOff(api));
+    const volume = await scanVolume(api, cleanup);
+
+    // An echo app stands in for Slack, through a Slack and a notification of
+    // the installation's: the daily scan's are global.
+    const project = await createProject(api, e2eName("scan-report"));
+    cleanup(() => deleteProject(api, project.id));
+    const { hook, domain } = await echoHook(page, api, project, "scan-report-hook");
+    const slackName = e2eName("scan-slack");
+    const notificationName = e2eName("scan-report");
+    cleanup(() => deleteSettingsNamed(api, "im-services", slackName));
+    const slack = await created(api, "settings/im-services", {
+        name: slackName,
+        kind: "slack",
+        slack: { webhook: `http://${domain}/slack` },
+    });
+    cleanup(() => deleteSettingsNamed(api, "notifications", notificationName));
+    const notification = await created(api, "settings/notifications", {
+        name: notificationName,
+        viaSlack: { enabled: true, useDefault: false, webhook: { id: slack } },
+    });
+    // Put back as it was before the notification goes: it refers to it.
+    const before = (await imageScanSettings(api)).notification;
+    cleanup(() => putSettings(api, false, undefined, before));
+    await putSettings(api, true, volume.id, {
+        success: { id: notification },
+        successUseDefault: false,
+        failureUseDefault: false,
+    });
+
+    const app = await appIn(api, cleanup, "image-report");
+    // A report's line names the app by its project, env and name.
+    const line = `${e2eName("image-report")} / `;
+    await deployImage(api, app, OLD_ALPINE, "sleep 3600");
+    await deployed(api, app);
+    await page.goto(appPage(app, "security"));
+    await criticalShown(page);
+
+    const reports = async () =>
+        ((await slackMessages(page, hook)) as unknown as ReportAttachment[]).filter(m =>
+            m.title.includes("new fixable vulnerabilities"),
+        );
+
+    await test.step("the first daily scan after the app's scan reports it", async () => {
+        await runDaily(api);
+        let found: ReportAttachment | undefined;
+        await expect(async () => {
+            found = (await reports()).find(m => m.text.includes(line));
+            expect(found).toBeDefined();
+        }).toPass(POLL);
+        expect(found?.text).toContain("1 CRITICAL");
+        expect(found?.title).toMatch(/\d+ apps? runs? new fixable vulnerabilities/);
+    });
+
+    await test.step("the next one has nothing new to tell of it", async () => {
+        const told = (await reports()).filter(m => m.text.includes(line)).length;
+        await runDaily(api);
+        // The report goes after the run's end: give it the time it would take.
+        await page.waitForTimeout(5_000);
+        expect((await reports()).filter(m => m.text.includes(line))).toHaveLength(told);
     });
 });

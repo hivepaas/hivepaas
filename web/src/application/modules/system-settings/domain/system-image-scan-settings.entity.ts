@@ -16,6 +16,8 @@ export interface ImageScanVolume {
     nodeName: string;
     nodeLabel: string;
     shared: boolean;
+    /** Why no scan can run on it now: no ready node carries its label. */
+    problem: string;
 }
 
 /** Where scans run, and what the last one used. */

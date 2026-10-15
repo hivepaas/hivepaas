@@ -51,7 +51,17 @@ export function ImageScannerStatusSection({ status, enabled }: { status: ImageSc
                                 titleWidth={220}
                                 title="Scans run"
                             >
-                                <span>{whereScansRun(volume)}</span>
+                                <span className="flex flex-col gap-1">
+                                    <span>{whereScansRun(volume)}</span>
+                                    {volume.problem && (
+                                        <span
+                                            className="text-amber-700 dark:text-amber-400"
+                                            data-testid="image-scan-volume-problem"
+                                        >
+                                            {volume.problem}
+                                        </span>
+                                    )}
+                                </span>
                             </InfoBlock>
                         )}
                     </>

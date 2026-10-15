@@ -62,6 +62,7 @@ export const SystemImageScanSettingsEntitySchema = SettingsBaseEntitySchema.omit
                     nodeName: text,
                     nodeLabel: text,
                     shared: z.boolean().catch(false),
+                    problem: text,
                 })
                 .nullish()
                 .transform(value => value ?? null),

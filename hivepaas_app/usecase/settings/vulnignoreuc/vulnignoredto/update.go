@@ -14,7 +14,9 @@ type UpdateVulnIgnoreReq struct {
 }
 
 func NewUpdateVulnIgnoreReq() *UpdateVulnIgnoreReq {
-	return &UpdateVulnIgnoreReq{}
+	// The body fills what is already there: left nil, a body naming none of its
+	// fields would skip validation and reach ToEntity as a nil pointer.
+	return &UpdateVulnIgnoreReq{VulnIgnoreBaseReq: &VulnIgnoreBaseReq{}}
 }
 
 func (req *UpdateVulnIgnoreReq) ModifyRequest() error {

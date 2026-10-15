@@ -36,9 +36,15 @@ func (s *service) Status(ctx context.Context, db database.IDB) (*imagescanservic
 	if latest != nil {
 		status.LastScanAt, status.DBUpdatedAt, status.TrivyVersion = latest.ScannedAt, latest.DBUpdatedAt,
 			latest.TrivyVersion
-		if latest.Status == base.ImageScanStatusFailed {
-			status.LastError = latest.Error
-		}
+	}
+	// The error is the last try's, which LatestScan - done scans alone - never
+	// is when it failed: scans failing since the last that worked say why.
+	attempt, err := s.imageScanRepo.LatestAttempt(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if attempt != nil && attempt.Status == base.ImageScanStatusFailed {
+		status.LastError = attempt.Error
 	}
 	return status, nil
 }

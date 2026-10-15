@@ -42,6 +42,19 @@ func (s *service) RemoveVolumeInCluster(
 	if clusterVol == nil {
 		clusterVol = &entity.ClusterVolume{}
 	}
+	if clusterVol.NodeID == "" && clusterVol.NodeLabel != "" {
+		carried, err := s.anyNodeCarries(ctx, clusterVol.NodeLabel)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if !carried {
+			// No node of the cluster carries the label - a mistyped one, or one
+			// taken off every node: no node can hold the volume, and there is
+			// nothing to remove. A node that carries it but is down still
+			// refuses the removal: its copy is there.
+			return nil
+		}
+	}
 
 	pins := []placementservice.VolumePin{{
 		VolumeName: setting.Name,
@@ -160,4 +173,21 @@ func underAnyRoot(dir string, roots ...string) bool {
 		}
 	}
 	return false
+}
+
+// anyNodeCarries says a node of the cluster carries a label, key or key=value,
+// whatever its state.
+func (s *service) anyNodeCarries(ctx context.Context, label string) (bool, error) {
+	key, val, hasVal := strings.Cut(strings.TrimSpace(label), "=")
+	key, val = strings.TrimSpace(key), strings.TrimSpace(val)
+	nodes, err := s.dockerManager.NodeList(ctx)
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	for i := range nodes.Items {
+		if actual, ok := nodes.Items[i].Spec.Labels[key]; ok && (!hasVal || actual == val) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

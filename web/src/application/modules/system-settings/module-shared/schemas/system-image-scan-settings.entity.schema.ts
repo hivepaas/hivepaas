@@ -80,7 +80,7 @@ const CountSchema = z.object({ total: z.number().catch(0), fixable: z.number().c
 export const ImageScanAppSchema = z.object({
     app: z.object({ id: z.string(), name: z.string() }),
     project: z.object({ id: z.string(), name: z.string() }),
-    projectEnv: z.object({ id: z.string(), name: z.string() }),
+    projectEnv: z.object({ id: z.string(), key: text, name: z.string() }),
     scannedAt: z.coerce.date(),
     error: text,
     summary: z.object({

@@ -39,3 +39,11 @@ export const SCOPE_LABELS: Record<VulnIgnoreScope, string> = {
     "project": "This project",
     "global": "Every project",
 };
+
+/** Where an ignore applies: its scope, and for a global one whether the apps have it. */
+export function ignoreScopeLabel(ignore: { scope: VulnIgnoreScope; inheritable: boolean }): string {
+    if (ignore.scope === "global" && !ignore.inheritable) {
+        return "HivePaaS only";
+    }
+    return SCOPE_LABELS[ignore.scope];
+}

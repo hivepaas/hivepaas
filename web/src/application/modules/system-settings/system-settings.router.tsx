@@ -336,6 +336,22 @@ export const systemSettingsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: "hivepaas",
+                    lazy: async () => {
+                        const { SystemSettingsImageScanningHivePaaSRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsImageScanningHivePaaSRoute };
+                    },
+                },
+                {
+                    path: "hivepaas/:component",
+                    lazy: async () => {
+                        const { SystemSettingsImageScanningHivePaaSComponentRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsImageScanningHivePaaSComponentRoute };
+                    },
+                },
+                {
                     path: "actions",
                     lazy: async () => {
                         const { SystemSettingsImageScanningActionsRoute } = await getLazyComponents();

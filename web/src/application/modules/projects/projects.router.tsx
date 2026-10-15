@@ -1573,6 +1573,16 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.projects.single.security.$pattern,
+                    lazy: async () => {
+                        const { ProjectSecurityRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectSecurityRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.appTemplates.$pattern,
                     lazy: async () => {
                         const { AppTemplatesView } = await import("~/app-templates");

@@ -11,6 +11,8 @@ export {
     SystemSettingsRegistryRoute,
     SystemSettingsImageScanningRoute,
     SystemSettingsImageScanningAppsRoute,
+    SystemSettingsImageScanningHivePaaSRoute,
+    SystemSettingsImageScanningHivePaaSComponentRoute,
     SystemSettingsImageScanningActionsRoute,
     SystemSettingsHivePaaSActionsRoute,
     SystemSettingsHivePaaSUpdatesRoute,

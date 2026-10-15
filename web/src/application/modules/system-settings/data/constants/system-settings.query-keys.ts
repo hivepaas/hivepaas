@@ -30,5 +30,7 @@ export const QK = {
     "system-settings.registry-auth-renewal.find-one": "system-settings.registry-auth-renewal.find-one",
     "system-settings.image-scan.find-one": "system-settings.image-scan.find-one",
     "system-settings.image-scan.find-apps": "system-settings.image-scan.find-apps",
+    "system-settings.image-scan.find-components": "system-settings.image-scan.find-components",
+    "system-settings.image-scan.find-component": "system-settings.image-scan.find-component",
     "system-settings.backup-repo-cleanup.find-one": "system-settings.backup-repo-cleanup.find-one",
 } as const;

@@ -606,6 +606,16 @@ export const ROUTE = {
                 $route: "/system/image-scanning/apps/",
             },
 
+            hivepaas: {
+                $pattern: "system/image-scanning/hivepaas",
+                $route: "/system/image-scanning/hivepaas/",
+
+                single: {
+                    $pattern: "system/image-scanning/hivepaas/:component",
+                    $route: (component: string) => `/system/image-scanning/hivepaas/${component}/`,
+                },
+            },
+
             actions: {
                 $pattern: "system/image-scanning/actions",
                 $route: "/system/image-scanning/actions/",
@@ -1429,6 +1439,11 @@ export const ROUTE = {
                     $pattern: "projects/:id/operations/export",
                     $route: (id: string) => `/projects/${id}/operations/export/`,
                 },
+            },
+
+            security: {
+                $pattern: "projects/:id/security",
+                $route: (id: string) => `/projects/${id}/security/`,
             },
 
             appTemplates: {

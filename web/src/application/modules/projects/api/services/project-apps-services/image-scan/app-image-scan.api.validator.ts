@@ -7,6 +7,7 @@ import type {
     AppImageScan_DeleteIgnore_Res,
     AppImageScan_FindOne_Res,
     AppImageScan_Scan_Res,
+    ProjectImageScan_Find_Res,
     VulnSeverity,
 } from "./app-image-scan.api.contracts";
 
@@ -27,7 +28,7 @@ const CountSchema = z.object({
     fixable: z.number().catch(0),
 });
 
-const SummarySchema = z.object({
+export const VulnSummarySchema = z.object({
     critical: CountSchema,
     high: CountSchema,
     medium: CountSchema,
@@ -36,7 +37,7 @@ const SummarySchema = z.object({
     ignored: z.number().catch(0),
 });
 
-const ImageSchema = z.object({
+export const ScannedImageSchema = z.object({
     imageId: z.string(),
     imageRef: text,
     platform: text,
@@ -50,7 +51,7 @@ const ImageSchema = z.object({
     updatedAt: z.coerce.date(),
     dbUpdatedAt: date,
     trivyVersion: text,
-    summary: SummarySchema,
+    summary: VulnSummarySchema,
 });
 
 const FindingSchema = z.object({
@@ -77,16 +78,17 @@ const IgnoredSchema = FindingSchema.extend({
         reason: text,
         setBy: text,
         expireAt: date,
+        inheritable: z.boolean().catch(true),
     }),
 });
 
-const AppImageScanSchema = z.object({
+export const AppImageScanSchema = z.object({
     enabled: z.boolean().catch(false),
     scannedAt: date,
     error: text,
-    summary: SummarySchema,
+    summary: VulnSummarySchema,
     images: z
-        .array(ImageSchema)
+        .array(ScannedImageSchema)
         .nullish()
         .transform(value => value ?? []),
     findings: z
@@ -101,6 +103,30 @@ const AppImageScanSchema = z.object({
         .object({ id: z.string(), status: z.string() })
         .nullish()
         .transform(value => value ?? null),
+});
+
+const ScannedAppSchema = z.object({
+    app: z.object({ id: z.string(), name: z.string() }),
+    project: z.object({ id: z.string(), name: z.string() }),
+    projectEnv: z.object({ id: z.string(), key: text, name: z.string() }),
+    scannedAt: z.coerce.date(),
+    error: text,
+    summary: VulnSummarySchema,
+    images: z
+        .array(ScannedImageSchema)
+        .nullish()
+        .transform(value => value ?? []),
+});
+
+const FindProjectSchema = z.object({
+    data: z.object({
+        enabled: z.boolean().catch(false),
+        apps: z
+            .array(ScannedAppSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 const FindOneSchema = z.object({
@@ -125,6 +151,10 @@ const MetaOnlySchema = z.object({
 export class AppImageScanApiValidator {
     findOne = (response: ApiHttpResponse): AppImageScan_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
+    };
+
+    findProject = (response: ApiHttpResponse): ProjectImageScan_Find_Res => {
+        return parseApiResponse({ response, schema: FindProjectSchema });
     };
 
     scan = (response: ApiHttpResponse): AppImageScan_Scan_Res => {

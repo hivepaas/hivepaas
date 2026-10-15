@@ -1,6 +1,15 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
-import { createVolume, deleteVolume, deployImage } from "../../support/api";
+import {
+    createProject,
+    createSettingAt,
+    createVolume,
+    deleteProject,
+    deleteVolume,
+    deployImage,
+    findProject,
+} from "../../support/api";
 import { appIn, appPage, deployed } from "../../support/apps";
 import { type Cleanup, e2eName, expect, test } from "../../support/fixtures";
 
@@ -231,5 +240,116 @@ test("image scanning: a finding ignored with a reason leaves the counts, the bad
         await expect(page.getByText("Image scanning is switched off")).toBeVisible();
         await expect(page.getByTestId("finding-row").filter({ hasText: CVE })).toBeVisible();
         await expect(page.getByRole("button", { name: "Scan now" })).toHaveCount(0);
+    });
+});
+
+interface ScannedComponent {
+    component: { key: string; name: string };
+    scannedAt: string;
+}
+
+// componentScanned waits for the daily scan, run now, to have scanned
+// HivePaaS's part of that key.
+async function componentScanned(api: APIRequestContext, key: string): Promise<void> {
+    const run = await api.post("system/settings/image-scan/exec", { data: {} });
+    expect(run.ok(), await run.text()).toBe(true);
+    await expect
+        .poll(async () => {
+            const res = await api.get("system/settings/image-scan/hivepaas");
+            const body = (await res.json()) as { data: { components: ScannedComponent[] } };
+            return body.data.components.some(c => c.component.key === key);
+        }, POLL)
+        .toBe(true);
+}
+
+test("image scanning, phase 2: a project's Security tab lists its apps; an image's SBOM downloads; HivePaaS's own images are scanned; an ignore goes with its project's spec", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    cleanup(() => switchOff(api));
+    const volume = await scanVolume(api, cleanup);
+    await putSettings(api, true, volume.id);
+
+    const app = await appIn(api, cleanup, "image-p2");
+    await deployImage(api, app, OLD_ALPINE, "sleep 3600");
+    await deployed(api, app);
+    await page.goto(appPage(app, "security"));
+    await criticalShown(page);
+
+    await test.step("an image's SBOM downloads as CycloneDX, and names apk-tools", async () => {
+        const downloading = page.waitForEvent("download");
+        await page.getByTestId("scanned-image").getByRole("button", { name: "Download SBOM" }).click();
+        const download = await downloading;
+        expect(download.suggestedFilename()).toMatch(/^web-[0-9a-f]{12}\.cdx\.json$/);
+        const file = test.info().outputPath("sbom.cdx.json");
+        await download.saveAs(file);
+        const sbom = JSON.parse(await readFile(file, "utf8")) as {
+            bomFormat: string;
+            components: { name: string }[];
+        };
+        expect(sbom.bomFormat).toBe("CycloneDX");
+        expect(sbom.components.map(c => c.name)).toContain("apk-tools");
+    });
+
+    await test.step("the project's Security tab lists the app, with its CRITICAL, and leads to its findings", async () => {
+        await page.goto(`/projects/${app.projectId}/security/`);
+        const tab = page.getByTestId("project-image-scan");
+        await expect(tab.getByText("Beta")).toBeVisible();
+        const row = tab.getByTestId("image-scan-app-row").filter({ hasText: OLD_ALPINE });
+        await expect(row).toHaveCount(1);
+        await row.getByRole("link", { name: app.name }).click();
+        await expect(page).toHaveURL(/\/security\/$/);
+        await expect(page.getByTestId("finding-row").filter({ hasText: CVE })).toBeVisible();
+    });
+
+    await test.step("the daily scan scans HivePaaS's own images: Traefik is listed, and opens its findings", async () => {
+        await componentScanned(api, "traefik");
+        await page.goto("/system/image-scanning/hivepaas/");
+        const row = page.getByTestId("image-scan-component-row").filter({ hasText: "Traefik" });
+        await expect(row).toContainText("traefik");
+        await row.getByRole("link", { name: "Traefik" }).click();
+        await expect(page.getByTestId("scanned-image")).toContainText("traefik");
+        await expect(page.getByTestId("severity-critical")).toBeVisible();
+    });
+
+    await test.step("a project's ignore goes out with its spec, and an import brings it back", async () => {
+        const name = e2eName("spec-ignore");
+        cleanup(async () => {
+            const made = await findProject(api, name);
+            if (made) await deleteProject(api, made.id);
+        });
+        const project = await createProject(api, name);
+        await createSettingAt(api, `projects/${project.id}/vulnerability-ignores`, {
+            vulnId: CVE,
+            package: "apk-tools",
+            reason: "apk never runs in the container",
+            expireAt: null,
+            inheritable: true,
+        });
+
+        await page.goto(`/projects/${project.id}/operations/export/`);
+        const downloading = page.waitForEvent("download");
+        await page.getByRole("button", { name: "Export", exact: true }).click();
+        const bundle = test.info().outputPath("bundle.tar.gz");
+        await (await downloading).saveAs(bundle);
+        await deleteProject(api, project.id);
+
+        await page.goto("/operations/export/");
+        const choosing = page.waitForEvent("filechooser");
+        await page.getByRole("button", { name: "Choose file" }).click();
+        await (await choosing).setFiles(bundle);
+        await expect(page.getByRole("checkbox", { name: new RegExp(`^Import ${name} `) })).toBeChecked();
+        await page.getByRole("button", { name: /^Import( and accept \d+ issues?)?$/ }).click();
+        await expect(page.getByText("Imported", { exact: true })).toBeVisible({ timeout: 60_000 });
+
+        const restored = await findProject(api, name);
+        expect(restored?.id, "a project of its own again").not.toBe(project.id);
+        const res = await api.get(`projects/${restored!.id}/vulnerability-ignores`);
+        expect(res.ok(), await res.text()).toBe(true);
+        const ignores = ((await res.json()) as { data: { vulnId: string; reason: string; setBy: string }[] }).data;
+        expect(ignores).toContainEqual(
+            expect.objectContaining({ vulnId: CVE, reason: "apk never runs in the container", setBy: "admin" }),
+        );
     });
 });

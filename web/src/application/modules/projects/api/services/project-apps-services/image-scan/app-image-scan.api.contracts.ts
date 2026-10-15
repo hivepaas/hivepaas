@@ -67,6 +67,8 @@ export interface VulnIgnoreRef {
     reason: string;
     setBy: string;
     expireAt: Date | null;
+    /** The apps of the scope's children have it too; a global one that is not is HivePaaS's alone. */
+    inheritable: boolean;
 }
 
 export interface IgnoredFinding extends VulnFinding {
@@ -121,3 +123,29 @@ export type AppImageScan_DeleteIgnore_Req = ApiRequestBase<
     }
 >;
 export type AppImageScan_DeleteIgnore_Res = ApiResponseBase<{ type: "success" }>;
+
+/** An app and what its images carry, in counts: a row of a project's Security tab. */
+export interface ScannedApp {
+    app: { id: string; name: string };
+    project: { id: string; name: string };
+    projectEnv: { id: string; key: string; name: string };
+    scannedAt: Date;
+    error: string;
+    summary: VulnSummary;
+    images: ScannedImage[];
+}
+
+export type ProjectImageScan_Find_Req = ApiRequestBase<{ projectID: string }>;
+export type ProjectImageScan_Find_Res = ApiResponseBase<{
+    /** Image scanning is on: the apps are scanned after each deployment and every day. */
+    enabled: boolean;
+    /** The project's scanned apps, the worst first. */
+    apps: ScannedApp[];
+}>;
+
+export type AppImageScan_DownloadSBOM_Req = ApiRequestBase<AppRef & { imageId: string }>;
+export type AppImageScan_DownloadSBOM_Res = ApiResponseBase<{
+    /** The image's packages, as CycloneDX JSON. */
+    blob: Blob;
+    filename?: string;
+}>;

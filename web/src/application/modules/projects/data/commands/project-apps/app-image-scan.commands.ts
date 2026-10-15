@@ -6,6 +6,8 @@ import type {
     AppImageScan_CreateIgnore_Res,
     AppImageScan_DeleteIgnore_Req,
     AppImageScan_DeleteIgnore_Res,
+    AppImageScan_DownloadSBOM_Req,
+    AppImageScan_DownloadSBOM_Res,
     AppImageScan_Scan_Req,
     AppImageScan_Scan_Res,
 } from "../../../api/services";
@@ -16,7 +18,12 @@ type Options<Res, Req> = Omit<UseMutationOptions<Res, Error, Req>, "mutationFn">
 /** What an app's image scan is shown from: read again once it changed. */
 function useInvalidate() {
     const queryClient = useQueryClient();
-    return () => queryClient.invalidateQueries({ queryKey: [QK["projects.apps.image-scan.$.find-one"]] });
+    // An ignore changes the counts of the project's Security tab too.
+    return () =>
+        Promise.all([
+            queryClient.invalidateQueries({ queryKey: [QK["projects.apps.image-scan.$.find-one"]] }),
+            queryClient.invalidateQueries({ queryKey: [QK["projects.image-scan.find-project"]] }),
+        ]);
 }
 
 function useScan({ onSuccess, ...options }: Options<AppImageScan_Scan_Res, AppImageScan_Scan_Req["data"]> = {}) {
@@ -67,7 +74,17 @@ function useDeleteIgnore({
     });
 }
 
+function useDownloadSBOM(options: Options<AppImageScan_DownloadSBOM_Res, AppImageScan_DownloadSBOM_Req["data"]> = {}) {
+    const { mutations } = useAppImageScanApi();
+
+    return useMutation({
+        mutationFn: mutations.downloadSBOM,
+        ...options,
+    });
+}
+
 export const AppImageScanCommands = Object.freeze({
+    useDownloadSBOM,
     useScan,
     useCreateIgnore,
     useDeleteIgnore,

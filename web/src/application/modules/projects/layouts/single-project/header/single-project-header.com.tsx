@@ -80,6 +80,11 @@ function View({ projectId }: Props) {
             activePathPrefixes: [ROUTE.projects.single.operations.$route(projectId), `/projects/${projectId}/status`],
         },
         {
+            route: ROUTE.projects.single.security.$route(projectId),
+            label: "Security",
+            activePathPrefixes: [ROUTE.projects.single.security.$route(projectId)],
+        },
+        {
             route: ROUTE.projects.single.appTemplates.$route(projectId),
             label: "App Templates",
             activePathPrefixes: [ROUTE.projects.single.appTemplates.$route(projectId)],

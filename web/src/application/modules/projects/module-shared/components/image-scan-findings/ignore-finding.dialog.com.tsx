@@ -26,7 +26,33 @@ import {
 
 import { SCOPE_LABELS } from "./severity";
 
-const SCOPES: VulnIgnoreScope[] = ["app", "project-env", "project", "global"];
+/** Whom an ignore is for: a scope, and for a global one whether the apps have it. */
+interface ScopeChoice {
+    value: string;
+    label: string;
+    scope: VulnIgnoreScope;
+    inheritable: boolean;
+}
+
+type ScopeChoices = readonly [ScopeChoice, ...ScopeChoice[]];
+
+function appChoice(scope: VulnIgnoreScope): ScopeChoice {
+    return { value: scope, label: SCOPE_LABELS[scope], scope, inheritable: true };
+}
+
+/** An app's: its own scope or one it inherits from. */
+const APP_CHOICES: ScopeChoices = [
+    appChoice("app"),
+    appChoice("project-env"),
+    appChoice("project"),
+    appChoice("global"),
+];
+
+/** HivePaaS's own parts are of no project: a global ignore, for them alone or for every app too. */
+const HIVEPAAS_CHOICES: ScopeChoices = [
+    { value: "hivepaas", label: "HivePaaS only", scope: "global", inheritable: false },
+    { value: "everywhere", label: "HivePaaS and every project", scope: "global", inheritable: true },
+];
 
 /** How long an ignore lasts: at most a year, so each is looked at again. */
 const EXPIRIES = [
@@ -41,6 +67,8 @@ const REASON_MAX_LENGTH = 1000;
 
 interface Props {
     finding: VulnFinding | null;
+    /** hivepaas sets aside a finding of HivePaaS's own images: a global ignore. */
+    variant?: "app" | "hivepaas";
     isPending: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: (scope: VulnIgnoreScope, payload: VulnIgnorePayload) => void;
@@ -50,26 +78,28 @@ interface Props {
  * Sets a finding aside, for the apps of a scope: a team found it does not
  * apply to them. It needs a reason, and lasts until it expires.
  */
-export function IgnoreFindingDialog({ finding, isPending, onOpenChange, onConfirm }: Props) {
-    const [scope, setScope] = useState<VulnIgnoreScope>("app");
+export function IgnoreFindingDialog({ finding, variant = "app", isPending, onOpenChange, onConfirm }: Props) {
+    const choices = variant === "hivepaas" ? HIVEPAAS_CHOICES : APP_CHOICES;
+    const [choiceValue, setChoiceValue] = useState(choices[0].value);
     const [packageOnly, setPackageOnly] = useState(true);
     const [reason, setReason] = useState("");
     const [expiry, setExpiry] = useState<string>("90");
 
     useEffect(() => {
         if (finding) {
-            setScope("app");
+            setChoiceValue(choices[0].value);
             setPackageOnly(true);
             setReason("");
             setExpiry("90");
         }
-    }, [finding]);
+    }, [finding, choices]);
 
     if (!finding) {
         return null;
     }
 
     const trimmed = reason.trim();
+    const choice = choices.find(item => item.value === choiceValue) ?? choices[0];
 
     return (
         <Dialog
@@ -89,18 +119,17 @@ export function IgnoreFindingDialog({ finding, isPending, onOpenChange, onConfir
                 </div>
                 <DialogBody className="flex flex-col gap-4">
                     <p className="text-sm leading-6 text-muted-foreground">
-                        An ignored vulnerability is left out of the counts, the app&apos;s badge and the daily report,
-                        for every app of the scope chosen. It is still listed under Ignored.
+                        {variant === "hivepaas"
+                            ? "An ignored vulnerability is left out of the counts of HivePaaS's own images - and of every app's too, when it is for every project. It is still listed under Ignored."
+                            : "An ignored vulnerability is left out of the counts, the app's badge and the daily report, for every app of the scope chosen. It is still listed under Ignored."}
                     </p>
                     <InfoBlock
                         titleWidth={140}
                         title="For"
                     >
                         <Select
-                            value={scope}
-                            onValueChange={value => {
-                                setScope(value as VulnIgnoreScope);
-                            }}
+                            value={choice.value}
+                            onValueChange={setChoiceValue}
                         >
                             <SelectTrigger
                                 className="w-full max-w-[320px]"
@@ -109,12 +138,12 @@ export function IgnoreFindingDialog({ finding, isPending, onOpenChange, onConfir
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {SCOPES.map(value => (
+                                {choices.map(item => (
                                     <SelectItem
-                                        key={value}
-                                        value={value}
+                                        key={item.value}
+                                        value={item.value}
                                     >
-                                        {SCOPE_LABELS[value]}
+                                        {item.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -196,7 +225,7 @@ export function IgnoreFindingDialog({ finding, isPending, onOpenChange, onConfir
                         disabled={trimmed === "" || isPending}
                         isLoading={isPending}
                         onClick={() => {
-                            onConfirm(scope, {
+                            onConfirm(choice.scope, {
                                 vulnId: finding.vulnId,
                                 package: packageOnly ? finding.pkgName : "",
                                 reason: trimmed,
@@ -204,7 +233,7 @@ export function IgnoreFindingDialog({ finding, isPending, onOpenChange, onConfir
                                     expiry === "never"
                                         ? null
                                         : new Date(Date.now() + Number(expiry) * 24 * 60 * 60 * 1000),
-                                inheritable: true,
+                                inheritable: choice.inheritable,
                             });
                         }}
                     >

@@ -49,7 +49,8 @@ export interface SystemImageScanSettings extends SettingsBaseEntity {
 export interface ImageScanApp {
     app: { id: string; name: string };
     project: { id: string; name: string };
-    projectEnv: { id: string; name: string };
+    /** key is what an app's address names. */
+    projectEnv: { id: string; key: string; name: string };
     scannedAt: Date;
     error: string;
     summary: {

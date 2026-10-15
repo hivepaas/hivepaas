@@ -4,3 +4,4 @@ export * from "./configuration";
 export * from "./cluster-resources";
 export * from "./operations";
 export * from "./single-app";
+export * from "./security";

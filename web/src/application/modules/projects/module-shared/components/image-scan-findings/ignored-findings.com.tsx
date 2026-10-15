@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { SCOPE_LABELS, severityLabel, severityTone } from "./severity";
+import { ignoreScopeLabel, severityLabel, severityTone } from "./severity";
 
 interface Props {
     ignored: IgnoredFinding[];
@@ -69,7 +69,7 @@ export function IgnoredFindings({ ignored, onRemove }: Props) {
                                     <TableCell className="font-mono text-xs">{finding.vulnId}</TableCell>
                                     <TableCell className="font-mono text-xs break-all">{finding.pkgName}</TableCell>
                                     <TableCell className="text-xs">
-                                        {SCOPE_LABELS[finding.ignore.scope]}
+                                        {ignoreScopeLabel(finding.ignore)}
                                         {!finding.ignore.package && (
                                             <span className="text-muted-foreground"> · every package</span>
                                         )}

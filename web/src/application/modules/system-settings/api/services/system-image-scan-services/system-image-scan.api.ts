@@ -8,6 +8,10 @@ import type {
     SystemImageScan_Execute_Res,
     SystemImageScan_FindApps_Req,
     SystemImageScan_FindApps_Res,
+    SystemImageScan_FindComponent_Req,
+    SystemImageScan_FindComponent_Res,
+    SystemImageScan_FindComponents_Req,
+    SystemImageScan_FindComponents_Res,
     SystemImageScan_FindOne_Req,
     SystemImageScan_FindOne_Res,
     SystemImageScan_UpdateOne_Req,
@@ -68,6 +72,32 @@ export class SystemImageScanApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.get("/system/settings/image-scan/apps", { params: request.data, signal })).pipe(
                 map(this.validator.findApps),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findComponents(
+        _request: SystemImageScan_FindComponents_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SystemImageScan_FindComponents_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.get("/system/settings/image-scan/hivepaas", { signal })).pipe(
+                map(this.validator.findComponents),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findComponent(
+        request: SystemImageScan_FindComponent_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SystemImageScan_FindComponent_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.get(`/system/settings/image-scan/hivepaas/${request.data.component}`, { signal })).pipe(
+                map(this.validator.findComponent),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

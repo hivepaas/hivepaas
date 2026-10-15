@@ -8,6 +8,13 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import type { VulnFinding } from "~/projects/api/services";
 import { AppImageScanCommands, AppImageScanQueries } from "~/projects/data";
+import {
+    FindingsTable,
+    IgnoreFindingDialog,
+    IgnoredFindings,
+    ScannedImages,
+    SeverityCounters,
+} from "~/projects/module-shared/components";
 
 import { AppLoader, BetaBadge } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -16,13 +23,15 @@ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button } from "@/components/ui/button";
 
-import {
-    FindingsTable,
-    IgnoreFindingDialog,
-    IgnoredFindings,
-    ScannedImages,
-    SeverityCounters,
-} from "../building-blocks";
+/** Saves a downloaded file under its name. */
+function saveBlob(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+}
 
 // How often the tab asks again while a scan of the app is queued or running.
 const PENDING_SCAN_REFETCH_INTERVAL_MS = 3_000;
@@ -55,6 +64,15 @@ export function AppSecurityRoute() {
         onSuccess: () => {
             toast.success("Vulnerability ignored");
             setIgnoring(null);
+        },
+    });
+    const {
+        mutate: downloadSBOM,
+        isPending: isDownloading,
+        variables: downloadingSBOM,
+    } = AppImageScanCommands.useDownloadSBOM({
+        onSuccess: res => {
+            saveBlob(res.data.blob, res.data.filename ?? "sbom.cdx.json");
         },
     });
     const { mutate: deleteIgnore } = AppImageScanCommands.useDeleteIgnore({
@@ -143,7 +161,17 @@ export function AppSecurityRoute() {
             ) : (
                 <>
                     <SeverityCounters summary={result.summary} />
-                    <ScannedImages images={result.images} />
+                    <ScannedImages
+                        images={result.images}
+                        onDownloadSBOM={
+                            result.enabled
+                                ? image => {
+                                      downloadSBOM({ ...appRef, imageId: image.imageId });
+                                  }
+                                : undefined
+                        }
+                        downloading={isDownloading ? downloadingSBOM.imageId : undefined}
+                    />
                     <FindingsTable
                         findings={result.findings}
                         onIgnore={canWrite ? setIgnoring : undefined}

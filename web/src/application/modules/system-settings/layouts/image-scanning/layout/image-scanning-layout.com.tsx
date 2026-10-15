@@ -1,6 +1,6 @@
 import { type PropsWithChildren, memo } from "react";
 
-import { ListChecks, Play, Settings } from "lucide-react";
+import { Boxes, ListChecks, Play, Settings } from "lucide-react";
 import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/system-settings/module-shared";
 
 import { ROUTE } from "@application/shared/constants";
@@ -18,6 +18,11 @@ const sections: SystemSettingsTabSection[] = [
                 label: "Apps",
                 route: ROUTE.systemSettings.imageScanning.apps.$route,
                 icon: ListChecks,
+            },
+            {
+                label: "HivePaaS",
+                route: ROUTE.systemSettings.imageScanning.hivepaas.$route,
+                icon: Boxes,
             },
             {
                 label: "Actions",

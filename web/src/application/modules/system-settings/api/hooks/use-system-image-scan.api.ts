@@ -4,6 +4,7 @@ import { match } from "oxide.ts";
 import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
 import type {
     SystemImageScan_FindApps_Req,
+    SystemImageScan_FindComponent_Req,
     SystemImageScan_FindOne_Req,
     SystemImageScan_UpdateOne_Req,
 } from "~/system-settings/api/services";
@@ -24,6 +25,28 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to get image scanning settings", error });
+                            throw error;
+                        },
+                    });
+                },
+                findComponents: async (signal?: AbortSignal) => {
+                    const result = await api.systemSettings.imageScan.findComponents({ data: {} }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to list HivePaaS's scanned images", error });
+                            throw error;
+                        },
+                    });
+                },
+                findComponent: async (data: SystemImageScan_FindComponent_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.systemSettings.imageScan.findComponent({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to get what the image carries", error });
                             throw error;
                         },
                     });

@@ -1,14 +1,27 @@
-import { AlertTriangle, Box } from "lucide-react";
+import { AlertTriangle, Box, Download } from "lucide-react";
 import type { ScannedImage } from "~/projects/api/services";
 
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { shortImageId } from "./severity";
 
-/** The images the app's tasks ran when last scanned, each with its last scan. */
-export function ScannedImages({ images }: { images: ScannedImage[] }) {
+/**
+ * The images the app's tasks ran when last scanned, each with its last scan.
+ * onDownloadSBOM, when given, offers each image's SBOM; downloading names the
+ * one being downloaded.
+ */
+export function ScannedImages({
+    images,
+    onDownloadSBOM,
+    downloading,
+}: {
+    images: ScannedImage[];
+    onDownloadSBOM?: (image: ScannedImage) => void;
+    downloading?: string;
+}) {
     return (
         <div className="flex flex-col gap-2">
             {images.map(image => (
@@ -39,6 +52,23 @@ export function ScannedImages({ images }: { images: ScannedImage[] }) {
                             >
                                 Scan failed
                             </Badge>
+                        )}
+                        {onDownloadSBOM && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="ml-auto h-7 text-xs"
+                                isLoading={downloading === image.imageId}
+                                disabled={downloading !== undefined}
+                                title="The image's packages, as CycloneDX JSON"
+                                onClick={() => {
+                                    onDownloadSBOM(image);
+                                }}
+                            >
+                                <Download className="size-3.5" />
+                                Download SBOM
+                            </Button>
                         )}
                     </div>
                     {image.osEosl && (

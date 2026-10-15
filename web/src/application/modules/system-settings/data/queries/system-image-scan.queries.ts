@@ -3,6 +3,9 @@ import { useSystemImageScanApi } from "~/system-settings/api/hooks";
 import type {
     SystemImageScan_FindApps_Req,
     SystemImageScan_FindApps_Res,
+    SystemImageScan_FindComponent_Req,
+    SystemImageScan_FindComponent_Res,
+    SystemImageScan_FindComponents_Res,
     SystemImageScan_FindOne_Req,
     SystemImageScan_FindOne_Res,
 } from "~/system-settings/api/services";
@@ -38,7 +41,34 @@ function useFindApps(
     });
 }
 
+function useFindComponents(
+    options: Omit<UseQueryOptions<SystemImageScan_FindComponents_Res>, "queryKey" | "queryFn"> = {},
+) {
+    const { queries } = useSystemImageScanApi();
+
+    return useQuery({
+        queryKey: [QK["system-settings.image-scan.find-components"]],
+        queryFn: ({ signal }) => queries.findComponents(signal),
+        ...options,
+    });
+}
+
+function useFindComponent(
+    request: SystemImageScan_FindComponent_Req["data"],
+    options: Omit<UseQueryOptions<SystemImageScan_FindComponent_Res>, "queryKey" | "queryFn"> = {},
+) {
+    const { queries } = useSystemImageScanApi();
+
+    return useQuery({
+        queryKey: [QK["system-settings.image-scan.find-component"], request],
+        queryFn: ({ signal }) => queries.findComponent(request, signal),
+        ...options,
+    });
+}
+
 export const SystemImageScanQueries = Object.freeze({
     useFindOne,
     useFindApps,
+    useFindComponents,
+    useFindComponent,
 });

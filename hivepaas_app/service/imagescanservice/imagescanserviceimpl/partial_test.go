@@ -48,7 +48,7 @@ func TestImagesOnNodesSaysWhichNodesWereNotRead(t *testing.T) {
 	images, err := svc.imagesOnNodes(context.Background(), map[string][]string{"A": {"c1"}, "B": {"c2"}},
 		tasklog.NewNullStore())
 
-	var unread *unreadNodes
+	var unread *unreadNodesError
 	if assert.True(t, errors.As(err, &unread), "got %v", err) {
 		assert.Equal(t, []string{"B"}, unread.nodeIDs)
 	}
@@ -96,7 +96,7 @@ func TestAPartlyReadAppKeepsTheImagesOfTheNodesNotRead(t *testing.T) {
 	repo := &appScans{previous: &entity.AppImageScan{AppID: "app", ImageIDs: []string{imageA, imageB},
 		Reported: []string{"CVE-1|pkg"}}}
 	svc := &service{imageScanRepo: repo}
-	unread := &unreadNodes{nodeIDs: []string{"B"}, last: errors.New("agent unreachable")}
+	unread := &unreadNodesError{nodeIDs: []string{"B"}, last: errors.New("agent unreachable")}
 
 	out, err := svc.scanSubject(context.Background(), &subject{id: "app",
 		images: []runningImage{{ID: imageA, Ref: "shop/web:1", NodeID: "A"}}, imagesErr: unread},

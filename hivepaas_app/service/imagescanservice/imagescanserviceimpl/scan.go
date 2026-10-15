@@ -43,6 +43,10 @@ const (
 	lockExpiry     = callTimeout + time.Minute
 	lockRetryDelay = 2 * time.Second
 	lockTries      = int(callTimeout / lockRetryDelay)
+	// sbomLockTries is the wait of an SBOM, asked for in a request a person
+	// waits on: half a minute, then try again, rather than a scan's whole
+	// length - and no queue of requests behind the volume.
+	sbomLockTries = int(30 * time.Second / lockRetryDelay)
 
 	// freshScan is how long a scan stands for its image: after a deployment, or
 	// the daily scan, it is not done again within it unless asked.
@@ -131,7 +135,7 @@ func (s *service) scanSubject(ctx context.Context, sub *subject, with *imageScan
 	}
 
 	out := &entity.TaskImageScanOutput{}
-	var unread *unreadNodes
+	var unread *unreadNodesError
 	if !errors.As(sub.imagesErr, &unread) || len(sub.images) == 0 {
 		unread = nil
 	}
@@ -273,7 +277,7 @@ func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanser
 	_ = req.log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanning %s (%s), run on node %s, on node %s",
 		img.Ref, shortID(img.ID), img.NodeID, scanNode), tasklog.TsNow))
 
-	resp, err := s.runLocked(ctx, req.volume, scanNode, runReq)
+	resp, err := s.runLocked(ctx, req.volume, scanNode, lockTries, runReq)
 	if err != nil {
 		return nil, err
 	}
@@ -287,11 +291,11 @@ func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanser
 }
 
 // runLocked runs a scan on its node, once the volume's copy there is free.
-func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode string,
+func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode string, tries int,
 	runReq *imagescanrun.RunReq) (*imagescanrun.RunResp, error) {
 	var resp *imagescanrun.RunResp
 	var runErr error
-	lockErr := s.redisLock.Do(ctx, volume.lockKey(scanNode), lockExpiry, lockTries, lockRetryDelay, func() {
+	lockErr := s.redisLock.Do(ctx, volume.lockKey(scanNode), lockExpiry, tries, lockRetryDelay, func() {
 		if runErr = timeLeftFor(ctx); runErr != nil {
 			return
 		}
@@ -301,7 +305,8 @@ func (s *service) runLocked(ctx context.Context, volume *scanVolume, scanNode st
 	})
 	if lockErr != nil {
 		return nil, hperrors.Wrap(hperrors.ErrImageScanNotReady).
-			WithExtraDetail("Another scan on the volume did not end in time: %v", lockErr)
+			WithExtraDetail("Another scan on the volume did not end within %v; try again later: %v",
+				time.Duration(tries)*lockRetryDelay, lockErr)
 	}
 	return resp, runErr
 }
@@ -446,21 +451,21 @@ func (s *service) serviceImages(ctx context.Context, serviceID, name string, log
 	return s.imagesOnNodes(ctx, containers, log)
 }
 
-// unreadNodes is what imagesOnNodes says when some nodes answered and some
+// unreadNodesError is what imagesOnNodes says when some nodes answered and some
 // did not: the images it gives are those of the nodes that answered.
-type unreadNodes struct {
+type unreadNodesError struct {
 	nodeIDs []string
 	last    error
 }
 
-func (e *unreadNodes) Error() string {
+func (e *unreadNodesError) Error() string {
 	return fmt.Sprintf("The containers of node %s could not be read (%s): what they run is kept from the "+
 		"last scan.", strings.Join(e.nodeIDs, ", "), hperrors.GetErrorDetail(e.last, ""))
 }
 
 // imagesOnNodes are the images the containers run, by node, one node each
 // runs on: the first by ID. When some nodes cannot be read it gives the others'
-// images with an *unreadNodes, and the error alone when none can.
+// images with an *unreadNodesError, and the error alone when none can.
 func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]string, log *tasklog.Store) (
 	[]runningImage, error) {
 	nodeIDs := make([]string, 0, len(containers))
@@ -492,7 +497,7 @@ func (s *service) imagesOnNodes(ctx context.Context, containers map[string][]str
 		return nil, lastErr
 	}
 	if len(unread) > 0 {
-		return images, &unreadNodes{nodeIDs: unread, last: lastErr}
+		return images, &unreadNodesError{nodeIDs: unread, last: lastErr}
 	}
 	return images, nil
 }

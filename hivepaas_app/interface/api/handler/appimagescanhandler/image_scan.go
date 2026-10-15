@@ -1,8 +1,10 @@
 package appimagescanhandler
 
 import (
+	"context"
 	"mime"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -86,6 +88,11 @@ func (h *Handler) ScanAppImages(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// sbomWriteTimeout lifts the server's write timeout for an SBOM: Trivy reads
+// the image, which a cold image or DB takes minutes to; the wait for the
+// volume is half a minute.
+const sbomWriteTimeout = 15 * time.Minute
+
 // GetAppImageSBOM Downloads the SBOM of an image an app runs
 // @Summary Downloads the SBOM of an image an app runs
 // @Description The image's packages as CycloneDX JSON, read as a scan reads the image - on the same node,
@@ -116,7 +123,16 @@ func (h *Handler) GetAppImageSBOM(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appImageScanUC.GetAppImageSBOM(h.RequestCtx(ctx), auth, req)
+	if err = http.NewResponseController(ctx.Writer).SetWriteDeadline(time.Now().Add(sbomWriteTimeout)); err != nil {
+		_ = ctx.Error(err)
+	}
+	// The SBOM's scan ends with its request: one whose person went away stops,
+	// and its container is removed, rather than holding the volume.
+	reqCtx, cancel := context.WithCancel(h.RequestCtx(ctx))
+	defer cancel()
+	defer context.AfterFunc(ctx.Request.Context(), cancel)()
+
+	resp, err := h.appImageScanUC.GetAppImageSBOM(reqCtx, auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

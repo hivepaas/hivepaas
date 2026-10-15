@@ -21,7 +21,7 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 	}
 	// Some nodes unread, the image may still be on one that answered.
 	images, err := s.appImages(ctx, req.App, tasklog.NewNullStore())
-	var unread *unreadNodes
+	var unread *unreadNodesError
 	if err != nil && !errors.As(err, &unread) {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 		return nil, err
 	}
 
-	resp, err := s.runLocked(ctx, volume, volume.scanNode(img.NodeID), &imagescanrun.RunReq{
+	resp, err := s.runLocked(ctx, volume, volume.scanNode(img.NodeID), sbomLockTries, &imagescanrun.RunReq{
 		Format:       imagescanrun.FormatCycloneDX,
 		TrivyImage:   trivyImage(),
 		ImageID:      img.ID,

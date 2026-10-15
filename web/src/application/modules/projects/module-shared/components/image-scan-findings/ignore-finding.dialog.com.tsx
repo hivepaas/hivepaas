@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
     Dialog,
@@ -69,6 +69,8 @@ interface Props {
     finding: VulnFinding | null;
     /** hivepaas sets aside a finding of HivePaaS's own images: a global ignore. */
     variant?: "app" | "hivepaas";
+    /** The scopes the user may set an ignore at; every one of the variant's when left out. */
+    scopes?: readonly VulnIgnoreScope[];
     isPending: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: (scope: VulnIgnoreScope, payload: VulnIgnorePayload) => void;
@@ -78,28 +80,37 @@ interface Props {
  * Sets a finding aside, for the apps of a scope: a team found it does not
  * apply to them. It needs a reason, and lasts until it expires.
  */
-export function IgnoreFindingDialog({ finding, variant = "app", isPending, onOpenChange, onConfirm }: Props) {
-    const choices = variant === "hivepaas" ? HIVEPAAS_CHOICES : APP_CHOICES;
-    const [choiceValue, setChoiceValue] = useState(choices[0].value);
+export function IgnoreFindingDialog({ finding, variant = "app", scopes, isPending, onOpenChange, onConfirm }: Props) {
+    // Only what the server would take from the user: a global ignore is the
+    // Settings module's, the others the project's.
+    const scopesKey = scopes?.join(",");
+    const choices = useMemo((): readonly ScopeChoice[] => {
+        const all = variant === "hivepaas" ? HIVEPAAS_CHOICES : APP_CHOICES;
+        const allowed = scopesKey?.split(",");
+        return allowed ? all.filter(item => allowed.includes(item.scope)) : all;
+    }, [variant, scopesKey]);
+    const firstValue = choices[0]?.value ?? "";
+    const [choiceValue, setChoiceValue] = useState(firstValue);
     const [packageOnly, setPackageOnly] = useState(true);
     const [reason, setReason] = useState("");
     const [expiry, setExpiry] = useState<string>("90");
 
     useEffect(() => {
         if (finding) {
-            setChoiceValue(choices[0].value);
+            setChoiceValue(firstValue);
             setPackageOnly(true);
             setReason("");
             setExpiry("90");
         }
-    }, [finding, choices]);
+    }, [finding, firstValue]);
 
-    if (!finding) {
+    // None at all: the user may set no ignore, and the dialog is not offered.
+    const choice = choices.find(item => item.value === choiceValue) ?? choices[0];
+    if (!finding || !choice) {
         return null;
     }
 
     const trimmed = reason.trim();
-    const choice = choices.find(item => item.value === choiceValue) ?? choices[0];
 
     return (
         <Dialog

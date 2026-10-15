@@ -31,7 +31,8 @@ const NO_APP = { projectID: "", env: "", appID: "" };
 export function SystemSettingsImageScanningHivePaaSComponentRoute() {
     const { component } = useParams<{ component: string }>();
     invariant(component, "component must be defined");
-    const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
+    // Its ignores are global: the Settings module's to write, as the server checks.
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
     const [ignoring, setIgnoring] = useState<VulnFinding | null>(null);
     const { data, isLoading, refetch } = SystemImageScanQueries.useFindComponent({ component });
     const { mutate: createIgnore, isPending: isIgnoring } = AppImageScanCommands.useCreateIgnore({
@@ -74,7 +75,9 @@ export function SystemSettingsImageScanningHivePaaSComponentRoute() {
             {scan.error && (
                 <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[13px] text-destructive">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                    <span className="break-words">Not scanned: {scan.error}</span>
+                    <span className="break-words">
+                        {scan.images.length > 0 ? "Last scan incomplete" : "Not scanned"}: {scan.error}
+                    </span>
                 </div>
             )}
 

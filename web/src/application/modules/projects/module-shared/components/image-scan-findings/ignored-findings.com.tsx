@@ -17,10 +17,12 @@ interface Props {
     ignored: IgnoredFinding[];
     /** Remove on a row; none when the user may not. */
     onRemove?: (ignore: VulnIgnoreRef) => void;
+    /** Whether the user may remove that ignore - one of a scope they cannot write is kept from them; every one when left out. */
+    canRemove?: (ignore: VulnIgnoreRef) => boolean;
 }
 
 /** What ignores set aside, folded: each finding with its ignore - where, why, who, until. */
-export function IgnoredFindings({ ignored, onRemove }: Props) {
+export function IgnoredFindings({ ignored, onRemove, canRemove }: Props) {
     const [open, setOpen] = useState(false);
 
     if (ignored.length === 0) {
@@ -87,25 +89,27 @@ export function IgnoredFindings({ ignored, onRemove }: Props) {
                                     </TableCell>
                                     {onRemove && (
                                         <TableCell className="text-right">
-                                            <PopConfirm
-                                                title="Remove the ignore"
-                                                description={`${finding.vulnId} counts again for every app the ignore covers.`}
-                                                confirmText="Remove"
-                                                variant="destructive"
-                                                onConfirm={() => {
-                                                    onRemove(finding.ignore);
-                                                }}
-                                            >
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 text-xs"
+                                            {(!canRemove || canRemove(finding.ignore)) && (
+                                                <PopConfirm
+                                                    title="Remove the ignore"
+                                                    description={`${finding.vulnId} counts again for every app the ignore covers.`}
+                                                    confirmText="Remove"
+                                                    variant="destructive"
+                                                    onConfirm={() => {
+                                                        onRemove(finding.ignore);
+                                                    }}
                                                 >
-                                                    <Undo2 className="size-3.5" />
-                                                    Remove
-                                                </Button>
-                                            </PopConfirm>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 text-xs"
+                                                    >
+                                                        <Undo2 className="size-3.5" />
+                                                        Remove
+                                                    </Button>
+                                                </PopConfirm>
+                                            )}
                                         </TableCell>
                                     )}
                                 </TableRow>

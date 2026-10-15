@@ -91,7 +91,8 @@ async function criticalShown(page: Page): Promise<void> {
             await page.reload();
             const scan = page.getByRole("button", { name: "Scan now" });
             const failed =
-                (await page.getByText("Scan failed").count()) > 0 || (await page.getByText("Not scanned:").count()) > 0;
+                (await page.getByText("Scan failed").count()) > 0 ||
+                (await page.getByText(/^(Not scanned|Last scan incomplete):/).count()) > 0;
             if (failed && (await scan.isEnabled())) {
                 await scan.click();
             }

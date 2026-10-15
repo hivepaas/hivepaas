@@ -6,7 +6,7 @@ import { AlertTriangle, ScanSearch, ShieldCheck } from "lucide-react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import type { VulnFinding } from "~/projects/api/services";
+import type { VulnFinding, VulnIgnoreScope } from "~/projects/api/services";
 import { AppImageScanCommands, AppImageScanQueries } from "~/projects/data";
 import {
     FindingsTable,
@@ -49,7 +49,14 @@ export function AppSecurityRoute() {
     const appRef = { projectID, env, appID };
 
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+    const { canWrite: canWriteSettings } = useConditionalModule({ id: MODULE_IDS.Settings });
     const { canRead: canReadSystem } = useConditionalModule({ id: MODULE_IDS.System });
+    // The scopes the user may set or remove an ignore at, as the server checks:
+    // a global one is the Settings module's, the others the project's.
+    const writableScopes: VulnIgnoreScope[] = [
+        ...(canWrite ? (["app", "project-env", "project"] as const) : []),
+        ...(canWriteSettings ? (["global"] as const) : []),
+    ];
     const [ignoring, setIgnoring] = useState<VulnFinding | null>(null);
 
     const { data, isLoading } = AppImageScanQueries.useFindOne(appRef, {
@@ -145,7 +152,9 @@ export function AppSecurityRoute() {
             {result.error && (
                 <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[13px] text-destructive">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                    <span className="break-words">Not scanned: {result.error}</span>
+                    <span className="break-words">
+                        {result.images.length > 0 ? "Last scan incomplete" : "Not scanned"}: {result.error}
+                    </span>
                 </div>
             )}
 
@@ -174,12 +183,13 @@ export function AppSecurityRoute() {
                     />
                     <FindingsTable
                         findings={result.findings}
-                        onIgnore={canWrite ? setIgnoring : undefined}
+                        onIgnore={writableScopes.length > 0 ? setIgnoring : undefined}
                     />
                     <IgnoredFindings
                         ignored={result.ignored}
+                        canRemove={ignore => writableScopes.includes(ignore.scope)}
                         onRemove={
-                            canWrite
+                            writableScopes.length > 0
                                 ? ignore => {
                                       // An app-scope ignore may be the parent app's, which the
                                       // app inherits: it is removed where it is set.
@@ -200,6 +210,7 @@ export function AppSecurityRoute() {
 
             <IgnoreFindingDialog
                 finding={ignoring}
+                scopes={writableScopes}
                 isPending={isIgnoring}
                 onOpenChange={open => {
                     if (!open) {

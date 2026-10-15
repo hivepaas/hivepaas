@@ -135,6 +135,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.125 | A project's Security tab lists its scanned app with what its image carries, and leads to the app's findings                                                                                                                                   | `tests/level-2/image-scan.spec.ts`          |
 | 2.126 | The daily scan scans HivePaaS's own images: Traefik is listed on System > Image Scanning > HivePaaS, and opens its findings                                                                                                                   | `tests/level-2/image-scan.spec.ts`          |
 | 2.127 | A project's ignore goes out with its exported spec; the project deleted and imported, the ignore is back with its reason and who set it                                                                                                       | `tests/level-2/image-scan.spec.ts`          |
+| 2.128 | An ignore for HivePaaS only, set on a HivePaaS part's finding, sets it aside there and none of an app's; removed, it counts again                                                                                                             | `tests/level-2/image-scan.spec.ts`          |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

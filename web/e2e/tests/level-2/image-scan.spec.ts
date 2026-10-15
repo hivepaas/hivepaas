@@ -354,3 +354,111 @@ test("image scanning, phase 2: a project's Security tab lists its apps; an image
         );
     });
 });
+
+interface ComponentFinding {
+    vulnId: string;
+    fixedVersion?: string;
+}
+
+// componentWithFinding is a part of HivePaaS whose last scan found a fixable
+// vulnerability no ignore sets aside - the ones its page lists by default - in
+// one package, and that vulnerability.
+async function componentWithFinding(api: APIRequestContext): Promise<{ key: string; vulnId: string }> {
+    const res = await api.get("system/settings/image-scan/hivepaas");
+    const { components } = ((await res.json()) as { data: { components: ScannedComponent[] } }).data;
+    for (const { component } of components) {
+        const detail = await api.get(`system/settings/image-scan/hivepaas/${component.key}`);
+        const findings = ((await detail.json()) as { data: { scan: { findings: ComponentFinding[] } } }).data.scan
+            .findings;
+        // One of a single package: the dialog ignores it in that package.
+        const fixable = findings.find(f => f.fixedVersion && findings.filter(o => o.vulnId === f.vulnId).length === 1);
+        if (fixable) return { key: component.key, vulnId: fixable.vulnId };
+    }
+    throw new Error("no part of HivePaaS runs a fixable vulnerability to ignore");
+}
+
+interface GlobalIgnore {
+    id: string;
+    vulnId: string;
+    inheritable: boolean;
+}
+
+async function globalIgnores(api: APIRequestContext): Promise<GlobalIgnore[]> {
+    const res = await api.get("settings/vulnerability-ignores");
+    expect(res.ok(), await res.text()).toBe(true);
+    return ((await res.json()) as { data: GlobalIgnore[] }).data;
+}
+
+async function deleteGlobalIgnores(api: APIRequestContext, vulnId: string): Promise<void> {
+    for (const ignore of (await globalIgnores(api)).filter(i => i.vulnId === vulnId)) {
+        await api.delete(`settings/vulnerability-ignores/${ignore.id}`);
+    }
+}
+
+test("image scanning: an ignore for HivePaaS only sets a finding of HivePaaS's images aside, and none of an app's; removed, it counts again", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    cleanup(() => switchOff(api));
+    const volume = await scanVolume(api, cleanup);
+    await putSettings(api, true, volume.id);
+    await componentScanned(api, "traefik");
+    const part = await componentWithFinding(api);
+    cleanup(() => deleteGlobalIgnores(api, part.vulnId));
+
+    await test.step("ignored for HivePaaS only on a part's page, it leaves the findings for Ignored", async () => {
+        await page.goto(`/system/image-scanning/hivepaas/${part.key}/`);
+        await page
+            .getByTestId("finding-row")
+            .filter({ hasText: part.vulnId })
+            .first()
+            .getByRole("button", { name: "Ignore…" })
+            .click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog.getByRole("combobox", { name: "Scope" })).toHaveText("HivePaaS only");
+        await dialog.getByRole("textbox", { name: "Reason" }).fill("not reachable in HivePaaS's setup");
+        await dialog.getByRole("button", { name: "Ignore", exact: true }).click();
+        await expect(page.getByText("Vulnerability ignored")).toBeVisible();
+
+        await expect(page.getByTestId("finding-row").filter({ hasText: part.vulnId })).toHaveCount(0);
+        await page.getByRole("button", { name: /^Ignored \(\d+\)$/ }).click();
+        const ignored = page.getByTestId("ignored-row").filter({ hasText: part.vulnId }).first();
+        await expect(ignored).toContainText("HivePaaS only");
+        await expect(ignored).toContainText("not reachable in HivePaaS's setup");
+
+        const made = (await globalIgnores(api)).find(i => i.vulnId === part.vulnId);
+        expect(made?.inheritable, "global, and not the apps'").toBe(false);
+    });
+
+    await test.step("an ignore for HivePaaS only leaves an app's finding counted", async () => {
+        const app = await appIn(api, cleanup, "image-hp-only");
+        await deployImage(api, app, OLD_ALPINE, "sleep 3600");
+        await deployed(api, app);
+        cleanup(() => deleteGlobalIgnores(api, CVE));
+        await createSettingAt(api, "settings/vulnerability-ignores", {
+            vulnId: CVE,
+            reason: "HivePaaS's images only",
+            expireAt: null,
+            inheritable: false,
+        });
+        await page.goto(appPage(app, "security"));
+        await criticalShown(page);
+        await expect(page.getByTestId("finding-row").filter({ hasText: CVE })).toBeVisible();
+        await expect(page.getByRole("button", { name: /^Ignored \(\d+\)$/ })).toHaveCount(0);
+    });
+
+    await test.step("removed, the part's finding counts again", async () => {
+        await page.goto(`/system/image-scanning/hivepaas/${part.key}/`);
+        await page.getByRole("button", { name: /^Ignored \(\d+\)$/ }).click();
+        await page
+            .getByTestId("ignored-row")
+            .filter({ hasText: part.vulnId })
+            .first()
+            .getByRole("button", { name: "Remove" })
+            .click();
+        await page.getByRole("button", { name: "Remove", exact: true }).last().click();
+        await expect(page.getByText("Ignore removed")).toBeVisible();
+        await expect(page.getByTestId("finding-row").filter({ hasText: part.vulnId }).first()).toBeVisible();
+    });
+});

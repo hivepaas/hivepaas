@@ -91,3 +91,51 @@ func TestPage(t *testing.T) {
 	assert.Empty(t, page)
 	assert.Equal(t, int64(0), meta.Page.Total)
 }
+
+// installation is every scanned app's scan, and keeps which images' scans
+// were read.
+type installation struct {
+	imageScans
+	read []string
+}
+
+func (r *installation) ListScans(_ context.Context, _ database.IDB, imageIDs []string, _ bool,
+	_ ...bunex.SelectQueryOption) ([]*entity.ImageScan, error) {
+	r.read = imageIDs
+	return nil, nil
+}
+
+// projectApps lists the apps of one project only, as the filter asks.
+type projectApps struct {
+	repository.AppRepo
+	apps []*entity.App
+}
+
+func (r projectApps) List(context.Context, database.IDB, string, *basedto.Paging, ...bunex.SelectQueryOption) (
+	[]*entity.App, *basedto.PagingMeta, error) {
+	return r.apps, nil, nil
+}
+
+type noIgnores struct{ repository.SettingRepo }
+
+func (noIgnores) List(context.Context, database.IDB, *entity.ObjectScope, *basedto.Paging,
+	...bunex.SelectQueryOption) ([]*entity.Setting, *basedto.PagingMeta, error) {
+	return nil, nil, nil
+}
+
+// A project's Security tab reads its own apps' images, not the installation's:
+// another project's app is scanned too, and its image is left unread.
+func TestListReadsTheListedAppsImagesOnly(t *testing.T) {
+	scans := &installation{imageScans: imageScans{appScans: []*entity.AppImageScan{
+		{AppID: "mine", ImageIDs: []string{"img-mine"}},
+		{AppID: "theirs", ImageIDs: []string{"img-theirs"}},
+	}}}
+	repos := Repos{App: projectApps{apps: []*entity.App{app("mine", "mine", "shop")}}, ImageScan: scans,
+		Setting: noIgnores{}}
+
+	out, err := List(context.Background(), nil, repos, Filter{ProjectID: "p-shop"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"img-mine"}, scans.read)
+	assert.Len(t, out, 1)
+}

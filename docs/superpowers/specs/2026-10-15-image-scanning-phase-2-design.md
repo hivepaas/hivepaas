@@ -1,9 +1,16 @@
 # Image scanning, phase 2
 
-Status: approved 2026-10-15, being built. Phase 1 is
+Status: approved and built 2026-10-15; the dashboard's part waits for its
+review. Phase 1 is
 [2026-10-11-image-scanning-design.md](2026-10-11-image-scanning-design.md):
 a container per scan, Trivy's data on a chosen volume, an app's Security tab,
-ignores at four scopes, the daily scan. Nothing below is built.
+ignores at four scopes, the daily scan.
+
+Built: the server (ae7917f7, 7b61fa11), the website (29a22c5, 2bda573), the
+CLI (hivepaas-cli fa29ef7), and the dashboard with its e2e 2.124-2.127, not
+committed yet. Checked on the dind env: the dashboard's image scanning e2e
+(2.121-2.127), the CLI's TestImageScanGate, and the MCP tools through a real
+client.
 
 ## What phase 2 adds
 

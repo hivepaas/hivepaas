@@ -45,6 +45,10 @@ const AttentionItemSchema = z.object({
         .number()
         .nullish()
         .transform(value => value ?? 0),
+    criticalFixable: z
+        .number()
+        .nullish()
+        .transform(value => value ?? 0),
     since: z.coerce
         .date()
         .nullish()

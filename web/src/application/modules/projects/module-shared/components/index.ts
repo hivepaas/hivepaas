@@ -4,6 +4,7 @@ export * from "./project-permission-tooltip-action";
 export * from "./project-app-status-badge";
 export * from "./app-instances-count-badge";
 export * from "./app-active-deployment-badge";
+export * from "./app-image-scan-badge";
 export * from "./project-secret-status-badge";
 export * from "./inheritable-cell";
 export * from "./tls-passthrough-mount-note";

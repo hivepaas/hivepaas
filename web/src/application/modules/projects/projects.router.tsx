@@ -1726,6 +1726,19 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
+                 * Single App – Security (what its images carry)
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.security.$pattern,
+                    lazy: async () => {
+                        const { AppSecurityRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppSecurityRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Logs
                  */
                 {

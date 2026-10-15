@@ -5,6 +5,7 @@
 export const AttentionKind = {
     AppNotRunning: "app-not-running",
     AppRestarting: "app-restarting",
+    AppVulnerable: "app-vulnerable",
     NodeDown: "node-down",
     NodeOvercommitted: "node-overcommitted",
 } as const;
@@ -36,6 +37,8 @@ export interface AttentionItem {
     nodeState: string;
     memoryLimitsBytes: number;
     memoryTotalBytes: number;
+    /** Of an app vulnerable: how many fixable CRITICAL vulnerabilities its images carry. */
+    criticalFixable: number;
     since: Date | null;
     /** Whether the user may change it on the screen it leads to, beyond looking. */
     canAct: boolean;

@@ -106,6 +106,7 @@ export const QK = {
      */
     "projects.apps.docker-api-settings.$.find-one": "projects.apps.docker-api-settings.$.find-one",
     "projects.apps.autoscale.$.find-one": "projects.apps.autoscale.$.find-one",
+    "projects.apps.image-scan.$.find-one": "projects.apps.image-scan.$.find-one",
     /*
      * Project App Storage Settings
      */

@@ -288,6 +288,60 @@ export const systemSettingsRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { ImageScanningLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Image Scanning">
+                                <ImageScanningLayout>
+                                    <Outlet />
+                                </ImageScanningLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.imageScanning.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.imageScanning.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SystemSettingsImageScanningRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsImageScanningRoute };
+                    },
+                },
+                {
+                    path: "apps",
+                    lazy: async () => {
+                        const { SystemSettingsImageScanningAppsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsImageScanningAppsRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SystemSettingsImageScanningActionsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsImageScanningActionsRoute };
+                    },
+                },
+            ],
+        },
         ...MOVED_TO_SETTINGS.map(page => ({
             path: `system/${page}/*`,
             element: <MovedToSettingsRedirect page={page} />,

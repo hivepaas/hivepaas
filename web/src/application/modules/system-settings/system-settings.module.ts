@@ -9,6 +9,9 @@ export {
     SystemSettingsLoggingPerformanceRoute,
     SystemSettingsAiMcpRoute,
     SystemSettingsRegistryRoute,
+    SystemSettingsImageScanningRoute,
+    SystemSettingsImageScanningAppsRoute,
+    SystemSettingsImageScanningActionsRoute,
     SystemSettingsHivePaaSActionsRoute,
     SystemSettingsHivePaaSUpdatesRoute,
     SystemSettingsHivePaaSHttpSettingsRoute,
@@ -20,7 +23,7 @@ export {
 /**
  * Layouts
  */
-export { HivePaaSLayout, LoggingLayout, AiLayout, RegistryLayout, TraefikLayout } from "./layouts";
+export { HivePaaSLayout, LoggingLayout, AiLayout, RegistryLayout, ImageScanningLayout, TraefikLayout } from "./layouts";
 
 /**
  * Dialogs

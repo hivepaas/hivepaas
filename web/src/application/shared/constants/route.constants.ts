@@ -592,6 +592,26 @@ export const ROUTE = {
             },
         },
 
+        imageScanning: {
+            $pattern: "system/image-scanning",
+            $route: "/system/image-scanning/configuration/",
+
+            configuration: {
+                $pattern: "system/image-scanning/configuration",
+                $route: "/system/image-scanning/configuration/",
+            },
+
+            apps: {
+                $pattern: "system/image-scanning/apps",
+                $route: "/system/image-scanning/apps/",
+            },
+
+            actions: {
+                $pattern: "system/image-scanning/actions",
+                $route: "/system/image-scanning/actions/",
+            },
+        },
+
         traefik: {
             $pattern: "system/traefik",
             $route: "/system/traefik/general/",
@@ -949,6 +969,12 @@ export const ROUTE = {
                         $pattern: "projects/:id/:env/apps/:appId/metrics",
                         $route: (id: string, env: string, appId: string) =>
                             `/projects/${id}/${env}/apps/${appId}/metrics/`,
+                    },
+
+                    security: {
+                        $pattern: "projects/:id/:env/apps/:appId/security",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/security/`,
                     },
 
                     logs: {

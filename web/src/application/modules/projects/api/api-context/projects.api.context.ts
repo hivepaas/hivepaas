@@ -112,6 +112,7 @@ import {
     AppDockerApiSettingsApi,
     AppDockerApiSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/docker-api-settings";
+import { AppImageScanApi, AppImageScanApiValidator } from "~/projects/api/services/project-apps-services/image-scan";
 import {
     AppKindSettingsApi,
     AppKindSettingsApiValidator,
@@ -284,6 +285,9 @@ function createApi() {
                 },
                 autoscale: {
                     $: new AppAutoscaleApi(appAutoscaleApiValidator),
+                },
+                imageScan: {
+                    $: new AppImageScanApi(new AppImageScanApiValidator()),
                 },
                 storageSettings: {
                     $: new AppStorageSettingsApi(appStorageSettingsApiValidator),

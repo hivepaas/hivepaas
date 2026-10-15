@@ -6,3 +6,4 @@ export * from "./preview-deployments";
 export * from "./tasks";
 export * from "./code";
 export * from "./metrics";
+export * from "./security";

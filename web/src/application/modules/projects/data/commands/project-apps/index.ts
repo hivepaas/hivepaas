@@ -17,6 +17,7 @@ export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";
 export * from "./app-docker-api-settings.commands";
 export * from "./app-autoscale.commands";
+export * from "./app-image-scan.commands";
 export * from "./app-storage-settings.commands";
 export * from "./app-routing-settings.commands";
 export * from "./app-kind-settings.commands";

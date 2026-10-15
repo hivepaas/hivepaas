@@ -18,6 +18,7 @@ import { QK } from "~/projects/data/constants";
 import {
     AppActiveDeploymentBadge,
     AppActiveDeploymentDot,
+    AppImageScanBadge,
     AppInstancesCountBadge,
     ProjectAppStatusBadge,
     ProjectEnvFilter,
@@ -219,6 +220,11 @@ function View({ projectId, env, appId }: Props) {
             route: ROUTE.projects.single.apps.single.metrics.$route(projectId, env, appId),
             label: "Metrics",
         },
+        // What its images carry: every app runs one.
+        {
+            route: ROUTE.projects.single.apps.single.security.$route(projectId, env, appId),
+            label: "Security",
+        },
         {
             route: ROUTE.projects.single.apps.single.logs.$route(projectId, env, appId),
             label: "Logs",
@@ -274,6 +280,11 @@ function View({ projectId, env, appId }: Props) {
                                 {appData.name}
                             </h2>
                             <ProjectAppStatusBadge status={appData.status} />
+                            <AppImageScanBadge
+                                projectId={projectId}
+                                env={env}
+                                appId={appId}
+                            />
                             {activeDeployment && (
                                 <AppActiveDeploymentBadge
                                     projectId={projectId}

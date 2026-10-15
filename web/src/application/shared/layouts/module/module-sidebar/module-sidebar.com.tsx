@@ -384,6 +384,12 @@ const navMain: SidebarItem[] = [
                         pattern: ROUTE.systemSettings.registry.$pattern,
                     },
                     {
+                        title: "Image Scanning",
+                        icon: ShieldCheck,
+                        route: ROUTE.systemSettings.imageScanning.configuration.$route,
+                        pattern: ROUTE.systemSettings.imageScanning.$pattern,
+                    },
+                    {
                         title: "AI",
                         icon: Sparkles,
                         route: ROUTE.systemSettings.ai.mcp.$route,

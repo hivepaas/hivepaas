@@ -187,6 +187,7 @@ const ALL_TASK_TYPES_FALLBACK = [
     "task:app-labels-sweep",
     "task:backup-restore",
     "task:data-file-load",
+    "task:image-scan",
 ];
 
 export function SystemTasksFilterBar({ scope, filters, onChange, className }: SystemTasksFilterBarProps) {

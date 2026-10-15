@@ -25,7 +25,7 @@ function systemRoute(subject: string): string {
     return ROUTE.systemSettings.hivepaas.$route;
 }
 
-function appLink(item: AttentionItem, screen: "logs" | "instances"): AttentionItemText["link"] {
+function appLink(item: AttentionItem, screen: "logs" | "instances" | "security"): AttentionItemText["link"] {
     if (item.scope === AttentionScope.System) {
         return { to: systemRoute(item.subject), label: "Open" };
     }
@@ -33,9 +33,14 @@ function appLink(item: AttentionItem, screen: "logs" | "instances"): AttentionIt
         return null;
     }
     const app = ROUTE.projects.single.apps.single;
-    return screen === "logs"
-        ? { to: app.logs.$route(item.project.id, item.env, item.app.id), label: "View logs" }
-        : { to: app.instances.$route(item.project.id, item.env, item.app.id), label: "Open app" };
+    switch (screen) {
+        case "logs":
+            return { to: app.logs.$route(item.project.id, item.env, item.app.id), label: "View logs" };
+        case "security":
+            return { to: app.security.$route(item.project.id, item.env, item.app.id), label: "View findings" };
+        case "instances":
+            return { to: app.instances.$route(item.project.id, item.env, item.app.id), label: "Open app" };
+    }
 }
 
 function withError(detail: string, error: string): string {
@@ -59,6 +64,14 @@ export function describeAttentionItem(item: AttentionItem): AttentionItemText {
                 title: `${item.subject} is not running`,
                 detail: withError(`${item.running} of ${item.desired} running`, item.lastError),
                 link: appLink(item, "instances"),
+            };
+        case AttentionKind.AppVulnerable:
+            return {
+                title: `${item.subject} runs a fixable critical vulnerability`,
+                detail:
+                    `${item.criticalFixable} CRITICAL ${item.criticalFixable === 1 ? "vulnerability has" : "vulnerabilities have"} ` +
+                    "a fixed version: rebuild or update its image",
+                link: appLink(item, "security"),
             };
         case AttentionKind.NodeDown:
             return {

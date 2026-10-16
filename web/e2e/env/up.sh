@@ -6,7 +6,9 @@
 #   - docker itself in a dind container, made a swarm;
 #   - the backend and its agent built from the backend repo and run INSIDE dind;
 #   - Traefik, the release's, as the stack's proxy inside dind: the apps'
-#     domains answer on this machine at 10180 (HTTP) and 10443 (HTTPS).
+#     domains answer on this machine at 10180 (HTTP) and 10443 (HTTPS);
+#   - a Colony license for dind's swarm, signed by the development key that
+#     only a backend in the development environment trusts.
 #
 # The last point is the one that matters. The backend's docker client takes the
 # default socket and ignores DOCKER_HOST: run anywhere else, it would work on
@@ -62,8 +64,10 @@ if [ "${HP_E2E_SKIP_BUILD:-}" != 1 ]; then
 	cp -R "$DASHBOARD_DIR/dist" "$BUILD/dist-dashboard"
 	(cd "$BACKEND_DIR" && GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -o "$BUILD/hivepaas-app" ./hivepaas_app/cmd/app)
 	(cd "$BACKEND_DIR" && GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -o "$BUILD/hivepaas-agent" ./hivepaas_app/cmd/agent)
+	# Runs here, not in dind: for this machine.
+	(cd "$BACKEND_DIR" && go build -o "$BUILD/licensesign" ./tools/licensesign)
 fi
-[ -x "$BUILD/hivepaas-app" ] || fail "Nothing built yet: run without HP_E2E_SKIP_BUILD."
+[ -x "$BUILD/hivepaas-app" ] && [ -x "$BUILD/licensesign" ] || fail "Nothing built yet: run without HP_E2E_SKIP_BUILD."
 
 say "Starting postgres, redis and dind"
 docker network create "$NET" >/dev/null
@@ -250,5 +254,20 @@ want="$(in_dind docker info -f '{{.Swarm.NodeID}}')"
 seen="$(curl -s -H "Authorization: Bearer $token" "$base/api/cluster/nodes" |
 	grep -o '"id":"[a-z0-9]\{25\}"' | sed 's/"id":"\(.*\)"/\1/' | sort -u | tr '\n' ' ' || true)"
 [ "$seen" = "$want " ] || fail "The backend sees nodes '$seen', not dind's '$want': stopped."
+
+say "Installing a development license: Colony, for dind's swarm"
+# The suite makes far more than the free plan's 20 apps, and invites past its 2
+# users. The key names dind's swarm, the installation it is for.
+cluster_id="$(in_dind docker info -f '{{.Swarm.Cluster.ID}}')"
+[ -n "$cluster_id" ] || fail "dind's swarm has no cluster ID."
+devkeys="$BACKEND_DIR/tools/licensesign/devkeys"
+license_key="$("$BUILD/licensesign" issue -plan colony -installation "$cluster_id" -days 30 \
+	-key "$devkeys/dev-ed.key" -key "$devkeys/dev-ml.key" -license-id lic_e2e \
+	-customer-name "HivePaaS e2e" -customer-email admin@e2e.localhost 2>/dev/null)" ||
+	fail "Could not sign the development license."
+license_status="$(curl -s -X PUT -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+	-d "{\"key\":\"$license_key\"}" "$base/api/system/license" |
+	grep -o '"status":"[a-z-]*"' | head -n 1 | cut -d'"' -f4 || true)"
+[ "$license_status" = valid ] || fail "The backend did not take the development license (status '$license_status'):"
 
 say "Up: $base - admin / abc123; the apps' domains at :$HTTP_PORT and :$HTTPS_PORT. Stop it with env/down.sh."

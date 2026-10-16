@@ -36,7 +36,10 @@ calls to the local backend.
 
 `env/up.sh` runs postgres and redis as containers, and the backend with its
 agent inside a dind container that is a swarm of its own - never on this
-machine's swarm, which it checks before it says the stack is up. It needs the
+machine's swarm, which it checks before it says the stack is up. It installs
+a Colony license for dind's swarm, signed by the backend's development key
+(`tools/licensesign/devkeys`), since the suite makes more than the free plan
+allows. It needs the
 backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 `hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
 10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the

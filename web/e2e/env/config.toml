@@ -79,5 +79,14 @@ app_path = "/hp/appdata"
 [agent]
     secret_token = "abc123"
 
+# A run calls no license portal. Left to the defaults, the daily refresh would
+# send production's portal the development key up.sh installs, which no portal
+# issued. It is off, and a refresh asked for by hand goes to portal-web's dev
+# address, where nothing listens inside dind: the check fails, and the key in
+# force stays.
+[license]
+    portal_url = "http://localhost:4100"
+    refresh_disabled = true
+
 [dev_mode]
     force_agent_local = false

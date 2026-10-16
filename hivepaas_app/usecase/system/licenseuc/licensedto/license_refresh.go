@@ -3,6 +3,7 @@ package licensedto
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 // RefreshLicenseReq asks the portal now for a newer key than the one stored. It
@@ -11,6 +12,11 @@ type RefreshLicenseReq struct{}
 
 func NewRefreshLicenseReq() *RefreshLicenseReq {
 	return &RefreshLicenseReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *RefreshLicenseReq) Validate() hperrors.ValidationErrors {
+	return nil
 }
 
 type RefreshLicenseResp struct {

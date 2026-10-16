@@ -119,7 +119,13 @@ func (h *Handler) RefreshLicense(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.licenseUC.RefreshLicense(h.RequestCtx(ctx), auth, licensedto.NewRefreshLicenseReq())
+	req := licensedto.NewRefreshLicenseReq()
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.licenseUC.RefreshLicense(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

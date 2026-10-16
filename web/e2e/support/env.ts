@@ -46,6 +46,11 @@ export function isDevServer(url: string): boolean {
     return LOOPBACK.includes(hostname) && port === DEV_SERVER_PORT;
 }
 
+// backendDir is the backend's repo: beside this one, or where HP_BACKEND_DIR
+// says - as for env/up.sh. Tests read its OpenAPI document and its development
+// license keys there.
+export const backendDir = process.env["HP_BACKEND_DIR"] ?? path.join(import.meta.dirname, "..", "..", "..", "hivepaas");
+
 // runId is one for the whole run: the config sets it before the workers start,
 // and they inherit it. What the tests make is named with it.
 process.env["HP_E2E_RUN_ID"] ??= Date.now().toString(36);

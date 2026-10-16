@@ -24,6 +24,7 @@ const PAGES = [
     "/operations/audit-logs/",
     "/settings/data-cleanup/configuration/",
     "/system/hivepaas/general/",
+    "/system/license/overview/",
     "/user-management/users/",
     "/current-user/profile/",
     "{project}/apps/",

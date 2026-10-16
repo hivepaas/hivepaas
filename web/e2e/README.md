@@ -56,6 +56,16 @@ and over SSH with a key (`git@127.0.0.1:e2e/private.git`, the key left in
 Discord and a Telegram, real ones - are removed: nothing the tests do is sent
 to anyone.
 
+The tests of the license itself, `tests/level-2/license-on/`, put other keys
+in force - a trial, a key in its grace period, one over its limits, one that
+runs out and leaves the installation on Bee - signed with the same development
+keys by `env/.build/licensesign`, which `env/up.sh` builds (`support/license.ts`).
+Every other test counts on the Colony key, so they are a project of their own,
+`license`, run alone after `secrets-on`, one at a time, and they put the Colony
+key back when they end. On their own, signed in by a run before:
+`--project=license --no-deps`. The license tests of level 1 change nothing: the
+keys they paste are refused.
+
 The stack's proxy is the release's Traefik, inside dind; the apps' domains
 answer on this machine at 10180 (HTTP) and 10443 (HTTPS), moved by
 `HP_E2E_HTTP_PORT` and `HP_E2E_HTTPS_PORT`. A test reaches an app at
@@ -114,6 +124,13 @@ hand (Run workflow). A failed run keeps its report, traces and videos as the
   `support/fixtures.ts` is signed in as the tests' user. Name what you make with
   `e2eName("...")`, and hand its removal to `cleanup(...)`. The screens are for
   the flow under test.
+- **Every answer is the server's**, but in
+  `tests/level-0/license-display.spec.ts`, which answers the license itself
+  (`page.route`) for the states the throwaway installation cannot be put in -
+  no key, a key the portal moved, another installation's key, one that no
+  longer verifies - and answers refusals that open the plan-limit dialog, for
+  its words on each limit. A state the installation can be put in is put in
+  force for real (`license-on/`), never answered by a test.
 - **Find elements as a person does:** `getByRole`, `getByLabel`, `getByText`, by
   their accessible names. A button with only an icon needs an `aria-label` in the
   app, which helps screen readers too. Use `data-testid` only where no name

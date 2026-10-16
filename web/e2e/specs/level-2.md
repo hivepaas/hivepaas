@@ -140,6 +140,10 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.130 | A shared volume says each scan runs on the node running its image, and an app's image is scanned                                                                                                                                              | `tests/level-2/image-scan.spec.ts`          |
 | 2.131 | The daily scan tells its notification of an app that runs a new fixable CRITICAL, with the app's line; the next run tells nothing new                                                                                                         | `tests/level-2/image-scan.spec.ts`          |
 | 2.132 | A PHP function made from its template builds with Composer, answers Run with its JSON, and is called at its domain over HTTPS                                                                                                                 | `tests/level-2/functions.spec.ts`           |
+| 2.133 | A Hive trial key pasted on System › License, after asking to replace Colony, is in force at once: Trial, "3 days left" on every page but that one; its banner, dismissed, stays hidden after a reload                                         | `tests/level-2/license-on/license.spec.ts`  |
+| 2.134 | A Comb key past its paid period holds through its grace: "13 days of grace left", with Renew; the License page says Grace period                                                                                                              | `tests/level-2/license-on/license.spec.ts`  |
+| 2.135 | A Comb key of 1 node and 1 app, over its apps: the banner says no app can be added; Join Node's command and a new app are refused by the plan's dialog, no toast; View license shows the apps over                                            | `tests/level-2/license-on/license.spec.ts`  |
+| 2.136 | A trial that runs out leaves the installation on Bee: the expired banner; Bee, Expired, no trial offered; a Google sign-in made before is Kept on Bee, no paid kind can be picked, and, disabled, it cannot be enabled again                  | `tests/level-2/license-on/license.spec.ts`  |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -158,6 +162,12 @@ What stands in for Slack is an app of the test's own,
 line of its own: the backend posts to it at its domain, as it would to Slack's
 webhook. The app a health check calls is `whoami`, whose `/health` answers with
 the code last POSTed to it: it fails, and passes again, with no restart.
+
+The license tests (2.133-2.136) put other keys in force, signed with the
+backend's development keys (see the README): they run alone, after every other
+test, and put the Colony key back. A key the portal moved cannot be made - the
+throwaway's portal never answers - so its banner and page are 0.9's, answered
+by the test.
 
 ## Next
 

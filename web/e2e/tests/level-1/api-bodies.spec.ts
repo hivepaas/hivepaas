@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { createApp, createProject, deleteProject } from "../../support/api";
+import { backendDir } from "../../support/env";
 import { e2eName, expect, test } from "../../support/fixtures";
 
 // The endpoints are read from the backend's OpenAPI document, in its repo
 // beside this one, or where HP_BACKEND_DIR says - as for env/up.sh.
-const backendDir = process.env["HP_BACKEND_DIR"] ?? path.join(import.meta.dirname, "..", "..", "..", "..", "hivepaas");
 const openAPIFile = path.join(backendDir, "docs", "openapi", "swagger.json");
 
 // Left out, for what an empty body would still do there:

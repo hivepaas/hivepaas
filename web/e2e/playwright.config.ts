@@ -16,6 +16,9 @@ if (levelZeroOnly && process.env["TEST_WORKER_INDEX"] === undefined) {
 // The tests that switch the server's return of secrets on: tests/**/secrets-on/.
 const SECRETS_ON = /[\\/]secrets-on[\\/]/;
 
+// The tests that change the installation's license: tests/**/license-on/.
+const LICENSE_ON = /[\\/]license-on[\\/]/;
+
 // The browser every test runs in.
 const CHROME = {
     ...devices["Desktop Chrome"],
@@ -57,7 +60,7 @@ export default defineConfig({
         { name: "setup", testMatch: /.*\.setup\.ts/ },
         {
             name: "chromium",
-            testIgnore: levelZeroOnly ? /[\\/]level-[12][\\/]/ : SECRETS_ON,
+            testIgnore: levelZeroOnly ? /[\\/]level-[12][\\/]/ : [SECRETS_ON, LICENSE_ON],
             use: CHROME,
             dependencies: ["setup"],
         },
@@ -74,6 +77,22 @@ export default defineConfig({
             testIgnore: levelZeroOnly ? /.*/ : undefined,
             use: CHROME,
             dependencies: ["chromium"],
+        },
+        // The tests that put other license keys in force - a trial, a key in
+        // its grace, one over its limits, one that runs out - and the Colony
+        // key back when they end. Every other test counts on Colony: the suite
+        // makes more than a lesser plan allows. So these run alone, last, after
+        // secrets-on, which makes apps too. They are level 2, never level 1: a
+        // run filtered to tests/level-1 would run all of what such a project
+        // depends on, unfiltered - every level-2 test with chromium. On their
+        // own, signed in by a run before (--project=setup):
+        // --project=license --no-deps.
+        {
+            name: "license",
+            testMatch: LICENSE_ON,
+            testIgnore: levelZeroOnly ? /.*/ : undefined,
+            use: CHROME,
+            dependencies: ["secrets-on"],
         },
     ],
 });

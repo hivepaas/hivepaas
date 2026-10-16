@@ -192,6 +192,8 @@ var (
 	_ = registerSpecPolicy(base.SettingTypeImageScan, skipSpecPolicy{
 		reason: "image scanning is switched on where it runs, and fetches its DB there"})
 	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, vulnerabilityIgnoreSpecPolicy{})
+	_ = registerSpecPolicy(base.SettingTypeLicense, skipSpecPolicy{
+		reason: "a license is for one installation, and carries the customer's email"})
 
 	_ = registerSpecPolicy(base.SettingTypeClusterNetwork, clusterSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeClusterVolume, clusterSpecPolicy{})

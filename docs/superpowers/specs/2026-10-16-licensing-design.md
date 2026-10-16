@@ -1,7 +1,8 @@
 # Plans and licensing
 
-Status: draft for review, 2026-10-16; trial and key moves settled the same
-day. Nothing built.
+Status: settled 2026-10-16; phase 1 (HivePaaS core) being built. The limits
+are enforced from the first release that carries them, so that release also
+carries the production license public keys.
 
 HivePaaS stays Apache 2.0 and self-hosted. What is sold is a license key that
 lifts the limits of the free plan. Paddle takes the payments, as merchant of
@@ -48,20 +49,25 @@ Each count is installation-wide and read when something is created.
 
 - **Apps**: apps not deleted, excluding:
   - a preview (`ParentID` set);
-  - a database cloned for a preview (`LogicalParentID` set);
+  - an app that belongs to another (`LogicalParentID` set): a database cloned
+    for a preview, or one a template makes beside its app. App lists leave
+    them out too;
   - an app of the hidden `hivepaas` project (system apps);
   - a function.
 - **Functions**: apps whose app-kind setting has `category = function`, with
-  the same exclusions. An app can change category (`appsettingsuc/function_rules.go`),
-  so that change is checked too.
+  the same exclusions. An app cannot change to or from a function
+  (`ERR_APP_KIND_FUNCTION_UNCHANGEABLE`), and templates and specs cannot make
+  one, so only creating and cloning a function are checked.
 - **Users**: users `active` or `pending`. An invitation holds a seat, or a
   limit of 2 could be invited past. `disabled` users do not count.
 - **Nodes**: every node of the swarm, whatever its state. Removing a node from
   the swarm frees its place; draining it does not.
-- **Previews**: previews that exist, which are apps with `ParentID` set. The
-  databases a preview clones belong to it and are not counted again.
+- **Previews**: previews that exist: apps with `ParentID` set and no
+  `LogicalParentID`. The databases a preview clones have `ParentID` too, but
+  `LogicalParentID` names the preview: they belong to it and are not counted.
 - **Sign-in providers**: on Bee, an OAuth setting of kind `google`,
-  `microsoft-online` or `openid-connect` cannot be created or enabled. Ones
+  `microsoft-online` or `openid-connect` cannot be created, enabled, or made
+  of such a kind. Ones
   that exist keep signing people in. Turning them off would lock out users who
   have no password, and the rule is never to break what runs. The dashboard
   marks them.
@@ -70,21 +76,29 @@ Each count is installation-wide and read when something is created.
 
 | Limit      | Checked at                                                                                          |
 |------------|-----------------------------------------------------------------------------------------------------|
-| Apps       | create app, from template, clone, spec import, project from compose, category change from function |
-| Functions  | create function, clone of a function, category change to function                                   |
-| Users      | invite, create, re-enable a disabled user                                                           |
-| Nodes      | the node join command (`nodeuc/node_join*.go`)                                                      |
-| Previews   | creating a preview, by webhook or by hand                                                           |
-| Sign-in    | creating or enabling an OAuth setting of a paid kind                                                |
+| Limit      | Checked at                                                                     |
+|------------|--------------------------------------------------------------------------------|
+| Apps       | create app, from template, clone, spec import, project from compose            |
+| Functions  | create function, clone of a function that keeps its deployment settings        |
+| Users      | invite (a new person), re-enable a disabled user                               |
+| Nodes      | the node join command (`nodeuc/node_join*.go`)                                 |
+| Previews   | creating a preview, by webhook or by hand                                      |
+| Sign-in    | creating, enabling or changing the kind of an OAuth setting, spec import too   |
 
-- **The error.** A refusal is `ERR_PLAN_LIMIT_REACHED`, with params `Limit`,
-  `Max` and `Plan`, and its translation. The dashboard turns it into an
-  upgrade prompt. The CLI and MCP pass it on as they pass any error.
+- **The error.** A refusal is `ERR_PLAN_LIMIT_REACHED` (412), and its
+  translation. Its params `Limit`, `Max` and `Plan` are on the wire, in the
+  error's `params`, the one error that exposes params. The dashboard turns it
+  into an upgrade prompt. The CLI and MCP pass it on as they pass any error.
+- **Clones and previews are tasks.** The request is checked, for an answer on
+  screen, and the task that makes the app checks again under the lock: queued
+  tasks are not counted.
 - **No race past a limit.** Two creations at once must not both see 19 and
   make 21. The creating transaction takes
   `pg_advisory_xact_lock(hashtext('plan-limit:<kind>'))` before it counts. One
   lock per kind is enough, because counts are installation-wide and creations
-  are rare.
+  are rare. A kind with no limit takes no lock, so paid plans never wait on
+  it. Nodes and sign-in providers are not counted in the database and take
+  none.
 - **Previews are made by webhooks.** Nobody is looking at a screen when a pull
   request opens a preview. A refused preview comments on the pull request, as
   a preview's deployment does, and tells the app's notification target. For
@@ -97,8 +111,11 @@ Each count is installation-wide and read when something is created.
 ## The license key
 
 A key is the `releasesig` envelope: the payload as base64, with an ed25519
-signature and an ML-DSA-65 signature, both required (`pkg/releasesig.Open`).
-It uses its own key pair, kept apart from the release keys:
+signature and an ML-DSA-65 signature, both required (`pkg/releasesig.Open`),
+signed under the context `hivepaas-license-v1`. As text, a key is that
+envelope's JSON as base64 on one line, which survives email and copying;
+whitespace in a pasted key is ignored, and the envelope's JSON is accepted as
+it is. It uses its own key pair, kept apart from the release keys:
 - releases are signed offline, by hand (`tools/releasesign`);
 - licenses are signed by the portal, unattended;
 - a leaked license key must never sign a release.
@@ -106,7 +123,6 @@ It uses its own key pair, kept apart from the release keys:
 ```json
 {
   "version": 1,
-  "keyId": "lic-2026-1",
   "licenseId": "lic_01K…",
   "subscriptionId": "sub_01h…",
   "customer": { "id": "acc_…", "name": "Acme", "email": "ops@acme.example" },
@@ -149,9 +165,10 @@ It uses its own key pair, kept apart from the release keys:
 - **Clock.** An offline installation can set its clock back, and nothing can
   stop that. As a cheap check, the service keeps the latest time it has seen
   and reads a clock that went back more than a day as that time.
-- **Key rotation.** The binary carries the license public keys by `keyId`, so
-  a new key pair is added in one release and used by the portal in a later
-  one.
+- **Key rotation.** The binary carries the license public keys
+  (`pkg/license/licensekeys`), each named by its key id, the id the envelope's
+  signatures give. A new key pair is added in one release and used by the
+  portal in a later one.
 
 ## Trial
 
@@ -206,13 +223,19 @@ key like any other, so it works offline and needs no new path in HivePaaS.
   counts, and returns `ERR_PLAN_LIMIT_REACHED`. The usecases listed under
   "What a limit does" call it.
 - **API.** All of these need the System module; the first only needs read.
-  - `GET /system/license` returns the status above, with usage per limit.
-  - `PUT /system/license` takes a key.
-  - `POST /system/license/refresh` asks the portal now.
+  - `GET /system/license` returns the status above, with usage per limit, and
+    the customer's name, never the email.
+  - `PUT /system/license` takes a key. It refuses one that is invalid, for
+    another installation, or past its grace, and keeps the key in force. Any
+    other key replaces the one stored, a lower plan included. There is no
+    DELETE.
+  - `POST /system/license/refresh` asks the portal now (phase 2).
 - **Development and e2e.** The e2e environment makes far more than 20 apps.
-  In development mode the binary also accepts a development public key.
-  `env/up.sh` installs a Colony key signed by it. A `tools/licensesign` signs
-  such keys, and keys for support, the way `tools/releasesign` signs releases.
+  In development (`HP_ENV=development`, which also opens the dev-helper
+  endpoints, so no production runs it) the binary also accepts a development
+  public key. Its private half is committed with `tools/licensesign`, which
+  signs such keys, and keys for support, the way `tools/releasesign` signs
+  releases. `env/up.sh` installs a Colony key signed by it.
 
 ## Dashboard
 
@@ -240,7 +263,9 @@ key like any other, so it works offline and needs no new path in HivePaaS.
    - the key format and its verification, and the `license` setting;
    - `licenseservice` and Bee's defaults;
    - each check and its error, and the API;
-   - `tools/licensesign`, and a development key for e2e.
+   - `tools/licensesign`, and a development key for e2e;
+   - the production license public keys, since the limits apply from this
+     release.
 2. **Portal:**
    - accounts and the Paddle sandbox catalog;
    - webhooks, key issuance, renewal emails and the refresh endpoint;
@@ -249,7 +274,7 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 3. **Dashboard:** System > License, the banners, the limit dialog, and the
    sign-in providers on Bee.
 4. **Live:**
-   - Paddle live and the production license keys;
+   - Paddle live, and the production license private keys in the portal;
    - the website's pricing page and the docs, including which data online
      renewal sends.
 

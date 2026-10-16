@@ -22,11 +22,12 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 ## 🌟 Key Features
 
 * **Deploy anything:** from a Docker image or a Git repository - with your Dockerfile, or one written for you for 15+ languages and frameworks - with deploy on push and pull request previews.
-* **Functions:** write a handler in Node.js/TypeScript, Bun, Python or Go; HivePaaS builds and runs it, over HTTP or on a schedule.
+* **Functions:** write a handler in Node.js/TypeScript, Bun, Python, PHP or Go; HivePaaS builds and runs it, over HTTP or on a schedule.
 * **App Store:** 300+ one-click templates - databases, CMSs, analytics, monitoring, automation.
 * **Domains & TLS:** Traefik v3 with automatic certificates (Let's Encrypt, ZeroSSL, Google Trust Services; wildcards through DNS), and redirects, basic auth, IP and rate limits per app.
 * **Run & scale:** health checks, resource limits, placement, autoscaling on requests and CPU, scheduled jobs, and multi-node Swarm clusters.
 * **Observe:** live logs and log history, a terminal into containers, CPU and memory metrics, and metrics of HTTP routes and outgoing calls through eBPF - no code changes.
+* **Image scanning (beta):** the images your apps run, and HivePaaS's own, scanned for known vulnerabilities with Trivy - after each deployment, daily and on demand - with the fixable ones first, ignores with a reason and an expiry, an SBOM to download, a daily report, and a CLI gate for CI.
 * **Backups:** encrypted, deduplicated backups (Kopia) to S3-compatible storage or a volume, scheduled, with restores; export, import and cloning of apps.
 * **Teams & security:** projects and environments, role-based access, API keys, an audit log, two-factor authentication, SSO (GitHub, GitLab, Google, Microsoft, OpenID Connect) and notifications.
 * **API & AI:** a REST API with OpenAPI docs, and an MCP server for AI assistants.
@@ -127,6 +128,7 @@ To work on HivePaaS itself, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 | **Backups** | [Kopia](https://kopia.io/) | Optional - when you back up | Encrypted, deduplicated backups and restores |
 | **Logs & metrics** | [VictoriaLogs](https://docs.victoriametrics.com/victorialogs/) and vlagent | Optional - switched on in System › Logging | Log history, metrics and autoscaling |
 | **Routes & calls** | [OBI](https://opentelemetry.io/docs/zero-code/obi/) (OpenTelemetry eBPF Instrumentation) | Optional - per app | HTTP routes and outgoing calls of apps, without code changes |
+| **Image scanning** | [Trivy](https://trivy.dev/) | Optional - switched on in System › Image Scanning | Scans the images apps run for known vulnerabilities, a container per scan |
 | **Registry** | [zot](https://zotregistry.dev/) | Optional - switched on in System › Registry | A container registry of your own, for images built on a multi-node cluster |
 | **Function runtimes** | [hivepaas/function-runtimes](https://github.com/hivepaas/function-runtimes) | Optional - when you use functions | The images functions are built on |
 | **Dashboard** | [React 19](https://react.dev/), [Vite](https://vite.dev/), TypeScript, Tailwind CSS, TanStack Query | Required | The web interface |

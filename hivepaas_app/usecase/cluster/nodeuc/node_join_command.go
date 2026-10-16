@@ -20,6 +20,12 @@ func (uc *UC) GetNodeJoinCommand(
 	auth *basedto.Auth,
 	req *nodedto.GetNodeJoinCommandReq,
 ) (*nodedto.GetNodeJoinCommandResp, error) {
+	// Before the reveal: a command HivePaaS will not give out reveals nothing, and
+	// records no reveal.
+	if err := uc.checkNodeLimit(ctx); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	// The join token is a secret, and this endpoint hands it over in the clear.
 	// It is not stored as a setting - it comes from the Swarm itself - which is
 	// the only reason it did not already pass through this gate: the same two

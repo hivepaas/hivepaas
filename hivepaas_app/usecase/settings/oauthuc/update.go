@@ -30,6 +30,11 @@ func (uc *UC) UpdateOAuth(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
+			err := uc.checkPaidSignIn(ctx, db, data.Setting, pData.Setting)
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+
 			current, err := data.Setting.AsOAuth()
 			if err != nil {
 				return hperrors.Wrap(err)

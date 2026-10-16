@@ -1,6 +1,7 @@
 # Plans and licensing
 
-Status: draft for review, 2026-10-16. Nothing built.
+Status: draft for review, 2026-10-16; trial and key moves settled the same
+day. Nothing built.
 
 HivePaaS stays Apache 2.0 and self-hosted. What is sold is a license key that
 lifts the limits of the free plan. Paddle takes the payments, as merchant of
@@ -34,6 +35,7 @@ subscriptions into keys. An installation checks its key offline.
 | Previews at once       | 2                                | -         | -          | -          | -           |
 | Sign-in providers      | GitHub, GitHub App, GitLab, Gitea | all      | all        | all        | all         |
 | Installations per key  | 1                                | 1         | 1          | 1          | set per key |
+| Trial                  | -                                | -         | 14 days, no card | -    | -           |
 
 A dash means no limit. Bee is what an installation runs without a valid key.
 Apiary is sold by contact. It is for many nodes or users, several
@@ -113,7 +115,8 @@ It uses its own key pair, kept apart from the release keys:
   "installations": ["<swarm cluster ID>"],
   "issuedAt": "2026-11-01T00:00:00Z",
   "expiresAt": "2026-12-01T00:00:00Z",
-  "graceDays": 14
+  "graceDays": 14,
+  "trial": false
 }
 ```
 
@@ -122,10 +125,16 @@ It uses its own key pair, kept apart from the release keys:
 - **Installation binding.** The key names the swarm cluster ID (`docker info`
   → `Swarm.Cluster.ID`) of the installation it is for. System > License shows
   that ID, and checkout and the portal ask for it. A key for another
-  installation is reported as such and not applied. Re-initialising a swarm,
-  for example in disaster recovery, makes a new ID. The portal lets the owner
-  move their key to the new one, a few times a year by themselves and more
-  through support. Apiary keys may name several installations.
+  installation is reported as such and not applied. Apiary keys may name
+  several installations.
+- **Moving a key.** Re-initialising a swarm, for example in disaster recovery,
+  makes a new ID. The owner moves their license to the new ID in the portal,
+  up to **10 times in any 365 days**, and beyond that through support.
+  - A move issues a key for the new ID and marks the old one superseded.
+  - An online installation still on the old ID learns of the move at its next
+    refresh, and drops to Bee once the old key's grace runs out.
+  - An offline one keeps the old key until it expires. That is accepted: the
+    limit on moves bounds it, and the gate is fair-use, not DRM.
 - **Validity.** A key holds from `issuedAt` to `expiresAt`, the end of the
   period paid for. It then works for `graceDays` more, with a banner. After
   that the installation is on Bee, which only stops creating.
@@ -133,15 +142,35 @@ It uses its own key pair, kept apart from the release keys:
   keeps it on the account. A yearly plan needs this once a year, a monthly plan
   once a month.
 - **Online renewal.** A daily task posts the current key and the cluster ID to
-  the portal (`POST /api/licenses/refresh`) and stores any newer key it gets
-  back. It sends nothing else. It is on by default and can be switched off.
-  When it fails, the next day tries again.
+  the portal (`POST /api/licenses/refresh`). It stores any newer key it gets
+  back, or the news that the key was moved to another installation. It sends
+  nothing else. It is on by default and can be switched off. When it fails,
+  the next day tries again.
 - **Clock.** An offline installation can set its clock back, and nothing can
   stop that. As a cheap check, the service keeps the latest time it has seen
   and reads a clock that went back more than a day as that time.
 - **Key rotation.** The binary carries the license public keys by `keyId`, so
   a new key pair is added in one release and used by the portal in a later
   one.
+
+## Trial
+
+A 14-day trial of Hive, with no card. The portal issues it, not Paddle: it is a
+key like any other, so it works offline and needs no new path in HivePaaS.
+
+- **Starting a trial.** System > License has "Start a 14-day trial", which
+  opens the portal with the installation ID. The person signs in or signs up
+  and starts the trial. The key is shown to copy and is emailed.
+- **What the key holds.** Hive's limits, `"trial": true`, `expiresAt` 14 days
+  out, and `graceDays: 0`. When it runs out, the installation is on Bee, which
+  only stops creating.
+- **Once each.** One trial per installation ID and one per account. The portal
+  keeps both.
+- **Buying.** A trial can be turned into a paid plan at any time through the
+  normal checkout. The paid key replaces it.
+- **Paddle's own trials** need a card and convert to paid on their own. They
+  may come later, as a price with a trial period, if conversion calls for
+  them.
 
 ## Paddle and the portal
 
@@ -171,8 +200,8 @@ It uses its own key pair, kept apart from the release keys:
   pasted. It is not a secret, but it carries the customer's email, so it is
   never logged.
 - **`licenseservice`.** `Current()` returns the plan, the effective limits,
-  the status (`none`, `valid`, `grace`, `expired`, `invalid`,
-  `other-installation`), the dates and the installation ID. It is cached and
+  the status (`none`, `valid`, `trial`, `grace`, `expired`, `invalid`,
+  `other-installation`, `moved`), the dates and the installation ID. It is cached and
   read again when the setting changes. `Check(ctx, db, kind)` takes the lock,
   counts, and returns `ERR_PLAN_LIMIT_REACHED`. The usecases listed under
   "What a limit does" call it.
@@ -193,8 +222,12 @@ It uses its own key pair, kept apart from the release keys:
   - the installation ID, with a copy button;
   - a box to paste a key, and "Check for a newer key".
   - an Upgrade link to the portal's pricing, carrying the installation ID.
-- **Banners**, shown to admins: grace (n days left), expired (now on Bee), and
-  over a limit ("7 of 5 nodes: no node can be added").
+- **Banners**, shown to admins:
+  - trial (n days left);
+  - grace (n days left);
+  - expired (now on Bee);
+  - moved (the key now belongs to another installation);
+  - over a limit ("7 of 5 nodes: no node can be added").
 - **Limit errors.** A refused creation opens a dialog that names the limit and
   links to Upgrade.
 - **Sign-in providers.** On Bee, a paid sign-in kind shows as unavailable in
@@ -211,6 +244,7 @@ It uses its own key pair, kept apart from the release keys:
 2. **Portal:**
    - accounts and the Paddle sandbox catalog;
    - webhooks, key issuance, renewal emails and the refresh endpoint;
+   - trials, and moving a key to a new swarm (10 a year);
    - portal-web's pricing, checkout and account pages.
 3. **Dashboard:** System > License, the banners, the limit dialog, and the
    sign-in providers on Bee.
@@ -221,8 +255,5 @@ It uses its own key pair, kept apart from the release keys:
 
 ## Open questions
 
-- **Trial.** Should a paid plan come with a trial, for example 14 days of
-  Hive through Paddle's trial periods?
 - **Refunds.** What is the policy? Paddle, as merchant of record, handles tax.
 - **portal-web's stack.** The Paddle tooling at hand assumes Next.js.
-- **Swarm re-initialisation.** How many self-service moves of a key a year?

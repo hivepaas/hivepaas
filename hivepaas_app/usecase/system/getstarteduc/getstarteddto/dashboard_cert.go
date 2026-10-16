@@ -2,6 +2,7 @@ package getstarteddto
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/getstartedservice"
 )
 
@@ -27,6 +28,11 @@ type GetDashboardCertReq struct{}
 
 func NewGetDashboardCertReq() *GetDashboardCertReq {
 	return &GetDashboardCertReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *GetDashboardCertReq) Validate() hperrors.ValidationErrors {
+	return nil
 }
 
 type GetDashboardCertResp struct {

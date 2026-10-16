@@ -14,6 +14,7 @@ import (
 func (uc *UC) RefreshSession(
 	ctx context.Context,
 	user *basedto.User,
+	_ *sessiondto.RefreshSessionReq,
 ) (resp *sessiondto.RefreshSessionResp, err error) {
 	// JWT token must be refresh token
 	if !user.AuthClaims.IsRefresh {

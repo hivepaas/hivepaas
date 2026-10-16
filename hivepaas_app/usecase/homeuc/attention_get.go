@@ -20,6 +20,7 @@ import (
 func (uc *UC) GetHomeAttention(
 	ctx context.Context,
 	auth *basedto.Auth,
+	_ *homedto.GetHomeAttentionReq,
 ) (*homedto.GetHomeAttentionResp, error) {
 	items, err := uc.attentionService.Items(ctx, uc.db)
 	if err != nil {

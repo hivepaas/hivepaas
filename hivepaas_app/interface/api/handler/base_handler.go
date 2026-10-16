@@ -521,6 +521,15 @@ func (h *BaseHandler) IsWebsocketRequest(ctx *gin.Context) bool {
 	return strings.ToLower(ctx.Request.Header.Get("Connection")) == "upgrade"
 }
 
+// ParseAndValidateFormFiles parses an upload's form, as ParseFormFiles does, then
+// runs the request's own modifier and validator.
+func (h *BaseHandler) ParseAndValidateFormFiles(ctx *gin.Context, req *filedto.UploadReq) error {
+	if err := h.ParseFormFiles(ctx, req); err != nil {
+		return err
+	}
+	return modifyAndValidate(req)
+}
+
 //nolint:gocognit,gocyclo
 func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) error {
 	cfg := &config.Current().Files

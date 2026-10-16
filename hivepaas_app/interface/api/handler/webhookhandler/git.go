@@ -43,6 +43,10 @@ func (h *Handler) HandleRepoWebhook(ctx *gin.Context) {
 	req := webhookdto.NewHandleRepoWebhookReq()
 	req.Request = ctx.Request
 	req.ID = webhookID
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
 
 	resp, err := h.webhookUC.HandleRepoWebhook(h.RequestCtx(ctx), req)
 	if err != nil {

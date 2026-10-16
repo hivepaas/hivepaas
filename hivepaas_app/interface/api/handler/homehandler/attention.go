@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
 )
 
 // GetHomeAttention Gets what needs attention
@@ -31,7 +31,13 @@ func (h *Handler) GetHomeAttention(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.homeUC.GetHomeAttention(h.RequestCtx(ctx), auth)
+	req := homedto.NewGetHomeAttentionReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.homeUC.GetHomeAttention(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

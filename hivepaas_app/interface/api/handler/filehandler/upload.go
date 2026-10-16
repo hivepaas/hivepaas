@@ -35,7 +35,7 @@ import (
 // @Router  /files/upload [post]
 func (h *Handler) UploadFiles(ctx *gin.Context) {
 	req := filedto.NewUploadReq()
-	err := h.ParseFormFiles(ctx, req)
+	err := h.ParseAndValidateFormFiles(ctx, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

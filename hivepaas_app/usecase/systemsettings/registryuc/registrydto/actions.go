@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 // ProbeDomainReq asks what answers at an address. The domain is in the body
@@ -40,6 +41,17 @@ type PushCheckDataRes struct {
 	StatusCode int    `json:"statusCode"`
 	Detail     string `json:"detail"`
 	ElapsedMs  int64  `json:"elapsedMs"`
+}
+
+type RotateCredentialReq struct{}
+
+func NewRotateCredentialReq() *RotateCredentialReq {
+	return &RotateCredentialReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *RotateCredentialReq) Validate() hperrors.ValidationErrors {
+	return nil
 }
 
 type RotateCredentialResp struct {

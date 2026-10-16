@@ -52,7 +52,7 @@ func usagesUC() *BaseUC {
 func TestAnAppsSettingListsItsUsages(t *testing.T) {
 	scope := &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "app_1"}
 
-	usages, err := usagesUC().GetSettingUsages(context.Background(), scope, "conf_1")
+	usages, err := usagesUC().GetSettingUsages(context.Background(), &GetSettingUsagesReq{Scope: scope, ID: "conf_1"})
 
 	assert.NoError(t, err)
 	assert.Len(t, usages, 1)
@@ -63,7 +63,7 @@ func TestAnAppsSettingListsItsUsages(t *testing.T) {
 func TestASettingOfAnotherAppIsNotFoundThroughThisOnesPath(t *testing.T) {
 	scope := &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "app_2"}
 
-	usages, err := usagesUC().GetSettingUsages(context.Background(), scope, "conf_1")
+	usages, err := usagesUC().GetSettingUsages(context.Background(), &GetSettingUsagesReq{Scope: scope, ID: "conf_1"})
 
 	assert.ErrorIs(t, err, hperrors.ErrSettingNotFound)
 	assert.Empty(t, usages)

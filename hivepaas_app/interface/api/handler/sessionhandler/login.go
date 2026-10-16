@@ -202,7 +202,13 @@ func (h *Handler) RefreshSession(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.sessionUC.RefreshSession(h.RequestCtx(ctx), user)
+	req := sessiondto.NewRefreshSessionReq()
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.sessionUC.RefreshSession(h.RequestCtx(ctx), user, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
 )
 
 type fakeAttention struct{ items []*attentionservice.Item }
@@ -56,7 +57,7 @@ func appItem(projectID, env, subject string) *attentionservice.Item {
 
 func subjects(t *testing.T, uc *UC) map[string]bool {
 	t.Helper()
-	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{})
+	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{}, homedto.NewGetHomeAttentionReq())
 	assert.NoError(t, err)
 	shown := map[string]bool{}
 	for _, item := range resp.Data.Items {
@@ -104,7 +105,7 @@ func TestHomeAttentionNamesAnAppsEnvByItsName(t *testing.T) {
 		}}},
 	}
 
-	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{})
+	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{}, homedto.NewGetHomeAttentionReq())
 
 	assert.NoError(t, err)
 	if assert.Len(t, resp.Data.Items, 1) {
@@ -119,7 +120,7 @@ func TestHomeAttentionIsAnEmptyListWhenAllIsWell(t *testing.T) {
 		permissionManager: &fakeManager{visibility: &fakeVisibility{}},
 	}
 
-	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{})
+	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{}, homedto.NewGetHomeAttentionReq())
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp.Data.Items)

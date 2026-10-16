@@ -17,6 +17,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc/sysstatusdto"
 )
 
 // The point of these stats is to answer a sizing question from real numbers, so they are worth
@@ -50,7 +51,7 @@ func TestGetDBStats_ReportsTheConfiguredCeiling(t *testing.T) {
 	db := newTestDB(t, 7)
 	defer func() { _ = db.Close() }()
 
-	resp, err := New(db).GetDBStats(context.Background(), nil)
+	resp, err := New(db).GetDBStats(context.Background(), nil, sysstatusdto.NewGetDBStatsReq())
 	assert.NoError(t, err)
 	assert.Equal(t, 7, resp.Data.MaxOpenConnections)
 	assert.GreaterOrEqual(t, resp.Data.OpenConnections, 0)
@@ -69,7 +70,7 @@ func TestGetDBStats_WaitCountTracksPoolContention(t *testing.T) {
 	var one int
 	assert.NoError(t, db.QueryRowContext(ctx, "SELECT 1").Scan(&one))
 
-	before, err := uc.GetDBStats(ctx, nil)
+	before, err := uc.GetDBStats(ctx, nil, sysstatusdto.NewGetDBStatsReq())
 	assert.NoError(t, err)
 	assert.Zero(t, before.Data.WaitCount, "an uncontended pool must report no waiting")
 
@@ -85,7 +86,7 @@ func TestGetDBStats_WaitCountTracksPoolContention(t *testing.T) {
 	}
 	wg.Wait()
 
-	after, err := uc.GetDBStats(ctx, nil)
+	after, err := uc.GetDBStats(ctx, nil, sysstatusdto.NewGetDBStatsReq())
 	assert.NoError(t, err)
 	assert.Positive(t, after.Data.WaitCount, "callers queued for a connection, so WaitCount must rise")
 	assert.Positive(t, after.Data.WaitDurationMs)

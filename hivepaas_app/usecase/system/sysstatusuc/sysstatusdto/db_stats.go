@@ -5,7 +5,19 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
+
+type GetDBStatsReq struct{}
+
+func NewGetDBStatsReq() *GetDBStatsReq {
+	return &GetDBStatsReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *GetDBStatsReq) Validate() hperrors.ValidationErrors {
+	return nil
+}
 
 type GetDBStatsResp struct {
 	Meta *basedto.Meta `json:"meta"`

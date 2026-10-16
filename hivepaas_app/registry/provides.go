@@ -83,6 +83,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice/licenseserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
@@ -424,6 +425,7 @@ var Provides = []any{
 	functionserviceimpl.New,
 	imagebuildserviceimpl.New,
 	imagescanserviceimpl.New,
+	licenseserviceimpl.New,
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
 	registryauthserviceimpl.New,
@@ -471,6 +473,7 @@ var Provides = []any{
 	repository.NewFileRepo,
 	repository.NewLockRepo,
 	repository.NewLoginTrustedDeviceRepo,
+	repository.NewPlanUsageRepo,
 	repository.NewProjectEnvRepo,
 	repository.NewProjectRepo,
 	repository.NewResLinkRepo,

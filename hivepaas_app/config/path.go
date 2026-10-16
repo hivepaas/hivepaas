@@ -47,6 +47,11 @@ func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID strin
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "deployments", deploymentID))
 }
 
+// DashboardAppPreviewsURL is an app's previews, where one is closed.
+func (cfg *Config) DashboardAppPreviewsURL(basePath string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "preview-deployments"))
+}
+
 // Image scanning
 
 // DashboardAppSecurityURL is an app's Security tab: what its images carry.

@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -19,6 +20,7 @@ type UC struct {
 	appPreviewService apppreviewservice.Service
 	auditService      auditservice.Service
 	appService        appservice.Service
+	licenseService    licenseservice.Service
 	settingService    settingservice.Service
 }
 
@@ -31,6 +33,7 @@ func New(
 	appPreviewService apppreviewservice.Service,
 	auditService auditservice.Service,
 	appService appservice.Service,
+	licenseService licenseservice.Service,
 	settingService settingservice.Service,
 ) *UC {
 	return &UC{
@@ -42,6 +45,7 @@ func New(
 		appPreviewService: appPreviewService,
 		auditService:      auditService,
 		appService:        appService,
+		licenseService:    licenseService,
 		settingService:    settingService,
 	}
 }

@@ -16,11 +16,14 @@ import (
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
 )
 
+// notifyPRForPreviewFailure comments on the pull request a preview failed for.
+// planLimit is the plan's limit when that is why, and nil otherwise.
 func (s *service) notifyPRForPreviewFailure(
 	ctx context.Context,
 	db database.IDB,
 	data *createPreviewData,
 	previewErr error,
+	planLimit *previewPlanLimit,
 ) error {
 	if data == nil || data.Task == nil || previewErr == nil {
 		return nil
@@ -80,7 +83,7 @@ func (s *service) notifyPRForPreviewFailure(
 	owner := parsedURL.Username
 	repo := parsedURL.Name
 
-	message := buildPreviewFailedPRComment(app.Name, taskArgs.RepoRef, previewErr)
+	message := buildPreviewFailedPRComment(app.Name, taskArgs.RepoRef, previewErr, planLimit)
 
 	return s.dispatchPRComment(ctx, db, data, repoSource, owner, repo, pullNumber, message)
 }
@@ -102,10 +105,15 @@ func extractPRNumber(repoRef string, trigger *entity.AppDeploymentTrigger) int {
 	return 0
 }
 
+// buildPreviewFailedPRComment is the comment on a failed preview's pull request.
+// A preview refused by the plan (planLimit set) is not a fault to look into: the
+// comment says the limit and what to do about it, rather than the error's code,
+// and does not send the reader to the preview settings.
 func buildPreviewFailedPRComment(
 	appName string,
 	targetRef string,
 	previewErr error,
+	planLimit *previewPlanLimit,
 ) string {
 	var errorText string
 	if previewErr != nil {
@@ -118,16 +126,24 @@ func buildPreviewFailedPRComment(
 	var sb strings.Builder
 	sb.WriteString("### ❌ **Preview Environment Creation Failed**\n\n")
 	fmt.Fprintf(&sb, "Failed to initialize preview environment for application `%s`:\n\n", appName)
-	sb.WriteString("```text\n")
-	sb.WriteString(errorText)
-	sb.WriteString("\n```\n\n")
+	if planLimit != nil {
+		sb.WriteString(planLimit.Sentence())
+		sb.WriteString("\n\n")
+	} else {
+		sb.WriteString("```text\n")
+		sb.WriteString(errorText)
+		sb.WriteString("\n```\n\n")
+	}
 	sb.WriteString("| Item | Details |\n")
 	sb.WriteString("| :--- | :--- |\n")
 	fmt.Fprintf(&sb, "| **Application** | `%s` |\n", appName)
 	if targetRef != "" {
 		fmt.Fprintf(&sb, "| **Target Ref** | `%s` |\n", targetRef)
 	}
-	sb.WriteString("\n👉 *Please check your application preview settings and database dependencies on HivePaaS Dashboard.*")
+	if planLimit == nil {
+		sb.WriteString("\n👉 *Please check your application preview settings and database dependencies " +
+			"on HivePaaS Dashboard.*")
+	}
 
 	return sb.String()
 }

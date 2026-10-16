@@ -171,7 +171,7 @@ func TestApplyRefusesAFunctionTheChecksBlock(t *testing.T) {
 	addReport(bundle, nil, functionSourceBody("node24"), nil)
 	req := applyReq(t, svc, bundle)
 
-	_, err := svc.applyBundle(context.Background(), nil, req, bundle)
+	_, err := svc.applyBundle(context.Background(), applyTx, req, bundle)
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecImportBlocked)
 	assert.Empty(t, svc.appProvisionService.(*fakeProvisionService).reqs)

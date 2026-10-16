@@ -47,6 +47,11 @@ func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID strin
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "deployments", deploymentID))
 }
 
+// DashboardAppPreviewsURL is an app's previews, where one is closed.
+func (cfg *Config) DashboardAppPreviewsURL(basePath string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "preview-deployments"))
+}
+
 // Image scanning
 
 // DashboardAppSecurityURL is an app's Security tab: what its images carry.
@@ -74,6 +79,39 @@ func (cfg *Config) DashboardTaskDetailsURL(basePath, taskID string, scope base.O
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 	}
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "tasks", taskID))
+}
+
+/// LICENSE PORTAL
+//
+// The portal's paths are composed here, so its contract with HivePaaS is in one
+// place. Its URL was validated when the config was loaded.
+
+// LicensePortalRefreshURL is where online refresh asks for a newer key.
+func (cfg *Config) LicensePortalRefreshURL() string {
+	return gofn.Must(url.JoinPath(cfg.License.PortalURL, "api/licenses/refresh"))
+}
+
+// LicensePortalPricingURL is the portal's plans, for buying a key for the
+// installation; any installation when its ID is not known.
+func (cfg *Config) LicensePortalPricingURL(installationID string) string {
+	return withInstallationID(gofn.Must(url.JoinPath(cfg.License.PortalURL, "pricing")), installationID)
+}
+
+// LicensePortalTrialURL is where a trial key is started for the installation.
+func (cfg *Config) LicensePortalTrialURL(installationID string) string {
+	return withInstallationID(gofn.Must(url.JoinPath(cfg.License.PortalURL, "trial")), installationID)
+}
+
+// LicensePortalAccountURL is the customer's licenses and their keys.
+func (cfg *Config) LicensePortalAccountURL() string {
+	return gofn.Must(url.JoinPath(cfg.License.PortalURL, "account/licenses"))
+}
+
+func withInstallationID(pageURL, installationID string) string {
+	if installationID == "" {
+		return pageURL
+	}
+	return pageURL + "?installationId=" + url.QueryEscape(installationID)
 }
 
 /// BACK-END

@@ -135,6 +135,9 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		}
 		result.skipNotification = skip
 
+	case base.SchedJobTypeLicenseRefresh:
+		return e.refreshLicense(ctx, db, run, schedJob)
+
 	case base.SchedJobTypeDataBackup:
 		resp, err := e.dataBackupService.Backup(ctx, db, &databackupservice.BackupReq{
 			TaskExecData: run.execData,

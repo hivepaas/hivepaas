@@ -55,6 +55,13 @@ func (s *service) CloneApp(
 	}()
 	s.notifyOnCloneEnd(ctx, data)
 
+	// After the notification is set up, so that a refusal is told like any
+	// failed clone, and before anything of the clone is made.
+	err = s.checkPlanLimit(ctx, db, data)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	// Cloning steps
 
 	if data.OnCloneStart != nil {

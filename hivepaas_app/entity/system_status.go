@@ -20,7 +20,11 @@ type SystemStatus struct {
 	// ScheduleTimezone is the timezone the daily system jobs were last given
 	// their times of day in; empty for before there was one, when it was UTC.
 	ScheduleTimezone string `json:"scheduleTimezone"`
-	UpdateVer        int    `json:"updateVer"`
+	// LicenseSeenAt is the latest time license checks have seen, so that a clock
+	// set back is noticed. Only SystemStatusRepo.RecordLicenseSeenAt changes it:
+	// no list of columns an upsert updates names it.
+	LicenseSeenAt time.Time `bun:",nullzero" json:"licenseSeenAt,omitzero"`
+	UpdateVer     int       `json:"updateVer"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`

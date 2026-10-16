@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc/oauthdto"
 )
@@ -16,7 +17,16 @@ func (uc *UC) UpdateOAuthStatus(
 ) (*oauthdto.UpdateOAuthStatusResp, error) {
 	req.Type = currentSettingType
 	req.Auth = auth
-	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
+	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
+		BeforePersisting: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.UpdateSettingStatusData,
+			pData *settings.PersistingSettingStatusData,
+		) error {
+			return uc.checkPaidSignIn(ctx, db, data.Setting, pData.Setting)
+		},
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

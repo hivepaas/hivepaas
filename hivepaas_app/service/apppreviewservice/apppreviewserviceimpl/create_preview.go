@@ -20,6 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
 
 type createPreviewData struct {
@@ -61,7 +62,10 @@ func (s *service) CreatePreview(
 	}()
 	defer func() {
 		if err != nil {
-			_ = s.notifyPRForPreviewFailure(context.WithoutCancel(ctx), s.db, data, err)
+			ctx := context.WithoutCancel(ctx)
+			planLimit := s.previewPlanLimitOf(ctx, err)
+			_ = s.notifyPRForPreviewFailure(ctx, s.db, data, err, planLimit)
+			s.notifyPlanLimitRefused(ctx, data, planLimit)
 		}
 	}()
 	var cloneResp *appcloneservice.AppCloneResp
@@ -76,6 +80,16 @@ func (s *service) CreatePreview(
 	}()
 
 	err = s.loadAppDataForCreatingPreview(ctx, db, data)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// The check that holds: the request that queued this task was checked too,
+	// but queued tasks are not counted, and a preview a pull request comment asks
+	// for is checked here only. The plan-limit lock it takes is held until the
+	// task's transaction ends: the next preview's check waits for it, and counts
+	// this one.
+	err = s.licenseService.Check(ctx, db, licenseservice.Adding(base.LicenseLimitPreviews, 1))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

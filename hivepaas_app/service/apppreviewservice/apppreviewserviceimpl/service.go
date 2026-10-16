@@ -12,6 +12,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -35,6 +37,8 @@ type service struct {
 	containerExecService containerexecservice.Service
 	domainService        domainservice.Service
 	envVarService        envvarservice.Service
+	licenseService       licenseservice.Service
+	notificationService  notificationservice.Service
 	settingService       settingservice.Service
 }
 
@@ -57,6 +61,8 @@ func New(
 	containerExecService containerexecservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
+	licenseService licenseservice.Service,
+	notificationService notificationservice.Service,
 	settingService settingservice.Service,
 ) apppreviewservice.Service {
 	return &service{
@@ -78,6 +84,8 @@ func New(
 		containerExecService: containerExecService,
 		domainService:        domainService,
 		envVarService:        envVarService,
+		licenseService:       licenseService,
+		notificationService:  notificationService,
 		settingService:       settingService,
 	}
 }

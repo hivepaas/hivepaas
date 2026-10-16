@@ -48475,6 +48475,166 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/license" : {
+      "get" : {
+        "description" : "The plan and status of the license in force, with the key's dates, how many of each limited\nkind there are against the plan's limit (max null: no limit), and this installation's ID, which\na key must name. A key that is not in force, such as one for another installation, is described\ntoo. Of the customer only the name is sent, never the email the key carries. With them are the\nlicense portal's pages, for this installation, and whether the daily check for a newer key is on,\nwith how its last check went.",
+        "operationId" : "getLicense",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.GetLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the license in force",
+        "tags" : [ "System" ]
+      },
+      "put" : {
+        "description" : "Verifies a license key and stores it in place of the one stored, whatever its plan, and answers\nwith the license it puts in force. Whitespace in the key is ignored. A key that does not verify,\nis for another installation, or is past its grace is refused with 412, and the stored key is\nkept. There is no way to remove a key.",
+        "operationId" : "updateLicense",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/licensedto.UpdateLicenseReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.UpdateLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Installs a license key",
+        "tags" : [ "System" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/license/refresh" : {
+      "post" : {
+        "description" : "Asks the license portal now whether there is a newer key than the one stored - a renewal, a plan\nchange, a paid key replacing a trial - and installs it, or learns that the key was moved to another\ninstallation. Only the stored key and this installation's ID are sent. It asks whether or not the\ndaily check is switched off. Answers with what the portal said and the license in force after it,\nas GET answers it: none, asking nothing, when no key is stored. A portal that cannot be reached is\n503, and one that refuses, or a newer key that cannot be installed, 412; either is recorded as the\nlast check's error.",
+        "operationId" : "refreshLicense",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.RefreshLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Service Unavailable"
+          }
+        },
+        "summary" : "Asks the license portal for a newer key",
+        "tags" : [ "System" ]
+      }
+    },
     "/system/settings/backup" : {
       "get" : {
         "description" : "Gets backup settings",
@@ -63041,6 +63201,26 @@
         "type" : "string",
         "x-enum-varnames" : [ "ImageScanStatusDone", "ImageScanStatusFailed" ]
       },
+      "base.LicenseLimit" : {
+        "enum" : [ "nodes", "users", "apps", "functions", "previews", "sign-in-providers" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseLimitNodes", "LicenseLimitUsers", "LicenseLimitApps", "LicenseLimitFunctions", "LicenseLimitPreviews", "LicenseLimitSignInProviders" ]
+      },
+      "base.LicensePlan" : {
+        "enum" : [ "bee", "comb", "hive", "colony", "apiary" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicensePlanBee", "LicensePlanComb", "LicensePlanHive", "LicensePlanColony", "LicensePlanApiary" ]
+      },
+      "base.LicenseRefreshResult" : {
+        "enum" : [ "newer", "moved", "current", "unknown", "none", "disabled", "failed" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseRefreshNewer", "LicenseRefreshMoved", "LicenseRefreshCurrent", "LicenseRefreshUnknown", "LicenseRefreshNone", "LicenseRefreshDisabled", "LicenseRefreshFailed" ]
+      },
+      "base.LicenseStatus" : {
+        "enum" : [ "none", "valid", "trial", "grace", "expired", "invalid", "other-installation", "moved" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseStatusNone", "LicenseStatusValid", "LicenseStatusTrial", "LicenseStatusGrace", "LicenseStatusExpired", "LicenseStatusInvalid", "LicenseStatusOtherInstallation", "LicenseStatusMoved" ]
+      },
       "base.LoggingBackendType" : {
         "enum" : [ "victoria-logs" ],
         "type" : "string",
@@ -63187,9 +63367,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired", "SettingStatusMissing" ]
       },
       "base.SettingType" : {
-        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore" ],
+        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore", "license" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore" ]
+        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore", "SettingTypeLicense" ]
       },
       "base.SubjectType" : {
         "enum" : [ "app", "cluster", "deployment", "network", "node", "project", "project-env", "user" ],
@@ -68658,6 +68838,11 @@
             },
             "type" : "array"
           },
+          "params" : {
+            "additionalProperties" : { },
+            "description" : "Params are values a client may act on, beside the message they appear in:\nthe limit a refused creation reached, for one. Most errors have none; which\nan error has is part of what its code means.",
+            "type" : "object"
+          },
           "stackTrace" : {
             "type" : "string"
           },
@@ -70075,6 +70260,222 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "licensedto.GetLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseLimitResp" : {
+        "properties" : {
+          "limit" : {
+            "$ref" : "#/components/schemas/base.LicenseLimit"
+          },
+          "max" : {
+            "description" : "Max is null when the plan in force does not limit the kind. Sign-in\nproviders are 0 or null: no paid kind can be added, or every one can.",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "used" : {
+            "description" : "Used is how many there are, counted as a creation counts them. For sign-in\nproviders it is the paid ones active.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "limit", "max", "used" ],
+        "type" : "object"
+      },
+      "licensedto.LicensePortalResp" : {
+        "properties" : {
+          "accountUrl" : {
+            "type" : "string"
+          },
+          "pricingUrl" : {
+            "type" : "string"
+          },
+          "trialUrl" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "accountUrl", "pricingUrl", "trialUrl", "url" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseRefreshResp" : {
+        "properties" : {
+          "enabled" : {
+            "description" : "Enabled is the daily check on. When it is off, a person can still ask now.",
+            "type" : "boolean"
+          },
+          "lastCheckedAt" : {
+            "description" : "LastCheckedAt is when the portal was last asked, whatever came of it.",
+            "type" : "string"
+          },
+          "lastError" : {
+            "description" : "LastError says why the last check failed.",
+            "type" : "string"
+          },
+          "lastResult" : {
+            "$ref" : "#/components/schemas/base.LicenseRefreshResult"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseResp" : {
+        "properties" : {
+          "customerName" : {
+            "type" : "string"
+          },
+          "development" : {
+            "description" : "Development is a key signed by the development keys, which only a backend\nin the development environment accepts.",
+            "type" : "boolean"
+          },
+          "expiresAt" : {
+            "type" : "string"
+          },
+          "graceEndsAt" : {
+            "description" : "GraceEndsAt is when a key for this installation stops holding: its grace\nafter it expires, or after it was moved if that comes first.",
+            "type" : "string"
+          },
+          "installationId" : {
+            "description" : "InstallationID is the ID a key names this installation by: its swarm's.\nIt is empty when docker cannot say.",
+            "type" : "string"
+          },
+          "installations" : {
+            "description" : "Installations are the IDs of the installations the key is for.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "issuedAt" : {
+            "type" : "string"
+          },
+          "keyPlan" : {
+            "$ref" : "#/components/schemas/base.LicensePlan"
+          },
+          "licenseId" : {
+            "type" : "string"
+          },
+          "limits" : {
+            "description" : "Limits has every kind a plan can limit, in the same order every time.",
+            "items" : {
+              "$ref" : "#/components/schemas/licensedto.LicenseLimitResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "movedAt" : {
+            "description" : "MovedAt is when the key was moved to another installation.",
+            "type" : "string"
+          },
+          "plan" : {
+            "$ref" : "#/components/schemas/base.LicensePlan"
+          },
+          "portal" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicensePortalResp"
+            } ],
+            "description" : "Portal is where a key is bought, a trial started, and the keys bought kept.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "reason" : {
+            "description" : "Reason says why the key is invalid.",
+            "type" : "string"
+          },
+          "refresh" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseRefreshResp"
+            } ],
+            "description" : "Refresh is the daily check with the portal for a newer key.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.LicenseStatus"
+          },
+          "trial" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "development", "installationId", "limits", "plan", "portal", "refresh", "status", "trial" ],
+        "type" : "object"
+      },
+      "licensedto.RefreshLicenseDataResp" : {
+        "properties" : {
+          "license" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/base.LicenseRefreshResult"
+          }
+        },
+        "required" : [ "license", "result" ],
+        "type" : "object"
+      },
+      "licensedto.RefreshLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.RefreshLicenseDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "licensedto.UpdateLicenseReq" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "key" ],
+        "type" : "object"
+      },
+      "licensedto.UpdateLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "loggingdto.BackendReq" : {

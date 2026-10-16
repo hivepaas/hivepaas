@@ -35,6 +35,7 @@ var singletonBlockNames = map[base.SettingType]string{
 	base.SettingTypeHivePaaSService:     "hivepaasService",
 	base.SettingTypeImageBuild:          "imageBuild",
 	base.SettingTypeImageScan:           "imageScan",
+	base.SettingTypeLicense:             "license",
 	base.SettingTypeLogging:             "logging",
 	base.SettingTypeMCP:                 "mcp",
 	base.SettingTypeRegistry:            "registry",

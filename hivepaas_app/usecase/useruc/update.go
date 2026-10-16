@@ -47,6 +47,15 @@ func (uc *UC) UpdateUser(
 			return hperrors.Wrap(err)
 		}
 
+		// Read against the status the update leaves, which prepareUpdatingUserData
+		// can move from the one requested. After the authorization: one not allowed
+		// to make the change is told that, not that the plan is full.
+		if reenables(before.Status, userData.User.Status) {
+			if err = uc.checkUserSeat(ctx, db); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
+
 		err = uc.cascadeRevokedCapabilities(ctx, db, auth, userData.User, persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)

@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
@@ -197,4 +198,35 @@ func (m *manager) NodeCurrentID(ctx context.Context) (string, error) {
 	}
 	currentNodeID = resp.Info.Swarm.NodeID
 	return currentNodeID, nil
+}
+
+// currentSwarmClusterID is the cluster ID once a daemon has answered with one.
+// Atomic, because license checks ask for it from requests running at once.
+var currentSwarmClusterID atomic.Pointer[string]
+
+// SwarmClusterID is the ID of the swarm the daemon this manager talks to is part
+// of. A license key names the installation it is for by this ID.
+//
+// A daemon that is a swarm manager reports it; a worker, or a daemon in no
+// swarm, does not, and that is NotFound rather than an empty ID: an empty ID
+// would match no key while looking like an answer. HivePaaS runs on managers.
+//
+// Not cached until it is real, as NodeCurrentID; after that it is, because a
+// swarm keeps its ID for as long as it exists.
+func (m *manager) SwarmClusterID(ctx context.Context) (string, error) {
+	if id := currentSwarmClusterID.Load(); id != nil {
+		return *id, nil
+	}
+	resp, err := m.SystemInfo(ctx)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	cluster := resp.Info.Swarm.Cluster
+	if cluster == nil || cluster.ID == "" {
+		return "", hperrors.NewNotFound("Swarm cluster").
+			WithMsgLog("docker daemon reports no swarm cluster: it is in no swarm, or not a manager of one")
+	}
+	id := cluster.ID
+	currentSwarmClusterID.Store(&id)
+	return id, nil
 }

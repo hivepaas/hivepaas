@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/taskhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/licenseuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 )
@@ -18,6 +19,7 @@ type Handler struct {
 	sysErrorUC      *syserroruc.UC
 	sysStatusUC     *sysstatusuc.UC
 	getStartedUC    *getstarteduc.UC
+	licenseUC       *licenseuc.UC
 }
 
 func New(
@@ -28,6 +30,7 @@ func New(
 	sysErrorUC *syserroruc.UC,
 	sysStatusUC *sysstatusuc.UC,
 	getStartedUC *getstarteduc.UC,
+	licenseUC *licenseuc.UC,
 ) *Handler {
 	return &Handler{
 		BaseHandler:     baseHandler,
@@ -37,5 +40,6 @@ func New(
 		sysErrorUC:      sysErrorUC,
 		sysStatusUC:     sysStatusUC,
 		getStartedUC:    getStartedUC,
+		licenseUC:       licenseUC,
 	}
 }

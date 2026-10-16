@@ -100,6 +100,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 	base.SettingTypeAPIKey:         {skip: reasonNeverExported},
 	base.SettingTypeBackupSnapshot: {skip: reasonNeverExported},
 	base.SettingTypeClusterNode:    {skip: reasonNeverExported},
+	base.SettingTypeLicense:        {skip: reasonNeverExported},
 }
 
 const reasonNeverExported = "export never writes this type"

@@ -71,3 +71,9 @@ app_path = "/var/lib/hivepaas"
 [agent]
     secret_token = "abc123"
 
+# The portal a developer runs: portal-web's dev server, which serves the web app
+# and proxies /api to the portal. A refresh with nothing listening there records
+# a failure and changes nothing.
+[license]
+    portal_url = "http://localhost:4100"
+

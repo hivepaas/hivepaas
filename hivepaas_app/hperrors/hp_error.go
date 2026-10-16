@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -40,6 +41,9 @@ type HPError interface {
 	WithParams(map[string]any) HPError
 	// WithTransParam sets a custom but translatable param
 	WithTransParam(k string, v any) HPError
+	// ExposeParams names the params, set with WithParam, that Build puts in
+	// ErrorInfo.Params as well as in the message
+	ExposeParams(keys ...string) HPError
 	// WithExtraDetail sets extra detail
 	WithExtraDetail(string, ...any) HPError
 	// WithMsgLog sets log message (used for debug purpose)
@@ -69,6 +73,7 @@ type hpError struct {
 	cause              error
 	params             map[string]any // non-translatable params
 	tParams            map[string]any // translatable params
+	exposedParams      []string       // the params a client is sent
 	extraDetail        string
 	msgLog             string
 	displayLevel       DisplayLevel
@@ -97,6 +102,16 @@ func (e *hpError) WithParams(m map[string]any) HPError {
 
 func (e *hpError) WithTransParam(k string, v any) HPError {
 	e.tParams[k] = v
+	return e
+}
+
+// ExposeParams is how a client is sent a value, rather than only a message with
+// the value in it. A param is otherwise for the message alone, and some hold
+// what was never meant as a field of the API, such as the text of an
+// underlying error; so none is sent unless named here. A translatable param is
+// never sent: its value is a message ID, not something a client acts on.
+func (e *hpError) ExposeParams(keys ...string) HPError {
+	e.exposedParams = append(e.exposedParams, keys...)
 	return e
 }
 
@@ -174,6 +189,7 @@ func (e *hpError) Build(lang translation.Lang) *ErrorInfo {
 
 	errInfo.Title = http.StatusText(errInfo.Status)
 	errInfo.Detail = detail
+	errInfo.Params = e.buildExposedParams()
 	errInfo.DebugLog = e.msgLog
 	errInfo.DisplayLevel = e.displayLevel
 	if len(detail) > errDetailsConsiderLong || errors.Is(e.err, ErrInfra) { // TODO: rune count?
@@ -187,6 +203,23 @@ func (e *hpError) Build(lang translation.Lang) *ErrorInfo {
 	errInfo.StackTrace = e.StackTrace()
 
 	return errInfo
+}
+
+// buildExposedParams is the exposed params that are set; nil when there are none,
+// so the field is left out.
+func (e *hpError) buildExposedParams() map[string]any {
+	var exposed map[string]any
+	for _, k := range e.exposedParams {
+		v, set := e.params[k]
+		if !set {
+			continue
+		}
+		if exposed == nil {
+			exposed = make(map[string]any, len(e.exposedParams))
+		}
+		exposed[k] = v
+	}
+	return exposed
 }
 
 func (e *hpError) StatusCode() int {
@@ -378,6 +411,7 @@ func Wrap(err error) HPError {
 	wrapped := *e
 	wrapped.params = cloneErrParams(e.params)
 	wrapped.tParams = cloneErrParams(e.tParams)
+	wrapped.exposedParams = slices.Clone(e.exposedParams)
 	wrapped.err = err
 	return &wrapped
 }

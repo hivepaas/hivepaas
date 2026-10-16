@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -48,6 +49,7 @@ func New(
 	domainService domainservice.Service,
 	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
+	licenseService licenseservice.Service,
 	networkService networkservice.Service,
 	settingMountService settingmountservice.Service,
 	sslService sslservice.Service,
@@ -72,6 +74,7 @@ func New(
 		domainService:       domainService,
 		dockerAPIService:    dockerAPIService,
 		envVarService:       envVarService,
+		licenseService:      licenseService,
 		networkService:      networkService,
 		settingMountService: settingMountService,
 		sslService:          sslService,
@@ -134,6 +137,7 @@ type service struct {
 	appProvisionService  appprovisionservice.Service
 	appRoutingService    approutingservice.Service
 	envVarService        envvarservice.Service
+	licenseService       licenseservice.Service
 	networkService       networkservice.Service
 	settingMountService  settingmountservice.Service
 	taskQueue            queue.TaskQueue

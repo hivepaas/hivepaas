@@ -66,7 +66,7 @@ func TestApplyBundleMountsTheVolumeTheProjectWasGiven(t *testing.T) {
 	plan, err := svc.PlanBundle(context.Background(), nil, req)
 	assert.NoError(t, err)
 
-	resp, err := svc.ApplyBundle(context.Background(), nil, &specservice.ApplyBundleReq{
+	resp, err := svc.ApplyBundle(context.Background(), applyTx, &specservice.ApplyBundleReq{
 		PlanBundleReq: *req, OperatorID: "u_operator", PlanHash: plan.PlanHash, AcceptIssues: true,
 	})
 	if !assert.NoError(t, err) {

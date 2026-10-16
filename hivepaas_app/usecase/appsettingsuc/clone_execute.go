@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
@@ -99,8 +100,10 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("ProjectEnv"),
+		// Its kind with its clone settings: together they say what the clone
+		// counts against.
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppClone),
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppClone, base.SettingTypeAppKind),
 		),
 	)
 	if err != nil {
@@ -128,6 +131,10 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 			WithMsgLog("app unique key '%s' already exists", appGlobalKey)
 	}
 
+	if err = uc.checkClonePlanLimit(ctx, db, app, cloneSettings); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// Create a task for cloning the app
 	cloneTask, err := uc.appCloneService.CreateAppCloneTask(data.App, data.DropGatedMounts)
 	if err != nil {
@@ -136,6 +143,22 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 	data.AppCloneTask = cloneTask
 
 	return nil
+}
+
+// checkClonePlanLimit refuses a clone past the plan's limit of what it will be:
+// the clone of a function that takes its deployment settings is a function,
+// any other clone an app. This is the answer on screen, not the last word: a
+// clone still queued is not counted, so two requests can both pass here, and
+// the clone task checks again when it makes the app.
+func (uc *UC) checkClonePlanLimit(
+	ctx context.Context,
+	db database.Tx,
+	app *entity.App,
+	cloneSettings *entity.AppCloneSettings,
+) error {
+	limit := licenseservice.CloneLimit(entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)),
+		cloneSettings.CloneDeploymentSettings)
+	return hperrors.Wrap(uc.licenseService.Check(ctx, db, licenseservice.Adding(limit, 1)))
 }
 
 // cloneMountsGate passes §7's gate for the gated parts of the app's inheritable

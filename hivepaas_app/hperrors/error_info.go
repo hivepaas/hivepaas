@@ -11,6 +11,10 @@ type ErrorInfo struct {
 	DebugLog     string       `json:"debugLog,omitempty"`
 	StackTrace   string       `json:"stackTrace,omitempty"`
 	DisplayLevel DisplayLevel `json:"displayLevel,omitempty"`
+	// Params are values a client may act on, beside the message they appear in:
+	// the limit a refused creation reached, for one. Most errors have none; which
+	// an error has is part of what its code means.
+	Params map[string]any `json:"params,omitempty"`
 
 	InnerErrors []*InnerErrorInfo `json:"errors,omitempty"`
 }

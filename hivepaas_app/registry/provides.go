@@ -83,6 +83,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice/licenseserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
@@ -193,6 +194,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/licenseuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
@@ -379,6 +381,7 @@ var Provides = []any{
 	syserroruc.New,
 	sysstatusuc.New,
 	getstarteduc.New,
+	licenseuc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
 	specuc.New,
@@ -424,6 +427,7 @@ var Provides = []any{
 	functionserviceimpl.New,
 	imagebuildserviceimpl.New,
 	imagescanserviceimpl.New,
+	licenseserviceimpl.New,
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
 	registryauthserviceimpl.New,
@@ -471,6 +475,7 @@ var Provides = []any{
 	repository.NewFileRepo,
 	repository.NewLockRepo,
 	repository.NewLoginTrustedDeviceRepo,
+	repository.NewPlanUsageRepo,
 	repository.NewProjectEnvRepo,
 	repository.NewProjectRepo,
 	repository.NewResLinkRepo,

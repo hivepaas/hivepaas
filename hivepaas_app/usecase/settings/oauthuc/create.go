@@ -32,7 +32,11 @@ func (uc *UC) CreateOAuth(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			err := pData.Setting.SetData(oauth)
+			err := uc.checkPaidSignIn(ctx, db, nil, pData.Setting)
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			err = pData.Setting.SetData(oauth)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

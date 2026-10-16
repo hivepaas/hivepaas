@@ -10,10 +10,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
+
+// applyTx stands for the caller's transaction, which an import is applied on:
+// the fakes never reach into it, and the writer refuses any other db.
+var applyTx = database.Tx{}
 
 // applyReq is a global apply of what selectors choose, with the hash of the
 // plan validate makes of it, and every issue accepted.
@@ -56,7 +61,7 @@ func apply(
 	t *testing.T, svc *service, bundle *specmodel.ImportBundle, req *specservice.ApplyImportReq,
 ) *specservice.ApplyImportResp {
 	t.Helper()
-	resp, err := svc.applyBundle(context.Background(), nil, req, bundle)
+	resp, err := svc.applyBundle(context.Background(), applyTx, req, bundle)
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -88,7 +93,7 @@ func TestApplyRefusesAPlanOtherThanTheOneSeen(t *testing.T) {
 	req := applyReq(t, svc, bundle)
 	req.PlanHash = "another"
 
-	_, err := svc.applyBundle(context.Background(), nil, req, bundle)
+	_, err := svc.applyBundle(context.Background(), applyTx, req, bundle)
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecImportPlanChanged)
 }
@@ -99,7 +104,7 @@ func TestApplyRefusesABlockedPlan(t *testing.T) {
 	meta["version"] = 999
 	req := applyReq(t, svc, bundle)
 
-	_, err := svc.applyBundle(context.Background(), nil, req, bundle)
+	_, err := svc.applyBundle(context.Background(), applyTx, req, bundle)
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecImportBlocked)
 }
@@ -110,7 +115,7 @@ func TestApplyRefusesIssuesNobodyAccepted(t *testing.T) {
 	req := applyReq(t, svc, bundle, backendPath, "-global")
 	req.AcceptIssues = false
 
-	_, err := svc.applyBundle(context.Background(), nil, req, bundle)
+	_, err := svc.applyBundle(context.Background(), applyTx, req, bundle)
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecImportIssuesNotAccepted)
 }

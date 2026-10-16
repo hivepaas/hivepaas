@@ -66,6 +66,9 @@ const (
 	// SettingTypeVulnerabilityIgnore sets a vulnerability aside, with a reason,
 	// for the apps of its scope.
 	SettingTypeVulnerabilityIgnore SettingType = "vulnerability-ignore"
+	// SettingTypeLicense is the installation's license key: one global setting,
+	// which only the license service writes.
+	SettingTypeLicense SettingType = "license"
 )
 
 var (

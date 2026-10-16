@@ -185,6 +185,7 @@ type Manager interface {
 	// Swarm
 	SwarmInspect(ctx context.Context, options ...SwarmInspectOption) (
 		*client.SwarmInspectResult, error)
+	SwarmClusterID(ctx context.Context) (string, error)
 
 	// System
 	SystemInfo(ctx context.Context, options ...SystemInfoOption) (

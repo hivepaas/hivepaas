@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc/apppreviewdto"
 )
 
@@ -22,46 +23,9 @@ func (uc *UC) CreatePreview(
 	req *apppreviewdto.CreatePreviewReq,
 ) (*apppreviewdto.CreatePreviewResp, error) {
 	var previewTask *entity.Task
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &createPreviewData{}
-		err := uc.loadAppForCreatePreview(ctx, db, req, data)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		cloneDBApps := data.PreviewSettings.AutoCloneApps
-		if req.CloneDBApps != nil {
-			cloneDBApps = *req.CloneDBApps
-		}
-
-		previewTask, err = uc.appPreviewService.CreateAppPreviewTask(data.App, &entity.TaskAppPreviewArgs{
-			ParentApp:       entity.ObjectID{ID: data.App.ID},
-			RepoRef:         req.RepoRef,
-			CustomSubdomain: req.CustomSubdomain,
-			NoStart:         req.NoStart,
-			CloneDBApps:     cloneDBApps,
-			Trigger: &entity.AppDeploymentTrigger{
-				Source:   base.DeploymentTriggerSourceUser,
-				SourceID: auth.User.ID,
-			},
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		err = uc.taskRepo.Upsert(ctx, db, previewTask,
-			entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		// Filed against the parent app: the preview does not exist yet, and the
-		// app it was spun off is what somebody would search the log for.
-		return uc.recordAppAction(ctx, db, auth, data.App, base.AuditLogSourceAPICreate, "preview-create",
-			auditdetail.New().
-				Set("repoRef", req.RepoRef).
-				Set("cloneDBApps", cloneDBApps).
-				Set("taskId", previewTask.ID))
+	err := transaction.Execute(ctx, uc.db, func(db database.Tx) (err error) {
+		previewTask, err = uc.createPreviewTask(ctx, db, auth, req)
+		return err
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -77,6 +41,66 @@ func (uc *UC) CreatePreview(
 	return &apppreviewdto.CreatePreviewResp{
 		Data: &basedto.ObjectIDResp{ID: previewTask.ID},
 	}, nil
+}
+
+// createPreviewTask stores the task that makes the preview, for CreatePreview to
+// schedule once the transaction is committed.
+func (uc *UC) createPreviewTask(
+	ctx context.Context,
+	db database.Tx,
+	auth *basedto.Auth,
+	req *apppreviewdto.CreatePreviewReq,
+) (*entity.Task, error) {
+	data := &createPreviewData{}
+	err := uc.loadAppForCreatePreview(ctx, db, req, data)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// For an answer on screen. The task checks again under the lock, and that is
+	// the check that holds: tasks still queued are not counted.
+	err = uc.licenseService.Check(ctx, db, licenseservice.Adding(base.LicenseLimitPreviews, 1))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	cloneDBApps := data.PreviewSettings.AutoCloneApps
+	if req.CloneDBApps != nil {
+		cloneDBApps = *req.CloneDBApps
+	}
+
+	previewTask, err := uc.appPreviewService.CreateAppPreviewTask(data.App, &entity.TaskAppPreviewArgs{
+		ParentApp:       entity.ObjectID{ID: data.App.ID},
+		RepoRef:         req.RepoRef,
+		CustomSubdomain: req.CustomSubdomain,
+		NoStart:         req.NoStart,
+		CloneDBApps:     cloneDBApps,
+		Trigger: &entity.AppDeploymentTrigger{
+			Source:   base.DeploymentTriggerSourceUser,
+			SourceID: auth.User.ID,
+		},
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	err = uc.taskRepo.Upsert(ctx, db, previewTask,
+		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// Filed against the parent app: the preview does not exist yet, and the
+	// app it was spun off is what somebody would search the log for.
+	err = uc.recordAppAction(ctx, db, auth, data.App, base.AuditLogSourceAPICreate, "preview-create",
+		auditdetail.New().
+			Set("repoRef", req.RepoRef).
+			Set("cloneDBApps", cloneDBApps).
+			Set("taskId", previewTask.ID))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return previewTask, nil
 }
 
 type createPreviewData struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -21,6 +22,7 @@ type UC struct {
 
 	clusterService clusterservice.Service
 	hpAppService   hpappservice.Service
+	licenseService licenseservice.Service
 
 	*settings.BaseUC
 }
@@ -31,6 +33,7 @@ func New(
 
 	clusterService clusterservice.Service,
 	hpAppService hpappservice.Service,
+	licenseService licenseservice.Service,
 
 	baseUC *settings.BaseUC,
 ) *UC {
@@ -40,6 +43,7 @@ func New(
 
 		clusterService: clusterService,
 		hpAppService:   hpAppService,
+		licenseService: licenseService,
 
 		BaseUC: baseUC,
 	}

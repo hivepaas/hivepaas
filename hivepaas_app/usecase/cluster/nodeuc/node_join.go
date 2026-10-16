@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/clusteraudit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/services/ssh"
@@ -28,8 +29,14 @@ func (uc *UC) JoinNode(
 	auth *basedto.Auth,
 	req *nodedto.JoinNodeReq,
 ) (*nodedto.JoinNodeResp, error) {
+	// Before anything is loaded: a join the plan refuses never reads the join token.
+	err := uc.checkNodeLimit(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	data := &joinNodeData{}
-	err := uc.loadJoinNodeData(ctx, uc.db, req, data)
+	err = uc.loadJoinNodeData(ctx, uc.db, req, data)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -85,6 +92,18 @@ func (uc *UC) JoinNode(
 			CommandOutput: output,
 		},
 	}, nil
+}
+
+// checkNodeLimit refuses one more node past the plan's limit. The swarm's nodes
+// are counted whatever their state, and with no lock: anyone holding the join
+// token can add one without asking HivePaaS, so this refuses only HivePaaS's own
+// ways of joining.
+func (uc *UC) checkNodeLimit(ctx context.Context) error {
+	err := uc.licenseService.Check(ctx, uc.db, licenseservice.Adding(base.LicenseLimitNodes, 1))
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }
 
 type joinNodeData struct {

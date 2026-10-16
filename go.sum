@@ -316,6 +316,8 @@ github.com/hivepaas/dockerfile-generator v0.0.0-20261016110026-cce83ba03fc2 h1:U
 github.com/hivepaas/dockerfile-generator v0.0.0-20261016110026-cce83ba03fc2/go.mod h1:gybYLIkzib8mwMEnahuW57Yk3y+MmDxajtHJMGroWwc=
 github.com/hivepaas/dockerfile-generator v0.0.0-20261016110909-d91498747884 h1:3hMA5IF7rofzXY+8BzDh9POmoD0iTzOeJq/OgvCOkRY=
 github.com/hivepaas/dockerfile-generator v0.0.0-20261016110909-d91498747884/go.mod h1:gybYLIkzib8mwMEnahuW57Yk3y+MmDxajtHJMGroWwc=
+github.com/hivepaas/dockerfile-generator v0.0.0-20261016125902-6b9ab270cb4b h1:nUYJ9R0ETfTil5vLBNg019PqWtQ3bmZxfhXp+BvXo2U=
+github.com/hivepaas/dockerfile-generator v0.0.0-20261016125902-6b9ab270cb4b/go.mod h1:gybYLIkzib8mwMEnahuW57Yk3y+MmDxajtHJMGroWwc=
 github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.215 h1:TPSjqhCW+5prLuNwpD2TIyaGZB84Jmw2oVB8n55hCXA=
 github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.215/go.mod h1:M+yna96Fx9o5GbIUnF3OvVvQGjgfVSyeJbV9Yb1z/wI=
 github.com/iancoleman/strcase v0.3.0 h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=

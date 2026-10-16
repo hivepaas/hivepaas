@@ -557,6 +557,16 @@ export const ROUTE = {
             },
         },
 
+        license: {
+            $pattern: "system/license",
+            $route: "/system/license/overview/",
+
+            overview: {
+                $pattern: "system/license/overview",
+                $route: "/system/license/overview/",
+            },
+        },
+
         logging: {
             $pattern: "system/logging",
             $route: "/system/logging/configuration/",

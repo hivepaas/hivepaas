@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    LicenseApi,
+    LicenseApiValidator,
     ProfileApi,
     ProfileApiValidator,
     SessionApi,
@@ -16,6 +18,7 @@ function createApplicationApi() {
         profile: new ProfileApi(new ProfileApiValidator()),
         session: new SessionApi(new SessionApiValidator()),
         settingUsage: new SettingUsageApi(new SettingUsageApiValidator()),
+        license: new LicenseApi(new LicenseApiValidator()),
         support: {
             feedbacks: new SupportFeedbacksApi(new SupportFeedbacksApiValidator()),
         },

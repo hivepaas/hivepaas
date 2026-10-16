@@ -18,3 +18,7 @@ export * from "./e.cloud-storage-kind";
 export * from "./e.command-template-kind";
 export * from "./e.oauth-kind";
 export * from "./e.support-feedback-category";
+export * from "./e.license-status";
+export * from "./e.license-plan";
+export * from "./e.license-limit";
+export * from "./e.license-refresh-result";

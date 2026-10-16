@@ -14,6 +14,7 @@ interface ConstructorParams {
     detail: string;
     errors: ValidationError[];
     displayLevel?: "high" | "medium" | "low";
+    params?: Record<string, unknown> | null;
 }
 
 export class ValidationProblemApiResponse extends ProblemApiResponse {
@@ -25,6 +26,7 @@ export class ValidationProblemApiResponse extends ProblemApiResponse {
             code: params.code,
             detail: params.detail,
             displayLevel: params.displayLevel,
+            params: params.params,
         });
 
         this.#errors = params.errors;

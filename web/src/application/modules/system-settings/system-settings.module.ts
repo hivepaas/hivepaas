@@ -20,12 +20,21 @@ export {
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsTraefikConfigOptionsRoute,
     SystemSettingsTraefikActionsRoute,
+    SystemSettingsLicenseRoute,
 } from "./routes";
 
 /**
  * Layouts
  */
-export { HivePaaSLayout, LoggingLayout, AiLayout, RegistryLayout, ImageScanningLayout, TraefikLayout } from "./layouts";
+export {
+    HivePaaSLayout,
+    LoggingLayout,
+    AiLayout,
+    RegistryLayout,
+    ImageScanningLayout,
+    TraefikLayout,
+    LicenseLayout,
+} from "./layouts";
 
 /**
  * Dialogs

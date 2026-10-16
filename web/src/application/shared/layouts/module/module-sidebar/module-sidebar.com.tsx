@@ -4,6 +4,7 @@ import { GithubIcon, LogoIcon } from "@/assets/icons";
 import {
     Archive,
     ArchiveX,
+    BadgeCheck,
     Bell,
     CircleDashed,
     CircleUser,
@@ -364,6 +365,12 @@ const navMain: SidebarItem[] = [
                         icon: Layers,
                         route: ROUTE.systemSettings.hivepaas.general.$route,
                         pattern: ROUTE.systemSettings.hivepaas.$pattern,
+                    },
+                    {
+                        title: "License",
+                        icon: BadgeCheck,
+                        route: ROUTE.systemSettings.license.overview.$route,
+                        pattern: ROUTE.systemSettings.license.$pattern,
                     },
                     {
                         title: "Traefik",

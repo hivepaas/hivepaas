@@ -5,7 +5,7 @@ import { cn } from "@lib/utils";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { McpSettingsCommands, McpSettingsQueries } from "~/system-settings/data";
-import { SectionHeader } from "~/system-settings/module-shared";
+import { CopyField, SectionHeader } from "~/system-settings/module-shared";
 
 import { EnvConfig } from "@config";
 
@@ -15,7 +15,7 @@ import { PermissionTooltipAction, useConditionalModule } from "@application/shar
 
 import { Button, Checkbox } from "@/components/ui";
 
-import { CopyField, McpConnectSection, McpRecentCallsSection } from "../building-blocks";
+import { McpConnectSection, McpRecentCallsSection } from "../building-blocks";
 
 interface FormValues {
     enabled: boolean;

@@ -5,3 +5,4 @@ export * from "./registry";
 export * from "./image-scanning";
 export * from "./traefik";
 export * from "./ai";
+export * from "./license";

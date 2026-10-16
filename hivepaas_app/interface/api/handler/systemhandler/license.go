@@ -34,7 +34,13 @@ func (h *Handler) GetLicense(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.licenseUC.GetLicense(h.RequestCtx(ctx), auth, licensedto.NewGetLicenseReq())
+	req := licensedto.NewGetLicenseReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.licenseUC.GetLicense(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

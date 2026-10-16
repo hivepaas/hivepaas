@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
@@ -14,6 +15,11 @@ type GetLicenseReq struct{}
 
 func NewGetLicenseReq() *GetLicenseReq {
 	return &GetLicenseReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *GetLicenseReq) Validate() hperrors.ValidationErrors {
+	return nil
 }
 
 type GetLicenseResp struct {

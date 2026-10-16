@@ -8,7 +8,9 @@ import { OAuthQueries } from "~/settings/data/queries";
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
+import { useReadableLicense } from "@application/shared/hooks";
 import { useConditionalModule } from "@application/shared/permissions";
+import { isPaidSignInKind, paidSignInAllowed } from "@application/shared/utils";
 
 import { Separator } from "@/components/ui";
 
@@ -36,9 +38,19 @@ export function UpdateOAuthStatusDialog() {
         }
     }, [clearDialog, state.mode]);
 
+    const open = state.mode !== "closed";
     const detailId = state.mode === "open" ? state.id : "";
     const detailQuery = OAuthQueries.useFindOneById({ id: detailId }, { enabled: state.mode === "open" });
     const oauth = detailQuery.data?.data;
+    // Asked for while open only: the dialog stays mounted on every Settings page.
+    const { license, query: licenseQuery } = useReadableLicense({ enabled: open });
+
+    // Bee enables no Google, Microsoft or OpenID Connect provider, and keeps one
+    // that is active. Unknown - no read of System, or the license failed - marks
+    // nothing, and the server's refusal opens the plan-limit dialog instead.
+    const isPaidOnBee = paidSignInAllowed(license) === false && isPaidSignInKind(oauth?.kind);
+    const canEnable = !isPaidOnBee || oauth?.status === ESettingStatus.Active;
+    const canEnableAgain = !isPaidOnBee;
 
     function onSubmit(values: UpdateOAuthStatusFormOutput) {
         if (state.mode !== "open" || !oauth || !canWrite) return;
@@ -61,7 +73,6 @@ export function UpdateOAuthStatusDialog() {
         dialogOptions?.onClose?.();
     }
 
-    const open = state.mode !== "closed";
     const initialValues = oauth
         ? {
               status: oauth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
@@ -69,7 +80,9 @@ export function UpdateOAuthStatusDialog() {
               default: oauth.default ?? false,
           }
         : undefined;
-    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+    // Waits for the license's first answer, so the form starts out right. Should a
+    // later answer change what can be done, the form's key starts it again.
+    const isDetailLoading = state.mode === "open" && (detailQuery.isFetching || licenseQuery.isLoading);
 
     return (
         <Dialog
@@ -90,11 +103,15 @@ export function UpdateOAuthStatusDialog() {
                 )}
                 {state.mode === "open" && !isDetailLoading && initialValues && (
                     <UpdateOAuthStatusForm
+                        key={`${canEnable}-${canEnableAgain}`}
                         isPending={isPending}
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
                         readOnly={!canWrite}
+                        canEnable={canEnable}
+                        canEnableAgain={canEnableAgain}
+                        pricingUrl={license?.portal?.pricingUrl}
                         onClose={handleClose}
                     />
                 )}

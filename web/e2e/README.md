@@ -19,8 +19,8 @@ npx playwright install chromium
 Level 1 makes and removes data; run it on an installation that is there to go:
 
 ```bash
-yarn env:up     # builds the dashboard and the backend, then starts them: http://localhost:10100
-HP_E2E_BASE_URL=http://localhost:10100 yarn test
+yarn env:up     # builds the dashboard and the backend, then starts them: http://localhost:10010
+HP_E2E_BASE_URL=http://localhost:10010 yarn test
 yarn env:down
 ```
 
@@ -39,7 +39,7 @@ agent inside a dind container that is a swarm of its own - never on this
 machine's swarm, which it checks before it says the stack is up. It needs the
 backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 `hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
-10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
+10010 (not 10100: that is the HivePaaS Portal's); `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
 app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind lists two GPUs of no hardware, `NVIDIA-GPU=GPU-e2e0` and
 `AMD_GPU=0xe2e1`, for the apps that reserve one. dind is also given kopia, the backup engine, from

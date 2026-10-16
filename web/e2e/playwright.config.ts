@@ -9,7 +9,7 @@ const levelZeroOnly = isLocalBackend(env.baseURL);
 if (levelZeroOnly && process.env["TEST_WORKER_INDEX"] === undefined) {
     console.warn(
         `${env.baseURL} is the local backend: levels 1 and 2 are left out. They run on the throwaway ` +
-            "installation - yarn env:up, then HP_E2E_BASE_URL=http://localhost:10100 (see the README).",
+            "installation - yarn env:up, then HP_E2E_BASE_URL=http://localhost:10010 (see the README).",
     );
 }
 

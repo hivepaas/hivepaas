@@ -27,7 +27,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 90
         env:
-            HP_E2E_BASE_URL: http://localhost:10100
+            HP_E2E_BASE_URL: http://localhost:10010
             # The API bodies test reads the backend's request types from here.
             HP_BACKEND_DIR: ${{ github.workspace }}/hivepaas
         steps:

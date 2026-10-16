@@ -50,10 +50,14 @@ app_path = "/hp/appdata"
     session_max_exp = "24h"
 
     # The same three for admin sessions, which can change the whole install.
-    # Any of them set to "0s" falls back to the shared value above.
-    admin_access_token_exp = "30m"
-    admin_refresh_token_exp = "1h"
-    admin_session_max_exp = "8h"
+    # Any of them set to "0s" falls back to the shared value above, as all three
+    # do here. The suite signs in once and every test starts from that session,
+    # whose refresh token renews it once only: past an admin's 30 minutes, the
+    # first test to renew it would leave every later one signed out - and a run
+    # takes longer than that.
+    admin_access_token_exp = "0s"
+    admin_refresh_token_exp = "0s"
+    admin_session_max_exp = "0s"
 
     basic_auth_username = "hivepaas"
     basic_auth_password = "abc123"

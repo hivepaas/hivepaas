@@ -139,6 +139,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.129 | A volume pinned by a node label scans on a node carrying it; a label none carries is said on the status, and on the app on Scan now                                                                                                           | `tests/level-2/image-scan.spec.ts`          |
 | 2.130 | A shared volume says each scan runs on the node running its image, and an app's image is scanned                                                                                                                                              | `tests/level-2/image-scan.spec.ts`          |
 | 2.131 | The daily scan tells its notification of an app that runs a new fixable CRITICAL, with the app's line; the next run tells nothing new                                                                                                         | `tests/level-2/image-scan.spec.ts`          |
+| 2.132 | A PHP function made from its template builds with Composer, answers Run with its JSON, and is called at its domain over HTTPS                                                                                                                 | `tests/level-2/functions.spec.ts`           |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

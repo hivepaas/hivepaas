@@ -3,6 +3,9 @@ import { useId } from "react";
 import Prism from "prismjs";
 import "prismjs/components/prism-go";
 import "prismjs/components/prism-json";
+// PHP's grammar builds on markup-templating, which must load first.
+import "prismjs/components/prism-markup-templating";
+import "prismjs/components/prism-php";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-typescript";
 import "prismjs/themes/prism-tomorrow.css";
@@ -24,7 +27,7 @@ function highlight(code: string, language: CodeLanguage): string {
 
 /**
  * An editor for one file of a function's code, highlighted after its extension:
- * JavaScript, TypeScript, Python, Go, JSON.
+ * JavaScript, TypeScript, Python, PHP, Go, JSON.
  */
 export function FunctionCodeEditor({ path, value, onChange, readOnly = false }: Props) {
     const generatedId = useId();

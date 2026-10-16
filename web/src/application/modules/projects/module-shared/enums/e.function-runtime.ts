@@ -5,6 +5,7 @@ export const EFunctionRuntime = {
     Node24: "node24",
     Bun1: "bun1",
     Python313: "python313",
+    Php85: "php85",
     Go127: "go127",
 } as const;
 
@@ -14,6 +15,7 @@ export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
     EFunctionRuntime.Node24,
     EFunctionRuntime.Bun1,
     EFunctionRuntime.Python313,
+    EFunctionRuntime.Php85,
     EFunctionRuntime.Go127,
 ];
 
@@ -47,6 +49,7 @@ export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
     [EFunctionRuntime.Node24]: "Node.js 24",
     [EFunctionRuntime.Bun1]: "Bun 1",
     [EFunctionRuntime.Python313]: "Python 3.13",
+    [EFunctionRuntime.Php85]: "PHP 8.5",
     [EFunctionRuntime.Go127]: "Go 1.27",
 };
 
@@ -58,6 +61,7 @@ export const FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT: Record<EFunctionRuntime, { fil
     [EFunctionRuntime.Node24]: { file: "index.js", handler: "default" },
     [EFunctionRuntime.Bun1]: { file: "index.ts", handler: "default" },
     [EFunctionRuntime.Python313]: { file: "main.py", handler: "handler" },
+    [EFunctionRuntime.Php85]: { file: "index.php", handler: "handler" },
     [EFunctionRuntime.Go127]: { file: ".", handler: "Handle" },
 };
 

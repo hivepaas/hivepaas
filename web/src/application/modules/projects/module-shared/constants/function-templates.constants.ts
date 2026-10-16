@@ -89,6 +89,36 @@ def handler(req, ctx):
 `,
         },
     ],
+    [EFunctionRuntime.Php85]: [
+        {
+            path: "composer.json",
+            content: `{
+    "require": {}
+}
+`,
+        },
+        {
+            path: "index.php",
+            content: `<?php
+
+// A function answers one request: it returns ['status', 'headers', 'body'].
+// A body that is an array is sent as JSON. Each process keeps this file
+// loaded: what a variable holds lasts from one call to the next, and echo goes
+// to the log.
+
+use Hivepaas\\Context;
+use Hivepaas\\Request;
+
+function handler(Request $req, Context $ctx): array
+{
+    $ctx->log("{$req->method} {$req->path}");
+    $name = $req->query['name'] ?? 'world';
+
+    return ['status' => 200, 'body' => ['hello' => $name]];
+}
+`,
+        },
+    ],
     [EFunctionRuntime.Go127]: [
         {
             path: "go.mod",

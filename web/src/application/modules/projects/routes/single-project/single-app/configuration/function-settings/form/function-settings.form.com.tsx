@@ -227,7 +227,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                 title={
                                     <LabelWithInfo
                                         label="Handler"
-                                        content="The name the file exports the handler by."
+                                        content="The name the file exports the handler by; for PHP, a function's name with its namespace, such as App\handle, or a static method, such as Handler::handle."
                                     />
                                 }
                             >
@@ -335,6 +335,14 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                                 Python serves with a process per CPU, at most this many and one per 128
                                                 MiB of a memory limit. Set WEB_CONCURRENCY in the function&apos;s
                                                 environment to choose.
+                                            </p>
+                                        )}
+                                        {runtime === EFunctionRuntime.Php85 && (
+                                            <p className="text-xs text-muted-foreground">
+                                                PHP runs one call at a time in each of its processes, started as calls
+                                                need them: at most this many, and one per 32 MiB of a memory limit. Set
+                                                WEB_CONCURRENCY in the function&apos;s environment to keep a number of
+                                                them.
                                             </p>
                                         )}
                                     </Field>

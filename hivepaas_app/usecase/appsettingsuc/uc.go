@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -46,6 +47,7 @@ type UC struct {
 	envVarService        envvarservice.Service
 	appAutoscale         appautoscaleservice.Service
 	hpAppService         hpappservice.Service
+	licenseService       licenseservice.Service
 	loggingService       loggingservice.Service
 	networkService       networkservice.Service
 	placementService     placementservice.Service
@@ -77,6 +79,7 @@ func New(
 	envVarService envvarservice.Service,
 	appAutoscale appautoscaleservice.Service,
 	hpAppService hpappservice.Service,
+	licenseService licenseservice.Service,
 	loggingService loggingservice.Service,
 	networkService networkservice.Service,
 	placementService placementservice.Service,
@@ -107,6 +110,7 @@ func New(
 		envVarService:        envVarService,
 		appAutoscale:         appAutoscale,
 		hpAppService:         hpAppService,
+		licenseService:       licenseService,
 		loggingService:       loggingService,
 		networkService:       networkService,
 		placementService:     placementService,

@@ -60,6 +60,9 @@ func (uc *UC) CreateFunction(
 	var created *appprovisionservice.ProvisionAppResp
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var txErr error
+		if txErr = uc.checkPlanLimit(ctx, db, base.LicenseLimitFunctions); txErr != nil {
+			return txErr
+		}
 		provisioned, txErr = uc.appProvisionService.ProvisionApps(ctx, db, &appprovisionservice.ProvisionAppsReq{
 			Apps: []*appprovisionservice.ProvisionAppReq{{
 				ProjectID:    req.ProjectID,

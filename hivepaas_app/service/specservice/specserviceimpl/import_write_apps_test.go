@@ -103,7 +103,7 @@ func TestApplyGeneratesTheCredentialOfACreatedApp(t *testing.T) {
 		"category": "database", "engine": "postgres", "database": map[string]any{"dbName": "worker"},
 	}})
 	req := applyReq(t, svc, bundle, workerPath)
-	p, err := svc.planBundle(context.Background(), nil, &req.ValidateImportReq, bundle)
+	p, err := svc.planBundle(context.Background(), applyTx, &req.ValidateImportReq, bundle)
 	assert.NoError(t, err)
 	w := newWriter(p, "u_operator")
 
@@ -152,7 +152,7 @@ func TestPreparedDeploymentNamesVolumesByIDAndDropsWhatValidateCleared(t *testin
 		Ports: []*specmodel.PortConfig{{Target: 80, Published: 8080}, {Target: 81, Published: 8081}},
 	}}
 	req := applyReq(t, svc, bundle, workerPath)
-	p, err := svc.planBundle(context.Background(), nil, &req.ValidateImportReq, bundle)
+	p, err := svc.planBundle(context.Background(), applyTx, &req.ValidateImportReq, bundle)
 	assert.NoError(t, err)
 	w := newWriter(p, "u_operator")
 	assert.NoError(t, w.write(context.Background()))

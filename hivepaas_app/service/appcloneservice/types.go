@@ -25,6 +25,13 @@ type AppCloneReq struct {
 	// key, a password: the clone's requester may not reveal them.
 	DropGatedMounts bool
 
+	// CheckPlanLimit refuses the clone, before anything of it is made, when it
+	// would take the installation past its plan's apps or functions. The clone
+	// task sets it: the request that queued the task was checked, but a clone
+	// still queued is not counted, so the task checks again under the plan-limit
+	// lock. A preview clones without it, as its own kind of app.
+	CheckPlanLimit bool
+
 	// Custom callbacks to override settings
 	OnCloneStart   func(req *AppCloneReq) error
 	OnCloneApp     func(destApp, srcApp *entity.App) error

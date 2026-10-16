@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -45,6 +46,21 @@ func (f *fakeDeploymentService) CreateDeploymentAndTask(
 ) (*entity.Deployment, *entity.Task, error) {
 	return &entity.Deployment{ID: "dep_" + app.ID, AppID: app.ID, Settings: settings},
 		&entity.Task{ID: "task_" + app.ID, ObjectID: app.ID}, nil
+}
+
+// fakeLicenseService records each plan check: the db it was made on and what it
+// was asked to add. It refuses with err.
+type fakeLicenseService struct {
+	licenseservice.Service
+	dbs  []database.IDB
+	reqs []*licenseservice.CheckReq
+	err  error
+}
+
+func (f *fakeLicenseService) Check(_ context.Context, db database.IDB, req *licenseservice.CheckReq) error {
+	f.dbs = append(f.dbs, db)
+	f.reqs = append(f.reqs, req)
+	return f.err
 }
 
 // fakeProvisionService provisions the way the real one does as far as import

@@ -84,6 +84,10 @@ func (w *writer) write(ctx context.Context) error {
 			return err
 		}
 	}
+	// Nothing is persisted or provisioned before this.
+	if err := w.checkPlanLimits(ctx); err != nil {
+		return err
+	}
 	if err := w.p.s.projectService.PersistProjectData(ctx, w.p.db, &w.data); err != nil {
 		return hperrors.Wrap(err)
 	}

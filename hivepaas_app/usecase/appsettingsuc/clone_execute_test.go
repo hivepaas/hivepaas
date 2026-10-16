@@ -9,6 +9,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
 
 func inheritableEntry(t *testing.T, name, source string, parts ...string) *entity.Setting {
@@ -62,4 +64,61 @@ func TestCloneRequestAsksNothingWithoutGatedParts(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, drop)
 	assert.Empty(t, gate.subjects)
+}
+
+// fakeLicenseService records each plan check, and refuses with err.
+type fakeLicenseService struct {
+	licenseservice.Service
+	dbs  []database.IDB
+	reqs []*licenseservice.CheckReq
+	err  error
+}
+
+func (f *fakeLicenseService) Check(_ context.Context, db database.IDB, req *licenseservice.CheckReq) error {
+	f.dbs = append(f.dbs, db)
+	f.reqs = append(f.reqs, req)
+	return f.err
+}
+
+// The request is checked against what the clone will be, in its transaction, for
+// an answer on screen: a function's clone that takes its code is a function, any
+// other clone an app. The clone task checks again when it makes the app.
+func TestCloneRequestChecksWhatTheCloneWillBe(t *testing.T) {
+	for name, tc := range map[string]struct {
+		category   base.AppCategory
+		withSource bool
+		want       base.LicenseLimit
+	}{
+		"a function, with its code":    {base.AppCategoryFunction, true, base.LicenseLimitFunctions},
+		"a function, without its code": {base.AppCategoryFunction, false, base.LicenseLimitApps},
+		"a database, with its source":  {base.AppCategoryDatabase, true, base.LicenseLimitApps},
+		"an app with no kind":          {"", true, base.LicenseLimitApps},
+	} {
+		app := &entity.App{ID: "app_1"}
+		if tc.category != "" {
+			kind := &entity.Setting{ID: "kind_1", Type: base.SettingTypeAppKind, ObjectID: app.ID}
+			assert.NoError(t, kind.SetData(&entity.AppKindSettings{Category: tc.category}), name)
+			app.Settings = []*entity.Setting{kind}
+		}
+		licenses := &fakeLicenseService{}
+		uc := &UC{licenseService: licenses}
+
+		err := uc.checkClonePlanLimit(context.Background(), database.Tx{}, app,
+			&entity.AppCloneSettings{CloneDeploymentSettings: tc.withSource})
+
+		assert.NoError(t, err, name)
+		if assert.Len(t, licenses.reqs, 1, name) {
+			assert.IsType(t, database.Tx{}, licenses.dbs[0], name)
+			assert.Equal(t, licenseservice.Adding(tc.want, 1), licenses.reqs[0], name)
+		}
+	}
+}
+
+func TestCloneRequestPastThePlanIsRefused(t *testing.T) {
+	uc := &UC{licenseService: &fakeLicenseService{err: hperrors.Wrap(hperrors.ErrPlanLimitReached)}}
+
+	err := uc.checkClonePlanLimit(context.Background(), database.Tx{}, &entity.App{ID: "app_1"},
+		&entity.AppCloneSettings{})
+
+	assert.ErrorIs(t, err, hperrors.ErrPlanLimitReached)
 }

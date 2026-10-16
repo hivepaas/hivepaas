@@ -36,6 +36,9 @@ func (uc *UC) CreateApp(
 	}()
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		if err := uc.checkPlanLimit(ctx, db, base.LicenseLimitApps); err != nil {
+			return err
+		}
 		provisioned, err := uc.appProvisionService.ProvisionApp(ctx, db, &appprovisionservice.ProvisionAppReq{
 			ProjectID:    req.ProjectID,
 			ProjectEnvID: req.ProjectEnvID,

@@ -169,6 +169,7 @@ type createFakes struct {
 	templates *fakeTemplateService
 	provision *fakeProvisionService
 	audit     *fakeAuditService
+	licenses  *fakeLicenseService
 }
 
 func newCreateTest(t *testing.T) (*UC, *createFakes) {
@@ -197,11 +198,13 @@ func newCreateTest(t *testing.T) (*UC, *createFakes) {
 		}},
 		provision: &fakeProvisionService{},
 		audit:     &fakeAuditService{},
+		licenses:  &fakeLicenseService{},
 	}
 	uc := &UC{
 		appProvisionService: fakes.provision,
 		appTemplateService:  fakes.templates,
 		auditService:        fakes.audit,
+		licenseService:      fakes.licenses,
 		specService:         &fakeSpecService{},
 	}
 	return uc, fakes
@@ -223,7 +226,7 @@ func testAuth() *basedto.Auth {
 func provisionOne(t *testing.T, uc *UC, fakes *createFakes) *appprovisionservice.ProvisionAppResp {
 	t.Helper()
 	req := testCreateReq()
-	provisioned, err := uc.provisionAll(context.Background(), nil, testAuth(), req,
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
 		planApps(req, fakes.templates.resp))
 	assert.NoError(t, err)
 	assert.Len(t, provisioned.Apps, 1)
@@ -391,7 +394,7 @@ func TestProvisionAllRecordsBothDirections(t *testing.T) {
 	req := testCreateReq()
 	req.Name = "blog"
 
-	provisioned, err := uc.provisionAll(context.Background(), nil, testAuth(), req,
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
 		planApps(req, renderedWithDependency(t, fakes)))
 
 	assert.NoError(t, err)
@@ -409,7 +412,7 @@ func TestProvisionAllNamesTheDependencyThatFailed(t *testing.T) {
 	req := testCreateReq()
 	req.Name = "blog"
 
-	provisioned, err := uc.provisionAll(context.Background(), nil, testAuth(), req,
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
 		planApps(req, renderedWithDependency(t, fakes)))
 
 	assert.ErrorIs(t, err, errTestProvision)
@@ -424,7 +427,7 @@ func TestTransformCreatedSeparatesTheAppFromItsDependencies(t *testing.T) {
 	req.Name = "blog"
 	apps := planApps(req, renderedWithDependency(t, fakes))
 
-	provisioned, err := uc.provisionAll(context.Background(), nil, testAuth(), req, apps)
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
 	assert.NoError(t, err)
 	resp := transformCreated(apps, provisioned.Apps)
 

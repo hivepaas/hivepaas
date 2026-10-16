@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -41,6 +42,7 @@ type service struct {
 	domainService          domainservice.Service
 	dockerAPIService       dockerapiservice.Service
 	envVarService          envvarservice.Service
+	licenseService         licenseservice.Service
 	networkService         networkservice.Service
 	notificationService    notificationservice.Service
 	settingService         settingservice.Service
@@ -66,6 +68,7 @@ func New(
 	domainService domainservice.Service,
 	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
+	licenseService licenseservice.Service,
 	networkService networkservice.Service,
 	notificationService notificationservice.Service,
 	settingService settingservice.Service,
@@ -90,6 +93,7 @@ func New(
 		domainService:          domainService,
 		dockerAPIService:       dockerAPIService,
 		envVarService:          envVarService,
+		licenseService:         licenseService,
 		networkService:         networkService,
 		notificationService:    notificationService,
 		settingService:         settingService,

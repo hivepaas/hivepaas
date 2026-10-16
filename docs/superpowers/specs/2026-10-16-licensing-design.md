@@ -56,8 +56,8 @@ Each count is installation-wide and read when something is created.
   - a function.
 - **Functions**: apps whose app-kind setting has `category = function`, with
   the same exclusions. An app cannot change to or from a function
-  (`ERR_APP_KIND_FUNCTION_UNCHANGEABLE`), and templates and specs cannot make
-  one, so only creating and cloning a function are checked.
+  (`ERR_APP_KIND_FUNCTION_UNCHANGEABLE`), and templates cannot make one, so
+  creating, importing and cloning a function are what is checked.
 - **Users**: users `active` or `pending`. An invitation holds a seat, or a
   limit of 2 could be invited past. `disabled` users do not count.
 - **Nodes**: every node of the swarm, whatever its state. Removing a node from
@@ -79,7 +79,7 @@ Each count is installation-wide and read when something is created.
 | Limit      | Checked at                                                                     |
 |------------|--------------------------------------------------------------------------------|
 | Apps       | create app, from template, clone, spec import, project from compose            |
-| Functions  | create function, clone of a function that keeps its deployment settings        |
+| Functions  | create function, spec import, clone of a function that keeps its deployment settings |
 | Users      | invite (a new person), re-enable a disabled user                               |
 | Nodes      | the node join command (`nodeuc/node_join*.go`)                                 |
 | Previews   | creating a preview, by webhook or by hand                                      |

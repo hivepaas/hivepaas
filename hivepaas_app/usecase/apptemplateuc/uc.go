@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -31,6 +32,7 @@ type UC struct {
 	auditService        auditservice.Service
 	clusterService      clusterservice.Service
 	domainService       domainservice.Service
+	licenseService      licenseservice.Service
 	specService         specservice.Service
 	volumeService       volumeservice.Service
 }
@@ -51,6 +53,7 @@ func New(
 	auditService auditservice.Service,
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
+	licenseService licenseservice.Service,
 	specService specservice.Service,
 	volumeService volumeservice.Service,
 ) *UC {
@@ -70,6 +73,7 @@ func New(
 		auditService:        auditService,
 		clusterService:      clusterService,
 		domainService:       domainService,
+		licenseService:      licenseService,
 		specService:         specService,
 		volumeService:       volumeService,
 	}

@@ -474,6 +474,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeDomainService{},
 		&fakeNoDockerAPI{},
 		&fakeEnvVarService{},
+		&fakeLicenseService{},
 		&fakeNetworkService{},
 		&fakeSettingMounts{},
 		&fakeSSLService{},

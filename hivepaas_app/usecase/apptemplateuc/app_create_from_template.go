@@ -159,18 +159,21 @@ func (uc *UC) checkDomains(
 	return hperrors.Wrap(uc.domainService.VerifyDomainsAvailable(ctx, uc.db, domains, nil))
 }
 
-// provisionAll is everything that happens inside the transaction: the apps of
-// the request are created, and each creation is recorded.
+// provisionAll is everything that happens inside the transaction: the plan is
+// checked, the apps of the request are created, and each creation is recorded.
 //
 // It returns what provisioning made even when it fails part way, so that the
 // caller can undo in docker what the transaction cannot take back.
 func (uc *UC) provisionAll(
 	ctx context.Context,
-	db database.IDB,
+	db database.Tx,
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	apps []*appToProvision,
 ) (*appprovisionservice.ProvisionAppsResp, error) {
+	if err := uc.checkPlanLimit(ctx, db, apps); err != nil {
+		return nil, err
+	}
 	provisioned, err := uc.appProvisionService.ProvisionApps(ctx, db,
 		&appprovisionservice.ProvisionAppsReq{Apps: uc.provisionRequests(auth, req, apps)})
 	if err != nil {

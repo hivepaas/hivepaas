@@ -74,7 +74,7 @@ func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
 	assert.Equal(t, specmodel.ActionCreate, node(t, plan, "projects/blog/envs/prod/apps/app").Action)
 	assert.True(t, node(t, plan, "projects/blog/envs/prod/apps/app").Deploy)
 
-	resp, err := svc.ApplyBundle(context.Background(), nil, &specservice.ApplyBundleReq{
+	resp, err := svc.ApplyBundle(context.Background(), applyTx, &specservice.ApplyBundleReq{
 		PlanBundleReq: *req, OperatorID: "u_operator", PlanHash: plan.PlanHash, AcceptIssues: true,
 	})
 	if !assert.NoError(t, err) {

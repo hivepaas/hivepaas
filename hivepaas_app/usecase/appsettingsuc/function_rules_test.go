@@ -45,6 +45,25 @@ func TestAFunctionStaysAFunction(t *testing.T) {
 		hperrors.ErrAppKindFunctionUnchangeable)
 }
 
+// The plan limits apps and functions apart, and checks only creating and cloning
+// one: that holds only while no app becomes a function, and no function another
+// app, of any category.
+func TestNoAppChangesToOrFromAFunction(t *testing.T) {
+	function := &entity.AppKindSettings{Category: base.AppCategoryFunction}
+	for _, category := range base.AllAppCategories {
+		if category == base.AppCategoryFunction {
+			continue
+		}
+		app := &entity.AppKindSettings{Category: category}
+		assert.ErrorIs(t, checkKindCategoryChange(function, category), hperrors.ErrAppKindFunctionUnchangeable,
+			"a function made %s", category)
+		assert.ErrorIs(t, checkKindCategoryChange(app, base.AppCategoryFunction),
+			hperrors.ErrAppKindFunctionUnchangeable, "%s made a function", category)
+	}
+	assert.ErrorIs(t, checkKindCategoryChange(nil, base.AppCategoryFunction), hperrors.ErrAppKindFunctionUnchangeable,
+		"an app with no kind made a function")
+}
+
 // A function's routing points at the port its runtime listens on, whatever
 // the request said.
 func TestAFunctionsRoutingPointsAtItsRuntimesPort(t *testing.T) {

@@ -32,6 +32,9 @@ func (e *Executor) execute(
 ) error {
 	_, err := e.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
 		TaskExecData: execData,
+		// The request that queued this was checked, but not against the clones
+		// queued with it: this is the check that counts.
+		CheckPlanLimit: true,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

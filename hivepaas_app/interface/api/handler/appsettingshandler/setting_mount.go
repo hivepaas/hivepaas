@@ -139,8 +139,12 @@ func (h *Handler) ListSettingMountSources(ctx *gin.Context) {
 		h.RenderError(ctx, err)
 		return
 	}
-	resp, err := h.SettingMountUC.ListSettingMountSources(h.RequestCtx(ctx), auth,
-		settingmountdto.NewListSettingMountSourcesReq())
+	req := settingmountdto.NewListSettingMountSourcesReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	resp, err := h.SettingMountUC.ListSettingMountSources(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

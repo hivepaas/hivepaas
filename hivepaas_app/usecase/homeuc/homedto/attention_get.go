@@ -4,8 +4,20 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice"
 )
+
+type GetHomeAttentionReq struct{}
+
+func NewGetHomeAttentionReq() *GetHomeAttentionReq {
+	return &GetHomeAttentionReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *GetHomeAttentionReq) Validate() hperrors.ValidationErrors {
+	return nil
+}
 
 type GetHomeAttentionResp struct {
 	Meta *basedto.Meta          `json:"meta"`

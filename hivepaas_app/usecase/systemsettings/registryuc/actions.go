@@ -63,6 +63,7 @@ func (uc *UC) CheckRegistryPush(
 func (uc *UC) RotateRegistryCredential(
 	ctx context.Context,
 	_ *basedto.Auth,
+	_ *registrydto.RotateCredentialReq,
 ) (*registrydto.RotateCredentialResp, error) {
 	setting, err := uc.loadStoredSetting(ctx)
 	if err != nil {

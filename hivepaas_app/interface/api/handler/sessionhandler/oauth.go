@@ -30,7 +30,14 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 		return
 	}
 
-	err = h.sessionUC.InitOAuthProvider(ctx, &sessiondto.InitOAuthProviderReq{Provider: provider})
+	req := sessiondto.NewInitOAuthProviderReq()
+	req.Provider = provider
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	err = h.sessionUC.InitOAuthProvider(ctx, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -95,6 +102,10 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	// Create a new session for OAuth user in our service
 	sessionReq := sessiondto.NewCreateOAuthSessionReq()
 	sessionReq.User = &oauthUser
+	if err = h.ParseAndValidateRequest(ctx, sessionReq, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
 	sessionResp, err := h.sessionUC.CreateOAuthSession(h.RequestCtx(ctx), sessionReq)
 	if err != nil {
 		h.RenderError(ctx, err)

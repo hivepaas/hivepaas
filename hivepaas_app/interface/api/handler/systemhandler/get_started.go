@@ -33,7 +33,13 @@ func (h *Handler) GetDashboardCert(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.getStartedUC.GetDashboardCert(h.RequestCtx(ctx), auth, getstarteddto.NewGetDashboardCertReq())
+	req := getstarteddto.NewGetDashboardCertReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.getStartedUC.GetDashboardCert(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -65,8 +71,13 @@ func (h *Handler) RequestDashboardCert(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.getStartedUC.RequestDashboardCert(h.RequestCtx(ctx), auth,
-		getstarteddto.NewRequestDashboardCertReq())
+	req := getstarteddto.NewRequestDashboardCertReq()
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.getStartedUC.RequestDashboardCert(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -95,7 +106,13 @@ func (h *Handler) DismissGetStarted(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.getStartedUC.Dismiss(h.RequestCtx(ctx), auth, getstarteddto.NewDismissReq())
+	req := getstarteddto.NewDismissReq()
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.getStartedUC.Dismiss(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

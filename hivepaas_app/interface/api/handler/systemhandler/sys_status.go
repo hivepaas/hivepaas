@@ -8,7 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc/sysstatusdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc/sysstatusdto"
 )
 
 // GetDBStats Gets database connection pool stats
@@ -36,7 +36,13 @@ func (h *Handler) GetDBStats(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.sysStatusUC.GetDBStats(h.RequestCtx(ctx), auth)
+	req := sysstatusdto.NewGetDBStatsReq()
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.sysStatusUC.GetDBStats(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

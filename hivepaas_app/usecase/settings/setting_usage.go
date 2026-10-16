@@ -3,7 +3,10 @@ package settings
 import (
 	"context"
 
+	vld "github.com/tiendc/go-validator"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -49,11 +52,26 @@ type SettingUsage struct {
 // Through a project's, an env's or an app's path, the setting is one of that
 // object's: the path's permission checks are of the object in it, and a setting
 // of another one is not found there.
+// GetSettingUsagesReq names a setting, and the scope of the path it was asked in.
+type GetSettingUsagesReq struct {
+	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
+	ID    string              `json:"-" mapstructure:"-"`
+}
+
+func NewGetSettingUsagesReq() *GetSettingUsagesReq {
+	return &GetSettingUsagesReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *GetSettingUsagesReq) Validate() hperrors.ValidationErrors {
+	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ID, true, "id")...))
+}
+
 func (uc *BaseUC) GetSettingUsages(
 	ctx context.Context,
-	scope *entity.ObjectScope,
-	settingID string,
+	req *GetSettingUsagesReq,
 ) ([]*SettingUsage, error) {
+	scope, settingID := req.Scope, req.ID
 	if objectID := scope.ScopeObjectID(); objectID != "" {
 		setting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, "", settingID, false)
 		if err != nil {

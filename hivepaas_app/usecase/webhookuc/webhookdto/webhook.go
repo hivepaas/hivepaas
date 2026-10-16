@@ -14,8 +14,8 @@ const (
 )
 
 type HandleRepoWebhookReq struct {
-	Request *http.Request `json:"-"`
-	ID      string        `json:"-"`
+	Request *http.Request `json:"-" mapstructure:"-"`
+	ID      string        `json:"-" mapstructure:"-"`
 }
 
 func NewHandleRepoWebhookReq() *HandleRepoWebhookReq {

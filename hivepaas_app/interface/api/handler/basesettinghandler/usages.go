@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
 type SettingUsageResp struct {
@@ -75,7 +76,15 @@ func (h *Handler) SettingUsages(resType base.ResourceType, scopeType base.Object
 			return
 		}
 
-		usages, err := h.BaseSettingUC.GetSettingUsages(h.RequestCtx(ctx), scope, itemID)
+		req := settings.NewGetSettingUsagesReq()
+		req.Scope = scope
+		req.ID = itemID
+		if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+			h.RenderError(ctx, err)
+			return
+		}
+
+		usages, err := h.BaseSettingUC.GetSettingUsages(h.RequestCtx(ctx), req)
 		if err != nil {
 			h.RenderError(ctx, err)
 			return

@@ -7,7 +7,7 @@ import (
 )
 
 type CreateOAuthSessionReq struct {
-	User *goth.User
+	User *goth.User `json:"-" mapstructure:"-"`
 }
 
 func NewCreateOAuthSessionReq() *CreateOAuthSessionReq {

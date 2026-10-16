@@ -12,6 +12,7 @@ import (
 func (uc *UC) GetDBStats(
 	_ context.Context,
 	_ *basedto.Auth,
+	_ *sysstatusdto.GetDBStatsReq,
 ) (*sysstatusdto.GetDBStatsResp, error) {
 	return &sysstatusdto.GetDBStatsResp{
 		Data: sysstatusdto.TransformDBStats(uc.db.Stats()),

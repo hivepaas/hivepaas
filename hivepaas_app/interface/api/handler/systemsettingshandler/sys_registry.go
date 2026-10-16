@@ -168,7 +168,13 @@ func (h *Handler) RotateRegistryCredential(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.RegistryUC.RotateRegistryCredential(h.RequestCtx(ctx), auth)
+	req := registrydto.NewRotateCredentialReq()
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.RegistryUC.RotateRegistryCredential(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

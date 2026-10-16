@@ -31,6 +31,12 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		getStartedGroup.POST("/dismiss", systemHandler.DismissGetStarted)
 	}
 
+	{ // License group: the license in force, and installing a key
+		licenseGroup := systemGroup.Group("/license")
+		licenseGroup.GET("", systemHandler.GetLicense)
+		licenseGroup.PUT("", systemHandler.UpdateLicense)
+	}
+
 	{ // Error group
 		errorGroup := systemGroup.Group("/errors")
 		errorGroup.GET("", systemHandler.ListSysError)

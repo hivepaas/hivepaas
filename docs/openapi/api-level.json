@@ -468,6 +468,7 @@
     "PUT /system/hivepaas/routing-settings": "be1e60d84e52e7e7a3e73613a3c7d6c6a13e6ac39bf0811466e369810301ddd4",
     "PUT /system/hivepaas/security-settings": "2065c914cfb453794869175feba38809854406a5e188e6ed4297b06a186b2ce3",
     "PUT /system/hivepaas/service-settings": "ea788b769684b65c00d93376548eb94369f6b3908ea34a39212ed15634f209a2",
+    "PUT /system/license": "b104bad2015067e998d2c32ec61baaa4c88442703daf397d9a1466daef6466f6",
     "PUT /system/settings/backup": "32251d9c59bbe5af2486c648cea8df86c387e452004d5e4d0a6688f4ce2cc114",
     "PUT /system/settings/backup-repo-cleanup": "b151b2b639092a3b5241d76a3f0f19939585a7f49776ee711540307a10aef26a",
     "PUT /system/settings/cleanup": "a1f0762f8381c1d22767f617225a36d7622f5243f8a70a7a6bf3f90cfc76fe9f",

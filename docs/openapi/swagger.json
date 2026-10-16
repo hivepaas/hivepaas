@@ -48475,6 +48475,106 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/license" : {
+      "get" : {
+        "description" : "The plan and status of the license in force, with the key's dates, how many of each limited\nkind there are against the plan's limit (max null: no limit), and this installation's ID, which\na key must name. A key that is not in force, such as one for another installation, is described\ntoo. Of the customer only the name is sent, never the email the key carries.",
+        "operationId" : "getLicense",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.GetLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the license in force",
+        "tags" : [ "System" ]
+      },
+      "put" : {
+        "description" : "Verifies a license key and stores it in place of the one stored, whatever its plan, and answers\nwith the license it puts in force. Whitespace in the key is ignored. A key that does not verify,\nis for another installation, or is past its grace is refused with 412, and the stored key is\nkept. There is no way to remove a key.",
+        "operationId" : "updateLicense",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/licensedto.UpdateLicenseReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.UpdateLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Installs a license key",
+        "tags" : [ "System" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/settings/backup" : {
       "get" : {
         "description" : "Gets backup settings",
@@ -63041,6 +63141,21 @@
         "type" : "string",
         "x-enum-varnames" : [ "ImageScanStatusDone", "ImageScanStatusFailed" ]
       },
+      "base.LicenseLimit" : {
+        "enum" : [ "nodes", "users", "apps", "functions", "previews", "sign-in-providers" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseLimitNodes", "LicenseLimitUsers", "LicenseLimitApps", "LicenseLimitFunctions", "LicenseLimitPreviews", "LicenseLimitSignInProviders" ]
+      },
+      "base.LicensePlan" : {
+        "enum" : [ "bee", "comb", "hive", "colony", "apiary" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicensePlanBee", "LicensePlanComb", "LicensePlanHive", "LicensePlanColony", "LicensePlanApiary" ]
+      },
+      "base.LicenseStatus" : {
+        "enum" : [ "none", "valid", "trial", "grace", "expired", "invalid", "other-installation", "moved" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseStatusNone", "LicenseStatusValid", "LicenseStatusTrial", "LicenseStatusGrace", "LicenseStatusExpired", "LicenseStatusInvalid", "LicenseStatusOtherInstallation", "LicenseStatusMoved" ]
+      },
       "base.LoggingBackendType" : {
         "enum" : [ "victoria-logs" ],
         "type" : "string",
@@ -70080,6 +70195,134 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "licensedto.GetLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseLimitResp" : {
+        "properties" : {
+          "limit" : {
+            "$ref" : "#/components/schemas/base.LicenseLimit"
+          },
+          "max" : {
+            "description" : "Max is null when the plan in force does not limit the kind. Sign-in\nproviders are 0 or null: no paid kind can be added, or every one can.",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "used" : {
+            "description" : "Used is how many there are, counted as a creation counts them. For sign-in\nproviders it is the paid ones active.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "limit", "max", "used" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseResp" : {
+        "properties" : {
+          "customerName" : {
+            "type" : "string"
+          },
+          "development" : {
+            "description" : "Development is a key signed by the development keys, which only a backend\nin the development environment accepts.",
+            "type" : "boolean"
+          },
+          "expiresAt" : {
+            "type" : "string"
+          },
+          "graceEndsAt" : {
+            "description" : "GraceEndsAt is when a key for this installation stops holding: its grace\nafter it expires, or after it was moved if that comes first.",
+            "type" : "string"
+          },
+          "installationId" : {
+            "description" : "InstallationID is the ID a key names this installation by: its swarm's.\nIt is empty when docker cannot say.",
+            "type" : "string"
+          },
+          "installations" : {
+            "description" : "Installations are the IDs of the installations the key is for.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "issuedAt" : {
+            "type" : "string"
+          },
+          "keyPlan" : {
+            "$ref" : "#/components/schemas/base.LicensePlan"
+          },
+          "licenseId" : {
+            "type" : "string"
+          },
+          "limits" : {
+            "description" : "Limits has every kind a plan can limit, in the same order every time.",
+            "items" : {
+              "$ref" : "#/components/schemas/licensedto.LicenseLimitResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "movedAt" : {
+            "description" : "MovedAt is when the key was moved to another installation.",
+            "type" : "string"
+          },
+          "plan" : {
+            "$ref" : "#/components/schemas/base.LicensePlan"
+          },
+          "reason" : {
+            "description" : "Reason says why the key is invalid.",
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.LicenseStatus"
+          },
+          "trial" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "development", "installationId", "limits", "plan", "status", "trial" ],
+        "type" : "object"
+      },
+      "licensedto.UpdateLicenseReq" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "key" ],
+        "type" : "object"
+      },
+      "licensedto.UpdateLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "loggingdto.BackendReq" : {

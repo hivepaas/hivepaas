@@ -194,6 +194,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/licenseuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
@@ -380,6 +381,7 @@ var Provides = []any{
 	syserroruc.New,
 	sysstatusuc.New,
 	getstarteduc.New,
+	licenseuc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
 	specuc.New,

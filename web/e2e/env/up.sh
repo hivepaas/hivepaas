@@ -20,7 +20,8 @@
 #   HP_BACKEND_DIR   the backend repo, default ../../hivepaas beside the dashboard
 #   HP_TEMPLATES_SRC the app-templates repo the catalog is read from, default
 #                    ../../app-templates beside the dashboard; none if missing
-#   HP_E2E_PORT      where the dashboard answers, default 10100
+#   HP_E2E_PORT      where the dashboard answers, default 10010 - not 10100, the
+#                    HivePaaS Portal's own port, so both can run on one machine
 #   HP_E2E_HTTP_PORT, HP_E2E_HTTPS_PORT
 #                    where the apps' domains answer, default 10180 and 10443
 #   HP_E2E_SKIP_BUILD=1  reuse the last build of the dashboard and the binaries
@@ -31,7 +32,7 @@ ENV_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$ENV_DIR/../.." && pwd)"
 BACKEND_DIR="$(cd "${HP_BACKEND_DIR:-$DASHBOARD_DIR/../hivepaas}" && pwd)"
 TEMPLATES_SRC="${HP_TEMPLATES_SRC:-$DASHBOARD_DIR/../app-templates}"
-PORT="${HP_E2E_PORT:-10100}"
+PORT="${HP_E2E_PORT:-10010}"
 HTTP_PORT="${HP_E2E_HTTP_PORT:-10180}"
 HTTPS_PORT="${HP_E2E_HTTPS_PORT:-10443}"
 BUILD="$ENV_DIR/.build"

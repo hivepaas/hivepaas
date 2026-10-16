@@ -1,5 +1,6 @@
 import { deployImage } from "../../support/api";
 import { WHOAMI, appIn, appPage, deployed } from "../../support/apps";
+import { env } from "../../support/env";
 import { expect, test } from "../../support/fixtures";
 import { checkRuns, expectRuns, newHealthCheck, setHealth } from "../../support/health-checks";
 import { domainFor, exposeAt, visit } from "../../support/routing";
@@ -7,8 +8,9 @@ import { domainFor, exposeAt, visit } from "../../support/routing";
 test.describe.configure({ timeout: 300_000 });
 
 // The checks are run by the backend, which in dind is on no app's network: the
-// URL they call is the backend's own, or an app's domain through the proxy.
-const BACKEND = "http://localhost:10100";
+// URL they call is the backend's own, or an app's domain through the proxy. In
+// dind the backend listens on the port this machine reaches it at.
+const BACKEND = `http://localhost:${new URL(env.baseURL).port}`;
 
 test("a health check runs on its interval: done when answered as asked, failed when not", async ({
     page,

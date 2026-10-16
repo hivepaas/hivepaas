@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProjectClusterVolumesQueries, ProjectsQueries } from "~/projects/data/queries";
 
 import { ErrorBoundary } from "@application/shared/components";
+import { openPlanLimitReachedDialog } from "@application/shared/dialogs";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +84,13 @@ export function DeployTemplateDialog() {
             }
         },
         onError: (err: Error) => {
+            // A creation the plan in force does not allow gets the plan-limit
+            // dialog. This call does not go through notifyError, which would
+            // open it, so it is opened here.
+            if (openPlanLimitReachedDialog(err)) {
+                return;
+            }
+
             toast.error(err.message !== "" ? err.message : "Failed to deploy application from template");
         },
     });

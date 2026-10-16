@@ -26,10 +26,15 @@ func (uc *UC) GetLicense(
 	return &licensedto.GetLicenseResp{Meta: &basedto.Meta{}, Data: data}, nil
 }
 
-// licenseResp is the state with the usage now. Usage takes no lock: it is for
-// showing, and a creation counts again under its own.
+// licenseResp is the state with the usage now, the portal's pages and the daily
+// refresh. Usage takes no lock: it is for showing, and a creation counts again
+// under its own.
 func (uc *UC) licenseResp(ctx context.Context, state *license.State) (*licensedto.LicenseResp, error) {
 	usage, err := uc.licenseService.Usage(ctx, uc.db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	refresh, err := uc.licenseService.RefreshInfo(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -37,6 +42,8 @@ func (uc *UC) licenseResp(ctx context.Context, state *license.State) (*licensedt
 	if resp.InstallationID == "" {
 		resp.InstallationID = uc.installationID(ctx)
 	}
+	resp.Portal = licensedto.TransformLicensePortal(uc.cfg(), resp.InstallationID)
+	resp.Refresh = licensedto.TransformLicenseRefresh(refresh)
 	return resp, nil
 }
 

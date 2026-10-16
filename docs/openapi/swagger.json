@@ -48477,7 +48477,7 @@
     },
     "/system/license" : {
       "get" : {
-        "description" : "The plan and status of the license in force, with the key's dates, how many of each limited\nkind there are against the plan's limit (max null: no limit), and this installation's ID, which\na key must name. A key that is not in force, such as one for another installation, is described\ntoo. Of the customer only the name is sent, never the email the key carries.",
+        "description" : "The plan and status of the license in force, with the key's dates, how many of each limited\nkind there are against the plan's limit (max null: no limit), and this installation's ID, which\na key must name. A key that is not in force, such as one for another installation, is described\ntoo. Of the customer only the name is sent, never the email the key carries. With them are the\nlicense portal's pages, for this installation, and whether the daily check for a newer key is on,\nwith how its last check went.",
         "operationId" : "getLicense",
         "responses" : {
           "200" : {
@@ -48573,6 +48573,66 @@
         "summary" : "Installs a license key",
         "tags" : [ "System" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/license/refresh" : {
+      "post" : {
+        "description" : "Asks the license portal now whether there is a newer key than the one stored - a renewal, a plan\nchange, a paid key replacing a trial - and installs it, or learns that the key was moved to another\ninstallation. Only the stored key and this installation's ID are sent. It asks whether or not the\ndaily check is switched off. Answers with what the portal said and the license in force after it,\nas GET answers it: none, asking nothing, when no key is stored. A portal that cannot be reached is\n503, and one that refuses, or a newer key that cannot be installed, 412; either is recorded as the\nlast check's error.",
+        "operationId" : "refreshLicense",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/licensedto.RefreshLicenseResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Service Unavailable"
+          }
+        },
+        "summary" : "Asks the license portal for a newer key",
+        "tags" : [ "System" ]
       }
     },
     "/system/settings/backup" : {
@@ -63151,6 +63211,11 @@
         "type" : "string",
         "x-enum-varnames" : [ "LicensePlanBee", "LicensePlanComb", "LicensePlanHive", "LicensePlanColony", "LicensePlanApiary" ]
       },
+      "base.LicenseRefreshResult" : {
+        "enum" : [ "newer", "moved", "current", "unknown", "none", "disabled", "failed" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "LicenseRefreshNewer", "LicenseRefreshMoved", "LicenseRefreshCurrent", "LicenseRefreshUnknown", "LicenseRefreshNone", "LicenseRefreshDisabled", "LicenseRefreshFailed" ]
+      },
       "base.LicenseStatus" : {
         "enum" : [ "none", "valid", "trial", "grace", "expired", "invalid", "other-installation", "moved" ],
         "type" : "string",
@@ -70233,6 +70298,45 @@
         "required" : [ "limit", "max", "used" ],
         "type" : "object"
       },
+      "licensedto.LicensePortalResp" : {
+        "properties" : {
+          "accountUrl" : {
+            "type" : "string"
+          },
+          "pricingUrl" : {
+            "type" : "string"
+          },
+          "trialUrl" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "accountUrl", "pricingUrl", "trialUrl", "url" ],
+        "type" : "object"
+      },
+      "licensedto.LicenseRefreshResp" : {
+        "properties" : {
+          "enabled" : {
+            "description" : "Enabled is the daily check on. When it is off, a person can still ask now.",
+            "type" : "boolean"
+          },
+          "lastCheckedAt" : {
+            "description" : "LastCheckedAt is when the portal was last asked, whatever came of it.",
+            "type" : "string"
+          },
+          "lastError" : {
+            "description" : "LastError says why the last check failed.",
+            "type" : "string"
+          },
+          "lastResult" : {
+            "$ref" : "#/components/schemas/base.LicenseRefreshResult"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
       "licensedto.LicenseResp" : {
         "properties" : {
           "customerName" : {
@@ -70284,9 +70388,25 @@
           "plan" : {
             "$ref" : "#/components/schemas/base.LicensePlan"
           },
+          "portal" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicensePortalResp"
+            } ],
+            "description" : "Portal is where a key is bought, a trial started, and the keys bought kept.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "reason" : {
             "description" : "Reason says why the key is invalid.",
             "type" : "string"
+          },
+          "refresh" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseRefreshResp"
+            } ],
+            "description" : "Refresh is the daily check with the portal for a newer key.",
+            "nullable" : true,
+            "type" : "object"
           },
           "status" : {
             "$ref" : "#/components/schemas/base.LicenseStatus"
@@ -70295,7 +70415,40 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "development", "installationId", "limits", "plan", "status", "trial" ],
+        "required" : [ "development", "installationId", "limits", "plan", "portal", "refresh", "status", "trial" ],
+        "type" : "object"
+      },
+      "licensedto.RefreshLicenseDataResp" : {
+        "properties" : {
+          "license" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.LicenseResp"
+            } ],
+            "nullable" : true
+          },
+          "result" : {
+            "$ref" : "#/components/schemas/base.LicenseRefreshResult"
+          }
+        },
+        "required" : [ "license", "result" ],
+        "type" : "object"
+      },
+      "licensedto.RefreshLicenseResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/licensedto.RefreshLicenseDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "licensedto.UpdateLicenseReq" : {

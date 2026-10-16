@@ -32,6 +32,11 @@ func (s *service) Current(ctx context.Context) (*license.State, error) {
 	if err != nil {
 		return nil, err
 	}
+	return s.evaluate(ctx, settings)
+}
+
+// evaluate is the license settings put in force here, now.
+func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings) (*license.State, error) {
 	now, err := s.now(ctx)
 	if err != nil {
 		return nil, err
@@ -62,14 +67,7 @@ func (s *service) loadSettings(ctx context.Context, db database.IDB) (*entity.Li
 	if err != nil {
 		return nil, err
 	}
-	if setting == nil {
-		return &entity.LicenseSettings{}, nil
-	}
-	settings, err := setting.AsLicenseSettings()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return settings, nil
+	return settingsOf(setting)
 }
 
 // loadSetting is the license setting, nil when there is none.

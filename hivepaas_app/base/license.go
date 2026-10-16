@@ -99,3 +99,33 @@ var (
 	AllLicenseLimits = []LicenseLimit{LicenseLimitNodes, LicenseLimitUsers, LicenseLimitApps,
 		LicenseLimitFunctions, LicenseLimitPreviews, LicenseLimitSignInProviders}
 )
+
+// LicenseRefreshResult is how a check with the portal for a newer key went.
+type LicenseRefreshResult string
+
+const (
+	// LicenseRefreshNewer is a newer key for this installation, installed: a
+	// renewal, a plan change, or a paid key replacing a trial.
+	LicenseRefreshNewer LicenseRefreshResult = "newer"
+	// LicenseRefreshMoved is the key moved to another installation since.
+	LicenseRefreshMoved LicenseRefreshResult = "moved"
+	// LicenseRefreshCurrent is no newer key: the one stored is the one in force.
+	LicenseRefreshCurrent LicenseRefreshResult = "current"
+	// LicenseRefreshUnknown is a key the portal did not issue, such as one signed
+	// by hand or by the development keys.
+	LicenseRefreshUnknown LicenseRefreshResult = "unknown"
+	// LicenseRefreshNone is no key stored, so nothing to ask with: a first key is
+	// pasted.
+	LicenseRefreshNone LicenseRefreshResult = "none"
+	// LicenseRefreshDisabled is the daily check switched off in the config.
+	LicenseRefreshDisabled LicenseRefreshResult = "disabled"
+	// LicenseRefreshFailed is a portal that could not be reached or refused to
+	// answer, or a newer key that could not be installed.
+	LicenseRefreshFailed LicenseRefreshResult = "failed"
+)
+
+var (
+	AllLicenseRefreshResults = []LicenseRefreshResult{LicenseRefreshNewer, LicenseRefreshMoved,
+		LicenseRefreshCurrent, LicenseRefreshUnknown, LicenseRefreshNone, LicenseRefreshDisabled,
+		LicenseRefreshFailed}
+)

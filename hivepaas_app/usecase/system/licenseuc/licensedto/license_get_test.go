@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
@@ -87,8 +89,10 @@ func TestTransformLicenseOfAKeyInForce(t *testing.T) {
 			{"limit": "functions", "max": null, "used": 2},
 			{"limit": "previews", "max": null, "used": 1},
 			{"limit": "sign-in-providers", "max": null, "used": 1}
-		]
-	}`, string(body))
+		],
+		"portal": null,
+		"refresh": null
+	}`, string(body), "the portal and the refresh are the usecase's to fill")
 	assert.NotContains(t, string(body), customerEmail)
 	assert.NotContains(t, string(body), "acc_1")
 }
@@ -120,8 +124,8 @@ func TestTransformLicenseWithNoKey(t *testing.T) {
 	assert.NoError(t, err)
 	var fields map[string]any
 	assert.NoError(t, json.Unmarshal(body, &fields))
-	assert.ElementsMatch(t, []string{"status", "plan", "trial", "development", "installationId", "limits"},
-		slices.Collect(maps.Keys(fields)), "no key, no key fields, and no zero times")
+	assert.ElementsMatch(t, []string{"status", "plan", "trial", "development", "installationId", "limits",
+		"portal", "refresh"}, slices.Collect(maps.Keys(fields)), "no key, no key fields, and no zero times")
 }
 
 // A key that is not in force - here for another installation - is still
@@ -172,4 +176,31 @@ func TestTransformLicenseOfAnInvalidKey(t *testing.T) {
 	assert.Empty(t, resp.LicenseID)
 	assert.Empty(t, resp.KeyPlan)
 	assert.Nil(t, resp.ExpiresAt)
+}
+
+// The portal's pages for buying a key and starting a trial carry the
+// installation's ID; without one they are the pages for any installation.
+func TestTransformLicensePortal(t *testing.T) {
+	cfg := &config.Config{License: config.License{PortalURL: "https://portal.example"}}
+
+	assert.Equal(t, &LicensePortalResp{
+		URL:        "https://portal.example",
+		PricingURL: "https://portal.example/pricing?installationId=" + thisCluster,
+		TrialURL:   "https://portal.example/trial?installationId=" + thisCluster,
+		AccountURL: "https://portal.example/account/licenses",
+	}, TransformLicensePortal(cfg, thisCluster))
+	assert.Equal(t, "https://portal.example/pricing", TransformLicensePortal(cfg, "").PricingURL)
+}
+
+// A refresh never made sends no time and no result, rather than the year one.
+func TestTransformLicenseRefresh(t *testing.T) {
+	body, err := json.Marshal(TransformLicenseRefresh(&licenseservice.RefreshInfo{Enabled: true}))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"enabled":true}`, string(body))
+
+	body, err = json.Marshal(TransformLicenseRefresh(&licenseservice.RefreshInfo{Refresh: entity.LicenseRefresh{
+		LastCheckedAt: issuedAt, LastResult: base.LicenseRefreshCurrent,
+	}}))
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"enabled":false,"lastCheckedAt":"2026-11-01T00:00:00Z","lastResult":"current"}`, string(body))
 }

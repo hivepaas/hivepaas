@@ -144,5 +144,10 @@ func (s *service) InitDefaultsWithTx(
 		}
 	}
 
+	// License refresh: on every start, as the license setting may predate its job
+	if err = s.initDefaultLicense(ctx, db, timeNow); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	return nil
 }

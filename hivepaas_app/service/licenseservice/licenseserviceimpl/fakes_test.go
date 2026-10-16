@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -248,6 +249,9 @@ type harness struct {
 	devEnv     bool
 	trustCalls int
 	trustErr   error
+	// config is the config in force: production, with a portal no test reaches
+	// unless it starts one (newPortal).
+	config *config.Config
 }
 
 func newHarness(t *testing.T) *harness {
@@ -260,6 +264,8 @@ func newHarness(t *testing.T) *harness {
 		prod:     newSigner(t, "lic-test"),
 		dev:      newSigner(t, "dev-test"),
 		now:      testNow,
+		config: &config.Config{Env: config.EnvProd,
+			License: config.License{PortalURL: "https://portal.invalid"}},
 	}
 	h.service = &service{
 		settingRepo:      h.settings,
@@ -275,6 +281,8 @@ func newHarness(t *testing.T) *harness {
 			}
 			return &license.Trust{Prod: h.prod.keys, Dev: h.dev.keys, AllowDev: allowDev}, nil
 		},
+		cfg:        func() *config.Config { return h.config },
+		httpClient: newPortalClient(),
 	}
 	return h
 }

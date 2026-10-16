@@ -1,5 +1,6 @@
 // Package licenseuc serves System > License: the license in force with how much
-// of each limit is used, and installing a license key.
+// of each limit is used, installing a license key, and asking the portal for a
+// newer one.
 //
 // It records its own audit entry rather than going through usecase/settings.
 // Only licenseservice writes the license setting, and the settings DTOs would put
@@ -7,6 +8,7 @@
 package licenseuc
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
@@ -18,6 +20,8 @@ type UC struct {
 	db             database.IDB
 	licenseService licenseservice.Service
 	auditService   auditservice.Service
+	// cfg is the config in force, which names the license portal.
+	cfg func() *config.Config
 }
 
 func New(
@@ -29,5 +33,6 @@ func New(
 		db:             db,
 		licenseService: licenseService,
 		auditService:   auditService,
+		cfg:            config.Current,
 	}
 }

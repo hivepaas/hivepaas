@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
@@ -66,6 +67,32 @@ type LicenseResp struct {
 	Reason string `json:"reason,omitempty"`
 	// Limits has every kind a plan can limit, in the same order every time.
 	Limits []*LicenseLimitResp `json:"limits"`
+	// Portal is where a key is bought, a trial started, and the keys bought kept.
+	Portal *LicensePortalResp `json:"portal"`
+	// Refresh is the daily check with the portal for a newer key.
+	Refresh *LicenseRefreshResp `json:"refresh"`
+}
+
+// LicensePortalResp is the license portal's pages. Those for buying a key and
+// starting a trial carry this installation's ID, when it is known.
+type LicensePortalResp struct {
+	URL        string `json:"url"`
+	PricingURL string `json:"pricingUrl"`
+	TrialURL   string `json:"trialUrl"`
+	AccountURL string `json:"accountUrl"`
+}
+
+// LicenseRefreshResp is the daily check with the portal for a newer key, and how
+// the last check went. Only a check that asked the portal, or failed trying, is
+// recorded.
+type LicenseRefreshResp struct {
+	// Enabled is the daily check on. When it is off, a person can still ask now.
+	Enabled bool `json:"enabled"`
+	// LastCheckedAt is when the portal was last asked, whatever came of it.
+	LastCheckedAt *time.Time                `json:"lastCheckedAt,omitempty"`
+	LastResult    base.LicenseRefreshResult `json:"lastResult,omitempty"`
+	// LastError says why the last check failed.
+	LastError string `json:"lastError,omitempty"`
 }
 
 // LicenseLimitResp is one kind a plan limits: the most the plan in force allows,
@@ -115,6 +142,26 @@ func TransformLicense(state *license.State, usage *licenseservice.Usage) *Licens
 		resp.Limits = append(resp.Limits, item)
 	}
 	return resp
+}
+
+// TransformLicensePortal is the portal's pages, as the config names the portal.
+func TransformLicensePortal(cfg *config.Config, installationID string) *LicensePortalResp {
+	return &LicensePortalResp{
+		URL:        cfg.License.PortalURL,
+		PricingURL: cfg.LicensePortalPricingURL(installationID),
+		TrialURL:   cfg.LicensePortalTrialURL(installationID),
+		AccountURL: cfg.LicensePortalAccountURL(),
+	}
+}
+
+// TransformLicenseRefresh is the daily check, and the last check's outcome.
+func TransformLicenseRefresh(info *licenseservice.RefreshInfo) *LicenseRefreshResp {
+	return &LicenseRefreshResp{
+		Enabled:       info.Enabled,
+		LastCheckedAt: optionalTime(info.Refresh.LastCheckedAt),
+		LastResult:    info.Refresh.LastResult,
+		LastError:     info.Refresh.LastError,
+	}
 }
 
 // optionalTime is nil for the zero time, which the response leaves out rather

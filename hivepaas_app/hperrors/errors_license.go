@@ -20,4 +20,11 @@ var (
 	// ErrLicenseSigningKeyInvalid is a compiled-in license public key that does
 	// not parse: a build mistake, not something a person can fix.
 	ErrLicenseSigningKeyInvalid = NewErr(ErrInternal, "ERR_LICENSE_SIGNING_KEY_INVALID")
+	// ErrLicensePortalUnavailable is a license portal that could not be reached,
+	// or that is down or busy: asking again later may work.
+	ErrLicensePortalUnavailable = NewErr(ErrServiceUnavailable, "ERR_LICENSE_PORTAL_UNAVAILABLE")
+	// ErrLicensePortalRefused is a portal that answered a refresh with a refusal,
+	// such as for a key that does not name this installation. Its detail is the
+	// portal's code; asking again will not change the answer.
+	ErrLicensePortalRefused = NewErr(ErrPreconditionFailed, "ERR_LICENSE_PORTAL_REFUSED")
 )

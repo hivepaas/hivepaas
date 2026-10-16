@@ -13,6 +13,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -50,6 +51,31 @@ type fakeLicenseService struct {
 	installedKeys []string
 	idErr         error
 	idAsked       int
+
+	refreshInfo *licenseservice.RefreshInfo
+	fetchReqs   []*licenseservice.FetchRefreshReq
+	fetched     *licenseservice.FetchRefreshResp
+	applied     []*licenseservice.FetchRefreshResp
+	apply       *licenseservice.ApplyRefreshResp
+}
+
+func (f *fakeLicenseService) RefreshInfo(context.Context) (*licenseservice.RefreshInfo, error) {
+	if f.refreshInfo == nil {
+		return &licenseservice.RefreshInfo{Enabled: true}, nil
+	}
+	return f.refreshInfo, nil
+}
+
+func (f *fakeLicenseService) FetchRefresh(_ context.Context, req *licenseservice.FetchRefreshReq) (
+	*licenseservice.FetchRefreshResp, error) {
+	f.fetchReqs = append(f.fetchReqs, req)
+	return f.fetched, nil
+}
+
+func (f *fakeLicenseService) ApplyRefresh(_ context.Context, _ database.Tx, fetched *licenseservice.FetchRefreshResp) (
+	*licenseservice.ApplyRefreshResp, error) {
+	f.applied = append(f.applied, fetched)
+	return f.apply, nil
 }
 
 func (f *fakeLicenseService) Current(context.Context) (*license.State, error) {
@@ -90,7 +116,9 @@ func (s *spyAuditService) Record(_ context.Context, _ database.IDB, entry *audit
 func newTestUC() (*UC, *fakeLicenseService, *spyAuditService) {
 	licenseService := &fakeLicenseService{}
 	audit := &spyAuditService{}
-	return &UC{db: txDB{}, licenseService: licenseService, auditService: audit}, licenseService, audit
+	cfg := &config.Config{License: config.License{PortalURL: "https://portal.example"}}
+	return &UC{db: txDB{}, licenseService: licenseService, auditService: audit,
+		cfg: func() *config.Config { return cfg }}, licenseService, audit
 }
 
 func adminAuth() *basedto.Auth {

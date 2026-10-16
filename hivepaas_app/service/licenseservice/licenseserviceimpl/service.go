@@ -2,6 +2,7 @@ package licenseserviceimpl
 
 import (
 	"context"
+	"net/http"
 	"sync"
 	"time"
 
@@ -27,6 +28,11 @@ type service struct {
 	timeNow  func() time.Time
 	trust    func(allowDev bool) (*license.Trust, error)
 	allowDev func() bool
+
+	// cfg is the config in force, read at each refresh so a reload applies, and
+	// httpClient what asks the portal. Tests replace both.
+	cfg        func() *config.Config
+	httpClient *http.Client
 
 	// mu guards the verification of the stored key, kept between calls.
 	mu       sync.Mutex
@@ -58,7 +64,9 @@ func New(
 		trust:            licensekeys.Trusted,
 		// Only the development environment, which also opens the dev-helper
 		// endpoints, accepts a key signed by the committed development keys.
-		allowDev: func() bool { return config.Current().IsDevEnv() },
+		allowDev:   func() bool { return config.Current().IsDevEnv() },
+		cfg:        config.Current,
+		httpClient: newPortalClient(),
 	}
 }
 

@@ -8,6 +8,8 @@ ERR_LICENSE_INVALID = "This license key could not be verified"
 ERR_LICENSE_OTHER_INSTALLATION = "This license key is for another installation. This installation's ID is {{.InstallationID}}."
 ERR_LICENSE_EXPIRED = "This license key has expired"
 ERR_LICENSE_SIGNING_KEY_INVALID = "License signing key is misconfigured"
+ERR_LICENSE_PORTAL_UNAVAILABLE = "The license portal could not be reached"
+ERR_LICENSE_PORTAL_REFUSED = "The license portal refused to check this license key"
 
 # What ERR_PLAN_LIMIT_REACHED calls each limit, as its LimitName
 # (license.LimitNameMsgID). They are not errors: they carry the ERR_ prefix

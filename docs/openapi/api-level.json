@@ -263,6 +263,7 @@
     "POST /system/hivepaas/service-settings/confirm": "d7cad80f63f2c555bda79e700f490bbe392271650035101a08facb827723fd41",
     "POST /system/hivepaas/service-settings/revert": "d7cad80f63f2c555bda79e700f490bbe392271650035101a08facb827723fd41",
     "POST /system/hivepaas/update-version": "6496a7eeed5114786c6f3e54be436d1f2d44afe90fb65e8c720a510c8a473b73",
+    "POST /system/license/refresh": "f1edec0fd39c2823e622804251c4338f498bb23248fd3e221cb0644779823175",
     "POST /system/settings/backup-repo-cleanup/exec": "f451b48b57f7560de556332f6e984746b64cbae533d9a025975a19bae5eee9d6",
     "POST /system/settings/backup/exec": "aaafd60fcd0b393f85d75af7add47282b8ef14246f0be195105eb5c4e2e74a80",
     "POST /system/settings/cleanup/exec": "aaafd60fcd0b393f85d75af7add47282b8ef14246f0be195105eb5c4e2e74a80",

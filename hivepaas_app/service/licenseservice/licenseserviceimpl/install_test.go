@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
@@ -154,4 +155,25 @@ func TestInstallDoesNotEchoWhatWasPasted(t *testing.T) {
 	assert.ErrorIs(t, err, hperrors.ErrLicenseInvalid)
 	info, _ := hperrors.ParseError(err, translation.LangEn)
 	assert.False(t, strings.Contains(info.Detail, "acme"), info.Detail)
+}
+
+// Installing a key replaces the key and clears a move, and keeps the refresh's
+// schedule and record, which are the installation's rather than the key's.
+func TestInstallKeepsTheRefresh(t *testing.T) {
+	h := newHarness(t)
+	refresh := entity.LicenseRefresh{
+		Schedule: entity.SchedJobSchedule{Interval: timeutil.Duration(timeutil.Day),
+			InitialTime: testNow.Add(-10 * day).Truncate(day)},
+		LastCheckedAt: testNow.Add(-time.Hour),
+		LastResult:    base.LicenseRefreshMoved,
+	}
+	h.storeKey(t, payload())
+	h.settings.setting.MustSetData(&entity.LicenseSettings{Key: h.settings.setting.MustAsLicenseSettings().Key,
+		MovedAt: testNow.Add(-day), Refresh: refresh})
+	key := h.prod.keyText(t, payload(func(p *license.Payload) { p.LicenseID = "lic_02" }))
+
+	_, err := h.Install(context.Background(), tx, &licenseservice.InstallReq{Key: key})
+
+	assert.NoError(t, err)
+	assert.Equal(t, &entity.LicenseSettings{Key: key, Refresh: refresh}, h.settings.setting.MustAsLicenseSettings())
 }

@@ -123,6 +123,7 @@ type Config struct {
 	Files      Files      `toml:"files"`
 	Security   Security   `toml:"security"`
 	Agent      Agent      `toml:"agent"`
+	License    License    `toml:"license"`
 
 	AppTemplates AppTemplates `toml:"app_templates"`
 
@@ -227,6 +228,9 @@ func loadConfig(configFile string) (*Config, error) {
 		return config, tracerr.Wrap(err)
 	}
 	if err := config.Storage.Validate(); err != nil {
+		return config, tracerr.Wrap(err)
+	}
+	if err := config.License.Validate(); err != nil {
 		return config, tracerr.Wrap(err)
 	}
 	// A name that is no zone stops the start rather than reading as UTC: the

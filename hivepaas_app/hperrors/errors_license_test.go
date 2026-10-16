@@ -18,6 +18,8 @@ func TestLicenseErrorStatuses(t *testing.T) {
 		ErrLicenseOtherInstallation: http.StatusPreconditionFailed,
 		ErrLicenseExpired:           http.StatusPreconditionFailed,
 		ErrLicenseSigningKeyInvalid: http.StatusInternalServerError,
+		ErrLicensePortalUnavailable: http.StatusServiceUnavailable,
+		ErrLicensePortalRefused:     http.StatusPreconditionFailed,
 	} {
 		assert.Equal(t, status, Wrap(err).StatusCode(), err)
 	}

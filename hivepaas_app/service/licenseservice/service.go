@@ -7,6 +7,8 @@ package licenseservice
 
 import (
 	"context"
+	"crypto/sha256"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -46,6 +48,25 @@ type Service interface {
 
 	// InstallationID is the ID a key names this installation by: its swarm's.
 	InstallationID(ctx context.Context) (string, error)
+
+	// FetchRefresh asks the portal whether there is a newer key than the one
+	// stored. It sends the stored key and this installation's ID, and nothing
+	// else, and writes nothing. Asking that fails is an answer, failed, with what
+	// went wrong as its Err; only a stored license that cannot be read is an
+	// error. With no key stored it asks nothing; nor does the daily check while it
+	// is switched off in the config.
+	FetchRefresh(ctx context.Context, req *FetchRefreshReq) (*FetchRefreshResp, error)
+
+	// ApplyRefresh stores what the portal answered, with the license setting
+	// locked: a newer key, installed as Install installs one, or when the key was
+	// moved; and how the check went, in the setting's Refresh. A newer key that
+	// Install would refuse is not installed, and the check failed. An answer for a
+	// key no longer stored - one installed while the portal was asked - is
+	// dropped.
+	ApplyRefresh(ctx context.Context, db database.Tx, fetched *FetchRefreshResp) (*ApplyRefreshResp, error)
+
+	// RefreshInfo is whether the daily check is on, and how the last check went.
+	RefreshInfo(ctx context.Context) (*RefreshInfo, error)
 }
 
 // CheckReq is how many of each kind a creation adds.
@@ -87,4 +108,52 @@ func CloneLimit(srcIsFunction, cloneDeploymentSettings bool) base.LicenseLimit {
 		return base.LicenseLimitFunctions
 	}
 	return base.LicenseLimitApps
+}
+
+type FetchRefreshReq struct {
+	// Manual is a person asking now. The daily check is not manual, and asks
+	// nothing while it is switched off in the config.
+	Manual bool
+}
+
+// FetchRefreshResp is what the portal answered about the stored key.
+type FetchRefreshResp struct {
+	Result base.LicenseRefreshResult
+	// SentKeySum is the sha256 of the key asked about, so the answer is applied
+	// only to that key.
+	SentKeySum [sha256.Size]byte
+	// NewKey is the key to install, for newer. It is not verified yet.
+	NewKey string
+	// MovedAt is when the key was moved to another installation, for moved; zero
+	// when the portal did not say.
+	MovedAt time.Time
+	// CheckedAt is when the portal was asked.
+	CheckedAt time.Time
+	// Err is why the check failed, for failed.
+	Err error
+}
+
+// ApplyRefreshResp is what applying a refresh changed.
+type ApplyRefreshResp struct {
+	// Result is the answer as applied: failed for a newer key that could not be
+	// installed, and current for an answer about a key no longer stored.
+	Result base.LicenseRefreshResult
+	// Changed is the license changed: a key installed, or a move learned of.
+	Changed bool
+	// Setting is the license setting as stored; nil when nothing was recorded.
+	Setting *entity.Setting
+	// Installed is the key installed, for newer.
+	Installed *InstallResp
+	// State is the license in force once it changed; nil when it did not.
+	State *license.State
+	// Err is why the refresh failed, for failed: the portal's, or why the newer
+	// key could not be installed.
+	Err error
+}
+
+// RefreshInfo is the daily check with the portal: whether it is on, and how the
+// last check went.
+type RefreshInfo struct {
+	Enabled bool
+	Refresh entity.LicenseRefresh
 }

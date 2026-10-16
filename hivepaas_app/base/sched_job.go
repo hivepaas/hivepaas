@@ -30,6 +30,11 @@ const (
 // nothing.
 var SchedJobTypeImageScan SchedJobType = "image-scan"
 
+// SchedJobTypeLicenseRefresh asks the license portal, once a day, for a newer
+// key than the one stored. HivePaaS makes its job, as it does the image scan's,
+// and it is a variable for the same reason.
+var SchedJobTypeLicenseRefresh SchedJobType = "license-refresh"
+
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,

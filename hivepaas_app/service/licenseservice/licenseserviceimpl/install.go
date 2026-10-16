@@ -2,6 +2,7 @@ package licenseserviceimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -15,10 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
 
-const (
-	licenseSettingName = "License"
-)
-
 // Install refuses only what could never be in force here: a key that does not
 // verify, one for another installation, and one past its grace. Any other key
 // replaces the one stored, a lower plan or a trial included: the person pasting
@@ -26,8 +23,36 @@ const (
 func (s *service) Install(ctx context.Context, db database.Tx,
 	req *licenseservice.InstallReq) (*licenseservice.InstallResp, error) {
 	keyText := license.NormalizeKeyText(req.Key)
-	// Its refusal is ErrLicenseInvalid, whose detail says what failed and never
-	// what the key holds.
+	state, err := s.installable(ctx, keyText)
+	if err != nil {
+		return nil, err
+	}
+
+	setting, err := s.loadSetting(ctx, db, bunex.SelectFor("UPDATE OF setting"))
+	if err != nil {
+		return nil, err
+	}
+	settings, err := settingsOf(setting)
+	if err != nil {
+		return nil, err
+	}
+	installKey(settings, keyText)
+	setting, created, err := s.saveSettings(ctx, db, setting, settings)
+	if err != nil {
+		return nil, err
+	}
+	// The next Current verifies what is stored now. The cache would see the key
+	// has changed anyway; dropping it also leaves nothing of the old key behind.
+	s.dropVerification()
+	return &licenseservice.InstallResp{Setting: setting, Created: created, State: state}, nil
+}
+
+// installable is the license a key would put in force here, or the refusal of a
+// key that would not be in force: one that does not verify, is for another
+// installation, or is past its grace. Its refusal of a key that does not verify
+// is ErrLicenseInvalid, whose detail says what failed and never what the key
+// holds.
+func (s *service) installable(ctx context.Context, keyText string) (*license.State, error) {
 	verified, err := s.verify(keyText, s.allowDev())
 	if err != nil {
 		return nil, err
@@ -49,15 +74,15 @@ func (s *service) Install(ctx context.Context, db database.Tx,
 	if err = refuseInstalling(state); err != nil {
 		return nil, err
 	}
+	return state, nil
+}
 
-	setting, created, err := s.saveKey(ctx, db, keyText)
-	if err != nil {
-		return nil, err
-	}
-	// The next Current verifies what is stored now. The cache would see the key
-	// has changed anyway; dropping it also leaves nothing of the old key behind.
-	s.dropVerification()
-	return &licenseservice.InstallResp{Setting: setting, Created: created, State: state}, nil
+// installKey makes keyText the stored key. A key installed was not moved,
+// whatever the one it replaces was; the refresh's schedule and record are the
+// installation's, and are kept.
+func installKey(settings *entity.LicenseSettings, keyText string) {
+	settings.Key = keyText
+	settings.MovedAt = time.Time{}
 }
 
 // refuseInstalling is the refusal of a key that would not be in force here.
@@ -77,14 +102,23 @@ func refuseInstalling(state *license.State) error {
 		state.Status)
 }
 
-// saveKey writes the key as the global license setting, the one there is, and
-// reports whether it was written for the first time. A key installed was not
-// moved, whatever the one it replaces was.
-func (s *service) saveKey(ctx context.Context, db database.Tx, keyText string) (*entity.Setting, bool, error) {
-	setting, err := s.loadSetting(ctx, db, bunex.SelectFor("UPDATE OF setting"))
-	if err != nil {
-		return nil, false, err
+// settingsOf is the license a setting holds; none when there is no setting.
+func settingsOf(setting *entity.Setting) (*entity.LicenseSettings, error) {
+	if setting == nil {
+		return &entity.LicenseSettings{}, nil
 	}
+	settings, err := setting.AsLicenseSettings()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return settings, nil
+}
+
+// saveSettings writes settings as the global license setting, the one there is,
+// over setting as it was read for update (nil when there was none), and reports
+// whether it was written for the first time.
+func (s *service) saveSettings(ctx context.Context, db database.Tx, setting *entity.Setting,
+	settings *entity.LicenseSettings) (*entity.Setting, bool, error) {
 	timeNow := s.timeNow().UTC()
 	created := setting == nil
 	if created {
@@ -98,14 +132,14 @@ func (s *service) saveKey(ctx context.Context, db database.Tx, keyText string) (
 		setting.UpdateVer++
 	}
 	setting.Status = base.SettingStatusActive
-	setting.Name = licenseSettingName
+	setting.Name = entity.LicenseSettingName
 	setting.Version = entity.CurrentLicenseSettingsVersion
 	setting.UpdatedAt = timeNow
-	if err = setting.SetData(&entity.LicenseSettings{Key: keyText}); err != nil {
+	if err := setting.SetData(settings); err != nil {
 		return nil, false, hperrors.Wrap(err)
 	}
 
-	err = s.settingRepo.Upsert(ctx, db, setting, entity.SettingUpsertingConflictCols,
+	err := s.settingRepo.Upsert(ctx, db, setting, entity.SettingUpsertingConflictCols,
 		entity.SettingUpsertingUpdateCols)
 	if err != nil {
 		return nil, false, hperrors.Wrap(err)

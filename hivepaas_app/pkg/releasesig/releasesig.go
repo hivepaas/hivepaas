@@ -1,4 +1,5 @@
-// Package releasesig verifies the signatures on release.json.
+// Package releasesig verifies the signatures on release.json, and on license
+// keys, which are the same envelope.
 //
 // What an installation fetches is release.signed.json: release.json itself,
 // base64, together with its signatures. One file rather than release.json plus a
@@ -22,9 +23,15 @@
 // if either algorithm does not. A later binary can drop ed25519 once ML-DSA has
 // earned it; releases keep carrying both for as long as older binaries need it.
 //
-// The format here and the one tools/releasesign writes are one format kept in two
-// places: the tool is a single stdlib-only file on purpose and cannot import this.
-// The tool's tests check that what it signs verifies here.
+// License keys are the same envelope (pkg/license), signed with key pairs of
+// their own and under a context of their own. A Purpose carries the context and
+// the errors to report with: an envelope opens only under the context it was
+// signed under, so one made for one purpose is never accepted for another.
+//
+// The format here, the one tools/releasesign writes and the one tools/licensesign
+// writes are one format kept in three places: the tools are single stdlib-only
+// files on purpose and cannot import this. Their tests check that what they sign
+// verifies here.
 package releasesig
 
 import (
@@ -96,26 +103,53 @@ type PublicKey struct {
 // PublicKeys is the set of trusted keys, by key id.
 type PublicKeys map[string]*PublicKey
 
+// Purpose is what an envelope is: the context both algorithms sign under, and
+// the errors a refused envelope and a bad compiled-in key set are reported with.
+// A release and a license key are told apart by their context alone, so each
+// purpose has its own.
+type Purpose struct {
+	Context      string
+	ErrSignature error
+	ErrKeys      error
+}
+
+// ReleasePurpose is release.json's.
+var ReleasePurpose = Purpose{
+	Context:      Context,
+	ErrSignature: hperrors.ErrReleaseSignatureInvalid,
+	ErrKeys:      hperrors.ErrReleaseSigningKeyInvalid,
+}
+
+// ParsePublicKeys is ReleasePurpose.ParsePublicKeys.
+func ParsePublicKeys(pemByKeyID map[string][]byte) (PublicKeys, error) {
+	return ReleasePurpose.ParsePublicKeys(pemByKeyID)
+}
+
+// Open is ReleasePurpose.Open.
+func Open(keys PublicKeys, envelope []byte) ([]byte, error) {
+	return ReleasePurpose.Open(keys, envelope)
+}
+
 // ParsePublicKeys decodes PKIX PEM public keys by key id, and checks that together
 // they can satisfy every required algorithm.
 //
 // A key that does not decode fails the whole set rather than being skipped: the
 // set is compiled in, so a bad entry is a build mistake, and dropping it quietly
 // would turn a key rotation into an outage nobody can explain.
-func ParsePublicKeys(pemByKeyID map[string][]byte) (PublicKeys, error) {
+func (p Purpose) ParsePublicKeys(pemByKeyID map[string][]byte) (PublicKeys, error) {
 	keys := make(PublicKeys, len(pemByKeyID))
 	covered := map[string]bool{}
 	for keyID, content := range pemByKeyID {
 		key, err := parsePublicKey(content)
 		if err != nil {
-			return nil, hperrors.Wrap(hperrors.ErrReleaseSigningKeyInvalid).WithExtraDetail("key %q: %v", keyID, err)
+			return nil, hperrors.Wrap(p.ErrKeys).WithExtraDetail("key %q: %v", keyID, err)
 		}
 		keys[keyID] = key
 		covered[key.Algorithm] = true
 	}
 	for _, alg := range RequiredAlgorithms() {
 		if !covered[alg] {
-			return nil, hperrors.Wrap(hperrors.ErrReleaseSigningKeyInvalid).WithExtraDetail("no %s key", alg)
+			return nil, hperrors.Wrap(p.ErrKeys).WithExtraDetail("no %s key", alg)
 		}
 	}
 	return keys, nil
@@ -143,30 +177,31 @@ func parsePublicKey(content []byte) (*PublicKey, error) {
 	}
 }
 
-// verify reports whether sig is a valid signature over data by k.
-func (k *PublicKey) verify(data, sig []byte) bool {
+// verify reports whether sig is a valid signature over data by k, under context.
+func (k *PublicKey) verify(data, sig []byte, context string) bool {
 	switch k.Algorithm {
 	case AlgEd25519:
-		return ed25519.VerifyWithOptions(k.ed25519, data, sig, &ed25519.Options{Context: Context}) == nil
+		return ed25519.VerifyWithOptions(k.ed25519, data, sig, &ed25519.Options{Context: context}) == nil
 	case AlgMLDSA65:
-		return mldsa.Verify(k.mldsa, data, sig, &mldsa.Options{Context: Context}) == nil
+		return mldsa.Verify(k.mldsa, data, sig, &mldsa.Options{Context: context}) == nil
 	default:
 		return false
 	}
 }
 
-// Open returns the release.json carried by envelope, if the envelope carries,
-// for every required algorithm, a valid signature over it by a trusted key of
-// that algorithm. Nothing in the payload should be read before Open returns it.
+// Open returns the payload carried by envelope, if the envelope carries, for
+// every required algorithm, a valid signature over it under p's context by a
+// trusted key of that algorithm. Nothing in the payload should be read before
+// Open returns it.
 //
 // A signature by a key this binary does not know is passed over: it is how a
 // release signs with a key that only newer binaries trust, during a rotation or
 // once another algorithm is added. A signature by a known key that does not
 // verify, or claims a different algorithm than the key has, refuses the whole
 // envelope - nothing legitimate produces one.
-func Open(keys PublicKeys, envelope []byte) ([]byte, error) {
+func (p Purpose) Open(keys PublicKeys, envelope []byte) ([]byte, error) {
 	invalid := func(format string, args ...any) error {
-		return hperrors.Wrap(hperrors.ErrReleaseSignatureInvalid).WithExtraDetail(format, args...)
+		return hperrors.Wrap(p.ErrSignature).WithExtraDetail(format, args...)
 	}
 
 	var env Envelope
@@ -195,7 +230,7 @@ func Open(keys PublicKeys, envelope []byte) ([]byte, error) {
 			return nil, invalid("key %q is %s, signature claims %q", entry.KeyID, key.Algorithm, entry.Algorithm)
 		}
 		sig, err := base64.StdEncoding.DecodeString(entry.Sig)
-		if err != nil || !key.verify(data, sig) {
+		if err != nil || !key.verify(data, sig, p.Context) {
 			return nil, invalid("signature by key %q does not verify", entry.KeyID)
 		}
 		satisfied[key.Algorithm] = true

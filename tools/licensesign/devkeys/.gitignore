@@ -1,0 +1,4 @@
+# The development license keys are committed on purpose (see README.md). The
+# repository's *.key rule still keeps any other private key here out.
+!dev-ed.key
+!dev-ml.key

@@ -192,3 +192,46 @@ func TestParsePublicKeys(t *testing.T) {
 		})
 	}
 }
+
+// licensePurpose stands in for pkg/license's purpose, which imports this package
+// and so cannot be imported by its tests.
+var licensePurpose = Purpose{
+	Context:      "hivepaas-license-v1",
+	ErrSignature: hperrors.ErrLicenseInvalid,
+	ErrKeys:      hperrors.ErrLicenseSigningKeyInvalid,
+}
+
+// An envelope opens only under the purpose it was signed for, even by keys both
+// purposes trust: a release.json is never a license key, nor the reverse. Each
+// purpose reports with its own errors.
+func TestPurposesAreApart(t *testing.T) {
+	ed := newEd25519(t, "2026-ed")
+	ml := newMLDSA65(t, "2026-ml")
+	keys := trust(t, ed, ml)
+	data := []byte(`{"version":1}`)
+	signedUnder := func(context string) []byte {
+		entryUnder := func(key *testKey) Entry {
+			return Entry{KeyID: key.id, Algorithm: key.alg, Sig: base64.StdEncoding.EncodeToString(key.sign(data, context))}
+		}
+		return envelope(t, data, entryUnder(ed), entryUnder(ml))
+	}
+	release := signedUnder(Context)
+	license := signedUnder(licensePurpose.Context)
+
+	opened, err := licensePurpose.Open(keys, license)
+	assert.NoError(t, err)
+	assert.Equal(t, data, opened)
+	opened, err = ReleasePurpose.Open(keys, release)
+	assert.NoError(t, err)
+	assert.Equal(t, data, opened)
+
+	_, err = Open(keys, license)
+	assert.ErrorIs(t, err, hperrors.ErrReleaseSignatureInvalid, "a license key is not a release.json")
+	_, err = licensePurpose.Open(keys, release)
+	assert.ErrorIs(t, err, hperrors.ErrLicenseInvalid, "a release.json is not a license key")
+	assert.NotErrorIs(t, err, hperrors.ErrReleaseSignatureInvalid)
+
+	_, err = licensePurpose.ParsePublicKeys(map[string][]byte{ed.id: pemOf(t, ed.pub)})
+	assert.ErrorIs(t, err, hperrors.ErrLicenseSigningKeyInvalid)
+	assert.NotErrorIs(t, err, hperrors.ErrReleaseSigningKeyInvalid)
+}

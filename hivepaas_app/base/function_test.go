@@ -49,3 +49,18 @@ func TestBunTakesWhatNodeTakesAndStartsInTypeScript(t *testing.T) {
 	assert.Equal(t, base.FunctionHandlerPatterns[base.FunctionRuntimeNode24],
 		base.FunctionHandlerPatterns[base.FunctionRuntimeBun1])
 }
+
+// PHP starts in index.php's function handler, and calls a function by its
+// name, with its namespace, or a class's static method.
+func TestPHPCallsAFunctionOrAStaticMethod(t *testing.T) {
+	file, handler := base.FunctionRuntimePhp85.DefaultEntrypoint()
+	assert.Equal(t, [2]string{"index.php", "handler"}, [2]string{file, handler})
+	assert.False(t, base.FunctionRuntimePhp85.Compiled())
+	pattern := base.FunctionHandlerPatterns[base.FunctionRuntimePhp85]
+	for _, name := range []string{"handler", `App\handle`, `\App\Http\handle`, "Handler::handle", `App\Fn::run`} {
+		assert.True(t, pattern.MatchString(name), name)
+	}
+	for _, name := range []string{"", "1handler", `App\`, "Handler::", "a b", `App\\handle`, "x;y", "Handler::a::b"} {
+		assert.False(t, pattern.MatchString(name), name)
+	}
+}

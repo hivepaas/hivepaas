@@ -28,10 +28,13 @@ const (
 var writeMethods = []string{"post", "put", "patch", "delete"}
 
 // docKeys are the parts of a schema that say nothing about what a request
-// carries: a change to them is not a change to the request.
+// carries: a change to them is not a change to the request. An enum's values
+// are among them: a CLI writes back the value it read, one it does not know as
+// well as the others, and loses nothing to a value added - a new runtime, a new
+// status.
 var docKeys = map[string]bool{
 	"description": true, "summary": true, "title": true, "example": true, "examples": true,
-	"deprecated": true, "x-enum-varnames": true, "x-enum-descriptions": true, "x-enum-comments": true,
+	"deprecated": true, "enum": true, "x-enum-varnames": true, "x-enum-descriptions": true, "x-enum-comments": true,
 }
 
 // apiLevel is docs/openapi/api-level.json: the level, and the fingerprint of the
@@ -211,8 +214,7 @@ func paramKey(param any) string {
 
 // canonical is a schema as plain values with its references resolved - a
 // reference already being resolved on the way stays one, so a recursive schema
-// ends - without what only documents it, with required names and enum values in
-// a fixed order.
+// ends - without what only documents it, with required names in a fixed order.
 func canonical(doc *object, node any, resolving []string) any {
 	switch n := node.(type) {
 	case *object:
@@ -232,7 +234,7 @@ func canonical(doc *object, node any, resolving []string) any {
 				continue
 			}
 			value := canonical(doc, n.values[key], resolving)
-			if key == "required" || key == "enum" {
+			if key == "required" {
 				value = sortedValues(value)
 			}
 			out[key] = value

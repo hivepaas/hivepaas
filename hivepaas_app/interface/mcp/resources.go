@@ -236,7 +236,7 @@ func deployFunctionPrompt(s *mcpsdk.Server, a access) {
 			{Name: argProject, Description: descPromptProject, Required: true},
 			{Name: argEnv, Description: descPromptEnv, Required: true},
 			{Name: "what", Description: "what the function does, such as resizing an uploaded image", Required: true},
-			{Name: "runtime", Description: "node24, bun1, python313 or go127; left out, propose one"},
+			{Name: "runtime", Description: "node24, bun1, python313, php85 or go127; left out, propose one"},
 			{Name: paramDomain, Description: "a domain to serve it at; left out, it is reached inside the project"},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {

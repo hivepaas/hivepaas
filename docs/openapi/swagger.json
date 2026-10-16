@@ -62997,9 +62997,9 @@
         "x-enum-varnames" : [ "FunctionContractV1" ]
       },
       "base.FunctionRuntime" : {
-        "enum" : [ "node24", "bun1", "python313", "go127" ],
+        "enum" : [ "node24", "bun1", "python313", "php85", "go127" ],
         "type" : "string",
-        "x-enum-varnames" : [ "FunctionRuntimeNode24", "FunctionRuntimeBun1", "FunctionRuntimePython313", "FunctionRuntimeGo127" ]
+        "x-enum-varnames" : [ "FunctionRuntimeNode24", "FunctionRuntimeBun1", "FunctionRuntimePython313", "FunctionRuntimePhp85", "FunctionRuntimeGo127" ]
       },
       "base.HTTPMethod" : {
         "enum" : [ "GET", "POST", "PUT", "PATCH", "DELETE" ],
@@ -66112,7 +66112,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/base.FunctionRuntime"
             } ],
-            "description" : "Runtime is the language and its line: node24, bun1, python313, go127.",
+            "description" : "Runtime is the language and its line: node24, bun1, python313, php85, go127.",
             "type" : "object"
           },
           "systemPackages" : {
@@ -67847,7 +67847,7 @@
             "additionalProperties" : {
               "type" : "string"
             },
-            "description" : "FunctionRuntimes are the images functions are built on, by runtime\n(node24, go127; go127-build for the image Go functions compile in). A\nfunction built under a release uses the image this release names, and\nkeeps it until it is deployed again. The images are released from the\nrepository hivepaas/function-runtimes.",
+            "description" : "FunctionRuntimes are the images functions are built on, by runtime\n(node24, php85, go127; go127-build for the image Go functions compile in). A\nfunction built under a release uses the image this release names, and\nkeeps it until it is deployed again. The images are released from the\nrepository hivepaas/function-runtimes.",
             "type" : "object"
           },
           "notesUrl" : {

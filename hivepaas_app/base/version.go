@@ -118,7 +118,7 @@ type ReleaseInfo struct {
 	// none, and the image set later runs its own.
 	PlaceholderImage string `json:"placeholderImage"`
 	// FunctionRuntimes are the images functions are built on, by runtime
-	// (node24, go127; go127-build for the image Go functions compile in). A
+	// (node24, php85, go127; go127-build for the image Go functions compile in). A
 	// function built under a release uses the image this release names, and
 	// keeps it until it is deployed again. The images are released from the
 	// repository hivepaas/function-runtimes.

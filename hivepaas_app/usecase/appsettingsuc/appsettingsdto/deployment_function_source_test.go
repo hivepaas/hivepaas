@@ -48,6 +48,7 @@ func TestAFunctionSourceTakesItsRuntimesDefaults(t *testing.T) {
 		base.FunctionRuntimeNode24:    {File: "index.js", Handler: "default"},
 		base.FunctionRuntimeBun1:      {File: "index.ts", Handler: "default"},
 		base.FunctionRuntimePython313: {File: "main.py", Handler: "handler"},
+		base.FunctionRuntimePhp85:     {File: "index.php", Handler: "handler"},
 		base.FunctionRuntimeGo127:     {File: ".", Handler: "Handle"},
 	} {
 		req := inlineSource(runtime, file("a", "x"))
@@ -86,6 +87,13 @@ func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
 		inlineSource(base.FunctionRuntimePython313, file("main.py", "def handler(req, ctx): pass"),
 			file("lib/helper.py", "")),
 		inlineSource(base.FunctionRuntimeGo127, file("go.mod", "module fn"), file("fn.go", "package fn")),
+		inlineSource(base.FunctionRuntimePhp85, file("index.php", "<?php function handler($req, $ctx) {}"),
+			file("composer.json", "{}")),
+		func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimePhp85, file("src/Handler.php", "<?php"))
+			req.Entrypoint = FunctionEntrypointReq{File: "src/Handler.php", Handler: `App\Handler::handle`}
+			return req
+		}(),
 		{
 			Runtime: base.FunctionRuntimeNode24,
 			Code: FunctionCodeReq{Dir: "functions/hello", Repo: &FunctionRepoCodeReq{
@@ -143,6 +151,16 @@ func TestAFunctionSourceThatCannotBeRunIsRefused(t *testing.T) {
 		"a Go handler that is not exported": {func() *DeploymentFunctionSourceReq {
 			req := inlineSource(base.FunctionRuntimeGo127, file("fn.go", ""))
 			req.Entrypoint.Handler = "handle"
+			return req
+		}(), "functionSource.entrypoint.handler: ERR_VLD_FUNCTION_HANDLER_INVALID"},
+		"a PHP handler file that is not PHP": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimePhp85, file("main.py", ""))
+			req.Entrypoint.File = "main.py"
+			return req
+		}(), "functionSource.entrypoint.file: ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"},
+		"a PHP handler that is not a function's name": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimePhp85, file("index.php", ""))
+			req.Entrypoint.Handler = `App\`
 			return req
 		}(), "functionSource.entrypoint.handler: ERR_VLD_FUNCTION_HANDLER_INVALID"},
 		"a Python handler that is not a name": {func() *DeploymentFunctionSourceReq {

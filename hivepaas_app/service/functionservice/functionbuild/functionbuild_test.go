@@ -20,6 +20,7 @@ var images = map[string]string{
 	"node24":      "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node",
 	"bun1":        "ghcr.io/hivepaas/function-runtime-bun1:1.1.0@sha256:bun",
 	"python313":   "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:python",
+	"php85":       "ghcr.io/hivepaas/function-runtime-php85:1.3.0@sha256:php",
 	"go127":       "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:go",
 	"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild",
 }
@@ -120,6 +121,39 @@ ENV HP_FN_ENTRYPOINT="index.ts" \
 	assert.Equal(t, []string{"bun.lock"}, LockFiles(base.FunctionRuntimeBun1))
 }
 
+// A PHP function's libraries are installed by Composer from composer.json, its
+// lock file and its auth.json alone; its handler keeps its namespace.
+func TestAPHPFunctionInstallsWithComposer(t *testing.T) {
+	dir := sourceDir(t, map[string]string{
+		"index.php":     "<?php namespace App; function handle($req, $ctx) {}",
+		"composer.json": `{"require": {"monolog/monolog": "^3"}}`, "composer.lock": "{}",
+		"auth.json": `{"http-basic": {}}`,
+	})
+	src := source(base.FunctionRuntimePhp85)
+	src.Entrypoint.Handler = `App\handle`
+
+	resp, err := Dockerfile(&DockerfileReq{Source: src, Images: images, SourceDir: dir})
+
+	assert.NoError(t, err)
+	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime php85, contract v1.
+FROM ghcr.io/hivepaas/function-runtime-php85:1.3.0@sha256:php AS base
+
+FROM base AS deps
+COPY --chown=hivepaas:hivepaas composer.json composer.lock auth.json /app/
+RUN hivepaas-runtime deps
+
+FROM deps
+COPY --chown=hivepaas:hivepaas . /app/
+ENV HP_FN_ENTRYPOINT="index.php" \
+    HP_FN_HANDLER="App\\handle" \
+    HP_FN_TIMEOUT_MS=30000 \
+    HP_FN_MAX_CONCURRENCY=16 \
+    HP_FN_MAX_BODY_SIZE=6291456
+`, resp.Content)
+	assert.Empty(t, resp.Notes)
+	assert.Equal(t, []string{"composer.lock"}, LockFiles(base.FunctionRuntimePhp85))
+}
+
 // Without a manifest there is nothing to install, and no package is no root.
 func TestAFunctionWithoutLibrariesHasNoInstallStep(t *testing.T) {
 	dir := sourceDir(t, map[string]string{"main.py": "def handler(req, ctx): pass"})
@@ -166,6 +200,10 @@ func TestLibrariesFromTheFunctionsOwnFilesAreInstalledWithItsCode(t *testing.T) 
 			"requirements.lock": ""},
 		"a Go module replaced by a directory": {"go.mod": "module fn\n\nreplace example.com/lib => ./lib\n",
 			"go.sum": ""},
+		"a Composer path repository": {"composer.json": `{"repositories": [{"type": "path", "url": "lib"}]}`,
+			"composer.lock": "{}"},
+		"a Composer repository of archives, by name": {
+			"composer.json": `{"repositories": {"local": {"type": "artifact", "url": "dist/"}}}`, "composer.lock": "{}"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			runtime := base.FunctionRuntimeNode24
@@ -174,6 +212,8 @@ func TestLibrariesFromTheFunctionsOwnFilesAreInstalledWithItsCode(t *testing.T) 
 				runtime = base.FunctionRuntimePython313
 			case files["go.mod"] != "":
 				runtime = base.FunctionRuntimeGo127
+			case files["composer.json"] != "":
+				runtime = base.FunctionRuntimePhp85
 			}
 
 			resp, err := Dockerfile(&DockerfileReq{Source: source(runtime), Images: images,
@@ -341,5 +381,18 @@ func TestARuntimeIsOutdatedOnceTheReleaseMovesOn(t *testing.T) {
 		"a runtime the release lacks": {map[string]string{"ruby3": "ruby:1"}, false},
 	} {
 		assert.Equal(t, tc.want, RuntimeOutdated(tc.built, release), name)
+	}
+}
+
+// Composer's repositories that are not the function's own files, or that are
+// no repositories at all, install from the manifest alone.
+func TestComposerRepositoriesElsewhereAreNotTheFunctionsOwn(t *testing.T) {
+	for _, content := range []string{
+		`{"require": {"monolog/monolog": "^3"}}`,
+		`{"repositories": [{"type": "vcs", "url": "https://github.com/acme/lib"}, {"packagist.org": false}]}`,
+		`{"repositories": {"packagist.org": false, "acme": {"type": "composer", "url": "https://repo.acme.test"}}}`,
+		`not JSON`,
+	} {
+		assert.False(t, composerLocalDeps(content), content)
 	}
 }

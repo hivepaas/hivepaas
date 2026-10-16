@@ -74,7 +74,7 @@ type createFunctionInput struct {
 	Project string              `json:"project" jsonschema:"the project's key, name or id; list_projects lists them"`
 	Env     string              `json:"env" jsonschema:"the env's name, such as production"`
 	Name    string              `json:"name" jsonschema:"the function's name, up to 100 characters"`
-	Runtime string              `json:"runtime" jsonschema:"the runtime: node24, bun1, python313 or go127"`
+	Runtime string              `json:"runtime" jsonschema:"the runtime: node24, bun1, python313, php85 or go127"`
 	Files   []functionFileInput `json:"files" jsonschema:"every file of the function's code, its library manifest too"`
 	//nolint:lll // a schema description is one line
 	Entrypoint string `json:"entrypoint,omitempty" jsonschema:"the handler's file - for go127 its package's directory; the runtime's default when not given"`
@@ -101,7 +101,7 @@ func planCreateFunctionTool() Tool {
 		"Plans POST /projects/{project}/{env}/apps/function: a function - an app whose deployment is code and "+
 			"a runtime ("+statusValues(base.AllFunctionRuntimes)+") - created and its first deployment queued "+
 			"at once: built on the runtime's image from the files given, then started. Every file goes in "+
-			"files, a package.json, requirements.txt or go.mod among them for its libraries. The API's own "+
+			"files, a package.json, requirements.txt, composer.json or go.mod among them for its libraries. The API's own "+
 			"checks - the entrypoint's extension, file paths, sizes - are run before the plan is made. The "+
 			"resource "+functionsURI+" says how a handler is written for each runtime. Nothing is created "+
 			"until apply_plan.",

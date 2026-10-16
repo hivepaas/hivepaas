@@ -13,6 +13,7 @@ deployed again with `plan_redeploy_app`.
 | `node24` | JavaScript, or TypeScript with its types removed (`.ts`, `.mts`, `.cts`) | `index.js` | `default` (the default export) |
 | `bun1` | JavaScript or TypeScript, transpiled whole | `index.ts` | `default` |
 | `python313` | Python | `main.py` | `handler` |
+| `php85` | PHP 8.5 | `index.php` | `handler` (a function; with its namespace, `App\handle`, or a static method, `Handler::handle`) |
 | `go127` | Go, compiled | `.` (the package's directory) | `Handle` |
 
 TypeScript on `node24` allows only syntax that can be erased: no `enum`, no
@@ -36,6 +37,16 @@ def handler(req, ctx):
     return {"status": 200, "body": {"hello": req.query.get("name", "world")}}
 ```
 
+```php
+<?php
+// php85 - loaded once per process: what a variable keeps lasts from call to call
+function handler(Hivepaas\Request $req, Hivepaas\Context $ctx): array
+{
+    $ctx->log("{$req->method} {$req->path}");
+    return ['status' => 200, 'body' => ['hello' => $req->query['name'] ?? 'world']];
+}
+```
+
 ```go
 // go127 - module with a go.mod; the runtime's package is added when it builds
 package function
@@ -54,9 +65,13 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
 - **The request**: method, path, query (first value; every value as
   `queryAll` / `query_all` / `Query[name]`), headers in lower case, body as
   bytes, `text()` or `json()`.
-- **The response**: an object with `status`, `headers`, `body`. A body that is
-  text is sent as `text/plain`, bytes as `application/octet-stream`, anything
-  else as JSON. Returning nothing answers 204.
+- **The response**: an object with `status`, `headers`, `body` (PHP: an array
+  with those keys). A body that is text is sent as `text/plain`, bytes as
+  `application/octet-stream` (PHP: `new Hivepaas\Bytes($data)`), anything else
+  as JSON. Returning nothing answers 204.
+- **PHP** runs each call in a process of its own, one call at a time, started
+  as calls need them; `echo` goes to the log, not the response; a call past
+  its timeout stops its process. A `php.ini` in the code adds settings.
 - **The runtime answers itself** 500 when the handler throws (the error goes to
   the log, never the client), 504 past the timeout, 429 past the concurrency,
   413 for a body over the limit.
@@ -65,7 +80,8 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
 
 A manifest beside the code is installed when the function is built:
 `package.json` (npm for `node24`, bun for `bun1`), `requirements.txt` (uv for
-`python313`), `go.mod` (`go127`). A lock file is made when there is none.
+`python313`), `composer.json` (Composer for `php85`, `auth.json` for private
+repositories), `go.mod` (`go127`). A lock file is made when there is none.
 System packages (`apt`) go in `functionSource.systemPackages`.
 
 ## Limits

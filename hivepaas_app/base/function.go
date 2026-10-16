@@ -18,12 +18,13 @@ const (
 	FunctionRuntimeNode24    FunctionRuntime = "node24"
 	FunctionRuntimeBun1      FunctionRuntime = "bun1"
 	FunctionRuntimePython313 FunctionRuntime = "python313"
+	FunctionRuntimePhp85     FunctionRuntime = "php85"
 	FunctionRuntimeGo127     FunctionRuntime = "go127"
 )
 
 var (
 	AllFunctionRuntimes = []FunctionRuntime{FunctionRuntimeNode24, FunctionRuntimeBun1, FunctionRuntimePython313,
-		FunctionRuntimeGo127}
+		FunctionRuntimePhp85, FunctionRuntimeGo127}
 )
 
 // Compiled says whether the runtime's functions are compiled, in a build image
@@ -32,7 +33,7 @@ func (r FunctionRuntime) Compiled() bool {
 	switch r {
 	case FunctionRuntimeGo127:
 		return true
-	case FunctionRuntimeNode24, FunctionRuntimeBun1, FunctionRuntimePython313:
+	case FunctionRuntimeNode24, FunctionRuntimeBun1, FunctionRuntimePython313, FunctionRuntimePhp85:
 		return false
 	}
 	return false
@@ -54,6 +55,8 @@ func (r FunctionRuntime) DefaultEntrypoint() (file, handler string) {
 		return "index.ts", "default"
 	case FunctionRuntimePython313:
 		return "main.py", "handler"
+	case FunctionRuntimePhp85:
+		return "index.php", "handler"
 	case FunctionRuntimeGo127:
 		return ".", "Handle"
 	}
@@ -113,7 +116,10 @@ var (
 		FunctionRuntimeNode24:    javaScriptHandler,
 		FunctionRuntimeBun1:      javaScriptHandler,
 		FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
-		FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
+		// PHP: a function's name, with its namespace, or a class's static method.
+		FunctionRuntimePhp85: regexp.MustCompile(
+			`^\\?[A-Za-z_][A-Za-z0-9_]*(\\[A-Za-z_][A-Za-z0-9_]*)*(::[A-Za-z_][A-Za-z0-9_]*)?$`),
+		FunctionRuntimeGo127: regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
 	}
 	// FunctionEntrypointExts are the extensions of a handler's file, for the
 	// runtimes whose entrypoint is a file. Node.js runs TypeScript by removing
@@ -122,6 +128,7 @@ var (
 		FunctionRuntimeNode24:    javaScriptFiles,
 		FunctionRuntimeBun1:      javaScriptFiles,
 		FunctionRuntimePython313: {".py"},
+		FunctionRuntimePhp85:     {".php"},
 	}
 )
 

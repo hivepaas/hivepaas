@@ -78,6 +78,9 @@ var manifests = map[base.FunctionRuntime]manifest{
 	base.FunctionRuntimePython313: {
 		file: "requirements.txt", lock: "requirements.lock", settings: []string{"uv.toml"}, localDeps: pipLocalDeps,
 	},
+	base.FunctionRuntimePhp85: {
+		file: "composer.json", lock: "composer.lock", settings: []string{"auth.json"}, localDeps: composerLocalDeps,
+	},
 	base.FunctionRuntimeGo127: {file: "go.mod", lock: "go.sum", localDeps: goLocalDeps},
 }
 
@@ -326,6 +329,32 @@ func pipLocalDeps(content string) bool {
 			strings.HasPrefix(line, "-e"), strings.HasPrefix(line, "--editable"),
 			strings.HasPrefix(line, "-r"), strings.HasPrefix(line, "--requirement"),
 			strings.HasPrefix(line, "-c"), strings.HasPrefix(line, "--constraint"):
+			return true
+		}
+	}
+	return false
+}
+
+// composerLocalDeps says whether composer.json has a repository of the
+// function's own files: a path, or a directory of package archives.
+func composerLocalDeps(content string) bool {
+	var composer struct {
+		Repositories any `json:"repositories"`
+	}
+	if json.Unmarshal([]byte(content), &composer) != nil {
+		return false // Composer says what is wrong with it, in the install step
+	}
+	var repositories []any
+	switch given := composer.Repositories.(type) {
+	case []any:
+		repositories = given
+	case map[string]any: // by name
+		for _, repository := range given {
+			repositories = append(repositories, repository)
+		}
+	}
+	for _, repository := range repositories {
+		if r, ok := repository.(map[string]any); ok && (r["type"] == "path" || r["type"] == "artifact") {
 			return true
 		}
 	}

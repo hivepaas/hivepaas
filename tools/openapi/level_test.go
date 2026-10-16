@@ -83,3 +83,13 @@ func TestTheAPILevelRisesWhenAnExistingWriteChanges(t *testing.T) {
 	assert.Equal(t, 2, raised.Level)
 	assert.Equal(t, []string{"PUT /a"}, changed)
 }
+
+// A value added to an enum is not a change: a CLI built before it writes back
+// the value it read, whatever it is.
+func TestAnEnumsValuesAreNotWhatARequestCarries(t *testing.T) {
+	enum := func(values string) string {
+		return `{"properties": {"runtime": {"type": "string", "enum": [` + values + `]}}, "type": "object"}`
+	}
+	assert.Equal(t, fingerprintOf(t, specWith(t, enum(`"node24", "go127"`), itemParams)),
+		fingerprintOf(t, specWith(t, enum(`"node24", "php85", "go127"`), itemParams)))
+}

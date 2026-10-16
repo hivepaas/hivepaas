@@ -58,6 +58,14 @@ func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
 		"typescript in python": with(func(s *entity.DeploymentFunctionSource) {
 			s.Runtime, s.Entrypoint.File = base.FunctionRuntimePython313, "index.ts"
 		}),
+		"php": with(func(s *entity.DeploymentFunctionSource) {
+			s.Runtime, s.Entrypoint = base.FunctionRuntimePhp85,
+				entity.FunctionEntrypoint{File: "index.php", Handler: `App\handle`}
+		}),
+		"php's handler": with(func(s *entity.DeploymentFunctionSource) {
+			s.Runtime, s.Entrypoint = base.FunctionRuntimePhp85, entity.FunctionEntrypoint{File: "index.js",
+				Handler: "App\\"}
+		}),
 		"handler": with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
 		"no code": with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
 		"both codes": with(func(s *entity.DeploymentFunctionSource) {

@@ -10,6 +10,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -161,6 +163,7 @@ func buildxInvocation(
 		}
 	}
 
-	// CheckoutDir is the build context
-	return append(args, data.CheckoutDir), env
+	// The checkout is the build's context, or the directory a Dockerfile was
+	// generated for
+	return append(args, gofn.Coalesce(data.ContextDir, data.CheckoutDir)), env
 }

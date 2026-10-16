@@ -18,7 +18,10 @@ type imageBuildData struct {
 
 	Inputs *imagebuildservice.BuildInputs
 
-	ImageTags     []string
+	ImageTags []string
+	// ContextDir is the build's context when it is not the checkout: the
+	// directory an auto-generated Dockerfile is written for
+	ContextDir    string
 	EnvVars       map[string]*string
 	SecretEnvVars map[string]string
 	RegistryAuths map[string]registry.AuthConfig

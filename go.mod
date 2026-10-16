@@ -38,7 +38,7 @@ require (
 	github.com/google/jsonschema-go v0.4.3
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hivepaas/dockerfile-generator v0.0.0-20261016110026-cce83ba03fc2
+	github.com/hivepaas/dockerfile-generator v0.0.0-20261016110909-d91498747884
 	github.com/itchyny/timefmt-go v0.1.9
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jaevor/go-nanoid v1.4.0

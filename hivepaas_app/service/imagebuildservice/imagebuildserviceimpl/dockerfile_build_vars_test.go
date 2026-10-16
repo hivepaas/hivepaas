@@ -68,31 +68,6 @@ func TestBuildVariablesLeaveTheDockerfileAlone(t *testing.T) {
 	assert.Equal(t, "FROM alpine\nRUN true", got)
 }
 
-// The scan path is a directory of the checkout: not one out of it, by its path
-// or by a link the repository holds, nor a file.
-func TestScanPathStaysInTheCheckout(t *testing.T) {
-	checkout := t.TempDir()
-	outside := t.TempDir()
-	assert.NoError(t, os.MkdirAll(filepath.Join(checkout, "apps", "api"), 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(checkout, "README.md"), nil, 0o600))
-	assert.NoError(t, os.Symlink(outside, filepath.Join(checkout, "out")))
-	assert.NoError(t, os.Symlink("apps", filepath.Join(checkout, "apps-link")))
-
-	dir, err := dirInCheckout(checkout, "apps/api")
-	assert.NoError(t, err)
-	root, _ := filepath.EvalSymlinks(checkout)
-	assert.Equal(t, filepath.Join(root, "apps", "api"), dir)
-
-	dir, err = dirInCheckout(checkout, "apps-link/api")
-	assert.NoError(t, err, "a link within the checkout")
-	assert.Equal(t, filepath.Join(root, "apps", "api"), dir)
-
-	for _, rel := range []string{"../", "apps/../../x", "out", "out/x", "README.md", "missing"} {
-		_, err := dirInCheckout(checkout, rel)
-		assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid, rel)
-	}
-}
-
 // The build's context is the directory a Dockerfile was generated for, when it
 // is not the checkout.
 func TestABuildIsGivenItsContextDirectory(t *testing.T) {
@@ -148,16 +123,7 @@ func TestGeneratingADockerfileLogsWhatItDetected(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, string(written), "ARG VITE_API_URL\n")
 	assert.Contains(t, string(written), "--mount=type=secret,id=NPM_TOKEN,env=NPM_TOKEN")
-	assert.Equal(t, filepath.Join(evalSymlinks(t, checkout), "apps", "web"), data.ContextDir)
-}
-
-func evalSymlinks(t *testing.T, path string) string {
-	t.Helper()
-	resolved, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resolved
+	assert.Equal(t, filepath.Join(checkout, "apps", "web"), data.ContextDir)
 }
 
 // End to end, with docker's own builder: a Node.js app in a subdirectory, its
@@ -213,4 +179,79 @@ func TestAGeneratedDockerfileGivesTheBuildItsVariables(t *testing.T) {
 	history, err := exec.Command("docker", "history", "--no-trunc", data.ImageTags[0]).CombinedOutput()
 	assert.NoError(t, err)
 	assert.NotContains(t, string(history), "s3cr3t")
+}
+
+// A Dockerfile is written and read in the checkout only: a path out of it, or a
+// link the repository holds - named as the Dockerfile or on the way to it -
+// is refused, and the file it names on the node is left as it was.
+func TestADockerfileIsNeverWrittenOutOfTheCheckout(t *testing.T) {
+	cases := map[string]struct {
+		source base.DockerfileSource
+		path   string
+		// What the repository holds, a link to the node's file or directory
+		link, linkTo string
+	}{
+		"a path out of it, with content":     {base.DockerfileSourceManual, "../victim/Dockerfile", "", ""},
+		"a link as the Dockerfile, content":  {base.DockerfileSourceManual, "Dockerfile", "Dockerfile", "file"},
+		"a link as the Dockerfile, auto":     {base.DockerfileSourceAuto, "Dockerfile", "Dockerfile", "file"},
+		"a link on the way to it, content":   {base.DockerfileSourceManual, "docker/Dockerfile", "docker", "dir"},
+		"a link on the way to it, auto":      {base.DockerfileSourceAuto, "docker/Dockerfile", "docker", "dir"},
+		"a reserved directory that is links": {base.DockerfileSourceManual, ".hivepaas/Dockerfile", ".hivepaas", "dir"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			parent := t.TempDir()
+			checkout := filepath.Join(parent, "checkout")
+			victimDir := filepath.Join(parent, "victim")
+			victim := filepath.Join(victimDir, "Dockerfile")
+			assert.NoError(t, os.MkdirAll(checkout, 0o755))
+			assert.NoError(t, os.MkdirAll(victimDir, 0o755))
+			assert.NoError(t, os.WriteFile(victim, []byte("the node's"), 0o600))
+			assert.NoError(t, os.WriteFile(filepath.Join(checkout, "index.html"), []byte("<p>x</p>"), 0o600))
+			switch tc.linkTo {
+			case "file":
+				assert.NoError(t, os.Symlink(victim, filepath.Join(checkout, tc.link)))
+			case "dir":
+				assert.NoError(t, os.Symlink(victimDir, filepath.Join(checkout, tc.link)))
+			}
+			data := &imageBuildData{ImageBuildReq: &imagebuildservice.ImageBuildReq{
+				TaskExecData: &queue.TaskExecData{LogStore: tasklog.NewNullStore()},
+				CheckoutDir:  checkout,
+				Dockerfile:   entity.DeploymentDockerfile{Source: tc.source, Path: tc.path, Content: "FROM scratch"},
+			}}
+
+			err := (&service{}).prepareDockerfile(context.Background(), data)
+
+			assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid)
+			content, _ := os.ReadFile(victim)
+			assert.Equal(t, "the node's", string(content))
+		})
+	}
+}
+
+// The repository's own Dockerfile is read where it is, a link within the
+// checkout followed; one that leads out of it is refused, not found.
+func TestARepositorysDockerfileIsReadInTheCheckoutOnly(t *testing.T) {
+	parent := t.TempDir()
+	checkout := filepath.Join(parent, "checkout")
+	assert.NoError(t, os.MkdirAll(filepath.Join(checkout, "docker"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(checkout, "docker", "Dockerfile.prod"), []byte("FROM scratch"), 0o600))
+	assert.NoError(t, os.Symlink("docker/Dockerfile.prod", filepath.Join(checkout, "Dockerfile")))
+	assert.NoError(t, os.WriteFile(filepath.Join(parent, "secret"), []byte("FROM scratch"), 0o600))
+	assert.NoError(t, os.Symlink(filepath.Join(parent, "secret"), filepath.Join(checkout, "Outside")))
+	prepare := func(path string) error {
+		return (&service{}).prepareDockerfile(context.Background(), &imageBuildData{
+			ImageBuildReq: &imagebuildservice.ImageBuildReq{
+				TaskExecData: &queue.TaskExecData{LogStore: tasklog.NewNullStore()},
+				CheckoutDir:  checkout,
+				Dockerfile:   entity.DeploymentDockerfile{Source: base.DockerfileSourceManual, Path: path},
+			},
+		})
+	}
+
+	assert.NoError(t, prepare("Dockerfile"))
+	assert.NoError(t, prepare("docker/Dockerfile.prod"))
+	assert.ErrorIs(t, prepare("Outside"), hperrors.ErrArgumentInvalid)
+	assert.ErrorIs(t, prepare("../secret"), hperrors.ErrArgumentInvalid)
+	assert.ErrorIs(t, prepare("Missing"), hperrors.ErrNotFound)
 }

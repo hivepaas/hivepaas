@@ -1,6 +1,7 @@
 package appsettingsdto
 
 import (
+	"path/filepath"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -209,7 +210,21 @@ func (req *DeploymentDockerfileReq) validate(field string) (res []vld.Validator)
 		field+"content")...)
 	res = append(res, basedto.ValidateStr(&req.ScanPath, false, 1, dockerfilePathMaxLen,
 		field+"scanPath")...)
+	// Both are in the repository: the build writes the Dockerfile at its path,
+	// and takes the scan path's directory as its context
+	for _, p := range []struct{ name, value string }{{"path", req.Path}, {"scanPath", req.ScanPath}} {
+		res = append(res, vld.Must(repoPathOK(p.value)).OnError(
+			vld.SetField(field+p.name, nil),
+			vld.SetCustomKey("ERR_VLD_REPO_PATH_INVALID"),
+		))
+	}
 	return res
+}
+
+// repoPathOK says whether p, a leading "/" aside, is a place in the repository:
+// not one out of it by "..". The build refuses a link out of it too.
+func repoPathOK(p string) bool {
+	return p == "" || filepath.IsLocal(strings.TrimPrefix(p, "/"))
 }
 
 func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {

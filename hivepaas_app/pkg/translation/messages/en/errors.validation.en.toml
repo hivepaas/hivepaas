@@ -69,6 +69,7 @@ ERR_VLD_ADMIN_SECURITY_OPTION_WEAK = "An administrator cannot sign in with a pas
 ERR_VLD_FUNCTION_ENTRYPOINT_INVALID = "The entrypoint must be a file of the function its runtime can load: a .js, .mjs, .cjs, .ts, .mts or .cts file for Node.js and Bun, a .py file for Python, a .php file for PHP, the directory of the handler's package for Go"
 ERR_VLD_FUNCTION_HANDLER_INVALID = "The handler must be a name the runtime can call: for Go, an exported name such as Handle; for PHP, a function's name with its namespace, such as App\\handle, or a static method, such as Handler::handle"
 ERR_VLD_FUNCTION_FILE_PATH_INVALID = "A path must be relative, stay inside the function, and use only letters, digits, '.', '_', '-' and '/'"
+ERR_VLD_REPO_PATH_INVALID = "A path must be relative and stay inside the repository"
 ERR_VLD_FUNCTION_CODE_TOO_LARGE = "The function's code is {{.Actual}}, over the {{.Max}} a function kept inline may have. Put larger code in a repository"
 ERR_VLD_DEBIAN_PACKAGE_INVALID = "A Debian package is a name of lowercase letters, digits, '+', '-' and '.', with an optional =version"
 

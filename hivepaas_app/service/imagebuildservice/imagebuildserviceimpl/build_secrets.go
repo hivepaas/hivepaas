@@ -2,8 +2,6 @@ package imagebuildserviceimpl
 
 import (
 	"maps"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -23,7 +21,7 @@ func checkSecretsNotDeclaredAsArg(data *imageBuildData) error {
 	if len(data.SecretEnvVars) == 0 {
 		return nil
 	}
-	content, err := os.ReadFile(filepath.Join(data.CheckoutDir, data.Dockerfile.Path))
+	content, err := readDockerfile(data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

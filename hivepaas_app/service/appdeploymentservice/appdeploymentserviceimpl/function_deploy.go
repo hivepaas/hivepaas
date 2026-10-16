@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionbuild"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
@@ -145,12 +146,17 @@ func (s *service) functionDeployStepSource(
 		output.CommitTitle = checkoutResp.CommitTitle
 		output.CommitAuthor = checkoutResp.CommitAuthor
 
-		data.ContextDir = filepath.Join(data.CheckoutDir, filepath.FromSlash(code.Dir))
-		if info, err := os.Stat(data.ContextDir); err != nil || !info.IsDir() {
-			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(fmt.Sprintf(
-				"The repository has no directory '%s' at commit %s.", code.Dir, checkoutResp.CommitHash),
-				tasklog.TsNow))
-			return hperrors.NewNotFound("Function directory")
+		// The directory is the build's context: one of the repository's, not a
+		// link it holds to a directory of the node
+		data.ContextDir = data.CheckoutDir
+		if code.Dir != "" {
+			data.ContextDir, err = fileutil.DirInside(data.CheckoutDir, filepath.FromSlash(code.Dir))
+			if err != nil {
+				_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(fmt.Sprintf(
+					"The repository has no directory '%s' at commit %s.", code.Dir, checkoutResp.CommitHash),
+					tasklog.TsNow))
+				return hperrors.NewNotFound("Function directory")
+			}
 		}
 
 	default:

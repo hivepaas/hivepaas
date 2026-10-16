@@ -2,7 +2,9 @@ package imagebuildserviceimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"maps"
 	"os"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -35,29 +38,68 @@ func (s *service) prepareDockerfile(
 }
 
 func (s *service) prepareDockerfileManual(
-	_ context.Context,
+	ctx context.Context,
 	data *imageBuildData,
 ) error {
-	targetPath := filepath.Join(data.CheckoutDir, data.Dockerfile.Path)
-
 	if data.Dockerfile.Content != "" {
-		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
-			return hperrors.Wrap(err)
-		}
-		if err := os.WriteFile(targetPath, []byte(data.Dockerfile.Content), 0644); err != nil { //nolint:mnd,gosec
-			return hperrors.Wrap(err)
-		}
-		return nil
+		return writeDockerfile(ctx, data, []byte(data.Dockerfile.Content))
 	}
 
-	if _, err := os.Stat(targetPath); err != nil {
-		if os.IsNotExist(err) {
-			return hperrors.NewNotFound("Dockerfile").WithMsgLog("Dockerfile not found at %s", targetPath)
-		}
+	root, err := os.OpenRoot(data.CheckoutDir)
+	if err != nil {
 		return hperrors.Wrap(err)
+	}
+	defer root.Close()
+	if _, err := root.Stat(data.Dockerfile.Path); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return hperrors.NewNotFound("Dockerfile").WithMsgLog("Dockerfile not found at %s", data.Dockerfile.Path)
+		}
+		return refuseDockerfilePath(ctx, data, err)
 	}
 
 	return nil
+}
+
+// writeDockerfile writes a Dockerfile at its path in the checkout, through
+// os.Root: a path that leads out of it - by "..", or through a link the
+// repository holds, named as the Dockerfile or on the way to it - is refused,
+// never followed to a file of the node.
+func writeDockerfile(ctx context.Context, data *imageBuildData, content []byte) error {
+	root, err := os.OpenRoot(data.CheckoutDir)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	defer root.Close()
+	if dir := filepath.Dir(data.Dockerfile.Path); dir != "." {
+		if err := root.MkdirAll(dir, 0o755); err != nil { //nolint:mnd
+			return refuseDockerfilePath(ctx, data, err)
+		}
+	}
+	if err := root.WriteFile(data.Dockerfile.Path, content, 0o644); err != nil { //nolint:mnd,gosec
+		return refuseDockerfilePath(ctx, data, err)
+	}
+	return nil
+}
+
+// readDockerfile reads the Dockerfile at its path in the checkout, through
+// os.Root as writeDockerfile writes it.
+func readDockerfile(data *imageBuildData) ([]byte, error) {
+	root, err := os.OpenRoot(data.CheckoutDir)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	defer root.Close()
+	content, err := root.ReadFile(data.Dockerfile.Path)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return content, nil
+}
+
+func refuseDockerfilePath(ctx context.Context, data *imageBuildData, err error) error {
+	_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(fmt.Sprintf(
+		"Dockerfile Path '%s' is not a file of the repository: %v", data.Dockerfile.Path, err), tasklog.TsNow))
+	return hperrors.Wrap(hperrors.ErrArgumentInvalid).WithMsgLog("dockerfile path %q: %v", data.Dockerfile.Path, err)
 }
 
 func (s *service) prepareDockerfileAuto(
@@ -66,7 +108,7 @@ func (s *service) prepareDockerfileAuto(
 ) (err error) {
 	scanDir := data.CheckoutDir
 	if data.Dockerfile.ScanPath != "" {
-		scanDir, err = dirInCheckout(data.CheckoutDir, data.Dockerfile.ScanPath)
+		scanDir, err = fileutil.DirInside(data.CheckoutDir, data.Dockerfile.ScanPath)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(fmt.Sprintf(
 				"Dockerfile Gen Scan Path '%s' is not a directory of the repository", data.Dockerfile.ScanPath),
@@ -91,12 +133,8 @@ func (s *service) prepareDockerfileAuto(
 
 	data.Dockerfile.Content = withBuildVariables(string(contents), data.EnvVars, data.SecretEnvVars)
 
-	targetPath := filepath.Join(data.CheckoutDir, data.Dockerfile.Path)
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
-		return hperrors.Wrap(err)
-	}
-	if err := os.WriteFile(targetPath, []byte(data.Dockerfile.Content), 0644); err != nil { //nolint:mnd,gosec
-		return hperrors.Wrap(err)
+	if err := writeDockerfile(ctx, data, []byte(data.Dockerfile.Content)); err != nil {
+		return err
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -118,31 +156,6 @@ func (s *service) prepareDockerfileAuto(
 	_ = data.LogStore.Add(ctx, tasklog.NewDebugFrame(data.Dockerfile.Content, tasklog.TsNow))
 
 	return nil
-}
-
-// dirInCheckout is the directory rel names in the checkout, refused when it is
-// not one: a path out of it, or through a link the repository holds to a
-// directory out of it. The directory becomes the build's context, which the
-// image can copy from.
-func dirInCheckout(checkoutDir, rel string) (string, error) {
-	if !filepath.IsLocal(rel) {
-		return "", hperrors.Wrap(hperrors.ErrArgumentInvalid).WithMsgLog("scan path %q leaves the checkout", rel)
-	}
-	root, err := filepath.EvalSymlinks(checkoutDir)
-	if err != nil {
-		return "", hperrors.Wrap(err)
-	}
-	dir, err := filepath.EvalSymlinks(filepath.Join(root, rel))
-	if err != nil {
-		return "", hperrors.Wrap(hperrors.ErrArgumentInvalid).WithMsgLog("scan path %q: %v", rel, err)
-	}
-	if inside, err := filepath.Rel(root, dir); err != nil || !filepath.IsLocal(inside) {
-		return "", hperrors.Wrap(hperrors.ErrArgumentInvalid).WithMsgLog("scan path %q leaves the checkout", rel)
-	}
-	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
-		return "", hperrors.Wrap(hperrors.ErrArgumentInvalid).WithMsgLog("scan path %q is not a directory", rel)
-	}
-	return dir, nil
 }
 
 // buildVariableNames lists the build's variables for its log, the names alone:

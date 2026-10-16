@@ -1,8 +1,8 @@
 # Plans and licensing
 
-Status: settled 2026-10-16; phase 1 (HivePaaS core) being built. The limits
-are enforced from the first release that carries them, so that release also
-carries the production license public keys.
+Status: settled 2026-10-16. Phase 1 (HivePaaS core) built; phase 2 (portal)
+being built. The limits are enforced from the first release that carries them,
+so that release also carries the production license public keys.
 
 HivePaaS stays Apache 2.0 and self-hosted. What is sold is a license key that
 lifts the limits of the free plan. Paddle takes the payments, as merchant of
@@ -158,10 +158,18 @@ it is. It uses its own key pair, kept apart from the release keys:
   keeps it on the account. A yearly plan needs this once a year, a monthly plan
   once a month.
 - **Online renewal.** A daily task posts the current key and the cluster ID to
-  the portal (`POST /api/licenses/refresh`). It stores any newer key it gets
-  back, or the news that the key was moved to another installation. It sends
-  nothing else. It is on by default and can be switched off. When it fails,
-  the next day tries again.
+  the portal (`POST /api/licenses/refresh`, at `https://portal.hivepaas.com` by
+  default). It stores any newer key it gets back, or the news that the key was
+  moved to another installation. It sends nothing else. It is on by default
+  and can be switched off. When it fails, the next day tries again.
+  - The key is what authenticates the request: the portal answers only for a
+    key it issued, and only for the installation that key names. So an
+    installation with no key cannot refresh, and its first key, trial or paid,
+    is pasted once; renewals then arrive by themselves. Answering by
+    installation ID alone would hand the customer's email to anyone who knows
+    the ID.
+  - The answer is `newer` (with the key to install: a renewal, a plan change,
+    or a paid key replacing a trial), `moved` (with when), or `current`.
 - **Clock.** An offline installation can set its clock back, and nothing can
   stop that. As a cheap check, the service keeps the latest time it has seen
   and reads a clock that went back more than a day as that time.
@@ -177,12 +185,13 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 
 - **Starting a trial.** System > License has "Start a 14-day trial", which
   opens the portal with the installation ID. The person signs in or signs up
+  (with an email address, verified; GitHub or Google sign-up may come later)
   and starts the trial. The key is shown to copy and is emailed.
 - **What the key holds.** Hive's limits, `"trial": true`, `expiresAt` 14 days
   out, and `graceDays: 0`. When it runs out, the installation is on Bee, which
   only stops creating.
 - **Once each.** One trial per installation ID and one per account. The portal
-  keeps both.
+  keeps both. A trial is not moved to another installation.
 - **Buying.** A trial can be turned into a paid plan at any time through the
   normal checkout. The paid key replaces it.
 - **Paddle's own trials** need a card and convert to paid on their own. They
@@ -192,8 +201,15 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 ## Paddle and the portal
 
 - **Catalog.** Three products (Comb, Hive, Colony), each with a monthly and a
-  yearly price, in sandbox and live. The checkout passes `custom_data`:
-  `{ accountId, installationId }`.
+  yearly price, in sandbox and live. Each price carries `custom_data`
+  `{ plan, period }`, which is how the portal knows what it sells: no price ID
+  is written into code.
+- **Checkout.** The portal creates the checkout's transaction itself, with
+  `custom_data` `{ accountId, installationId, checkoutId }`, and the web opens
+  Paddle's checkout on that transaction. What the browser sends is never
+  trusted for whom a key is for. The portal refuses a purchase for an
+  installation that already has a license in force: its plan is changed
+  instead.
 - **Webhooks.** The portal verifies each one's signature, applies it
   idempotently by event ID, and mirrors the subscription in its database:
 
@@ -201,15 +217,37 @@ key like any other, so it works offline and needs no new path in HivePaaS.
   |--------------------------|--------------------------------------------------------------------------|
   | `subscription.created`   | the subscription and its first key                                       |
   | `transaction.completed`  | a renewal: the key for the new period, emailed                           |
-  | `subscription.updated`   | a plan change: a key with the new limits at once; a scheduled change at its date |
+  | `subscription.updated`   | a plan change: a key with the new limits at once. A scheduled cancel or pause changes nothing until it takes effect |
   | `subscription.past_due`  | nothing more: the key's grace covers Paddle's retries                    |
+  | `subscription.paused`    | no further keys until it resumes                                         |
   | `subscription.canceled`  | no further keys; the last one runs out with its grace                    |
 
-- **Account.** The portal's account screens list the subscriptions, the keys
-  to copy, and the installation each key is for. They open Paddle's customer
+  A key runs to the end of the latest period paid for, not of the period
+  Paddle is in: that one moves on even while a renewal is failing. Paddle has
+  no scheduled plan change: a plan change takes effect at once, and only its
+  billing can wait.
+
+- **Account.** One account per person for now; the data allows team members
+  later. The portal's account screens list the subscriptions, the keys to
+  copy, and the installation each key is for. They open Paddle's customer
   portal for card, invoices and cancellation.
+- **Plan changes** are made in the portal, as Paddle's customer portal cannot
+  make them: an upgrade (a higher plan, or monthly to yearly) is charged now,
+  prorated; a downgrade from the next period. The key with the new limits is
+  issued at once.
+- **Moves** are made in the portal, for a subscription's license; a manual
+  (Apiary) license is moved by staff.
+- **Staff.** Apiary and other manual keys, support moves, revoking a license
+  and events Paddle sent that could not be applied go through a staff API,
+  documented in the portal's `docs/licensing.md`.
 - **Signing.** The license private keys live only in the portal's secret
-  store.
+  store. The portal signs with its own small signer, held to `tools/licensesign`
+  byte for byte by a test. A sandbox portal signs with the development key, so
+  only a HivePaaS in development trusts what it issues; a live one with the
+  production keys, and refuses to start with the development key.
+- **Grace and Paddle's retries.** The 14 days of grace cover Paddle's retries
+  of a failed renewal only while its payment recovery runs 14 days or less:
+  set it so in live, or raise the grace.
 
 ## In HivePaaS
 
@@ -229,7 +267,7 @@ key like any other, so it works offline and needs no new path in HivePaaS.
     another installation, or past its grace, and keeps the key in force. Any
     other key replaces the one stored, a lower plan included. There is no
     DELETE.
-  - `POST /system/license/refresh` asks the portal now (phase 2).
+  - `POST /system/license/refresh` asks the portal now.
 - **Development and e2e.** The e2e environment makes far more than 20 apps.
   In development (`HP_ENV=development`, which also opens the dev-helper
   endpoints, so no production runs it) the binary also accepts a development
@@ -281,4 +319,5 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 ## Open questions
 
 - **Refunds.** What is the policy? Paddle, as merchant of record, handles tax.
-- **portal-web's stack.** The Paddle tooling at hand assumes Next.js.
+  For now nothing is automatic: staff revoke a license through the staff API,
+  and a key already issued runs out on its own.

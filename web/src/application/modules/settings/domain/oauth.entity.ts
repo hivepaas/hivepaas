@@ -13,5 +13,7 @@ export interface SettingOAuth extends SettingsBaseEntity {
     profileURL?: string;
     autoDiscoveryURL?: string;
     scopes?: string[];
+    /** OpenID Connect only: the provider's emails are taken as verified, without its email_verified. */
+    trustEmail?: boolean;
     secretMasked?: boolean;
 }

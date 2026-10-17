@@ -1,7 +1,9 @@
 import { GiteaIcon, GithubIcon, GitlabIcon, GoogleIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TriangleAlert } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { useSearchParams } from "react-router";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -15,9 +17,14 @@ import { Input } from "@/components/ui/input";
 
 import { SignInSchema, type SignInSchemaInput, type SignInSchemaOutput } from "../schemas";
 
+import { ssoErrorMessage } from "./sso-error";
+
 const DEV_SIGN_IN = { email: "tiendc@gmail.com", password: "abc123" };
 
 export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
+    const [params] = useSearchParams();
+    const ssoError = params.get("ssoError");
+
     const {
         handleSubmit,
         control,
@@ -78,6 +85,15 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                         }}
                     >
                         <FieldGroup>
+                            {ssoError && (
+                                <div
+                                    role="alert"
+                                    className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+                                >
+                                    <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                                    <span>{ssoErrorMessage(ssoError)}</span>
+                                </div>
+                            )}
                             <Field>
                                 <FieldLabel htmlFor="email">Username</FieldLabel>
                                 <Input

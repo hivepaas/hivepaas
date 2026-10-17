@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { OAuthCommands } from "~/settings/data/commands";
 import { OAuthQueries } from "~/settings/data/queries";
 import type { SettingOAuth } from "~/settings/domain";
-import { CreateOrEditOAuthForm } from "~/settings/module-shared/components/oauth-form";
+import { CreateOrEditOAuthForm, hasCustomURLs } from "~/settings/module-shared/components/oauth-form";
 import type {
     CreateOrEditOAuthFormInput,
     CreateOrEditOAuthFormOutput,
@@ -75,10 +75,12 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
             organization: values.organization,
             clientId: values.clientId,
             clientSecret: values.clientSecret,
-            authURL: values.authURL,
-            tokenURL: values.tokenURL,
-            profileURL: values.profileURL,
+            // Only a GitLab or Gitea of one's own is signed in with by its URLs.
+            authURL: hasCustomURLs(values.kind) ? values.authURL : "",
+            tokenURL: hasCustomURLs(values.kind) ? values.tokenURL : "",
+            profileURL: hasCustomURLs(values.kind) ? values.profileURL : "",
             autoDiscoveryURL: values.kind === EOAuthKind.OpenIDConnect ? values.autoDiscoveryURL : "",
+            trustEmail: values.kind === EOAuthKind.OpenIDConnect && values.trustEmail,
             scopes: values.scopes
                 .split(",")
                 .map(item => item.trim())
@@ -143,6 +145,7 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
               profileURL: activeOAuth.profileURL ?? "",
               autoDiscoveryURL: activeOAuth.autoDiscoveryURL ?? "",
               scopes: activeOAuth.scopes?.join(", ") ?? "",
+              trustEmail: activeOAuth.trustEmail ?? false,
               default: activeOAuth.default ?? false,
           }
         : undefined;

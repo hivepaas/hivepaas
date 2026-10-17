@@ -129,7 +129,7 @@ it is. It uses its own key pair, kept apart from the release keys:
   "installations": ["<swarm cluster ID>"],
   "issuedAt": "2026-11-01T00:00:00Z",
   "expiresAt": "2026-12-01T00:00:00Z",
-  "graceDays": 14,
+  "graceDays": 30,
   "trial": false
 }
 ```
@@ -146,12 +146,15 @@ it is. It uses its own key pair, kept apart from the release keys:
   up to **10 times in any 365 days**, and beyond that through support.
   - A move issues a key for the new ID and marks the old one superseded.
   - An online installation still on the old ID learns of the move at its next
-    refresh, and drops to Bee once the old key's grace runs out.
+    refresh, and keeps the old key for the key's grace counted from the move
+    (up to 30 days for a paid key), or until that key's own grace ends if that
+    is sooner. Then it drops to Bee.
   - An offline one keeps the old key until it expires. That is accepted: the
     limit on moves bounds it, and the gate is fair-use, not DRM.
 - **Validity.** A key holds from `issuedAt` to `expiresAt`, the end of the
-  period paid for. It then works for `graceDays` more, with a banner. After
-  that the installation is on Bee, which only stops creating.
+  period paid for. It then works for `graceDays` more, with a banner: 30 for
+  a paid key, 0 for a trial. After that the installation is on Bee, which only
+  stops creating.
 - **Offline renewal.** At every renewal the portal emails the new key and
   keeps it on the account. A yearly plan needs this once a year, a monthly plan
   once a month.
@@ -248,9 +251,10 @@ key like any other, so it works offline and needs no new path in HivePaaS.
   byte for byte by a test. A sandbox portal signs with the development key, so
   only a HivePaaS in development trusts what it issues; a live one with the
   production keys, and refuses to start with the development key.
-- **Grace and Paddle's retries.** The 14 days of grace cover Paddle's retries
-  of a failed renewal only while its payment recovery runs 14 days or less:
-  set it so in live, or raise the grace.
+- **Grace and Paddle's retries.** A paid key's 30 days of grace cover Paddle's
+  retries of a failed renewal, which its payment recovery spreads over 30 days
+  by default. Keep payment recovery at 30 days or less in live, or raise the
+  grace.
 - **Refunds.** Paddle handles them, as merchant of record: a full refund on
   request within 14 days of a payment, asked for through Paddle (paddle.net),
   never by email to HivePaaS, so that nothing waits on a person answering

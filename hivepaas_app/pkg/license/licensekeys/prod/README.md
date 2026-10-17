@@ -36,6 +36,10 @@ never updates keeps the keys it has. So:
    `TestProductionKeysShipped` holds the release until the two agree.
 2. Only once that release is widely installed, let the portal sign with the new
    pair. A key signed by it is refused by every binary built before step 1.
+   The portal keeps a copy of these public keys (`pkg/licensesig/prodkeys/` in
+   hivepaas-portal) and refuses to start with a signing key that is not the
+   private half of one of them, so copy the new `.pub.pem` files there first;
+   its weekly `license-keys` workflow fails until the copies match these.
 3. Remove the old pair's files, and its entries in `productionKeys`, only when
    no key it signed is still in force: a yearly key holds for a year and its
    grace days after it is issued.

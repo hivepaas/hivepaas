@@ -253,9 +253,10 @@ Work on a branch per repository, in a worktree.
   node and its architecture.
 - `artifactservice.EnsureOnNode` reads the architecture from `NodeInspect` and asks
   the mirror for `<HP_ARTIFACTS_MIRROR>/<sha256>`.
-- `artifact.pb.go` was generated in the `hivepaas-devtools` image, which has protoc
-  6.31.1. Its header says so, unlike the other protos' 7.35.1. The code generated is
-  the same, and the other protos were not regenerated.
+- The protos are generated with protoc 35.1 (`v7.35.1` in their headers),
+  `protoc-gen-go` v1.36.12 and `protoc-gen-go-grpc` v1.6.2, installed locally. The
+  `hivepaas-devtools` image has protoc 31.1. Moving to a newer protoc waits until after
+  the release.
 
 - [x] **Step 1:** Write the tests:
   - a good file lands with mode 0755;

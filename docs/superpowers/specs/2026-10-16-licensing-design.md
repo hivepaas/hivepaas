@@ -254,12 +254,15 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 - **Refunds.** Paddle handles them, as merchant of record: a full refund on
   request within 14 days of a payment, asked for through Paddle (paddle.net),
   never by email to HivePaaS, so that nothing waits on a person answering
-  mail. When a payment of a license is refunded in full (an `adjustment`
-  with action `refund`, status `approved`, for the whole amount), the portal
-  revokes the license by itself: no further keys, and the key already issued
-  runs out on its own, as an offline key cannot be revoked. Partial refunds
-  and credits change nothing. The live webhook destination subscribes to the
-  adjustment events for this.
+  mail. When a payment for a period - the first one or a renewal - is
+  refunded in full (an `adjustment` with action `refund`, status `approved`,
+  for the whole amount), the portal revokes the license by itself, issuing no
+  further keys, and cancels the subscription at once, so nothing more is
+  charged; the key already issued runs out on its own, as an offline key
+  cannot be revoked. Partial refunds, credits, and refunds of a plan change's
+  charge, a one-time charge or a payment-method change change nothing:
+  staff decide. The live webhook destination subscribes to the adjustment
+  events for this.
 
 ## In HivePaaS
 

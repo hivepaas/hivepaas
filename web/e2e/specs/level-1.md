@@ -5,6 +5,8 @@ removed by `cleanup()`; the screens are for the flow under test. Nothing here
 makes a container, but it writes: run it on an installation that is there to go.
 Settings are the installation's own - those tests run one at a time and put
 back what they found.
+The license is too, and none of these changes it: the keys they paste are
+refused. The tests that put other keys in force are level 2's (2.133-2.136).
 
 | #    | Scenario                                                                                                                           | Test                                   |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
@@ -28,6 +30,9 @@ back what they found.
 | 1.16 | A member's audit log of the project shows no other project's entries, nor another env's, whatever its filters say                  | `tests/level-1/permissions.spec.ts`    |
 | 1.17 | A member's API key reaches what the member does as they are: moved, it follows; disabled, refused; no capability they lack         | `tests/level-1/permissions.spec.ts`    |
 | 1.18 | A member whose access expires is refused at the next request, though signed in, and cannot sign in again                           | `tests/level-1/permissions.spec.ts`    |
+| 1.19 | System › License shows the Colony development key, Upgrade for this installation, each limit's usage; the installation ID copied   | `tests/level-1/license.spec.ts`        |
+| 1.20 | Check for a newer key, the portal unreachable: an error toast says so, and so does the last check                                  | `tests/level-1/license.spec.ts`        |
+| 1.21 | A text that is not a key, and another installation's key (naming this installation's ID), refused by the box; the key stays        | `tests/level-1/license.spec.ts`        |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)

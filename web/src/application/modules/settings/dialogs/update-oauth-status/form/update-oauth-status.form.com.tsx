@@ -1,7 +1,14 @@
+import { useId } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
+import {
+    OAUTH_ENABLE_NEEDS_PAID_PLAN,
+    OAUTH_KEPT_ON_BEE_NOTE,
+    PaidPlanUpgradeLink,
+} from "~/settings/module-shared/components/oauth-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
@@ -12,6 +19,7 @@ import {
     DialogActionFooter,
     DialogBody,
     Field,
+    FieldDescription,
     FieldError,
     FieldGroup,
     Tabs,
@@ -37,9 +45,14 @@ export function UpdateOAuthStatusForm({
     initialValues,
     onHasChanges,
     readOnly = false,
+    canEnable = true,
+    canEnableAgain = true,
+    pricingUrl,
     onClose,
 }: Props) {
     const isReadOnly = readOnly;
+    const statusNoteId = useId();
+    const statusNote = statusNoteOf(canEnable, canEnableAgain);
 
     const {
         handleSubmit,
@@ -47,7 +60,12 @@ export function UpdateOAuthStatusForm({
         formState: { errors },
     } = useForm<UpdateOAuthStatusFormInput, unknown, UpdateOAuthStatusFormOutput>({
         defaultValues: {
-            status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+            // Never Active when it can't be chosen: a pending or expired provider
+            // the plan holds back starts on Disabled, the one status it can take.
+            status:
+                initialValues?.status === ESettingStatus.Disabled || !canEnable
+                    ? ESettingStatus.Disabled
+                    : ESettingStatus.Active,
             expireAt: initialValues?.expireAt ?? undefined,
             default: initialValues?.default ?? false,
         },
@@ -100,23 +118,31 @@ export function UpdateOAuthStatusForm({
                                 title="Status"
                                 titleWidth={160}
                             >
-                                <Tabs
-                                    value={status.value}
-                                    onValueChange={value => {
-                                        status.onChange(value);
-                                    }}
-                                >
-                                    <TabsList>
-                                        {Object.entries(statusMap).map(([value, label]) => (
-                                            <TabsTrigger
-                                                key={value}
-                                                value={value}
-                                            >
-                                                {label}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                </Tabs>
+                                <div className="flex flex-col gap-2">
+                                    <Tabs
+                                        value={status.value}
+                                        onValueChange={value => {
+                                            status.onChange(value);
+                                        }}
+                                    >
+                                        <TabsList aria-describedby={statusNote ? statusNoteId : undefined}>
+                                            {Object.entries(statusMap).map(([value, label]) => (
+                                                <TabsTrigger
+                                                    key={value}
+                                                    value={value}
+                                                    disabled={value === ESettingStatus.Active && !canEnable}
+                                                >
+                                                    {label}
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                    </Tabs>
+                                    {statusNote && (
+                                        <FieldDescription id={statusNoteId}>
+                                            {statusNote} <PaidPlanUpgradeLink pricingUrl={pricingUrl} />
+                                        </FieldDescription>
+                                    )}
+                                </div>
                             </InfoBlock>
                         </Field>
 
@@ -191,5 +217,29 @@ interface Props {
     initialValues?: Partial<UpdateOAuthStatusFormInput>;
     onHasChanges?: (dirty: boolean) => void;
     readOnly?: boolean;
+    /**
+     * Whether it can be made active. Not a Google, Microsoft or OpenID Connect
+     * provider that is not active on Bee: enabling one needs a paid plan.
+     */
+    canEnable?: boolean;
+    /**
+     * Whether, once disabled, it could be enabled again. Not a Google, Microsoft
+     * or OpenID Connect provider on Bee, which keeps one that is active.
+     */
+    canEnableAgain?: boolean;
+    /** Where a paid plan is bought, for an Upgrade link. No link when empty. */
+    pricingUrl?: string;
     onClose?: () => void;
+}
+
+/** What is said under the status of a provider the plan in force holds back. */
+function statusNoteOf(canEnable: boolean, canEnableAgain: boolean): string | null {
+    if (!canEnable) {
+        return OAUTH_ENABLE_NEEDS_PAID_PLAN;
+    }
+    if (!canEnableAgain) {
+        return OAUTH_KEPT_ON_BEE_NOTE;
+    }
+
+    return null;
 }

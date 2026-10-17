@@ -2,7 +2,7 @@ import { type PropsWithChildren, useEffect } from "react";
 
 import { LogoIcon } from "@/assets/icons";
 
-import { WeakAccountSecurityWarning } from "@application/shared/components";
+import { LicenseBanners, WeakAccountSecurityWarning } from "@application/shared/components";
 import { useF2aSetupDialogState, useMfaSetupRequiredDialogState } from "@application/shared/dialogs";
 
 import { useAuthContext } from "@application/authentication/context";
@@ -48,10 +48,11 @@ export function ModuleLayout({ children }: PropsWithChildren) {
                 </header>
 
                 <div className="flex flex-1 flex-col gap-2 sm:gap-4 p-2 sm:p-4 bg-canvas">
-                    {/* Above the page, not inside it: the account it is about is the
-                        one signed in, so it has nothing to do with whichever page
-                        happens to be open. */}
+                    {/* Above the page, not inside it: what these are about - the
+                        account signed in, the installation's license - has nothing
+                        to do with whichever page happens to be open. */}
                     <WeakAccountSecurityWarning />
+                    <LicenseBanners />
                     {children}
                 </div>
             </SidebarInset>

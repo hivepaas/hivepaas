@@ -69,6 +69,7 @@ const PAGES: [path: string, heading: string][] = [
     ["/system/hivepaas/routing-settings/", "HivePaaS"],
     ["/system/hivepaas/security/", "HivePaaS"],
     ["/system/hivepaas/updates/", "HivePaaS"],
+    ["/system/license/overview/", "License"],
     ["/system/logging/configuration/", "Logging"],
     ["/system/logging/routes-and-calls/", "Logging"],
     ["/system/registry/configuration/", "Registry"],

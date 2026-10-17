@@ -114,6 +114,44 @@ export const systemSettingsRouter: RouteObject = {
         },
         {
             lazy: async () => {
+                const { LicenseLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="License">
+                                <LicenseLayout>
+                                    <Outlet />
+                                </LicenseLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.license.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.license.overview.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "overview",
+                    lazy: async () => {
+                        const { SystemSettingsLicenseRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsLicenseRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { TraefikLayout } = await getLazyComponents();
 
                 return {

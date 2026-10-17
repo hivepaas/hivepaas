@@ -14,9 +14,11 @@ import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
-import { EOAuthKind } from "@application/shared/enums";
+import { EOAuthKind, ESettingStatus } from "@application/shared/enums";
+import { useReadableLicense } from "@application/shared/hooks";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
+import { paidSignInAllowed } from "@application/shared/utils";
 
 import { RevealSecretsProvider } from "@/components/ui/input-password";
 
@@ -30,6 +32,11 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
     const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
     const { navigate } = useAppNavigate();
+    // Marked only when the plan is known to be Bee. Unknown - no read of System,
+    // or the license still loading or failed - marks nothing, and the server's
+    // refusal opens the plan-limit dialog instead.
+    const { license } = useReadableLicense();
+    const paidKindsUnavailable = paidSignInAllowed(license) === false;
 
     const isEditMode = mode === "edit";
     const detailId = isEditMode ? (oauthId ?? "") : "";
@@ -182,6 +189,9 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
                         initialValues={initialValues}
                         disableProvider={isEditMode}
                         readOnly={!canWrite}
+                        paidKindsUnavailable={paidKindsUnavailable}
+                        pricingUrl={license?.portal?.pricingUrl}
+                        isActive={activeOAuth?.status === ESettingStatus.Active}
                         onClose={handleClose}
                     />
                 </RevealSecretsProvider>

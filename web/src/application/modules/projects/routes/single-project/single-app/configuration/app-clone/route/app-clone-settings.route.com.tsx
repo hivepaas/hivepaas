@@ -9,6 +9,7 @@ import { ProjectPermissionSubmitButton, ProjectPermissionTooltipAction } from "~
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
+import { isPlanLimitReached } from "@application/shared/dialogs";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
 
@@ -85,6 +86,12 @@ export function AppCloneSettingsRoute() {
             }
         },
         onError: err => {
+            // The hook's notifyError has opened the plan-limit dialog, which says
+            // it all: a toast would say it again.
+            if (isPlanLimitReached(err)) {
+                return;
+            }
+
             if (err instanceof Error) {
                 toast.error(err.message);
             } else {

@@ -11,7 +11,8 @@ export interface Project {
     envs?: { name: string }[];
 }
 
-async function ok(res: APIResponse, doing: string): Promise<unknown> {
+// ok is the answer's body, parsed, once it is checked to be a success.
+export async function ok(res: APIResponse, doing: string): Promise<unknown> {
     expect(res.ok(), `${doing}: ${res.status()} ${await res.text()}`).toBe(true);
     const body = (await res.text()).trim();
     return body === "" ? undefined : (JSON.parse(body) as unknown);

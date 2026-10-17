@@ -1,21 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { EOAuthKind } from "@application/shared/enums";
+import { isPaidSignInKind } from "@application/shared/utils";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import { Button, Checkbox, Field, FieldDescription, FieldError, FieldGroup, Input } from "@/components/ui";
 
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
 import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type { CreateOrEditOAuthFormInput, CreateOrEditOAuthFormOutput } from "./create-or-edit-oauth.form.schema";
 import { CreateOrEditOAuthFormSchema } from "./create-or-edit-oauth.form.schema";
+import { OAUTH_KEPT_ON_BEE_NOTE, OAUTH_UNAVAILABLE_ON_BEE_NOTE, PaidPlanUpgradeLink } from "./oauth-on-bee.com";
 
 const providerOptions = [
     { value: EOAuthKind.Github, label: "Github" },
@@ -34,9 +38,13 @@ export function CreateOrEditOAuthForm({
     initialValues,
     disableProvider,
     readOnly = false,
+    paidKindsUnavailable = false,
+    pricingUrl,
+    isActive = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnly;
+    const paidKindsNoteId = useId();
 
     const {
         handleSubmit,
@@ -77,6 +85,11 @@ export function CreateOrEditOAuthForm({
 
     const currentProvider = useWatch({ control, name: "kind" });
     const showAutoDiscoveryURL = currentProvider === EOAuthKind.OpenIDConnect;
+    // On Bee the paid kinds can't be picked, wherever a kind is picked. One that
+    // exists stays editable - its secret may need replacing - and says what Bee
+    // leaves it.
+    const marksPaidKinds = paidKindsUnavailable && !disableProvider;
+    const isPaidProviderOnBee = paidKindsUnavailable && disableProvider && isPaidSignInKind(currentProvider);
 
     const {
         field: name,
@@ -142,6 +155,12 @@ export function CreateOrEditOAuthForm({
         >
             <div className="">
                 {isReadOnly && <PermissionReadonlyNotice />}
+                {isPaidProviderOnBee && (
+                    <div className={cn(dashedBorderBox, "mb-4")}>
+                        {isActive ? OAUTH_KEPT_ON_BEE_NOTE : OAUTH_UNAVAILABLE_ON_BEE_NOTE}{" "}
+                        <PaidPlanUpgradeLink pricingUrl={pricingUrl} />
+                    </div>
+                )}
                 <fieldset
                     disabled={isReadOnly}
                     className={`flex flex-col gap-6 border-0 p-0 m-0 min-w-0 ${SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS}`}
@@ -177,20 +196,34 @@ export function CreateOrEditOAuthForm({
                                     onValueChange={kind.onChange}
                                     disabled={disableProvider || isReadOnly}
                                 >
-                                    <SelectTrigger aria-invalid={isKindInvalid}>
+                                    <SelectTrigger
+                                        aria-invalid={isKindInvalid}
+                                        aria-describedby={marksPaidKinds ? paidKindsNoteId : undefined}
+                                    >
                                         <SelectValue placeholder="Select provider" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {providerOptions.map(option => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
+                                        {providerOptions.map(option => {
+                                            const isUnavailable = marksPaidKinds && isPaidSignInKind(option.value);
+
+                                            return (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                    disabled={isUnavailable}
+                                                >
+                                                    {isUnavailable ? `${option.label} · paid plan` : option.label}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
+                                {marksPaidKinds && (
+                                    <FieldDescription id={paidKindsNoteId}>
+                                        Google, Microsoft Online and OpenID Connect sign-in need a paid plan: this
+                                        installation is on Bee. <PaidPlanUpgradeLink pricingUrl={pricingUrl} />
+                                    </FieldDescription>
+                                )}
                                 <FieldError errors={[errors.kind]} />
                             </Field>
                         </FieldGroup>
@@ -386,5 +419,14 @@ interface Props {
     initialValues?: Partial<CreateOrEditOAuthFormInput>;
     disableProvider: boolean;
     readOnly?: boolean;
+    /**
+     * The plan in force allows no Google, Microsoft Online or OpenID Connect
+     * provider to be added or enabled: Bee. False when that is not known.
+     */
+    paidKindsUnavailable?: boolean;
+    /** Where a paid plan is bought, for an Upgrade link. No link when empty. */
+    pricingUrl?: string;
+    /** The provider being edited is active. */
+    isActive?: boolean;
     onClose?: () => void;
 }

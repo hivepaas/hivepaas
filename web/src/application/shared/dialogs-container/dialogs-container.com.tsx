@@ -8,6 +8,7 @@ import {
     F2aSetupDialog,
     GlobalAlertDialog,
     MfaSetupRequiredDialog,
+    PlanLimitReachedDialog,
     SettingInUseDialog,
     UpdateApiKeyStatusDialog,
     useChangePasswordDialogState,
@@ -15,6 +16,7 @@ import {
     useF2aSetupDialogState,
     useGlobalAlertDialogState,
     useMfaSetupRequiredDialogState,
+    usePlanLimitReachedDialogState,
     useSettingInUseDialogState,
     useUpdateApiKeyStatusDialogState,
 } from "@application/shared/dialogs";
@@ -30,6 +32,7 @@ function View() {
     const updateApiKeyStatusDialog = useUpdateApiKeyStatusDialogState();
     const globalAlertDialog = useGlobalAlertDialogState();
     const settingInUseDialog = useSettingInUseDialogState();
+    const planLimitReachedDialog = usePlanLimitReachedDialogState();
 
     useUpdateEffect(() => {
         changePasswordDialog.destroy();
@@ -37,6 +40,7 @@ function View() {
         updateApiKeyStatusDialog.destroy();
         globalAlertDialog.destroy();
         settingInUseDialog.destroy();
+        planLimitReachedDialog.destroy();
 
         // Keep enforced MFA dialogs open across route changes so the user cannot escape setup.
         const authData = useAuthContext.getState().data;
@@ -56,6 +60,7 @@ function View() {
             <UpdateApiKeyStatusDialog />
             <GlobalAlertDialog />
             <SettingInUseDialog />
+            <PlanLimitReachedDialog />
             {/* TODO: Add other dialogs here */}
         </>
     );

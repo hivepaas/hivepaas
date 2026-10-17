@@ -4,9 +4,20 @@ import { format } from "date-fns";
 import type { SettingOAuth } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
-import { OAuthEditCell, OAuthMenuCell } from "./building-blocks";
+import { ESettingStatus } from "@application/shared/enums";
+import { isPaidSignInKind } from "@application/shared/utils";
 
-function createColumns(): ColumnDef<SettingOAuth>[] {
+import { OAuthEditCell, OAuthMenuCell, OAuthOnBeeBadge } from "./building-blocks";
+
+interface ColumnsOptions {
+    /**
+     * The plan in force allows no Google, Microsoft or OpenID Connect provider to
+     * be added or enabled: Bee. Those there are say what Bee leaves them.
+     */
+    paidKindsUnavailable: boolean;
+}
+
+function createColumns({ paidKindsUnavailable }: ColumnsOptions): ColumnDef<SettingOAuth>[] {
     return [
         {
             id: "view",
@@ -28,7 +39,15 @@ function createColumns(): ColumnDef<SettingOAuth>[] {
             header: "Provider",
             cell: ({ row: { original } }) => {
                 if (!original.kind) return "-";
-                return <Badge tone="sky">{original.kind}</Badge>;
+                if (!paidKindsUnavailable || !isPaidSignInKind(original.kind)) {
+                    return <Badge tone="sky">{original.kind}</Badge>;
+                }
+                return (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge tone="sky">{original.kind}</Badge>
+                        <OAuthOnBeeBadge isActive={original.status === ESettingStatus.Active} />
+                    </div>
+                );
             },
         },
         {

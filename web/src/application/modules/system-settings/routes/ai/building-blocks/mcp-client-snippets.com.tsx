@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { CopyField } from "~/system-settings/module-shared";
+
 import {
     Select,
     SelectContent,
@@ -11,8 +13,6 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui";
-
-import { CopyField } from "./copy-field.com";
 
 /**
  * How each MCP client is pointed at the server with an API key. The server is

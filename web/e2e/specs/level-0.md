@@ -3,18 +3,26 @@
 Nothing is written but sessions. Runs anywhere, with an admin account: an
 account with less sees fewer pages.
 
-| #   | Scenario                                                                                                   | Expected                                                                                                | Test                                   |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 0.1 | Sign in with a username and password; an unknown user; a saved session                                     | Home, "Welcome back"; "Email or password is incorrect" on the sign-in page; Home at once                | `tests/level-0/sign-in.spec.ts`        |
-| 0.2 | Open every page the sidebar reaches                                                                        | Its heading; its own address; no error toast, no console error, no API call refused (4xx/5xx)           | `tests/level-0/pages.spec.ts`          |
-| 0.3 | Log out from the user menu, then open Home                                                                 | The sign-in page, both times                                                                            | `tests/level-0/session.spec.ts`        |
-| 0.4 | Open an address that does not exist                                                                        | "Sorry, the page not found", with "Back to application"                                                 | `tests/level-0/session.spec.ts`        |
-| 0.5 | Follow View System Apps from System › HivePaaS › Actions                                                   | The warning about changing them; the HivePaaS project's apps, traefik and worker among them             | `tests/level-0/system-apps.spec.ts`    |
-| 0.6 | Order the template store A–Z, Popular, Trending, New; then search                                          | A–Z first; each order the cards the API lists for it; a search keeps the order chosen                   | `tests/level-0/template-store.spec.ts` |
-| 0.7 | Open every tab and setting of an app, every page of a project - the HivePaaS project's Traefik, read only  | The app's or the project's name; its own address; no error toast, no console error, no API call refused | `tests/level-0/project-pages.spec.ts`  |
-| 0.8 | Check 21 pages of every kind - lists, forms, settings, an app's tabs - with axe, against WCAG 2.1 A and AA | No rule broken but those known not passed yet                                                           | `tests/level-0/accessibility.spec.ts`  |
+| #   | Scenario                                                                                                   | Expected                                                                                                | Test                                    |
+| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| 0.1 | Sign in with a username and password; an unknown user; a saved session                                     | Home, "Welcome back"; "Email or password is incorrect" on the sign-in page; Home at once                | `tests/level-0/sign-in.spec.ts`         |
+| 0.2 | Open every page the sidebar reaches                                                                        | Its heading; its own address; no error toast, no console error, no API call refused (4xx/5xx)           | `tests/level-0/pages.spec.ts`           |
+| 0.3 | Log out from the user menu, then open Home                                                                 | The sign-in page, both times                                                                            | `tests/level-0/session.spec.ts`         |
+| 0.4 | Open an address that does not exist                                                                        | "Sorry, the page not found", with "Back to application"                                                 | `tests/level-0/session.spec.ts`         |
+| 0.5 | Follow View System Apps from System › HivePaaS › Actions                                                   | The warning about changing them; the HivePaaS project's apps, traefik and worker among them             | `tests/level-0/system-apps.spec.ts`     |
+| 0.6 | Order the template store A–Z, Popular, Trending, New; then search                                          | A–Z first; each order the cards the API lists for it; a search keeps the order chosen                   | `tests/level-0/template-store.spec.ts`  |
+| 0.7 | Open every tab and setting of an app, every page of a project - the HivePaaS project's Traefik, read only  | The app's or the project's name; its own address; no error toast, no console error, no API call refused | `tests/level-0/project-pages.spec.ts`   |
+| 0.8 | Check 22 pages of every kind - lists, forms, settings, an app's tabs - with axe, against WCAG 2.1 A and AA | No rule broken but those known not passed yet                                                           | `tests/level-0/accessibility.spec.ts`   |
+| 0.9 | A license the installation cannot be put in, answered by the test; the refusals 2.135 does not meet        | Each one's banner, badge, sentence, details; a trial offered with no key; the dialog's words; no toast  | `tests/level-0/license-display.spec.ts` |
 
 A page added to the dashboard is added to the list in `pages.spec.ts`.
+
+0.9 is the one test of the suite that answers for the API (`page.route`), and
+only for what the throwaway installation cannot be put in: no key, a key the
+portal moved, another installation's key, one that does not verify, and the
+plan-limit dialog's words for users, functions, previews, paid sign-in, a kind
+left out or unknown. A trial, a grace period, a key that ran out, a limit
+passed and the refusals that follow are put in force for real (2.133-2.136).
 
 An app's or a project's page added to the dashboard is added to the lists in
 `project-pages.spec.ts`; one of a new kind, to those of `accessibility.spec.ts`.

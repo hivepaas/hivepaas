@@ -5,9 +5,11 @@ import { OAuthQueries } from "~/settings/data/queries";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useReadableLicense } from "@application/shared/hooks";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
+import { paidSignInAllowed } from "@application/shared/utils";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -20,7 +22,11 @@ export function SettingsOAuthTable() {
     const { data: { data: oauthItems, meta } = DEFAULT_PAGINATED_DATA, isFetching } = OAuthQueries.useFindManyPaginated(
         { pagination, sorting, search },
     );
-    const columns = useMemo(() => OAuthTableDefs.columns(), []);
+    // Marked only when the plan is known to be Bee. "New OAuth" stays enabled
+    // there: the providers that are not paid can still be added.
+    const { license } = useReadableLicense();
+    const paidKindsUnavailable = paidSignInAllowed(license) === false;
+    const columns = useMemo(() => OAuthTableDefs.columns({ paidKindsUnavailable }), [paidKindsUnavailable]);
 
     return (
         <div className="flex flex-col gap-4">

@@ -3,7 +3,11 @@ import { useCallback } from "react";
 
 import { type ExternalToast, toast } from "sonner";
 
-import { useGlobalAlertDialog, useSettingInUseDialogState } from "@application/shared/dialogs";
+import {
+    openPlanLimitReachedDialog,
+    useGlobalAlertDialog,
+    useSettingInUseDialogState,
+} from "@application/shared/dialogs";
 
 import {
     isCancelException,
@@ -38,6 +42,16 @@ function createHook() {
         const notifyError = useCallback(
             ({ message, error, status = "error", options = {} }: Params) => {
                 if (isCancelException(error)) {
+                    return;
+                }
+
+                // A creation the plan in force does not allow: the plan-limit
+                // dialog says which limit it reached and how to get past it, in
+                // place of a toast. Handled here, like ERR_SETTING_IN_USE below,
+                // because around a dozen creation hooks - apps, functions,
+                // previews, clones, users, nodes, sign-in providers - funnel their
+                // failures through this one function.
+                if (openPlanLimitReachedDialog(error)) {
                     return;
                 }
 

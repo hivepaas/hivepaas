@@ -5,7 +5,8 @@ import { create } from "zustand";
 const KEY = "2fa-authentication";
 
 const Schema = z.object({
-    email: z.string().trim().nonempty(),
+    // Empty after a sign-in with a provider: nothing was typed to show.
+    email: z.string().trim(),
     mfaToken: z.string().trim().nonempty(),
     required2FA: z.literal(true),
 });

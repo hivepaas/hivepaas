@@ -2,13 +2,16 @@ package sessionuc
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
@@ -22,13 +25,28 @@ func (uc *UC) CreateOAuthSession(
 	req *sessiondto.CreateOAuthSessionReq,
 ) (*sessiondto.CreateOAuthSessionResp, error) {
 	oauthUser := req.User
-	email := oauthUser.Email
-	if email == "" {
-		return nil, hperrors.Wrap(hperrors.ErrOAuthUserEmailNotReturned)
+	setting, oauth, err := uc.loadSSOSetting(ctx, oauthUser.Provider)
+	if err != nil {
+		return nil, err
+	}
+	email, err := uc.verifiedOAuthEmail(ctx, base.OAuthKind(setting.Kind), oauth, oauthUser)
+	if err != nil {
+		if errors.Is(err, hperrors.ErrOAuthEmailNotVerified) {
+			if e := uc.recordUnverifiedOAuthEmail(ctx, oauthUser.Email); e != nil {
+				return nil, e
+			}
+		}
+		return nil, err
 	}
 
 	dbUser, err := uc.userRepo.GetByEmail(ctx, uc.db, email)
 	if err != nil {
+		if errors.Is(err, hperrors.ErrNotFound) {
+			if e := uc.recordLoginDenied(ctx, nil, auditMethodOAuth, auditReasonUnknownUser); e != nil {
+				return nil, e
+			}
+			return nil, hperrors.Wrap(hperrors.ErrOAuthUserNotFound).WithCause(err)
+		}
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -65,4 +83,18 @@ func (uc *UC) CreateOAuthSession(
 	return &sessiondto.CreateOAuthSessionResp{
 		BaseCreateSessionResp: *sessionResp,
 	}, nil
+}
+
+// recordUnverifiedOAuthEmail records a sign-in refused for an email the provider does not vouch for against the user
+// who has it, if one does: somebody may have typed that user's address into a profile to sign in as them.
+func (uc *UC) recordUnverifiedOAuthEmail(ctx context.Context, email string) error {
+	var user *entity.User
+	if email = strutil.NormalizeEmail(email); email != "" {
+		found, err := uc.userRepo.GetByEmail(ctx, uc.db, email)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
+		}
+		user = found
+	}
+	return uc.recordLoginDenied(ctx, user, auditMethodOAuth, auditReasonEmailNotVerified)
 }

@@ -29,6 +29,9 @@ type OAuth struct {
 	ProfileURL       string         `json:"profileURL,omitempty"`
 	AutoDiscoveryURL string         `json:"autoDiscoveryURL,omitempty"`
 	Scopes           []string       `json:"scopes,omitempty"`
+	// TrustEmail has a sign-in with an OpenID Connect provider take the email it gives as the person's own, whether
+	// or not it says email_verified: for an identity provider whose users and their emails the administrator manages.
+	TrustEmail bool `json:"trustEmail,omitempty"`
 }
 
 func (s *OAuth) GetType() base.SettingType {

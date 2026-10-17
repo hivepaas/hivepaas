@@ -1,5 +1,5 @@
 {
-  "level": 2,
+  "level": 3,
   "operations": {
     "DELETE /cluster/networks/{itemID}": "70b4e9a12bfd331f394ed35d25b5e2e15cff8d9d0d40030d079a3f18727af7a8",
     "DELETE /cluster/nodes/{itemID}": "70b4e9a12bfd331f394ed35d25b5e2e15cff8d9d0d40030d079a3f18727af7a8",
@@ -238,7 +238,7 @@
     "POST /settings/image-build-settings/repo-cache/clear": "aaafd60fcd0b393f85d75af7add47282b8ef14246f0be195105eb5c4e2e74a80",
     "POST /settings/key-auth": "9391b707dd982806c8b4aacf43cac61afc7398665e346e461ca1f83ce65eb144",
     "POST /settings/notifications": "482394886976a1976700616c6bd8ab982a6450bef25ce57112c29a2557e4f180",
-    "POST /settings/oauth": "989c4d778d13d134ab7b8ede087c4f19b79647321ca4ae593efaf347add52ff8",
+    "POST /settings/oauth": "84d1adf23616cf301125324d849c5002a2c9e135ea966e461d862fb04ad80862",
     "POST /settings/registry-auth": "a176fc420a3dd5b272bbd8249ee7f4edd402e474a698a09a948f22a852a28f2f",
     "POST /settings/registry-auth/test-conn": "b2558ac901e88660572251f0cfe3d213efcd9ab5d014d3cb8bee2ceaa8df9389",
     "POST /settings/repo-webhooks": "4d88aa34b52c6bfa205d4c5e91831d6c4b961911c7d65d757ae393bc1108653e",
@@ -449,7 +449,7 @@
     "PUT /settings/key-auth/{itemID}/status": "a9110e0aea7df9f30766c86b062da4a7c5026b61d7231653ef5aeaec0cf9c4ae",
     "PUT /settings/notifications/{itemID}": "a9fcffa4c44c8ca14400450103404d92b77b37920ca3cf93de4fa651ba3bda80",
     "PUT /settings/notifications/{itemID}/status": "a9110e0aea7df9f30766c86b062da4a7c5026b61d7231653ef5aeaec0cf9c4ae",
-    "PUT /settings/oauth/{itemID}": "23131e024fb64043bba752f20401727555771468fa3d2c6c64a8c3496b151162",
+    "PUT /settings/oauth/{itemID}": "0bd90782a38baf0244095c265ce86dc452cf29102770983f49869f27ddae48e3",
     "PUT /settings/oauth/{itemID}/status": "a9110e0aea7df9f30766c86b062da4a7c5026b61d7231653ef5aeaec0cf9c4ae",
     "PUT /settings/registry-auth/{itemID}": "8e2532ac74e2628a664620eeb6349a848a19823f45c942dcb94be673fb6f8bf7",
     "PUT /settings/registry-auth/{itemID}/status": "a9110e0aea7df9f30766c86b062da4a7c5026b61d7231653ef5aeaec0cf9c4ae",

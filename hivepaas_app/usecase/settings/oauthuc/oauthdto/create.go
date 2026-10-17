@@ -29,6 +29,8 @@ type OAuthBaseReq struct {
 	ProfileURL       string         `json:"profileURL"`
 	AutoDiscoveryURL string         `json:"autoDiscoveryURL"`
 	Scopes           []string       `json:"scopes"`
+	// TrustEmail, for an OpenID Connect provider only, takes the email it gives as verified without email_verified.
+	TrustEmail bool `json:"trustEmail"`
 }
 
 func (req *OAuthBaseReq) ToEntity() *entity.OAuth {
@@ -41,6 +43,7 @@ func (req *OAuthBaseReq) ToEntity() *entity.OAuth {
 		ProfileURL:       req.ProfileURL,
 		AutoDiscoveryURL: req.AutoDiscoveryURL,
 		Scopes:           req.Scopes,
+		TrustEmail:       req.TrustEmail,
 	}
 }
 
@@ -70,6 +73,9 @@ func (req *OAuthBaseReq) modifyRequest() error {
 	req.TokenURL = strings.TrimSpace(req.TokenURL)
 	req.ProfileURL = strings.TrimSpace(req.ProfileURL)
 	req.AutoDiscoveryURL = strings.TrimSpace(req.AutoDiscoveryURL)
+	// Only an OpenID Connect provider's emails can be trusted by the setting: every other kind tells verified ones
+	// apart by itself (see sessionuc.verifiedOAuthEmail).
+	req.TrustEmail = req.TrustEmail && req.Kind == base.OAuthKindOpenIDConnect
 	req.Scopes = strings.FieldsFunc(strings.Join(req.Scopes, ","), func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})
@@ -106,11 +112,14 @@ func (req *OAuthBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidatePlainSecret(&req.ClientSecret, field+"clientSecret")...)
 	res = append(res, basedto.ValidateStr(&req.Organization, false, base.IDMinLen,
 		base.IDMaxLen, field+"organization")...)
-	res = append(res, basedto.ValidateStr(&req.AuthURL, false, base.URLMinLen,
+	// A GitLab or Gitea of one's own is signed in with by its three URLs together: one alone would be ignored.
+	customURLs := (req.Kind == base.OAuthKindGitlab || req.Kind == base.OAuthKindGitea) &&
+		(req.AuthURL != "" || req.TokenURL != "" || req.ProfileURL != "")
+	res = append(res, basedto.ValidateStr(&req.AuthURL, customURLs, base.URLMinLen,
 		base.URLMaxLen, field+"authURL")...)
-	res = append(res, basedto.ValidateStr(&req.TokenURL, false, base.URLMinLen,
+	res = append(res, basedto.ValidateStr(&req.TokenURL, customURLs, base.URLMinLen,
 		base.URLMaxLen, field+"tokenURL")...)
-	res = append(res, basedto.ValidateStr(&req.ProfileURL, false, base.URLMinLen,
+	res = append(res, basedto.ValidateStr(&req.ProfileURL, customURLs, base.URLMinLen,
 		base.URLMaxLen, field+"profileURL")...)
 	res = append(res, basedto.ValidateStr(&req.AutoDiscoveryURL, false, base.URLMinLen,
 		base.URLMaxLen, field+"autoDiscoveryURL")...)

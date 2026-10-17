@@ -18,28 +18,26 @@ import (
 // @Produce json
 // @Id      ssoOAuthBegin
 // @Param   provider path string true "provider name"
-// @Success 302 "on success redirect to provider OAuth URL"
-// @Failure 400 {object} hperrors.ErrorInfo
-// @Failure 500 {object} hperrors.ErrorInfo
+// @Success 302 "redirect to the provider; on a failure, to the sign-in page with ssoError, the error's code"
 // @Security
 // @Router  /auth/sso/{provider} [get]
 func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 	provider, err := h.ParseStringParam(ctx, "provider")
 	if err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 
 	req := sessiondto.NewInitOAuthProviderReq()
 	req.Provider = provider
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 
 	err = h.sessionUC.InitOAuthProvider(ctx, req)
 	if err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 
@@ -56,9 +54,7 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 // @Produce json
 // @Id      ssoOAuthCallbackPost
 // @Param   provider path string true "provider name"
-// @Success 302 "on success redirect to the dashboard page"
-// @Failure 400 {object} hperrors.ErrorInfo
-// @Failure 500 {object} hperrors.ErrorInfo
+// @Success 302 "redirect to the dashboard; on a failure, to the sign-in page with ssoError, the error's code"
 // @Security
 // @Router  /auth/sso/callback/{provider} [post]
 //
@@ -75,15 +71,13 @@ func (h *Handler) SSOOAuthCallbackPost(ctx *gin.Context) {
 // @Produce json
 // @Id      ssoOAuthCallback
 // @Param   provider path string true "provider name"
-// @Success 302 "on success redirect to the dashboard page"
-// @Failure 400 {object} hperrors.ErrorInfo
-// @Failure 500 {object} hperrors.ErrorInfo
+// @Success 302 "redirect to the dashboard; on a failure, to the sign-in page with ssoError, the error's code"
 // @Security
 // @Router  /auth/sso/callback/{provider} [get]
 func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	provider, err := h.ParseStringParam(ctx, "provider")
 	if err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 
@@ -95,7 +89,7 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	// refuses: the sign-in is not completed, whichever it was.
 	oauthUser, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
-		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrUnauthorized).WithCause(err))
+		h.redirectSSOError(ctx, hperrors.Wrap(hperrors.ErrUnauthorized).WithCause(err))
 		return
 	}
 
@@ -103,12 +97,12 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	sessionReq := sessiondto.NewCreateOAuthSessionReq()
 	sessionReq.User = &oauthUser
 	if err = h.ParseAndValidateRequest(ctx, sessionReq, nil); err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 	sessionResp, err := h.sessionUC.CreateOAuthSession(h.RequestCtx(ctx), sessionReq)
 	if err != nil {
-		h.RenderError(ctx, err)
+		h.redirectSSOError(ctx, err)
 		return
 	}
 
@@ -118,4 +112,11 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 
 	// Redirect client to front-end page
 	ctx.Redirect(http.StatusFound, config.Current().DashboardSsoSuccessURL())
+}
+
+// redirectSSOError sends the browser back to the sign-in page, which says why the sign-in failed. Every step of a
+// sign-in with a provider is a page the browser opened, and an error written as JSON would leave the person on it.
+func (h *Handler) redirectSSOError(ctx *gin.Context, err error) {
+	errInfo := h.ErrorInfoOf(ctx, err)
+	ctx.Redirect(http.StatusFound, config.Current().DashboardSsoErrorURL(errInfo.Code))
 }

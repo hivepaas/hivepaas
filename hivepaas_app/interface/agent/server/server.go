@@ -6,6 +6,7 @@ import (
 
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/artifactagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
@@ -20,6 +21,7 @@ import (
 
 type AgentServer struct {
 	agentproto.UnimplementedAgentServiceServer
+	agentproto.UnimplementedArtifactServiceServer
 	agentproto.UnimplementedContainerServiceServer
 	agentproto.UnimplementedDockerAPIServiceServer
 	agentproto.UnimplementedFileServiceServer
@@ -31,6 +33,7 @@ type AgentServer struct {
 	agentproto.UnimplementedRepoServerServiceServer
 	agentproto.UnimplementedVolumeServiceServer
 	logger             logging.Logger
+	artifactAgentUC    *artifactagentuc.UC
 	containerAgentUC   *containeragentuc.UC
 	dockerAPIAgentUC   *dockerapiagentuc.UC
 	fileAgentUC        *fileagentuc.UC
@@ -45,6 +48,7 @@ type AgentServer struct {
 
 func NewAgentServer(
 	logger logging.Logger,
+	artifactAgentUC *artifactagentuc.UC,
 	containerAgentUC *containeragentuc.UC,
 	dockerAPIAgentUC *dockerapiagentuc.UC,
 	fileAgentUC *fileagentuc.UC,
@@ -59,6 +63,7 @@ func NewAgentServer(
 ) *AgentServer {
 	return &AgentServer{
 		logger:             logger,
+		artifactAgentUC:    artifactAgentUC,
 		containerAgentUC:   containerAgentUC,
 		dockerAPIAgentUC:   dockerAPIAgentUC,
 		fileAgentUC:        fileAgentUC,

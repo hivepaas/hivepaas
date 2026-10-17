@@ -243,7 +243,21 @@ Work on a branch per repository, in a worktree.
   - `hivepaas_app/config/`: `HP_ARTIFACTS_MIRROR` (base URL, optional) and the timeout.
 - Test: `artifactagentuc/ensure_test.go` against `httptest.Server`.
 
-- [ ] **Step 1:** Write the tests:
+**As built:**
+- The RPC is `ArtifactService.Ensure(EnsureArtifactReq) returns (EnsureArtifactResp)`.
+- The agent's `artifactagentuc.Ensure` checks a file already there once per agent
+  start. One that fails the check is removed and downloaded again.
+- Only the source's error is returned. A failed mirror is logged.
+- New errors: `ERR_ARTIFACT_INVALID`, `ERR_ARTIFACT_HASH_MISMATCH`,
+  `ERR_ARTIFACT_DOWNLOAD_FAILED` and `ERR_ARTIFACT_ARCH_UNSUPPORTED`, which names the
+  node and its architecture.
+- `artifactservice.EnsureOnNode` reads the architecture from `NodeInspect` and asks
+  the mirror for `<HP_ARTIFACTS_MIRROR>/<sha256>`.
+- `artifact.pb.go` was generated in the `hivepaas-devtools` image, which has protoc
+  6.31.1. Its header says so, unlike the other protos' 7.35.1. The code generated is
+  the same, and the other protos were not regenerated.
+
+- [x] **Step 1:** Write the tests:
   - a good file lands with mode 0755;
   - a wrong hash leaves no file and no temp file;
   - a connection cut halfway leaves nothing behind;
@@ -252,10 +266,10 @@ Work on a branch per repository, in a worktree.
   - a file already present is not downloaded again;
   - the mirror is tried first, and the source after the mirror fails;
   - an arch the template lacks is refused, naming the node and the arch.
-- [ ] **Step 2:** Watch them fail.
-- [ ] **Step 3:** Write the code, and generate the protos with `go generate ./hivepaas_app/interface/agent/proto/...`. The other protos are unchanged.
-- [ ] **Step 4:** Run the task's packages and the global checks.
-- [ ] **Step 5:** Commit: `feat(agent): ensure an artifact on a node by url and hash`.
+- [x] **Step 2:** Watch them fail.
+- [x] **Step 3:** Write the code, and generate the protos with `go generate ./hivepaas_app/interface/agent/proto/...`. The other protos are unchanged.
+- [x] **Step 4:** Run the task's packages and the global checks.
+- [x] **Step 5:** Commit: `feat(agent): ensure an artifact on a node by url and hash`.
 
 ## Task 4: An app can carry artifact mounts that HivePaaS owns
 

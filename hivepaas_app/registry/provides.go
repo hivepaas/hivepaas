@@ -58,6 +58,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/apptemplateserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice/artifactserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice/attentionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
@@ -212,6 +213,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/artifactagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
@@ -436,6 +438,7 @@ var Provides = []any{
 	attentionserviceimpl.New,
 	networkserviceimpl.New,
 	nodeexecserviceimpl.New,
+	artifactserviceimpl.New,
 	notificationserviceimpl.New,
 	placementserviceimpl.New,
 	projectserviceimpl.New,
@@ -516,5 +519,6 @@ var Provides = []any{
 	reposerveragentuc.New,
 	nodecleanupagentuc.New,
 	volumeagentuc.New,
+	artifactagentuc.New,
 	fileagentuc.New,
 }

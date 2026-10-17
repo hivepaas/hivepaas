@@ -25,6 +25,7 @@ func main() {
 		func(agentSrv *agentserver.AgentServer) internal.GrpcRegistrar {
 			return func(s *grpc.Server) {
 				agentproto.RegisterAgentServiceServer(s, agentSrv)
+				agentproto.RegisterArtifactServiceServer(s, agentSrv)
 				agentproto.RegisterContainerServiceServer(s, agentSrv)
 				agentproto.RegisterDockerAPIServiceServer(s, agentSrv)
 				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)

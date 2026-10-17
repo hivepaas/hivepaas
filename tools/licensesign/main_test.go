@@ -470,3 +470,46 @@ func mustIssue(t *testing.T, opts *issueOptions) *Payload {
 	}
 	return payload
 }
+
+// Every paid plan's key grants the features of the paid plans unless told
+// otherwise, and the app puts them in force.
+func TestIssueGrantsThePlansFeatures(t *testing.T) {
+	for _, plan := range []string{"comb", "hive", "colony"} {
+		opts := colonyOptions()
+		opts.plan = plan
+		if got := mustIssue(t, opts).Features; !slices.Equal(got, []string{"managed-databases"}) {
+			t.Fatalf("%s: features %v, want managed-databases", plan, got)
+		}
+	}
+	for flagged, want := range map[string][]string{
+		"plan": {"managed-databases"}, "none": nil, "managed-databases": {"managed-databases"},
+	} {
+		opts := colonyOptions()
+		opts.features = flagged
+		if got := mustIssue(t, opts).Features; !slices.Equal(got, want) {
+			t.Fatalf("-features %s: got %v, want %v", flagged, got, want)
+		}
+	}
+	for _, flagged := range []string{"quantum", "managed-databases,managed-databases"} {
+		opts := colonyOptions()
+		opts.features = flagged
+		if _, err := issuePayload(opts, testNow); err == nil {
+			t.Fatalf("-features %s: want a refusal", flagged)
+		}
+	}
+
+	text := issueToFile(t, devKeys(t), colonyOptions(), formatToken)
+	trust, err := licensekeys.Trusted(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	verified, err := license.Verify(trust, text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := license.Evaluate(&license.EvalInput{KeyText: text, Verified: verified,
+		InstallationID: "cluster-e2e", Now: testNow.Add(time.Hour)})
+	if !state.Grants("managed-databases") {
+		t.Fatalf("the app grants %v, want managed-databases", state.Features)
+	}
+}

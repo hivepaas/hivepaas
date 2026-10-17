@@ -197,7 +197,20 @@ Work on a branch per repository, in a worktree.
 - Test: `pkg/license/evaluate_test.go`, `licenseserviceimpl/check_test.go` and
   `apptemplateuc/app_create_from_template_test.go`.
 
-- [ ] **Step 1:** Write the tests:
+**As built:**
+- `license.State.Features` and `Grants(feature)`, with `license.FeaturesOf` and
+  `FeatureNameMsgID` in `pkg/license/features.go`.
+- `licenseservice.CheckFeatures(ctx, features)` returns `ERR_PLAN_FEATURE_REQUIRED`,
+  exposing `Feature` and `Plan`.
+- `CreateAppFromTemplate` checks first, through `checkRequest`, which now holds every
+  pre-provision check (gocognit).
+- The list and get responses carry `managed`, `requiresFeatures` and
+  `missingFeatures`.
+- `tools/licensesign` gives every paid plan's key `managed-databases`, with
+  `-features plan|none|a,b`, so that keys signed by hand match what Task 13 makes the
+  portal issue.
+
+- [x] **Step 1:** Write the tests:
   - a key without `features` grants none;
   - a Bee installation is refused `ERR_PLAN_FEATURE_REQUIRED`, with the feature as a
     param;
@@ -205,10 +218,10 @@ Work on a branch per repository, in a worktree.
   - an expired key past grace grants none;
   - the list marks the missing features;
   - a key with an unknown feature name is still valid.
-- [ ] **Step 2:** Watch them fail.
-- [ ] **Step 3:** Write the code.
-- [ ] **Step 4:** Run the task's packages and the global checks.
-- [ ] **Step 5:** Commit: `feat(license): features, and templates that require them`.
+- [x] **Step 2:** Watch them fail.
+- [x] **Step 3:** Write the code.
+- [x] **Step 4:** Run the task's packages and the global checks.
+- [x] **Step 5:** Commit: `feat(license): features, and templates that require them`.
 
 ## Task 3: The agent ensures an artifact on its node
 

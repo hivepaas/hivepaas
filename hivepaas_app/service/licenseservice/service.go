@@ -41,6 +41,15 @@ type Service interface {
 	// one.
 	Check(ctx context.Context, db database.IDB, req *CheckReq) error
 
+	// CheckFeatures refuses, with ERR_PLAN_FEATURE_REQUIRED, a creation that needs
+	// a feature the license in force does not grant, naming the first one missing.
+	// Features are named as templates name them; one this HivePaaS does not know
+	// is never granted. Needing none reads nothing.
+	//
+	// Only creating is refused for want of a feature. What exists keeps running,
+	// and restoring is never checked.
+	CheckFeatures(ctx context.Context, features []string) error
+
 	// Install verifies a key and stores it as the license, replacing the one
 	// stored, whatever its plan. It refuses a key that is invalid, for another
 	// installation, or past its grace, and keeps the stored key then.

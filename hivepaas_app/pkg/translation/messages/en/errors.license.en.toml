@@ -4,6 +4,7 @@
 # A limit of 0 is a kind the plan leaves out, such as Bee's paid sign-in
 # providers, where removing one would free nothing.
 ERR_PLAN_LIMIT_REACHED = "{{if .Max}}The {{.PlanName}} plan allows {{.Max}} {{.LimitName}}. Remove one, or upgrade.{{else}}The {{.PlanName}} plan does not include {{.LimitName}}. Upgrade to add one.{{end}}"
+ERR_PLAN_FEATURE_REQUIRED = "The {{.PlanName}} plan does not include {{.FeatureName}}. Upgrade to use it."
 ERR_LICENSE_INVALID = "This license key could not be verified"
 ERR_LICENSE_OTHER_INSTALLATION = "This license key is for another installation. This installation's ID is {{.InstallationID}}."
 ERR_LICENSE_EXPIRED = "This license key has expired"
@@ -20,3 +21,7 @@ ERR_PLAN_LIMIT_APPS = "apps"
 ERR_PLAN_LIMIT_FUNCTIONS = "functions"
 ERR_PLAN_LIMIT_PREVIEWS = "previews at a time"
 ERR_PLAN_LIMIT_SIGN_IN_PROVIDERS = "Google, Microsoft or OpenID Connect sign-in providers"
+
+# What ERR_PLAN_FEATURE_REQUIRED calls each feature, as its FeatureName
+# (license.FeatureNameMsgID), with the ERR_ prefix for the same reason.
+ERR_PLAN_FEATURE_MANAGED_DATABASES = "managed databases"

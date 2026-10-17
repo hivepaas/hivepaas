@@ -37,21 +37,25 @@ type GetAppTemplateResp struct {
 }
 
 type AppTemplateResp struct {
-	Source      string                    `json:"source"`
-	Revision    string                    `json:"revision"`
-	Name        string                    `json:"name"`
-	Title       string                    `json:"title"`
-	Tagline     string                    `json:"tagline"`
-	Description string                    `json:"description"`
-	Categories  []string                  `json:"categories"`
-	Tags        []string                  `json:"tags"`
-	IconURL     string                    `json:"iconUrl"`
-	Links       *AppTemplateLinksResp     `json:"links"`
-	License     string                    `json:"license"`
-	Compatible  bool                      `json:"compatible"`
-	Variants    []*AppTemplateVariantResp `json:"variants"`
-	Versions    []*AppTemplateVersionResp `json:"versions"`
-	Parameters  []*AppTemplateParamResp   `json:"parameters"`
+	Source      string                `json:"source"`
+	Revision    string                `json:"revision"`
+	Name        string                `json:"name"`
+	Title       string                `json:"title"`
+	Tagline     string                `json:"tagline"`
+	Description string                `json:"description"`
+	Categories  []string              `json:"categories"`
+	Tags        []string              `json:"tags"`
+	IconURL     string                `json:"iconUrl"`
+	Links       *AppTemplateLinksResp `json:"links"`
+	License     string                `json:"license"`
+	Compatible  bool                  `json:"compatible"`
+	// Managed, RequiresFeatures and MissingFeatures are the listing's.
+	Managed          string                    `json:"managed"`
+	RequiresFeatures []string                  `json:"requiresFeatures"`
+	MissingFeatures  []string                  `json:"missingFeatures"`
+	Variants         []*AppTemplateVariantResp `json:"variants"`
+	Versions         []*AppTemplateVersionResp `json:"versions"`
+	Parameters       []*AppTemplateParamResp   `json:"parameters"`
 	// Dependencies are the apps creating this template also creates, each with the
 	// parameters a person has to fill in for it.
 	Dependencies []*AppTemplateDependencyResp `json:"dependencies"`
@@ -204,25 +208,29 @@ func TransformIncompatibleAppTemplate(
 	index *apptemplateservice.IndexResp,
 	entry *templatemodel.IndexEntry,
 	currentVersionCode string,
+	granted FeatureGrants,
 ) *AppTemplateResp {
-	summary := transformSummary(entry, currentVersionCode)
+	summary := transformSummary(entry, currentVersionCode, granted)
 	resp := &AppTemplateResp{
-		Source:         index.Source,
-		Revision:       index.Revision,
-		Name:           summary.Name,
-		Title:          summary.Title,
-		Tagline:        summary.Tagline,
-		Categories:     summary.Categories,
-		Tags:           summary.Tags,
-		IconURL:        summary.IconURL,
-		License:        summary.License,
-		Compatible:     summary.Compatible,
-		Versions:       summary.Versions,
-		Variants:       make([]*AppTemplateVariantResp, 0, len(summary.Variants)),
-		Parameters:     []*AppTemplateParamResp{},
-		Dependencies:   []*AppTemplateDependencyResp{},
-		PublishedPorts: []*AppTemplatePortResp{},
-		Components:     make([]*AppTemplateComponentResp, 0, len(summary.Components)),
+		Source:           index.Source,
+		Revision:         index.Revision,
+		Name:             summary.Name,
+		Title:            summary.Title,
+		Tagline:          summary.Tagline,
+		Categories:       summary.Categories,
+		Tags:             summary.Tags,
+		IconURL:          summary.IconURL,
+		License:          summary.License,
+		Compatible:       summary.Compatible,
+		Managed:          summary.Managed,
+		RequiresFeatures: summary.RequiresFeatures,
+		MissingFeatures:  summary.MissingFeatures,
+		Versions:         summary.Versions,
+		Variants:         make([]*AppTemplateVariantResp, 0, len(summary.Variants)),
+		Parameters:       []*AppTemplateParamResp{},
+		Dependencies:     []*AppTemplateDependencyResp{},
+		PublishedPorts:   []*AppTemplatePortResp{},
+		Components:       make([]*AppTemplateComponentResp, 0, len(summary.Components)),
 	}
 	for _, variant := range summary.Variants {
 		resp.Variants = append(resp.Variants, &AppTemplateVariantResp{Name: variant.Name, Default: variant.Default})
@@ -236,24 +244,31 @@ func TransformIncompatibleAppTemplate(
 	return resp
 }
 
-func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionCode string) *AppTemplateResp {
+func TransformAppTemplate(
+	tmpl *apptemplateservice.TemplateResp,
+	currentVersionCode string,
+	granted FeatureGrants,
+) *AppTemplateResp {
 	metadata := tmpl.Template.Metadata
-	summary := transformSummary(tmpl.Entry, currentVersionCode)
+	summary := transformSummary(tmpl.Entry, currentVersionCode, granted)
 	resp := &AppTemplateResp{
-		Source:      tmpl.Source,
-		Revision:    tmpl.Revision,
-		Name:        metadata.Name,
-		Title:       metadata.Title,
-		Tagline:     metadata.Tagline,
-		Description: metadata.Description,
-		Categories:  nonNil(metadata.Categories),
-		Tags:        nonNil(metadata.Tags),
-		IconURL:     summary.IconURL,
-		License:     metadata.License,
-		Compatible:  summary.Compatible,
-		Versions:    summary.Versions,
-		Variants:    make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
-		Parameters:  make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
+		Source:           tmpl.Source,
+		Revision:         tmpl.Revision,
+		Name:             metadata.Name,
+		Title:            metadata.Title,
+		Tagline:          metadata.Tagline,
+		Description:      metadata.Description,
+		Categories:       nonNil(metadata.Categories),
+		Tags:             nonNil(metadata.Tags),
+		IconURL:          summary.IconURL,
+		License:          metadata.License,
+		Compatible:       summary.Compatible,
+		Managed:          summary.Managed,
+		RequiresFeatures: summary.RequiresFeatures,
+		MissingFeatures:  summary.MissingFeatures,
+		Versions:         summary.Versions,
+		Variants:         make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
+		Parameters:       make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
 	}
 	if links := metadata.Links; links != nil {
 		resp.Links = &AppTemplateLinksResp{

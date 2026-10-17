@@ -61218,6 +61218,17 @@
             } ],
             "nullable" : true
           },
+          "managed" : {
+            "description" : "Managed, RequiresFeatures and MissingFeatures are the listing's.",
+            "type" : "string"
+          },
+          "missingFeatures" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "name" : {
             "type" : "string"
           },
@@ -61232,6 +61243,13 @@
             "description" : "PublishedPorts are the addresses this app claims on the cluster itself,\nbeside the web addresses the reverse proxy serves. Two apps cannot share\none, so they are shown before anybody deploys.",
             "items" : {
               "$ref" : "#/components/schemas/apptemplatedto.AppTemplatePortResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "requiresFeatures" : {
+            "items" : {
+              "type" : "string"
             },
             "nullable" : true,
             "type" : "array"
@@ -61270,7 +61288,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "managed", "missingFeatures", "name", "parameters", "publishedPorts", "requiresFeatures", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -61319,6 +61337,17 @@
           "license" : {
             "type" : "string"
           },
+          "managed" : {
+            "description" : "Managed is the engine that looks after what the template creates, and \"\"\nfor an ordinary template. The store marks the managed ones.",
+            "type" : "string"
+          },
+          "missingFeatures" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "name" : {
             "type" : "string"
           },
@@ -61329,6 +61358,14 @@
           "requiresDockerApi" : {
             "description" : "RequiresDockerAPI says creating this template gives an app the Docker API,\nbehind the same permission. The store marks those too.",
             "type" : "boolean"
+          },
+          "requiresFeatures" : {
+            "description" : "RequiresFeatures are the license features creating the template needs, and\nMissingFeatures those of them the license in force does not grant. The\nstore shows what is missing, and the plans that include it, instead of a\nform that would be refused.",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
           },
           "stars" : {
             "description" : "Stars are the GitHub stars of the project the template runs, and\nStarsGained the ones of the last 28 days; 0 for a project not counted.",
@@ -61365,7 +61402,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "added", "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "requiresDockerApi", "stars", "starsGained", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "added", "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "managed", "missingFeatures", "name", "requiresCapabilities", "requiresDockerApi", "requiresFeatures", "stars", "starsGained", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {

@@ -52,22 +52,7 @@ func (uc *UC) CreateAppFromTemplate(
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
 	}
-	if err = uc.checkAppRefs(ctx, req, rendered); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkCapabilities(ctx, auth, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkDockerAPI(ctx, auth, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkPublishedPorts(ctx, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkDomains(ctx, req, apps); err != nil {
+	if err = uc.checkRequest(ctx, auth, req, rendered, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	// Whatever a previous install of these apps left on the volumes goes first,
@@ -120,6 +105,37 @@ func (uc *UC) CreateAppFromTemplate(
 		}
 	}
 	return transformCreated(apps, provisioned.Apps), nil
+}
+
+// checkRequest runs every check that can refuse a request before anything is
+// created for it, in the order a person would want to hear about them: what the
+// license grants first, then what the request asks of the cluster.
+func (uc *UC) checkRequest(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	rendered *apptemplateservice.RenderResp,
+	apps []*appToProvision,
+) error {
+	if err := uc.checkFeatures(ctx, apps); err != nil {
+		return err
+	}
+	if err := uc.checkAppRefs(ctx, req, rendered); err != nil {
+		return err
+	}
+	if err := uc.checkCapabilities(ctx, auth, apps); err != nil {
+		return err
+	}
+	if err := uc.checkDockerAPI(ctx, auth, apps); err != nil {
+		return err
+	}
+	if err := uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
+		return err
+	}
+	if err := uc.checkPublishedPorts(ctx, apps); err != nil {
+		return err
+	}
+	return uc.checkDomains(ctx, req, apps)
 }
 
 // checkDomains refuses a request whose domains cannot be served before anything

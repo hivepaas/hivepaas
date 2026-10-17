@@ -38,6 +38,9 @@ type State struct {
 	Plan base.LicensePlan
 	// Limits are the limits in force. They are the State's own, never shared.
 	Limits Limits
+	// Features are the features in force: the key's that this binary knows,
+	// while the key holds. Bee grants none.
+	Features []base.LicenseFeature
 	// Key is the key's payload whenever its signatures verified, also when it is
 	// not in force, as for another installation or past its grace.
 	Key *Payload
@@ -108,6 +111,7 @@ func Evaluate(in *EvalInput) *State {
 	if in.Now.Before(state.GraceEndsAt) {
 		state.Plan = key.Plan
 		state.Limits = LimitsOf(key)
+		state.Features = FeaturesOf(key)
 	}
 	return state
 }

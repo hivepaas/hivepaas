@@ -120,6 +120,20 @@ var planLimits = map[string]map[string]int{
 // limit that silently is not.
 var keyLimits = []string{"nodes", "users", "apps", "functions", "previews"}
 
+// keyFeatures are the features a key can grant: base.AllLicenseFeatures. As
+// with limits, the app passes over a name it does not know, so one misspelled
+// here would be a feature that silently is not granted.
+var keyFeatures = []string{"managed-databases"}
+
+// planFeatures are the features a key of each paid plan grants unless told
+// otherwise: all of them, on every paid plan.
+var planFeatures = map[string][]string{
+	"comb":   keyFeatures,
+	"hive":   keyFeatures,
+	"colony": keyFeatures,
+	"apiary": keyFeatures,
+}
+
 // Payload is what a license key says; license.Payload reads the same fields.
 type Payload struct {
 	Version        int            `json:"version"`
@@ -128,6 +142,7 @@ type Payload struct {
 	Customer       Customer       `json:"customer"`
 	Plan           string         `json:"plan"`
 	Limits         map[string]int `json:"limits,omitempty"`
+	Features       []string       `json:"features,omitempty"`
 	Installations  []string       `json:"installations"`
 	IssuedAt       time.Time      `json:"issuedAt"`
 	ExpiresAt      time.Time      `json:"expiresAt"`
@@ -298,6 +313,7 @@ type issueOptions struct {
 	days           int
 	graceDays      int
 	trial          bool
+	features       string
 	nodes          int
 	users          int
 	licenseID      string
@@ -315,6 +331,8 @@ func runIssue(args []string) error {
 	fs.IntVar(&opts.days, "days", defaultDays, "days the key holds from now, before its grace")
 	fs.IntVar(&opts.graceDays, "grace-days", defaultGraceDays, "days the key still holds after it expires")
 	fs.BoolVar(&opts.trial, "trial", false, "a trial key, which has no grace")
+	fs.StringVar(&opts.features, "features", featuresOfPlan,
+		"features the key grants, comma-separated: plan for the plan's, none for none")
 	fs.IntVar(&opts.nodes, "nodes", -1, "most nodes; -1 is the plan's, and apiary has none")
 	fs.IntVar(&opts.users, "users", -1, "most users; -1 is the plan's, and apiary has none")
 	fs.StringVar(&opts.licenseID, "license-id", "", "license id (default: a new random one)")
@@ -366,6 +384,10 @@ func issuePayload(opts *issueOptions, now time.Time) (*Payload, error) {
 			return nil, fmt.Errorf("-%s is required: an %s key has no default limits", flagged.name, opts.plan)
 		}
 	}
+	features, err := issueFeatures(opts)
+	if err != nil {
+		return nil, err
+	}
 	licenseID := opts.licenseID
 	if licenseID == "" {
 		random := make([]byte, licenseIDBytes)
@@ -388,6 +410,7 @@ func issuePayload(opts *issueOptions, now time.Time) (*Payload, error) {
 		Customer:       opts.customer,
 		Plan:           opts.plan,
 		Limits:         limits,
+		Features:       features,
 		Installations:  opts.installations,
 		IssuedAt:       issuedAt,
 		ExpiresAt:      issuedAt.Add(time.Duration(opts.days) * day),
@@ -441,6 +464,7 @@ func signAndWrite(keys []*privateKey, data []byte, payload *Payload, out, format
 	fmt.Fprintf(os.Stderr, "holds:   %s to %s, then %d grace days\n", payload.IssuedAt.Format(time.RFC3339),
 		payload.ExpiresAt.Format(time.RFC3339), payload.GraceDays)
 	fmt.Fprintf(os.Stderr, "limits:  %s\n", describeLimits(payload.Limits))
+	fmt.Fprintf(os.Stderr, "grants:  %s\n", describeFeatures(payload.Features))
 	for _, entry := range env.Signatures {
 		fmt.Fprintf(os.Stderr, "key:     %s (%s)\n", entry.KeyID, entry.Algorithm)
 	}
@@ -530,6 +554,14 @@ func validatePayload(p *Payload) error {
 	}
 	if p.GraceDays < 0 || p.GraceDays > maxGraceDays {
 		return fmt.Errorf("graceDays must be between 0 and %d", maxGraceDays)
+	}
+	for i, feature := range p.Features {
+		if !slices.Contains(keyFeatures, feature) {
+			return fmt.Errorf("feature %q is not one a key can grant (%s)", feature, strings.Join(keyFeatures, ", "))
+		}
+		if slices.Contains(p.Features[:i], feature) {
+			return fmt.Errorf("feature %q is listed twice", feature)
+		}
 	}
 	for name, value := range p.Limits {
 		if !slices.Contains(keyLimits, name) {
@@ -699,6 +731,30 @@ func trialNote(p *Payload) string {
 		return " (trial)"
 	}
 	return ""
+}
+
+// featuresOfPlan and featuresNone are what -features takes besides a list.
+const (
+	featuresOfPlan = "plan"
+	featuresNone   = "none"
+)
+
+// issueFeatures is what -features asks for: the plan's, none, or a list.
+func issueFeatures(opts *issueOptions) ([]string, error) {
+	switch opts.features {
+	case "", featuresOfPlan:
+		return slices.Clone(planFeatures[opts.plan]), nil
+	case featuresNone:
+		return nil, nil
+	}
+	return strings.Split(opts.features, ","), nil
+}
+
+func describeFeatures(features []string) string {
+	if len(features) == 0 {
+		return "none"
+	}
+	return strings.Join(features, ", ")
 }
 
 func describeLimits(limits map[string]int) string {

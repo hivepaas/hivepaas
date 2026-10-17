@@ -141,6 +141,15 @@ type AppTemplateSummaryResp struct {
 	// the only thing to do about an incompatible template is update - which is
 	// the same whichever version it asked for.
 	Compatible bool `json:"compatible"`
+	// Managed is the engine that looks after what the template creates, and ""
+	// for an ordinary template. The store marks the managed ones.
+	Managed string `json:"managed"`
+	// RequiresFeatures are the license features creating the template needs, and
+	// MissingFeatures those of them the license in force does not grant. The
+	// store shows what is missing, and the plans that include it, instead of a
+	// form that would be refused.
+	RequiresFeatures []string `json:"requiresFeatures"`
+	MissingFeatures  []string `json:"missingFeatures"`
 	// Added is the day the template joined the catalog, YYYY-MM-DD, or "" when
 	// the catalog does not say. The store marks the recent ones as new.
 	Added string `json:"added"`
@@ -172,18 +181,29 @@ type AppTemplateVersionResp struct {
 	Variants   []string `json:"variants"`
 }
 
+// FeatureGrants is what the license in force grants: license.State, or nil for
+// none.
+type FeatureGrants interface {
+	Grants(feature string) bool
+}
+
 func TransformAppTemplateSummaries(
 	entries []*templatemodel.IndexEntry,
 	currentVersionCode string,
+	granted FeatureGrants,
 ) []*AppTemplateSummaryResp {
 	out := make([]*AppTemplateSummaryResp, 0, len(entries))
 	for _, entry := range entries {
-		out = append(out, transformSummary(entry, currentVersionCode))
+		out = append(out, transformSummary(entry, currentVersionCode, granted))
 	}
 	return out
 }
 
-func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string) *AppTemplateSummaryResp {
+func transformSummary(
+	entry *templatemodel.IndexEntry,
+	currentVersionCode string,
+	granted FeatureGrants,
+) *AppTemplateSummaryResp {
 	summary := &AppTemplateSummaryResp{
 		Name:         entry.Name,
 		Title:        entry.Title,
@@ -201,6 +221,14 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 
 		RequiresCapabilities: entry.RequiresCapabilities,
 		RequiresDockerAPI:    entry.RequiresDockerAPI,
+		Managed:              entry.Managed,
+		RequiresFeatures:     nonNil(entry.Requires.Features),
+		MissingFeatures:      []string{},
+	}
+	for _, feature := range entry.Requires.Features {
+		if granted == nil || !granted.Grants(feature) {
+			summary.MissingFeatures = append(summary.MissingFeatures, feature)
+		}
 	}
 	if entry.Stats != nil {
 		summary.Added, summary.Stars, summary.StarsGained = entry.Stats.Added, entry.Stats.Stars, entry.Stats.StarsGained

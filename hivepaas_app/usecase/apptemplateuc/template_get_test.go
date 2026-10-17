@@ -53,7 +53,7 @@ func TestGetAppTemplateShowsANewerTemplateFromTheIndex(t *testing.T) {
 	previous := config.Current()
 	config.SetCurrent(&config.Config{})
 	t.Cleanup(func() { config.SetCurrent(previous) })
-	uc := &UC{appTemplateService: &indexTemplateService{
+	uc := &UC{licenseService: &fakeLicenseService{}, appTemplateService: &indexTemplateService{
 		index: &templatemodel.Index{Templates: []*templatemodel.IndexEntry{newerEntry("v999999")}},
 	}}
 
@@ -107,7 +107,7 @@ func nullsBesides(value any, key string, allowed ...string) []string {
 // template itself does not - the refusal stands: the template cannot be offered,
 // and its own entry would say it can.
 func TestGetAppTemplateKeepsARefusalTheIndexDoesNotExplain(t *testing.T) {
-	uc := &UC{appTemplateService: &indexTemplateService{
+	uc := &UC{licenseService: &fakeLicenseService{}, appTemplateService: &indexTemplateService{
 		index: &templatemodel.Index{Templates: []*templatemodel.IndexEntry{newerEntry("v000001")}},
 	}}
 
@@ -117,7 +117,7 @@ func TestGetAppTemplateKeepsARefusalTheIndexDoesNotExplain(t *testing.T) {
 }
 
 func TestGetAppTemplatePassesOtherErrorsOn(t *testing.T) {
-	uc := &UC{appTemplateService: &indexTemplateService{
+	uc := &UC{licenseService: &fakeLicenseService{}, appTemplateService: &indexTemplateService{
 		index: &templatemodel.Index{},
 		err:   hperrors.Wrap(hperrors.ErrAppTemplateInvalid),
 	}}

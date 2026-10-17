@@ -1,0 +1,575 @@
+# Managed Templates Phase 1 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** A user on a paid plan creates a Postgres 17 or 18 database from the
+`postgres-managed` template. It archives WAL with WAL-G to S3, a cloud storage or a
+volume repository, takes and prunes base backups, checks its chain, tests its own
+restore, reports its health, and restores to a point in time into a new app. HivePaaS
+builds no image for it: the official image runs with the WAL-G binary that the agent
+downloaded, verified and mounted.
+
+**Architecture:**
+- **Schema (Tasks 1-2).** `v000002` adds `managed`, `artifacts` and
+  `requires.features` to the template schema. The license payload gains `features`. A
+  template that needs a feature the license lacks is shown, and cannot be created from.
+- **Artifacts (Tasks 3-4).** A new agent RPC downloads a URL on its own node, hashes it
+  while streaming, and keeps it in `<HostDir>/cache/artifacts/sha256/<hex>`. The backend
+  ensures it on the app's pinned node before `ServiceCreate` and before every deploy,
+  and adds a hidden read-only bind mount, treated as the Docker API socket mount is.
+- **The engine (Tasks 5-9).**
+  - `managedservice` holds one `Engine` per database, and `postgres` is the first.
+  - Its state is the new `app-managed` setting.
+  - It creates `container-command` jobs owned through `SchedJob.ManagedBy`, and refuses
+    edits to the fields it owns.
+  - Status is read from the jobs' last outputs.
+- **Restore (Tasks 10, 11 and 11b).**
+  - The restore test runs in the database's container or in a verifier app, a logical
+    child scaled to zero between runs.
+  - A restore creates a new app from the same template. It recovers from the source's
+    archive, to the latest, a time, a restore point or a base backup, and archives to
+    its own prefix.
+  - Users name restore points, which are targeted by LSN. Retention keeps the kept ones
+    restorable until their date.
+- **Outside the backend (Tasks 12-14):**
+  - the `postgres-managed` template and its scripts (`app-templates`);
+  - the license portal issuing `features` (`hivepaas-portal`);
+  - the dashboard (`hivepaas-dashboard`).
+
+**Tech Stack:** Go 1.27, gRPC with protoc (as `repo_server.proto` was generated), WAL-G
+3.0.8 (`wal-g-pg-20.04-{amd64,aarch64}`), Postgres 17 and 18 on Debian images, React
+for the dashboard.
+
+**Spec:** `docs/superpowers/specs/2026-10-17-managed-templates-design.md`.
+
+## How this plan works
+
+Unlike the plans before it, **no patches were written or verified in advance.** Each
+task is written test-first when it is executed, and is done when its checks pass. The
+file lists and interfaces below come from reading the code at this plan's commit. Where
+the code has moved since, follow the code and note the change in the task's commit.
+
+**Repositories:**
+- this one (the backend), Tasks 1-11;
+- `../app-templates`, Task 12;
+- `../hivepaas-portal`, Task 13;
+- `../hivepaas-dashboard`, Task 14.
+
+Work on a branch per repository, in a worktree.
+
+**Order:**
+- Tasks 1 to 11 build on each other.
+- Task 12 needs Task 1, plus Task 3 to run.
+- Task 13 needs only Task 2.
+- Task 14 needs the endpoints of Tasks 2, 7, 9, 10 and 11, and can start on their DTOs.
+
+## Global Constraints
+
+- **Before a task is done:** `go build ./...`, `golangci-lint run ./...` over the whole
+  repo, `go test ./...`, and `make gen-swag` when a DTO or a handler's swag comment
+  changed (CI fails on a stale `docs/openapi/swagger.json`). `go test
+  ./hivepaas_app/cmd/...` includes the fx wiring test, which catches a dependency
+  cycle.
+- **Conventions:** `docs/ARCHITECTURE.md`. A service does not import a DTO. Request and
+  response shapes follow §2. Switches over enums follow §7. Tests use `assert` and
+  fakes.
+- **Names, verbatim:**
+  - Version code: `VersionCodeV2 = "v000002"`.
+  - Setting types: `app-managed`.
+  - Feature: `managed-databases`.
+  - Engine: `postgres`, `engineApi` 1.
+  - Errors: `ERR_PLAN_FEATURE_REQUIRED` (412) and `ERR_APP_MANAGED_FIELD_LOCKED` (422),
+    whose param is `Field`.
+  - Host cache: `<HP_STORAGE_HOST_DIR>/cache/artifacts/sha256/<hex>`, files `0755`.
+  - Container paths: artifacts under `/opt/hivepaas/bin/`.
+  - WAL-G prefix: `walg/<app key>` under the chosen storage's prefix.
+- **Limits:**
+  - an artifact is at most 256 MiB;
+  - downloads are https only (http only from a mirror on a private address, in dev);
+  - `Ensure` times out after 10 minutes.
+- **Secrets:** S3 keys and the libsodium key reach the container as Swarm secrets, never
+  as env and never on argv. Logs name the step, not the value.
+- **Git:** commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+  Merge locally, never push. Never `git stash`. Never touch the user's uncommitted work.
+- **Deploys:** nothing is deployed to the user's Docker Desktop swarm. Live checks run
+  on the user's Linux server.
+
+## Review Focus
+
+1. **A task starts before its artifact is there.**
+   - Where this can happen: at creation, `ProvisionApp` calls `ServiceCreate` before
+     the first deployment; and about forty other `ServiceUpdate` callers roll tasks.
+   - Expectation: the artifact is on the pinned node before the service is created, and
+     a managed app with an unpinned data volume is refused.
+   - Pinned by: Task 4's create-order test, and Task 7's refusal test.
+2. **Two servers writing one archive.** A restored app, and the restore test's copy,
+   must never push to the source's prefix.
+   - Expectation: the restored app archives to its own prefix, the test runs with
+     `archive_mode=off`, and `WALG_PREVENT_WAL_OVERWRITE=true` is set everywhere.
+   - Pinned by: Task 6's golden output, Task 10's argument test, Task 11's env test, and
+     the live check in Task 11.
+3. **Recovery that ends early and says nothing.** If `wal-fetch` fails with a network
+   error and exits 1, Postgres treats the WAL as ended and promotes at an earlier point.
+   - Expectation: `walg-fetch` turns every exit other than 74 into 255.
+   - Pinned by: Task 12's script test, and the live check in Task 11.
+4. **A license that lapses.**
+   - Expectation: existing managed apps keep archiving and restore tests keep running;
+     PITR and unmanage still work; only creating a managed app or adding a verifier is
+     refused.
+   - Pinned by: Task 2's and Task 11's tests.
+5. **A user edits what the engine owns.**
+   - Expectation: every such edit is refused with `ERR_APP_MANAGED_FIELD_LOCKED`. None is
+     silently re-applied.
+   - Pinned by: Task 8's per-use-case tests.
+
+## Decisions beyond the spec
+
+- **The restore test's verifier mode is its own job type,** `managed-restore-test`. It
+  is a `var`, kept out of `AllSchedJobTypes` as `image-scan` is, because it has to
+  scale the verifier up and down around the exec, and `container-command` needs a task
+  that is already running. In container mode it is an ordinary `container-command`.
+- **"Update tools" waits for phase 2.** Artifacts are fixed when the app is created. A
+  new WAL-G reaches existing apps through phase 2.
+- **Unmanage removes the jobs and keeps the archive.** The prefix and its data are
+  left for the user to delete.
+
+---
+
+## Task 1: Templates can declare `managed`, `artifacts` and `requires.features`
+
+**Files:**
+- Modify:
+  - `hivepaas_app/base/version.go`: `VersionCodeV2`, `CurrentVersion = VersionCodeV2`.
+  - `hivepaas_app/service/apptemplateservice/templatemodel/template.go`:
+    `Template.Managed *Managed`, `Template.Artifacts []*Artifact`,
+    `Requires.Features []string`.
+  - `.../templatemodel/validate.go`: `validateManaged`, `validateArtifacts`.
+  - `.../templatemodel/index.go`: `IndexEntry.Managed string`, `IndexEntry.RequiresFeatures`.
+  - `.../templaterepo/lint.go`: managed lint. `alpine` in a variant name or image tag
+    is refused. `mountPath` must not be under a volume mount.
+  - `tools/apptemplate/main.go`: `index` writes the new entry fields.
+- Create:
+  - `.../templatemodel/managed.go`: `Managed{Engine, EngineAPI, Postgres *ManagedPostgresDefaults}`,
+    `Artifact{Name, Version, MountPath, Files map[base.CPUArch]*ArtifactFile}`,
+    `ArtifactFile{URL, SHA256, Size}`.
+  - `hivepaas_app/base/cpu_arch.go`: `CPUArch` (`amd64`, `arm64`) and
+    `CPUArchFromDocker("x86_64"|"aarch64")`.
+- Test: `templatemodel/managed_test.go` and lint fixtures under `templaterepo/testdata/`.
+
+**Interfaces:**
+- Produces: `templatemodel.Managed`, `templatemodel.Artifact`, `ArtifactFile`,
+  `base.CPUArch` and `base.CPUArchFromDocker(string) (CPUArch, bool)`.
+- The engine registry (Task 5) is not ready yet. Lint takes a `func(engine string,
+  api int) bool`, wired to the registry in Task 5 and to an `engine == "postgres" &&
+  api == 1` stub until then.
+
+- [ ] **Step 1:** Write the tests:
+  - a valid managed template decodes and validates;
+  - `KnownFields` still refuses an unknown key inside `managed` and `artifacts`;
+  - each refusal: an unknown engine, `engineApi` out of range, an http URL, a hash that
+    is not 64 hex characters, no `amd64`, a relative `mountPath`, a `mountPath` under a
+    volume mount, an `alpine` tag;
+  - lint refuses `v000002` blocks under `requires.versionCode: v000001`;
+  - `subset -version-code v000001` leaves a managed template out.
+- [ ] **Step 2:** Run `go test ./hivepaas_app/service/apptemplateservice/... ./tools/apptemplate/...`. Expected: FAIL to build.
+- [ ] **Step 3:** Write the code.
+- [ ] **Step 4:** Run the task's packages and the global checks. Expected: all pass.
+- [ ] **Step 5:** Commit: `feat(templates): v000002 - managed, artifacts and requires.features`.
+
+## Task 2: A license grants features, and a template that needs a missing one cannot be created from
+
+**Files:**
+- Modify:
+  - `hivepaas_app/pkg/license/license.go`: `Payload.Features []string`.
+  - `hivepaas_app/pkg/license/limits.go` (or beside it): Bee's compiled features, none.
+  - `hivepaas_app/base/`: `LicenseFeature`, `LicenseFeatureManagedDatabases`.
+  - `hivepaas_app/service/licenseservice/service.go`: `HasFeature(ctx, f) (bool, error)`.
+  - `.../licenseserviceimpl/check.go`.
+  - `hivepaas_app/hperrors`: `ErrPlanFeatureRequired`.
+  - `hivepaas_app/usecase/apptemplateuc/app_create_from_template.go`: checks
+    `entry.Requires.Features`, for the main template and every dependency.
+  - `.../apptemplatedto/template_list.go` and `template_get.go`: `requiresFeatures` and
+    `missingFeatures` in responses.
+- Test: `pkg/license/evaluate_test.go`, `licenseserviceimpl/check_test.go` and
+  `apptemplateuc/app_create_from_template_test.go`.
+
+- [ ] **Step 1:** Write the tests:
+  - a key without `features` grants none;
+  - a Bee installation is refused `ERR_PLAN_FEATURE_REQUIRED`, with the feature as a
+    param;
+  - a key in grace still grants;
+  - an expired key past grace grants none;
+  - the list marks the missing features;
+  - a key with an unknown feature name is still valid.
+- [ ] **Step 2:** Watch them fail.
+- [ ] **Step 3:** Write the code.
+- [ ] **Step 4:** Run the task's packages and the global checks.
+- [ ] **Step 5:** Commit: `feat(license): features, and templates that require them`.
+
+## Task 3: The agent ensures an artifact on its node
+
+**Files:**
+- Create:
+  - `hivepaas_app/interface/agent/proto/artifact.proto`:
+    `ArtifactService.Ensure(EnsureReq{url, mirror_url, sha256, size}) returns (EnsureResp{host_path, downloaded bool})`.
+    Generated `*.pb.go` files are committed.
+  - `hivepaas_app/usecaseagent/artifactagentuc/ensure.go`: stat and size, then a hash
+    once per agent start; otherwise download (mirror first) into a temp file beside the
+    target, `io.TeeReader` into sha256, cap at `size` and 256 MiB, `chmod 0755`, then
+    rename. A per-hash mutex makes concurrent calls download once.
+  - `hivepaas_app/interface/agent/client/artifactservice/`.
+  - `hivepaas_app/service/artifactservice/`: `EnsureOnNode(ctx, nodeID, *templatemodel.Artifact) (hostPath string, err error)`.
+    It reads the node's architecture from Swarm with `base.CPUArchFromDocker`, picks the
+    file, and calls the node's agent through `agentservice.GetAgentAddrForNode`.
+- Modify:
+  - `hivepaas_app/cmd/agent/main.go`: register the service.
+  - `hivepaas_app/config/`: `HP_ARTIFACTS_MIRROR` (base URL, optional) and the timeout.
+- Test: `artifactagentuc/ensure_test.go` against `httptest.Server`.
+
+- [ ] **Step 1:** Write the tests:
+  - a good file lands with mode 0755;
+  - a wrong hash leaves no file and no temp file;
+  - a connection cut halfway leaves nothing behind;
+  - a file over `size` is refused while still downloading;
+  - two concurrent `Ensure` calls cause one download;
+  - a file already present is not downloaded again;
+  - the mirror is tried first, and the source after the mirror fails;
+  - an arch the template lacks is refused, naming the node and the arch.
+- [ ] **Step 2:** Watch them fail.
+- [ ] **Step 3:** Write the code, and generate the protos with `go generate ./hivepaas_app/interface/agent/proto/...`. The other protos are unchanged.
+- [ ] **Step 4:** Run the task's packages and the global checks.
+- [ ] **Step 5:** Commit: `feat(agent): ensure an artifact on a node by url and hash`.
+
+## Task 4: An app can carry artifact mounts that HivePaaS owns
+
+**Files:**
+- Create: `hivepaas_app/service/artifactservice/mounts.go`, mirroring
+  `dockerapiservice/attach.go`:
+  - `ArtifactMounts(app) []mount.Mount`: bind, `ReadOnly`, **no `CreateMountpoint`**;
+  - `KeepArtifactMounts(final, current)`;
+  - `ApplyToService(ctx, db, app, spec)`.
+- Modify:
+  - `usecase/appsettingsuc/storage_settings_update.go`: keep them, as `KeepSocketMounts`.
+  - `appsettingsdto/storage_settings_get.go`: hide them.
+  - The storage settings version: leave them out.
+  - `specserviceimpl/storage_map.go`: leave them out of export.
+  - Image, repo and function deploy apply steps: `ensureArtifacts` beside
+    `prepareDockerAPI`. Unlike it, **a failure fails the deploy**. `ApplyToService` runs
+    inside `ServiceUpdateFunc`.
+  - `appprovisionserviceimpl/provision.go`: the artifacts are ensured before
+    `ServiceCreate`, through a `PreCreate` hook on the provision request.
+  - `usecaseagent/nodecleanupagentuc`: remove cached artifacts that no app references
+    after the cleanup's retention. The backend sends the referenced hashes.
+- Test: one per touchpoint, plus `TestProvisionEnsuresArtifactsBeforeServiceCreate`.
+
+- [ ] **Step 1:** Write the tests:
+  - storage GET hides the mount;
+  - a storage save keeps it;
+  - export leaves it out;
+  - a deploy re-applies it;
+  - a failed ensure fails the deploy, and no `ServiceUpdate` happens;
+  - provision calls ensure before create;
+  - cleanup never removes a referenced hash.
+- [ ] **Step 2:** Watch them fail.
+- [ ] **Step 3:** Write the code.
+- [ ] **Step 4:** Run the task's packages and the global checks.
+- [ ] **Step 5:** Commit: `feat(apps): artifact mounts that HivePaaS owns`.
+
+## Task 5: The `app-managed` setting, owned jobs and the engine registry
+
+**Files:**
+- Create:
+  - `hivepaas_app/entity/setting_app_managed.go`: `AppManagedSettings`, `ManagedPostgres`
+    and `ManagedStorage{BackupRepo, CloudStorage, KeyAuth, Prefix}` (spec §3),
+    `RestoreTest{Mode container|verifier, VerifierAppID, NodeID, CheckQuery}`,
+    `ArtifactRef`, `CurrentAppManagedSettingsVersion = 1`, and `GetRefObjectIDs` (repo,
+    storage, key and jobs).
+  - `setting_app_managed_migration.go`, a no-op template.
+  - `hivepaas_app/service/managedservice/service.go` and `managedmodel/engine.go`: the
+    `Engine` interface (spec §3) and `Registry.Get(engine) (Engine, bool)`.
+- Modify:
+  - `base/setting.go`: `SettingTypeAppManaged`.
+  - `entity/setting_sched_job.go`: `ManagedBy ObjectID`, with a ref link.
+  - `usecase/settings/schedjobuc/update.go` and `delete.go`: refuse a job whose
+    `ManagedBy` is set, with `ErrAppManagedFieldLocked{Field: "schedJob"}`.
+  - The Task 1 lint stub becomes the registry.
+- Test: entity round trip, the job refusals, and resource links that block deleting a
+  storage a managed app uses.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the app-managed setting, owned jobs, the engine registry`.
+
+## Task 6: The Postgres engine's `Configure` and `Apply`
+
+**Files:**
+- Create `hivepaas_app/service/managedservice/postgres/`:
+  - `configure.go`:
+    - the command arguments, from spec §3;
+    - `shared_buffers` from the memory limit (25%, at least 128MB);
+    - `PGDATA` per major (18: `/var/lib/postgresql/18/docker`);
+    - the `WALG_*` env;
+    - the storage resolved through `cloudstorageservice.S3Config`, or for a volume
+      repository, a volume mount of `<prefix>/walg/<app key>` and `WALG_FILE_PREFIX`;
+    - secrets for the keys and `WALG_LIBSODIUM_KEY` (generated, 32 bytes);
+    - jobs: the nightly `job-sequence` (backup, retain, verify), health every 5 minutes,
+      and the restore test, all with `ManagedBy` and failure notification by default;
+    - the check that every script `engineApi` 1 names is among the template's config
+      files.
+  - `apply.go`: the arguments and artifact mounts again on every deploy.
+  - `placement.go`: `off-site`, `shared` or `same-node`, for a volume repository, and
+    the refusal of a volume pinned to another node.
+- Test: `configure_test.go`, golden output per major (17, 18) per storage kind (S3
+  repo, cloud storage, volume repo on the same node, volume repo unpinned).
+
+- [ ] **Step 1:** Write the tests. The golden files show no secret value, and contain
+  `archive_mode=on`, `WALG_PREVENT_WAL_OVERWRITE=true` and the prefix. Refused: a
+  missing script, and a volume pinned to another node.
+- [ ] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the postgres engine - configure and apply`.
+
+## Task 7: Creating a managed app from a template
+
+**Files:**
+- Modify:
+  - `usecase/apptemplateuc/app_create_from_template.go`. When the rendered template has
+    `managed`, it:
+    - resolves the engine and its `engineApi`;
+    - checks that the data volume is pinned (`ErrManagedVolumeNotPinned`);
+    - checks the feature (Task 2);
+    - passes `PreCreate`, which ensures the artifacts (Task 4);
+    - merges the engine's `Configure` output into the `Configure` closure that
+      `ProvisionApps` takes;
+    - writes `app-managed`.
+  - The create DTO gains `managed{storage{backupRepo|cloudStorage, keyAuth?},
+    restoreTest{mode, nodeId?, checkQuery?}, archiveTimeout?, retainFull?}`, with
+    defaults from `managed.postgres`.
+- Test: `app_create_managed_test.go`.
+
+- [ ] **Step 1:** Write the tests:
+  - success creates the app, the `app-managed` setting, three jobs and the artifact
+    mount, in one transaction;
+  - each refusal (feature, unpinned volume, engine unknown or out of range, storage of
+    the wrong kind) creates nothing, and leaves no Swarm service;
+  - a volume repository on the same node saves, with the warning in the response.
+- [ ] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): create a managed app from its template`.
+
+## Task 8: Fields the engine owns are refused, and an app can be unmanaged
+
+**Files:**
+- Create:
+  - `usecase/appsettingsuc/managed_rules.go`, beside `function_rules.go`:
+    `checkManagedKind`, `checkManagedDeployment` (the image repository is fixed; the
+    tag may move only within its major, through `templatemodel`'s Postgres tag-family
+    logic), `checkManagedContainer` (the engine's arguments come first and are
+    unchanged), `checkManagedStorage` (the data and artifact mounts),
+    `checkManagedEnvVars` (`WALG_*`, `AWS_*`, `PGDATA`).
+  - `usecase/appmanageduc/unmanage.go`: remove `app-managed` and its jobs, keep the app
+    and its data, and audit it.
+- Modify: the kind, deployment, container, storage and env var settings update use
+  cases call the rules, and the router gains `POST /apps/:appID/managed/unmanage`.
+- Test: one refusal per rule, one allowed edit per rule (a minor tag bump, an extra
+  argument, another env var), and unmanage.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): refuse edits to what the engine owns; unmanage`.
+
+## Task 9: Status, and changing a managed app's settings
+
+**Files:**
+- Create `usecase/appmanageduc/`:
+  - `status.go`: `GET /apps/:appID/managed/status`. It reads the last outputs of the
+    health, nightly and restore-test jobs, as JSON printed by the scripts (Task 12):
+    archiving `ok|failing|stale`, the size of `pg_wal`, the restore window, the last
+    base backup, the last restore test, the archive's placement, and the suggestions.
+    The verifier is suggested when free space is under 1.5 × the database's size, or
+    the last test took over 30 minutes.
+  - `update.go`: `PUT /apps/:appID/managed`. It changes schedules, retention, the
+    restore test's mode and check query, and the key. The storage and prefix never
+    change.
+- Modify: `usecase/settings/` cloud storage and key auth updates mark the managed apps
+  that link to them as needing a redeploy. Find them by resource links.
+- Test: status from fixture outputs (none yet, healthy, failing, stale), each
+  suggestion, an update of each field, and the redeploy mark.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): status, and managed settings`.
+
+## Task 10: The restore test in a verifier app
+
+**Files:**
+- Create:
+  - `tasks/taskschedjobexec/managed_restore_test.go`: job type `managed-restore-test`
+    (a `var`).
+    - Container mode runs `walg-restore-test` through `schedJobExecService`.
+    - Verifier mode scales the verifier to 1, waits for a running task (the existing
+      `TaskFindRetry*`), runs the script in it, and always scales back to 0, in a
+      `defer`.
+  - `service/managedservice/postgres/verifier.go`: the verifier app is a logical child.
+    It uses the same template version and artifact, its own volume on the node the
+    user picks, scale 0, a read-only `KeyAuth` when one is given, and no archiving
+    (`archive_mode=off` in its arguments).
+- Modify:
+  - Task 9's `update.go`: switching to verifier mode creates the verifier, and needs
+    the feature; switching back deletes it.
+  - `usecase/appuc/plan_limit.go`: a logical child is not counted, as the licensing
+    design already says.
+- Test: verifier creation (needs the feature); a run scales up and down, and also down
+  when the script fails; the arguments contain `archive_mode=off`; a lapsed license
+  still runs an existing verifier's test.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the restore test in a verifier app`.
+
+## Task 11: Restore to a point in time into a new app
+
+**Files:**
+- Create:
+  - `usecase/appmanageduc/restore.go`: `POST /apps/:appID/managed/restore{target{kind:
+    latest|time|point|backup, time?, point?, backup?}, name?, dataVolume}`.
+    - It checks that the target is inside Status's restore window, and that a named
+      point or backup still exists.
+    - It maps the target to its recovery settings (spec §4, "What to restore to"):
+      - `latest`: none;
+      - `time`: `recovery_target_time`;
+      - `point`: `recovery_target_lsn` and `recovery_target_inclusive=on`;
+      - `backup`: that backup with `recovery_target='immediate'`.
+
+      For the other targets, `walg-entrypoint` fetches the latest base backup that
+      starts before the target.
+    - It creates the new app from the source's template binding (`app-template`
+      setting: template, version and params) through Task 7's path, **without the
+      feature check**.
+    - The new app's env: `HIVEPAAS_RESTORE_SOURCE_PREFIX`,
+      `HIVEPAAS_RESTORE_TARGET_TIME`, the source's read key, and its own prefix.
+    - Its command goes through `walg-entrypoint`.
+    - It inserts a `managed-restore` task.
+  - `tasks/taskmanagedrestore/executor.go`. Steps, kept in the task with `Continue()`:
+    1. wait for the service to run;
+    2. wait for `pg_is_in_recovery() = false`, failing with Postgres's own message when
+       recovery ends before the target;
+    3. run `walg-backup` once;
+    4. drop the restore env, and redeploy;
+    5. mark the app ready.
+- Test:
+  - refusals: a time outside the window, a point or a backup that no longer exists, a
+    target volume pinned to another node;
+  - the recovery settings for each of the four targets;
+  - the new app's env has its own prefix, and the source's only for fetching;
+  - restore is allowed without the feature;
+  - each step resumes after a crash;
+  - the source app is not changed.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore into a new app - latest, a time, a point or a backup`.
+
+## Task 11b: Restore points, and the retention that keeps them
+
+**Files:**
+- Create:
+  - `usecase/appmanageduc/restore_point.go`:
+    - `POST /apps/:appID/managed/restore-points{name, note?, keepUntil?}`. It checks the
+      name: unique, at most 63 bytes, not `hp-`. It runs `pg_create_restore_point` and
+      then `pg_switch_wal()` through `schedJobExecService.RunCommand`, waits for
+      `pg_stat_archiver` to show the segment (timeout 2 × `archive_timeout`), records
+      the point with the returned LSN, and is audited.
+    - `PUT .../restore-points/:name{keepUntil|null, note}`.
+    - `DELETE .../restore-points/:name`, which removes the record only.
+  - `service/managedservice/postgres/retention.go`:
+    `RetentionBoundary(backups []BaseBackup, retainFull int, points []RestorePoint, now)`
+    returns the older of the n-th newest full backup and the full backup that starts
+    before the oldest point still kept (`KeepUntil > now`). It returns none when there
+    are fewer than n fulls.
+  - The CLI's `hivepaas db mark <app> <name> [--keep-until] [--note]` lives in
+    `../hivepaas-cli`, as a separate commit.
+- Modify:
+  - Task 6's nightly sequence: before `walg-retain` runs, the engine computes the
+    boundary from `wal-g backup-list --json` (the previous step's output) and passes it
+    as `walg-retain <backup>`.
+  - Task 9's status: each point with the date until which it can be restored, and the
+    storage held back by kept points.
+  - `KeepUntil` is capped at 90 days by default.
+- Test:
+  - `RetentionBoundary` with no points, a point inside retention, a kept point older
+    than retention, a lapsed point, and fewer fulls than n;
+  - name refusals: a duplicate, too long, `hp-`;
+  - a point is listed only after its segment is archived, and is refused on timeout;
+  - deleting a point leaves the archive alone;
+  - a lapsed license still allows creating points: they are part of restoring, which
+    is never gated.
+
+- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore points, and retention that keeps them`.
+
+## Task 12 (`app-templates`): `postgres-managed`
+
+**Files:**
+- Create `templates/postgres-managed.yaml`:
+  - `requires: {versionCode: v000002, features: [managed-databases]}`;
+  - `managed: {engine: postgres, engineApi: 1, postgres: {...defaults}}`;
+  - the `wal-g` artifact for amd64 and arm64. Take the sha256 and size from the
+    release's `.sha256` files, then check them by downloading both;
+  - versions 17 and 18 on pinned Debian images. 18 overrides the mount path, as
+    `postgres.yaml` does;
+  - the scripts as `settings.configFiles` at `/opt/hivepaas/bin/walg-*`, mode 0755:
+    `walg-run`, `walg-fetch`, `walg-backup`, `walg-retain`, `walg-verify`,
+    `walg-health`, `walg-restore-test`, `walg-entrypoint`.
+- Create `scripts/test/walg/`: shell tests run in `postgres:17` and `postgres:18`
+  containers, with MinIO as the S3.
+- Modify: `index.json` (via `apptemplate index`), and the README:
+  - the new blocks and their version code;
+  - fix the type count (9) and the dependency limit (5).
+
+- [ ] **Step 1:** Write the script tests:
+  - `walg-fetch` maps 1 to 255 and passes 0 and 74;
+  - `walg-health` prints valid JSON, and fails on a grown `failed_count`;
+  - `walg-restore-test` reaches its restore point, fails on a removed WAL segment, and
+    refuses without free space;
+  - `walg-entrypoint` recovers to each of the four targets: the latest, a time between
+    two inserts, a restore point's LSN, and a base backup;
+  - `walg-retain <backup>` deletes only what is before that backup.
+- [ ] **Step 2:** Watch them fail. **Step 3:** Write the template and the scripts. **Step 4:** Run `apptemplate lint`, `index -check`, the compat job's subset for `v000001` (which leaves the template out), and the script tests. **Step 5:** Commit: `feat(templates): postgres-managed`.
+
+## Task 13 (`hivepaas-portal`): keys carry features
+
+- [ ] Every paid plan's key, Comb, Hive, Colony and Apiary, and the trial's, carries
+  `features: ["managed-databases"]`. Bee has no key.
+- [ ] A test of the issued payload per plan.
+- [ ] Commit: `feat(keys): managed-databases on every paid plan`.
+
+## Task 14 (`hivepaas-dashboard`): the managed screens
+
+- [ ] **Store:**
+  - a "Managed" badge;
+  - the missing feature, with the plans that grant it, instead of the form.
+- [ ] **Create form:** a Managed section with:
+  - storage: an S3 repository, a cloud storage or a volume repository;
+  - an optional separate key, with the reason for one;
+  - the placement warning;
+  - the restore test's mode and node;
+  - schedules and retention.
+- [ ] **The app's Database tab:**
+  - Status: archiving, restore window, last backup and test, placement and
+    suggestions;
+  - Restore: the four targets (latest, a time bounded by the window, a restore
+    point, a base backup) and the new volume;
+  - Restore points: create with a note and an optional keep date, which shows the
+    estimated storage; list each point with its "restorable until" date; delete;
+  - Settings;
+  - Unmanage, with a confirmation that names what goes.
+- [ ] **Locked fields:** shown read-only with the reason, on every screen Task 8
+  covers. The jobs list shows managed jobs as managed.
+- [ ] e2e for create, status and restore against a mocked API. Lint and types are
+  clean.
+- [ ] Commit per screen.
+
+## After the plan: live checks on the Linux server
+
+1. Create managed PG17 and PG18 apps on a pinned volume, archiving to MinIO or an
+   actual bucket. Write rows, and see `last_archived_time` move within 60 seconds.
+2. Delete a row, then restore to a time before the delete into a new app. The row is
+   there, and the source app is unchanged.
+3. Mark a restore point, insert more rows, and restore to the point into a new app.
+   It has exactly the rows from before the mark. Keep a point past `retainFull`
+   nights, and see the base backup before it survive retention, and restoring to it
+   still work.
+4. The nightly sequence and the restore test, in both modes: they pass, and Status
+   shows them.
+5. Revoke the key. Archiver health fails within 5 minutes and notifies, and Status
+   says `failing`.
+6. Remove one WAL segment from the bucket. The next restore test fails on it.
+7. Remove the license. Archiving and the restore test go on, PITR still works, and
+   creating a managed app is refused.
+8. On an arm64 node, if one is available: the aarch64 artifact is chosen and runs.

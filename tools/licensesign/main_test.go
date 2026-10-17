@@ -86,7 +86,7 @@ func devKeys(t *testing.T) []*privateKey {
 
 func colonyOptions() *issueOptions {
 	return &issueOptions{
-		plan: "colony", installations: []string{"cluster-e2e"}, days: 30, graceDays: 14, nodes: -1, users: -1,
+		plan: "colony", installations: []string{"cluster-e2e"}, days: 30, graceDays: defaultGraceDays, nodes: -1, users: -1,
 		licenseID: "lic_e2e", customer: Customer{Name: "HivePaaS e2e", Email: "admin@e2e.localhost"},
 	}
 }
@@ -209,8 +209,8 @@ func TestIssuedKeyIsInForceInTheApp(t *testing.T) {
 			want) {
 			t.Fatalf("limits %v, want %v", state.Limits, want)
 		}
-		if !state.GraceEndsAt.Equal(testNow.Add(44 * day)) {
-			t.Fatalf("grace ends %s, want 30 days and 14 grace days on", state.GraceEndsAt)
+		if !state.GraceEndsAt.Equal(testNow.Add(60 * day)) {
+			t.Fatalf("grace ends %s, want 30 days and 30 grace days on", state.GraceEndsAt)
 		}
 
 		trust, err = licensekeys.Trusted(false)

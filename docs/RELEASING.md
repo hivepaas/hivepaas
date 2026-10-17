@@ -103,10 +103,11 @@ installation run them.
      the pricing page, the Terms, Privacy and Refunds pages, and
      `docs.hivepaas.com/plans-and-licenses/`, which the dashboard links to.
    - **Paddle live has passed its smoke test**: a real purchase gives a key, and
-     a full refund revokes the license. If Paddle's live approval takes more
-     than a week, release with trials only, and Apiary by hand, instead: the
-     portal's pricing page then says plans cannot be bought yet, and offers the
-     trial.
+     a full refund revokes the license. Its payment recovery retries a failed
+     renewal for 30 days at most, Paddle's default, which a paid key's 30 days
+     of grace cover. If Paddle's live approval takes more than a week, release
+     with trials only, and Apiary by hand, instead: the portal's pricing page
+     then says plans cannot be bought yet, and offers the trial.
 
 ## Every release
 

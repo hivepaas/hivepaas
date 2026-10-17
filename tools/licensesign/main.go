@@ -33,7 +33,7 @@
 //	licensesign keygen -alg ml-dsa-65 -key-id lic-2026-ml -dir /secure
 //	licensesign sign   -key A.key -key B.key -in payload.json [-out key.txt] [-format token|json]
 //	licensesign issue  -key A.key -key B.key -plan comb|hive|colony|apiary -installation ID [-installation ID]
-//	                   [-days 30] [-grace-days 14] [-trial] [-nodes N] [-users N] [-license-id ID]
+//	                   [-days 30] [-grace-days 30] [-trial] [-nodes N] [-users N] [-license-id ID]
 //	                   [-customer-id ID] [-customer-name NAME] [-customer-email EMAIL] [-subscription-id ID]
 //	                   [-out key.txt] [-format token|json]
 //	licensesign verify -pub A.pub.pem -pub B.pub.pem [-in key.txt]
@@ -87,9 +87,10 @@ const (
 	formatToken = "token"
 	formatJSON  = "json"
 
-	// issue's defaults: a month's key, with two weeks' grace.
+	// issue's defaults: a month's key, with a paid key's 30 days of grace, which
+	// cover Paddle's retries of a failed renewal. A trial has none.
 	defaultDays      = 30
-	defaultGraceDays = 14
+	defaultGraceDays = 30
 
 	// licenseIDBytes is the randomness of a license id issue makes up.
 	licenseIDBytes = 8

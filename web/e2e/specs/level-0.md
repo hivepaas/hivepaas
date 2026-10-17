@@ -23,6 +23,8 @@ portal moved, another installation's key, one that does not verify, and the
 plan-limit dialog's words for users, functions, previews, paid sign-in, a kind
 left out or unknown. A trial, a grace period, a key that ran out, a limit
 passed and the refusals that follow are put in force for real (2.133-2.136).
+It also checks where the License page's and the dialog's links to the docs
+lead, and that the page says where the daily check is turned off.
 
 An app's or a project's page added to the dashboard is added to the lists in
 `project-pages.spec.ts`; one of a new kind, to those of `accessibility.spec.ts`.

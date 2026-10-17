@@ -1,5 +1,6 @@
 export * from "./installation-id-section.com";
 export * from "./license-date.com";
+export * from "./license-docs-link.com";
 export * from "./license-labels";
 export * from "./license-plan-card.com";
 export * from "./license-refresh-section.com";

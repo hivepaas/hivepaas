@@ -159,11 +159,15 @@ Work on a branch per repository, in a worktree.
 **Interfaces:**
 - Produces: `templatemodel.Managed`, `templatemodel.Artifact`, `ArtifactFile`,
   `base.CPUArch` and `base.CPUArchFromDocker(string) (CPUArch, bool)`.
-- The engine registry (Task 5) is not ready yet. Lint takes a `func(engine string,
-  api int) bool`, wired to the registry in Task 5 and to an `engine == "postgres" &&
-  api == 1` stub until then.
+- **As built:** the engines a template may name are a table in the template format,
+  `templatemodel.ManagedEngines` (`EngineContract{MinAPI, MaxAPI, Artifacts}`), and
+  `Validate` checks against it. Task 5's registry is tested against the table, as the
+  spec builders are against `BuildableBlocks`. This replaces the lint callback first
+  planned.
+- **As built:** artifacts may only go directly in `/opt/hivepaas/bin/`, so they cannot
+  shadow a file of the image.
 
-- [ ] **Step 1:** Write the tests:
+- [x] **Step 1:** Write the tests:
   - a valid managed template decodes and validates;
   - `KnownFields` still refuses an unknown key inside `managed` and `artifacts`;
   - each refusal: an unknown engine, `engineApi` out of range, an http URL, a hash that
@@ -171,10 +175,10 @@ Work on a branch per repository, in a worktree.
     volume mount, an `alpine` tag;
   - lint refuses `v000002` blocks under `requires.versionCode: v000001`;
   - `subset -version-code v000001` leaves a managed template out.
-- [ ] **Step 2:** Run `go test ./hivepaas_app/service/apptemplateservice/... ./tools/apptemplate/...`. Expected: FAIL to build.
-- [ ] **Step 3:** Write the code.
-- [ ] **Step 4:** Run the task's packages and the global checks. Expected: all pass.
-- [ ] **Step 5:** Commit: `feat(templates): v000002 - managed, artifacts and requires.features`.
+- [x] **Step 2:** Run `go test ./hivepaas_app/service/apptemplateservice/... ./tools/apptemplate/...`. Expected: FAIL to build.
+- [x] **Step 3:** Write the code.
+- [x] **Step 4:** Run the task's packages and the global checks. Expected: all pass.
+- [x] **Step 5:** Commit: `feat(templates): v000002 - managed, artifacts and requires.features`.
 
 ## Task 2: A license grants features, and a template that needs a missing one cannot be created from
 

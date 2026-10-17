@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
@@ -131,5 +132,5 @@ func TestLintRefusesAVersionCodeNewerThanThisHivePaaS(t *testing.T) {
 	newer := strings.Replace(webTemplateYAML, "versionCode: v000001", "versionCode: v000009", 1)
 
 	assert.Contains(t, strings.Join(lintWeb(t, newer), "\n"),
-		"requires.versionCode v000009 is newer than this HivePaaS (v000001)")
+		"requires.versionCode v000009 is newer than this HivePaaS ("+base.CurrentVersion+")")
 }

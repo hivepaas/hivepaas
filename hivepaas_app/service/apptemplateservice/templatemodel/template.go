@@ -41,6 +41,13 @@ type Template struct {
 	// application that is several processes rather than one. A template has
 	// components or the App block below, never both.
 	Components []*Component `yaml:"components,omitempty"`
+	// Managed names the engine that looks after an app made from this template,
+	// for a template that is more than the app it creates: a database whose
+	// backups, restores and health HivePaaS runs. Nil for nearly every template.
+	Managed *Managed `yaml:"managed,omitempty"`
+	// Artifacts are files the managed engine puts into the app's container, by
+	// URL and hash, so that the image can stay the one its project publishes.
+	Artifacts []*Artifact `yaml:"artifacts,omitempty"`
 
 	// App is a specmodel.AppDoc with placeholders in it. It stays an untyped tree
 	// until it is rendered: version overrides and placeholders apply to the tree,
@@ -77,8 +84,15 @@ type Links struct {
 
 // Requires names the oldest HivePaaS able to provision a template, by version
 // code (base.CurrentVersion). Codes are fixed-width, so they compare as strings.
+//
+// Features are what the license has to grant for the template to be created
+// from. They name features, not plans: which plans grant a feature is the key's
+// to say, so prices can move without a template changing. They have nothing to
+// do with compatibility - a HivePaaS that cannot grant a feature still reads the
+// template, and the store says what is missing.
 type Requires struct {
-	VersionCode string `yaml:"versionCode" json:"versionCode"`
+	VersionCode string   `yaml:"versionCode" json:"versionCode"`
+	Features    []string `yaml:"features,omitempty" json:"features,omitempty"`
 }
 
 // IsCompatible reports whether a HivePaaS at currentVersionCode can provision a

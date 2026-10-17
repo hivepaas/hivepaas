@@ -72,6 +72,10 @@ type IndexEntry struct {
 	// RequiresDockerAPI says the template gives an app the Docker API, which
 	// also takes Write on the Cluster module; in the index for the same reason.
 	RequiresDockerAPI bool `json:"requiresDockerApi,omitempty"`
+	// Managed is the engine that looks after what the template creates, and empty
+	// for an ordinary template, so that the store can mark it without reading the
+	// file. The index is read leniently, so an older HivePaaS skips the field.
+	Managed string `json:"managed,omitempty"`
 	// Stats are what the store orders templates by besides their name.
 	Stats *IndexStats `json:"stats,omitempty"`
 }

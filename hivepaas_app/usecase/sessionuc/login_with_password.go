@@ -81,36 +81,21 @@ func (uc *UC) LoginWithPassword(
 		return nil, err
 	}
 
-	passcodeRequired := dbUser.TotpSecret != ""
-
-	// When trusted device is sent
-	if passcodeRequired && req.TrustedDeviceID != "" {
-		timeNow := timeutil.NowUTC()
-		// If the sending trusted device matches the data in DB
-		trustedDevice, err := uc.loginTrustedDeviceRepo.GetByUserAndDevice(ctx, uc.db, dbUser.ID, req.TrustedDeviceID)
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return nil, hperrors.Wrap(err)
-		}
-		if trustedDevice != nil && timeNow.Sub(trustedDevice.UpdatedAt) < config.Current().Session.DeviceTrustedPeriod {
-			passcodeRequired = false
-		}
+	passcodeRequired, err := uc.passcodeRequired(ctx, dbUser, req.TrustedDeviceID)
+	if err != nil {
+		return nil, err
 	}
 
 	// When passcode is required, builds token for using in the next step
 	if passcodeRequired {
-		mfaType := base.MFATypeTOTP
-		mfaToken, err := uc.userService.GenerateMFAToken(dbUser.ID, mfaType, req.TrustedDeviceID)
+		mfaToken, err := uc.startPasscodeStep(ctx, dbUser, req.TrustedDeviceID)
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, err
 		}
-
-		// Initialize MFA passcode attempts tracker in redis
-		_ = uc.cacheMfaPasscodeRepo.Set(ctx, dbUser.ID, &cacheentity.MFAPasscode{Attempts: 0}, mfaPasscodeExp)
-
 		return &sessiondto.LoginWithPasswordResp{
 			Data: &sessiondto.LoginWithPasswordDataResp{
 				NextStep: nextStepMfaInput,
-				MFAType:  mfaType,
+				MFAType:  base.MFATypeTOTP,
 				MFAToken: mfaToken,
 			},
 		}, nil
@@ -220,4 +205,33 @@ func (uc *UC) wrapSensitiveError(err error) error {
 		return hperrors.Wrap(hperrors.ErrLoginInputInvalid).WithCause(err)
 	}
 	return hperrors.Wrap(err)
+}
+
+// passcodeRequired reports whether a user who proved the first factor - a password, or a provider's sign-in - still
+// owes the second: one who set up an authenticator app, unless signing in on a device they trusted within the
+// configured period.
+func (uc *UC) passcodeRequired(ctx context.Context, user *entity.User, trustedDeviceID string) (bool, error) {
+	if user.TotpSecret == "" {
+		return false, nil
+	}
+	if trustedDeviceID == "" {
+		return true, nil
+	}
+	trustedDevice, err := uc.loginTrustedDeviceRepo.GetByUserAndDevice(ctx, uc.db, user.ID, trustedDeviceID)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return false, hperrors.Wrap(err)
+	}
+	trusted := trustedDevice != nil &&
+		timeutil.NowUTC().Sub(trustedDevice.UpdatedAt) < config.Current().Session.DeviceTrustedPeriod
+	return !trusted, nil
+}
+
+// startPasscodeStep is the token the passcode is signed in with (LoginWithPasscode), its attempts counted afresh.
+func (uc *UC) startPasscodeStep(ctx context.Context, user *entity.User, trustedDeviceID string) (string, error) {
+	mfaToken, err := uc.userService.GenerateMFAToken(user.ID, base.MFATypeTOTP, trustedDeviceID)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	_ = uc.cacheMfaPasscodeRepo.Set(ctx, user.ID, &cacheentity.MFAPasscode{Attempts: 0}, mfaPasscodeExp)
+	return mfaToken, nil
 }

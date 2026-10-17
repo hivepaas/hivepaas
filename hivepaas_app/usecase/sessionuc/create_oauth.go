@@ -72,6 +72,26 @@ func (uc *UC) CreateOAuthSession(
 		return nil, hperrors.Wrap(err)
 	}
 
+	// The provider stands for the password: a user with an authenticator app owes the passcode all the same. One
+	// who may not sign in is refused before it is asked for, as after a password.
+	passcodeRequired, err := uc.passcodeRequired(ctx, dbUser, req.TrustedDeviceID)
+	if err != nil {
+		return nil, err
+	}
+	if passcodeRequired {
+		if err = signInRefusal(dbUser); err != nil {
+			if e := uc.recordLoginDenied(ctx, dbUser, auditMethodOAuth, loginRefusalReason(err)); e != nil {
+				return nil, e
+			}
+			return nil, err
+		}
+		mfaToken, err := uc.startPasscodeStep(ctx, dbUser, req.TrustedDeviceID)
+		if err != nil {
+			return nil, err
+		}
+		return &sessiondto.CreateOAuthSessionResp{MFAToken: mfaToken}, nil
+	}
+
 	sessionResp, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
 		User:   dbUser,
 		Method: auditMethodOAuth,

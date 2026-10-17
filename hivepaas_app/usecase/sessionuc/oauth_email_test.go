@@ -167,6 +167,10 @@ func (r *userByEmail) GetByEmail(_ context.Context, _ database.IDB, email string
 	return nil, hperrors.NewNotFound("User")
 }
 
+func (r *userByEmail) Update(context.Context, database.IDB, *entity.User, ...bunex.UpdateQueryOption) error {
+	return nil
+}
+
 func ssoSettings(t *testing.T) map[string]*entity.Setting {
 	t.Helper()
 	google := &entity.Setting{ID: "set-google", Type: base.SettingTypeOAuth, Kind: string(base.OAuthKindGoogle)}

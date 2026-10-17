@@ -13,6 +13,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
 )
 
 // The embedded keys are otherwise exercised only by a key being pasted; a bad
@@ -31,6 +32,35 @@ func TestEmbeddedKeysParse(t *testing.T) {
 		_, err = license.Purpose.ParsePublicKeys(prod)
 		assert.NoError(t, err)
 	}
+}
+
+// productionKeys is the production set a release must carry, by key id: one key
+// of each algorithm a license key is signed with. A rotation adds the new pair
+// here as it adds its files to prod/, and removes the old one the same way.
+var productionKeys = map[string]string{
+	"lic-2026-ed": releasesig.AlgEd25519,
+	"lic-2026-ml": releasesig.AlgMLDSA65,
+}
+
+// TestProductionKeysShipped is a release gate: the release workflow runs go test
+// before it builds. A binary without the production pair refuses every key the
+// portal issues, and runs every installation on Bee. A file missing, one more, or
+// a key of the wrong algorithm under a pair's id stops the release.
+func TestProductionKeysShipped(t *testing.T) {
+	prod, err := Prod()
+	if !assert.NoError(t, err) {
+		return
+	}
+	keys, err := license.Purpose.ParsePublicKeys(prod)
+	if !assert.NoError(t, err, "the production set must hold a key of every algorithm") {
+		return
+	}
+
+	shipped := map[string]string{}
+	for keyID, key := range keys {
+		shipped[keyID] = key.Algorithm
+	}
+	assert.Equal(t, productionKeys, shipped)
 }
 
 // Whatever the committed development keys sign must never pass as production:

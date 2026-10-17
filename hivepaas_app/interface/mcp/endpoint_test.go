@@ -69,6 +69,9 @@ type mcpWorld struct {
 	audit  *fakeAudit
 	plans  *memPlans
 	denied bool
+	// planLimited answers the project list as the API answers a creation the
+	// installation's plan refuses.
+	planLimited bool
 }
 
 // newMCPWorld serves the project list, and whatever routes adds.
@@ -82,6 +85,12 @@ func newMCPWorld(t *testing.T, routes ...func(api *gin.RouterGroup)) *mcpWorld {
 		api.GET("/projects", func(ctx *gin.Context) {
 			if _, err := auth.GetCurrentAuth(ctx, authhandler.NoAccessCheck); err != nil || w.denied {
 				ctx.JSON(http.StatusForbidden, gin.H{"title": "Forbidden", "status": 403})
+				return
+			}
+			if w.planLimited {
+				ctx.JSON(http.StatusPreconditionFailed, gin.H{"status": 412, "code": "ERR_PLAN_LIMIT_REACHED",
+					"title": "Precondition failed", "detail": "The Bee plan allows 20 apps. Remove one, or upgrade.",
+					"params": gin.H{"Limit": "apps", "Max": 20, "Plan": "bee"}})
 				return
 			}
 			ctx.JSON(http.StatusOK, gin.H{"data": testProjects})
@@ -213,6 +222,38 @@ func TestARefusalIsAToolErrorAndAudited(t *testing.T) {
 	if assert.Len(t, w.audit.entries, 2) {
 		assert.Equal(t, base.AuditLogResultDenied, w.audit.entries[1].Result)
 	}
+}
+
+// A plan's limit is a tool error too, which tells the model to tell the person,
+// and neither to ask again nor to remove anything to make room, as the API's own
+// words would suggest. It is no denial: only the call is audited.
+func TestAPlanLimitIsAToolErrorThatSaysToTellThePerson(t *testing.T) {
+	w := newMCPWorld(t)
+	w.planLimited = true
+	session, err := w.connect(t, "key1")
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	text, isError := callTool(t, session, "list_projects", map[string]any{})
+
+	assert.True(t, isError)
+	assert.True(t, strings.HasPrefix(text, "the installation's plan limit was reached"), text)
+	for _, said := range []string{"Do not retry", "Tell the person", "System > License",
+		"Remove nothing to make room unless the person asks",
+		"412: Precondition failed: The Bee plan allows 20 apps. Remove one, or upgrade."} {
+		assert.Contains(t, text, said)
+	}
+	if assert.Len(t, w.audit.entries, 1) {
+		assert.Equal(t, base.AuditLogResultAllowed, w.audit.entries[0].Result)
+	}
+}
+
+// Another refusal of the same status is told in the API's words alone.
+func TestDescribeAPIErrorKeepsOtherRefusalsAsTheyAre(t *testing.T) {
+	expired := &APIError{Status: http.StatusPreconditionFailed, Code: "ERR_LICENSE_EXPIRED",
+		Title: "Precondition failed", Detail: "This license key ran out."}
+	assert.Equal(t, expired.Error(), describeAPIError(expired))
 }
 
 func TestEveryToolIsDescribed(t *testing.T) {

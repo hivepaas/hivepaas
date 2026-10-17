@@ -72,13 +72,52 @@ installation run them.
    - HSTS on `hivepaas.com`; a CAA record naming the CA you use; registrar lock
      and 2FA on the registrar and DNS accounts; DNSSEC where the provider has it.
    - The target is set per release (step 9).
+8. **Licensing**, before the first release that carries plan limits
+   (`v1.0.0-beta5`, to confirm then). From that release on, an installation
+   without a key runs on Bee, so these hold first:
+   - **The production public keys are the portal's.** Every binary trusts
+     [licensekeys/prod](../hivepaas_app/pkg/license/licensekeys/prod/), and
+     `TestProductionKeysShipped` only checks that the pair is there. Have the
+     live portal issue a key, a trial or a staff key, save it as `key.txt`, and
+     check it against them:
+     ```bash
+     go run ./tools/licensesign verify -in key.txt \
+       -pub hivepaas_app/pkg/license/licensekeys/prod/lic-2026-ed.pub.pem \
+       -pub hivepaas_app/pkg/license/licensekeys/prod/lic-2026-ml.pub.pem
+     ```
+     It prints `OK` and what the key holds. Check a key the offline copies sign
+     the same way ([License keys](#license-keys)), so the emergency path is
+     known to work before it is needed.
+   - **The portal** at `https://portal.hivepaas.com`:
+     - `/api/ping` answers;
+     - `/pricing?installationId=…` and `/trial` open signed out, on those pages
+       and not on the sign-in page;
+     - a key it did not issue is refused as unknown, `404 ERR_LICENSE_KEY_UNKNOWN`:
+       ```bash
+       curl -s https://portal.hivepaas.com/api/licenses/refresh -H 'Content-Type: application/json' \
+         -d '{"key":"not-a-key","installationId":"0000000000000000000000000"}'
+       ```
+     - a HivePaaS built from `main` and run as beta (`HP_ENV=beta`) takes the
+       portal's key, and System › License does not call it a development key.
+   - **The website and the docs are deployed**, before the release or with it:
+     the pricing page, the Terms, Privacy and Refunds pages, and
+     `docs.hivepaas.com/plans-and-licenses/`, which the dashboard links to.
+   - **Paddle live has passed its smoke test**: a real purchase gives a key, and
+     a full refund revokes the license. If Paddle's live approval takes more
+     than a week, release with trials only, and Apiary by hand, instead: the
+     portal's pricing page then says plans cannot be bought yet, and offers the
+     trial.
 
 ## Every release
 
 The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
 
 1. **Main is green.** The `Go Source Check` workflow passes on the commit you
-   release, in both repositories where it applies.
+   release, in both repositories where it applies. So does the dashboard's
+   **`E2E`**, at every level, on the dashboard commit you tag: a push runs only
+   levels 0 and 1, so run it by hand (Actions › E2E › Run workflow). It tests
+   against the backend's `main`, and its level 2 puts plan limits in force for
+   real (`tests/level-2/license-on`).
 
 2. **The release commit (backend).** [release.json](../release.json) is the one
    place a release is declared: the binary is built with it
@@ -194,6 +233,39 @@ migration and `blockMajorUpgrade` run for the first time there.
   and the redirect of `get.hivepaas.com`.
 - Never move or delete a pushed version tag or image tag: installations and
   `release.json` refer to them.
+- **A plan limit that misfires**, refusing what the plan allows, is not undone
+  by moving `release` back: the installations that updated stay on the release.
+  A limit only stops creating, so nothing that runs is hurt. The fastest relief,
+  until a fixed release is out, is a key that lifts the limit for each
+  installation that reports it, for a few weeks: issued by staff through the
+  portal (`POST /api/licensing/licenses`, in the portal's `docs/licensing.md`),
+  or with `licensesign` and the offline keys if the portal is down
+  ([License keys](#license-keys)). The installation ID is in System › License.
+  The key replaces the one in force: afterwards the person pastes their own
+  key back, from the portal's Licenses page.
+
+## License keys
+
+License keys are signed by the portal, unattended, with a pair of their own,
+`lic-2026-ed` and `lic-2026-ml`, kept apart from the release keys. Every binary
+trusts the public halves in
+[licensekeys/prod](../hivepaas_app/pkg/license/licensekeys/prod/), whose
+README says how a pair is added and rotated: the new pair ships in a release
+well before the portal signs with it. `TestProductionKeysShipped` holds a
+release whose set is not the one it names.
+
+The private halves are in the portal's secret store, and in a copy on the
+offline machine. That copy is the emergency path, when the portal cannot sign:
+
+```bash
+go run ./tools/licensesign issue -key /offline/lic-2026-ed.key -key /offline/lic-2026-ml.key \
+  -plan colony -installation <installation ID> -days 30 \
+  -customer-name "Acme" -customer-email ops@acme.example -out key.txt
+```
+
+The person pastes `key.txt` in System › License. The portal never saw that key:
+a refresh of it answers that the portal does not know it, it is never renewed,
+and the account page does not show it.
 
 ## GHCR packages
 

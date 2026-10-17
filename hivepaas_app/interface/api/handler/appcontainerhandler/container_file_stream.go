@@ -266,7 +266,7 @@ func drainUntilClosed(conn *websocket.Conn, wait time.Duration) {
 // @Description and {"type":"end"} as a text message; answers {"type":"done","data":{...}} or
 // @Description {"type":"error","error":{...}}. Neither the server's nor Traefik's timeouts cut it; a
 // @Description client sends a message at least every 60 seconds. With progress=true, each binary
-// @Description message is followed by {"type":"progress","received":<bytes the copy has taken>}.
+// @Description message is followed by `{"type":"progress","received":<bytes the copy has taken>}`.
 // @Description Without the websocket upgrade, the request is only checked: 204 when the stream would
 // @Description be taken, else the error it would get - which a browser cannot read from a refused upgrade.
 // @Tags    Apps

@@ -13,7 +13,7 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 [![Traefik](https://img.shields.io/badge/Traefik-v3-24A1C1?style=flat&logo=traefik)](https://traefik.io)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-[Features](#-key-features) • [Website & Demo](#-website--demo) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [Contributing](#-contributing)
+[Features](#-key-features) • [Website & Demo](#-website--demo) • [Plans](#-plans) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
@@ -40,6 +40,19 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 * **Website:** [hivepaas.com](https://hivepaas.com)
 * **Demo servers:** [Demo1 (EU)](https://demo1.hivepaas.com) · [Demo2 (Asia)](https://demo2.hivepaas.com) · [Demo3 (US)](https://demo3.hivepaas.com)
 * **Sign in with:** username `demo` · password `HivePaaS@2026` (a read-only account)
+
+---
+
+## 💳 Plans
+
+HivePaaS is Apache 2.0 and free to self-host. Without a license key it runs on Bee, the free plan, with no time
+limit: 2 nodes, 2 users, 20 apps, 20 functions and 2 previews at a time. Paid plans lift those limits, and Hive can be
+tried for 14 days without a card. A limit only stops creating; it never stops what runs. A key is checked offline.
+HivePaaS sends no telemetry: with a key installed, a daily check for a newer one sends only the key and the
+installation's ID, and can be turned off.
+
+See [pricing](https://hivepaas.com/pricing), and [Plans and licenses](https://docs.hivepaas.com/plans-and-licenses)
+in the docs.
 
 ---
 

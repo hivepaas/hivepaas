@@ -85,6 +85,16 @@ secret = "kept"
 		_, err := loadManagedSettings(appPath)
 		assert.Error(t, err)
 	})
+
+	t.Run("reads the license section", func(t *testing.T) {
+		appPath := writeManagedSettings(t, "secret = \"kept\"\n\n[license]\nrefresh_disabled = true\n", 0o600)
+
+		settings, err := loadManagedSettings(appPath)
+		assert.NoError(t, err)
+		if assert.NotNil(t, settings.License.RefreshDisabled) {
+			assert.True(t, *settings.License.RefreshDisabled)
+		}
+	})
 }
 
 func TestManagedSettingsApplyTo(t *testing.T) {
@@ -107,6 +117,28 @@ func TestManagedSettingsApplyTo(t *testing.T) {
 		settings.applyTo(config)
 		assert.Equal(t, "from-env", config.Secret)
 	})
+
+	// The refresh opt-out: set in the file, either way, it wins over the
+	// environment; left out, HP_LICENSE_REFRESH_DISABLED still decides.
+	t.Run("the license refresh setting", func(t *testing.T) {
+		disabled, enabled := true, false
+		cases := []struct {
+			name     string
+			fromEnv  bool
+			fromFile *bool
+			want     bool
+		}{
+			{name: "switched off in the file", fromEnv: false, fromFile: &disabled, want: true},
+			{name: "switched on in the file, over the environment", fromEnv: true, fromFile: &enabled, want: false},
+			{name: "left out of the file: the environment's off", fromEnv: true, fromFile: nil, want: true},
+			{name: "left out of the file: the default, on", fromEnv: false, fromFile: nil, want: false},
+		}
+		for _, c := range cases {
+			config := &Config{License: License{RefreshDisabled: c.fromEnv}}
+			(&ManagedSettings{License: ManagedLicense{RefreshDisabled: c.fromFile}}).applyTo(config)
+			assert.Equal(t, c.want, config.License.RefreshDisabled, c.name)
+		}
+	})
 }
 
 func TestLoadConfigAppliesManagedSettingsOverEnv(t *testing.T) {
@@ -121,6 +153,21 @@ func TestLoadConfigAppliesManagedSettingsOverEnv(t *testing.T) {
 	cfg, err := LoadConfig()
 	assert.NoError(t, err)
 	assert.Equal(t, "rotated-by-the-app", cfg.Secret)
+}
+
+// The refresh switched off in hivepaas.toml is off once loaded, with nothing in
+// the environment: an installer that deploys the stack again cannot turn it on.
+func TestLoadConfigAppliesTheManagedRefreshOptOut(t *testing.T) {
+	resetLoadState()
+	appPath := writeManagedSettings(t, "secret = \"from-the-file\"\n\n[license]\nrefresh_disabled = true\n", 0o600)
+	assert.NoError(t, os.WriteFile(filepath.Join(appPath, configFileName), []byte("env = \"myenv\"\n"), 0o600))
+
+	t.Setenv("HP_APP_PATH", appPath)
+	t.Setenv("HP_LICENSE_REFRESH_DISABLED", "")
+
+	cfg, err := LoadConfig()
+	assert.NoError(t, err)
+	assert.True(t, cfg.License.RefreshDisabled)
 }
 
 // Clearing HP_* keeps the app secret out of the environment handed to the
@@ -228,5 +275,23 @@ func TestSaveManagedSettings(t *testing.T) {
 		entries, err := os.ReadDir(appPath)
 		assert.NoError(t, err)
 		assert.Len(t, entries, 1, "the temp file must not survive the write")
+	})
+
+	// The app rewrites the file when its secret is rotated or a security setting
+	// is saved. The operator's refresh opt-out, which the app never sets, must come
+	// through that rewrite.
+	t.Run("a rewrite keeps the license section", func(t *testing.T) {
+		appPath := writeManagedSettings(t, "secret = \"first\"\n\n[license]\nrefresh_disabled = true\n", 0o600)
+
+		assert.NoError(t, updateManagedSettings(appPath, func(settings *ManagedSettings) {
+			settings.Secret = "rotated"
+		}))
+
+		loaded, err := loadManagedSettings(appPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "rotated", loaded.Secret)
+		if assert.NotNil(t, loaded.License.RefreshDisabled) {
+			assert.True(t, *loaded.License.RefreshDisabled)
+		}
 	})
 }

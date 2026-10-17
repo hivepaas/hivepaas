@@ -65,7 +65,8 @@ func licenseRefreshLog(applied *licenseservice.ApplyRefreshResp) string {
 	case base.LicenseRefreshNone:
 		return "No license key is stored, so there is nothing to ask the portal with.\n"
 	case base.LicenseRefreshDisabled:
-		return "The daily license refresh is switched off in the config (license.refresh_disabled).\n"
+		return "The daily license refresh is switched off in the config: refresh_disabled under [license] " +
+			"in hivepaas.toml, or HP_LICENSE_REFRESH_DISABLED.\n"
 	case base.LicenseRefreshFailed:
 		return "The license refresh failed: " + hperrors.GetErrorDetail(applied.Err, "") + "\n"
 	}

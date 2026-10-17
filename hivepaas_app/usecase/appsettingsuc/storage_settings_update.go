@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -55,6 +56,9 @@ func (uc *UC) UpdateAppStorageSettings(
 		// The Docker API socket is not shown on the storage screen, so what it
 		// saves never has it; the one the service has is kept.
 		data.FinalMounts = dockerapiservice.KeepSocketMounts(built.Mounts,
+			data.Service.Spec.TaskTemplate.ContainerSpec.Mounts)
+		// Nor are an app's artifacts, which its engine binds.
+		data.FinalMounts = artifactservice.KeepArtifactMounts(data.FinalMounts,
 			data.Service.Spec.TaskTemplate.ContainerSpec.Mounts)
 
 		err = uc.applyAppStorageSettings(ctx, db, data)

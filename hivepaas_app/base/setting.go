@@ -9,6 +9,7 @@ const (
 	SettingTypeAcmeDnsProvider   SettingType = "acme-dns-provider"
 	SettingTypeAPIKey            SettingType = "api-key"
 	SettingTypeApp               SettingType = "app"
+	SettingTypeAppArtifacts      SettingType = "app-artifacts"
 	SettingTypeAppAutoscale      SettingType = "app-autoscale"
 	SettingTypeAppClone          SettingType = "app-clone"
 	SettingTypeAppDeployment     SettingType = "app-deployment"

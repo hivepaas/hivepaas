@@ -97,6 +97,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 
 	// Export never writes these; a bundle holding one was written by hand.
 	base.SettingTypeApp:            {skip: reasonNeverExported},
+	base.SettingTypeAppArtifacts:   {skip: reasonNeverExported},
 	base.SettingTypeAPIKey:         {skip: reasonNeverExported},
 	base.SettingTypeBackupSnapshot: {skip: reasonNeverExported},
 	base.SettingTypeClusterNode:    {skip: reasonNeverExported},

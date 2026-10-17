@@ -192,6 +192,8 @@ var (
 	_ = registerSpecPolicy(base.SettingTypeImageScan, skipSpecPolicy{
 		reason: "image scanning is switched on where it runs, and fetches its DB there"})
 	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, vulnerabilityIgnoreSpecPolicy{})
+	_ = registerSpecPolicy(base.SettingTypeAppArtifacts, skipSpecPolicy{
+		reason: "a managed engine's: written when the app is created from its template, and fetched on its node"})
 	_ = registerSpecPolicy(base.SettingTypeLicense, skipSpecPolicy{
 		reason: "a license is for one installation, and carries the customer's email"})
 

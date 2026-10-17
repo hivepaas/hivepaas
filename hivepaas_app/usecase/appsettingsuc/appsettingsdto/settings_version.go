@@ -8,6 +8,7 @@ import (
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -54,10 +55,11 @@ func ServiceSettingsVersion(service *swarm.Service) int {
 }
 
 // StorageSettingsVersion is the version of the app's Persistent Storage
-// screen: its mounts, but the Docker API socket's, which is not chosen there.
+// screen: its mounts, but the Docker API socket's and the artifacts', which are
+// not chosen there.
 func StorageSettingsVersion(service *swarm.Service) int {
 	mounts := slices.DeleteFunc(slices.Clone(service.Spec.TaskTemplate.ContainerSpec.Mounts), func(m mount.Mount) bool {
-		return dockerapiservice.IsSocketMount(&m)
+		return dockerapiservice.IsSocketMount(&m) || artifactservice.IsArtifactMount(&m)
 	})
 	return settingsVersion(mounts)
 }

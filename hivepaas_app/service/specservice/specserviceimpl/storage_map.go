@@ -5,6 +5,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -49,6 +50,11 @@ func mapAppStorage(
 		// The socket is this installation's, named after this app's id; import
 		// gives an app with the setting its own.
 		if dockerapiservice.IsSocketMount(m) {
+			continue
+		}
+		// So are artifacts: files of this installation's cache, which the app's
+		// engine binds on every deploy.
+		if artifactservice.IsArtifactMount(m) {
 			continue
 		}
 		if seen[m.Target] {

@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentartifactclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/artifactagentuc/artifactagentdto"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -68,10 +68,10 @@ func (f *fakeAgentClient) Ensure(
 
 func (f *fakeAgentClient) Close() error { return nil }
 
-func walg() *templatemodel.Artifact {
-	return &templatemodel.Artifact{
+func walg() *entity.AppArtifact {
+	return &entity.AppArtifact{
 		Name: "wal-g", Version: "3.0.8", MountPath: "/opt/hivepaas/bin/wal-g",
-		Files: map[base.CPUArch]*templatemodel.ArtifactFile{
+		Files: map[base.CPUArch]*entity.AppArtifactFile{
 			base.CPUArchAMD64: {URL: "https://example.com/wal-g-amd64", SHA256: "aa", Size: 10},
 			base.CPUArchARM64: {URL: "https://example.com/wal-g-aarch64", SHA256: "bb", Size: 20},
 		},
@@ -146,4 +146,86 @@ func TestEnsureOnNodePassesTheAgentsRefusalOn(t *testing.T) {
 	_, err := svc.EnsureOnNode(context.Background(), &artifactservice.EnsureOnNodeReq{NodeID: "n1", Artifact: walg()})
 
 	assert.ErrorIs(t, err, hperrors.ErrArtifactHashMismatch)
+}
+
+func (f *fakeDocker) NodeList(context.Context, ...docker.NodeListOption) (*client.NodeListResult, error) {
+	var nodes []swarm.Node
+	for _, id := range []string{"n1", "n2", "n3", "n4"} {
+		arch := map[string]string{"n1": "x86_64", "n2": "aarch64", "n3": "riscv64", "n4": "x86_64"}[id]
+		node := swarm.Node{ID: id,
+			Spec: swarm.NodeSpec{Availability: swarm.NodeAvailabilityActive,
+				Annotations: swarm.Annotations{Labels: map[string]string{"zone": id}}},
+			Description: swarm.NodeDescription{Hostname: "node-" + id, Platform: swarm.Platform{Architecture: arch}},
+			Status:      swarm.NodeStatus{State: swarm.NodeStateReady},
+		}
+		if id == "n4" {
+			node.Status.State = swarm.NodeStateDown
+		}
+		nodes = append(nodes, node)
+	}
+	return &client.NodeListResult{Items: nodes}, nil
+}
+
+func specWith(constraints ...string) *swarm.ServiceSpec {
+	return &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{Placement: &swarm.Placement{Constraints: constraints}}}
+}
+
+func walgSettings() *entity.AppArtifactsSettings {
+	return &entity.AppArtifactsSettings{Artifacts: []*entity.AppArtifact{walg()}}
+}
+
+// An app pinned to a node has its artifacts there, and only there.
+func TestMountsForAPinnedApp(t *testing.T) {
+	for _, constraint := range []string{"node.id==n2", "node.hostname==node-n2", "node.labels.zone==n2"} {
+		svc, agent := newTestService("")
+
+		mounts, err := svc.MountsFor(context.Background(), walgSettings(), specWith(constraint))
+
+		assert.NoError(t, err, constraint)
+		assert.Equal(t, []string{"n2:10001"}, agent.addrs, constraint)
+		if assert.Len(t, mounts, 1) {
+			assert.Equal(t, "/var/lib/hivepaas/cache/artifacts/sha256/bb", mounts[0].Source)
+			assert.Equal(t, "/opt/hivepaas/bin/wal-g", mounts[0].Target)
+			assert.True(t, mounts[0].ReadOnly)
+		}
+	}
+}
+
+// Without a pin, every node a task could start on needs the file, and one bind
+// can only name one: nodes of two architectures are refused, with the reason.
+func TestMountsForAnUnpinnedAppOnMixedNodesIsRefused(t *testing.T) {
+	svc, _ := newTestService("")
+
+	_, err := svc.MountsFor(context.Background(), walgSettings(), specWith("node.labels.zone!=n3"))
+
+	assert.ErrorIs(t, err, hperrors.ErrArtifactArchUnsupported)
+}
+
+func TestMountsForAnUnpinnedAppOnLikeNodes(t *testing.T) {
+	svc, agent := newTestService("")
+
+	// n1 and n4 are both amd64, and n4 is down: only n1 can start a task.
+	mounts, err := svc.MountsFor(context.Background(), walgSettings(), specWith("node.platform.arch==x86_64"))
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"n1:10001"}, agent.addrs)
+	assert.Len(t, mounts, 1)
+}
+
+func TestMountsForNoArtifactsAsksNothing(t *testing.T) {
+	svc, agent := newTestService("")
+
+	mounts, err := svc.MountsFor(context.Background(), nil, specWith("node.id==n1"))
+
+	assert.NoError(t, err)
+	assert.Empty(t, mounts)
+	assert.Empty(t, agent.addrs)
+}
+
+func TestMountsForNoNodeIsRefused(t *testing.T) {
+	svc, _ := newTestService("")
+
+	_, err := svc.MountsFor(context.Background(), walgSettings(), specWith("node.id==gone"))
+
+	assert.ErrorIs(t, err, hperrors.ErrArtifactDownloadFailed)
 }

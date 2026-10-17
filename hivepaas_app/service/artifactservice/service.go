@@ -6,8 +6,12 @@ package artifactservice
 import (
 	"context"
 
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
 type Service interface {
@@ -16,11 +20,23 @@ type Service interface {
 	// no build for is refused with ERR_ARTIFACT_ARCH_UNSUPPORTED, before its agent
 	// is asked anything.
 	EnsureOnNode(ctx context.Context, req *EnsureOnNodeReq) (*EnsureOnNodeResp, error)
+
+	// ArtifactsOf is an app's artifacts setting, or nil when it has none.
+	ArtifactsOf(ctx context.Context, db database.IDB, appID string) (*entity.AppArtifactsSettings, error)
+
+	// MountsFor has the artifacts on every node a task of spec could start on -
+	// the Ready, active nodes its placement constraints allow - and returns the
+	// mounts that bind them. One bind names one file, so nodes that would need
+	// different builds are refused with ERR_ARTIFACT_ARCH_UNSUPPORTED before any
+	// is asked; so is a placement no node satisfies, as ERR_ARTIFACT_DOWNLOAD_FAILED.
+	// No artifacts asks nothing and returns none.
+	MountsFor(ctx context.Context, artifacts *entity.AppArtifactsSettings, spec *swarm.ServiceSpec) (
+		[]mount.Mount, error)
 }
 
 type EnsureOnNodeReq struct {
 	NodeID   string
-	Artifact *templatemodel.Artifact
+	Artifact *entity.AppArtifact
 }
 
 type EnsureOnNodeResp struct {

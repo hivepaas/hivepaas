@@ -108,7 +108,7 @@ test("a Hive trial key pasted on System › License is in force at once; its ban
 // 2.134
 test("a key past its paid period holds through its grace: the banner counts the days left", async ({ page, api }) => {
     const now = Date.now();
-    // 12 days and 23 hours of grace left: 13, rounded up.
+    // 28 days and 23 hours of grace left: 29, rounded up.
     const license = await installLicense(
         api,
         signKey(
@@ -117,7 +117,7 @@ test("a key past its paid period holds through its grace: the banner counts the 
                 installation,
                 issuedAt: new Date(now - 31 * DAY),
                 expiresAt: new Date(now - DAY - HOUR),
-                graceDays: 14,
+                graceDays: 30,
                 licenseId: "lic_e2e_grace",
             }),
         ),
@@ -125,7 +125,7 @@ test("a key past its paid period holds through its grace: the banner counts the 
     expect(`${license.plan} ${license.status}`).toBe("comb grace");
 
     await page.goto("/home/");
-    const grace = banner(page, /^The Comb license ran out on .+: 13 days of grace left\.$/);
+    const grace = banner(page, /^The Comb license ran out on .+: 29 days of grace left\.$/);
     await expect(grace).toBeVisible();
     await expect(grace).toContainText("Renew it, or paste the renewed key.");
     await expect(grace.getByRole("link", { name: "Renew" })).toHaveAttribute(

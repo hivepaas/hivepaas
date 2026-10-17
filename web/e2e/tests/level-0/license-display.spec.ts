@@ -85,7 +85,7 @@ function licenseOf(over: Partial<License>): License {
         installations: [INSTALLATION],
         issuedAt: at(-10 * DAY),
         expiresAt: at(20 * DAY),
-        graceEndsAt: at(34 * DAY),
+        graceEndsAt: at(50 * DAY),
         limits: paidLimits(25, 30),
         portal: PORTAL,
         refresh: { enabled: true },
@@ -155,17 +155,17 @@ const STATUSES: StatusCase[] = [
             licenseOf({
                 status: "moved",
                 movedAt: at(-2 * DAY),
-                graceEndsAt: at(12 * DAY - HOUR),
+                graceEndsAt: at(28 * DAY - HOUR),
             }),
         banner: {
             title: "This license key now belongs to another installation.",
-            body: "It holds here 12 more days, then this installation is on Bee.",
+            body: "It holds here 28 more days, then this installation is on Bee.",
         },
         plan: "Colony",
         badge: "Moved",
         sentence: [
             "The portal moved this key to another installation on",
-            "(12 days left), then this installation is on Bee.",
+            "(28 days left), then this installation is on Bee.",
         ],
         rows: [
             ["Moved", ""],
@@ -178,8 +178,10 @@ const STATUSES: StatusCase[] = [
             licenseOf({
                 status: "moved",
                 plan: "bee",
-                movedAt: at(-20 * DAY),
-                graceEndsAt: at(-6 * DAY),
+                issuedAt: at(-45 * DAY),
+                expiresAt: at(-15 * DAY),
+                movedAt: at(-40 * DAY),
+                graceEndsAt: at(-10 * DAY),
                 limits: beeLimits(),
             }),
         banner: {

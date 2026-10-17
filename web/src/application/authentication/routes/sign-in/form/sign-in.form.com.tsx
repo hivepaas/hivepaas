@@ -1,6 +1,7 @@
 import { GiteaIcon, GithubIcon, GitlabIcon, GoogleIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { DeviceInfo } from "@infrastructure/device";
 import { TriangleAlert } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { useSearchParams } from "react-router";
@@ -69,9 +70,15 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
         console.log(_errors);
     }
 
-    function handleLoginWithProvider(provider: LoginOption) {
-        console.log(window.location.origin + provider.authURL);
-        window.location.href = window.location.origin + provider.authURL;
+    async function handleLoginWithProvider(provider: LoginOption) {
+        const url = new URL(provider.authURL, window.location.origin);
+        // A trusted device is not asked for the passcode again for a while, after
+        // a provider's sign-in as after a password.
+        const deviceId = isTrustDevice.value ? await new DeviceInfo().getFingerprint() : undefined;
+        if (deviceId) {
+            url.searchParams.set("trustedDeviceId", deviceId);
+        }
+        window.location.href = url.toString();
     }
     return (
         <div className="flex flex-col gap-6">
@@ -151,7 +158,7 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                         variant="outline"
                                         type="button"
                                         onClick={() => {
-                                            handleLoginWithProvider(option);
+                                            void handleLoginWithProvider(option);
                                         }}
                                     >
                                         {option.icon === "github" && <GithubIcon />}

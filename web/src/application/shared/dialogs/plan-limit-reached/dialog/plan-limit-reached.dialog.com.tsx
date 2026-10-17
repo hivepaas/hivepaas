@@ -12,7 +12,7 @@ import { Separator } from "@components/ui/separator";
 import { ExternalLinkIcon } from "lucide-react";
 
 import { AppLink } from "@application/shared/components/navigation";
-import { ROUTE } from "@application/shared/constants";
+import { LICENSE_DOCS, ROUTE } from "@application/shared/constants";
 import { useReadableLicense } from "@application/shared/hooks";
 
 import { usePlanLimitReachedDialogState } from "../hooks";
@@ -25,7 +25,7 @@ const NO_REFUSAL: PlanLimitRefusal = { limit: "", max: null, plan: "", message: 
 /**
  * Says why a creation was refused: the plan in force allows no more of its kind.
  * It names the limit, says what counts towards it and what makes room, and leads
- * to the plan.
+ * to the plan, and to the docs' page on plans for more than a dialog has room for.
  *
  * It is opened from useApiErrorNotifications rather than from the creations:
  * around a dozen of them - apps, functions, previews, clones, users, nodes,
@@ -79,6 +79,16 @@ export function PlanLimitReachedDialog() {
                             Ask an administrator to upgrade this installation&apos;s plan.
                         </p>
                     )}
+
+                    <a
+                        href={LICENSE_DOCS.plansAndLimits}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 self-start text-sm underline-offset-4 hover:underline"
+                    >
+                        Plans and limits
+                        <ExternalLinkIcon className="size-3.5 shrink-0" />
+                    </a>
                 </DialogBody>
 
                 <DialogActionFooter className="flex flex-wrap justify-end">

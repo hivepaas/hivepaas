@@ -4,6 +4,7 @@ import { Badge } from "@components/ui/badge";
 import { ExternalLink } from "lucide-react";
 
 import { InfoBlock } from "@application/shared/components";
+import { LICENSE_DOCS } from "@application/shared/constants";
 import type { License } from "@application/shared/entities";
 import { ELicenseStatus } from "@application/shared/enums";
 import { licensePlanName } from "@application/shared/utils";
@@ -11,6 +12,7 @@ import { licensePlanName } from "@application/shared/utils";
 import { Button } from "@/components/ui";
 
 import { LicenseDate } from "./license-date.com";
+import { LicenseDocsLink } from "./license-docs-link.com";
 import { isOnBee } from "./license-labels";
 import { LicenseStatusBadge } from "./license-status-badge.com";
 import { LicenseStatusSentence } from "./license-status-sentence.com";
@@ -127,9 +129,9 @@ interface Props {
 
 /**
  * The plan in force and what the stored key amounts to: its status, the key's
- * own details, and the portal's pages. Upgrade carries this installation's ID;
- * a trial is offered only while no key was ever installed, as there is one per
- * installation.
+ * own details, the portal's pages, and the docs on what each plan allows.
+ * Upgrade carries this installation's ID; a trial is offered only while no key
+ * was ever installed, as there is one per installation.
  */
 export function LicensePlanCard({ license }: Props) {
     const titleId = useId();
@@ -138,7 +140,6 @@ export function LicensePlanCard({ license }: Props) {
     const upgradeUrl = portal?.pricingUrl;
     const trialUrl = license.status === ELicenseStatus.None ? portal?.trialUrl : undefined;
     const accountUrl = license.licenseId ? portal?.accountUrl : undefined;
-    const hasPortalLinks = [upgradeUrl, trialUrl, accountUrl].some(Boolean);
 
     return (
         <section
@@ -169,21 +170,25 @@ export function LicensePlanCard({ license }: Props) {
 
             <KeyDetails license={license} />
 
-            {hasPortalLinks && (
-                <div className="flex flex-wrap items-center gap-2">
-                    {upgradeUrl && (
-                        <PortalLink
-                            href={upgradeUrl}
-                            // On Bee a plan is the next step; on a paid one the page is mostly read.
-                            primary={isOnBee(license)}
-                        >
-                            Upgrade
-                        </PortalLink>
-                    )}
-                    {trialUrl && <PortalLink href={trialUrl}>Start a 14-day trial</PortalLink>}
-                    {accountUrl && <PortalLink href={accountUrl}>Your licenses</PortalLink>}
-                </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+                {upgradeUrl && (
+                    <PortalLink
+                        href={upgradeUrl}
+                        // On Bee a plan is the next step; on a paid one the page is mostly read.
+                        primary={isOnBee(license)}
+                    >
+                        Upgrade
+                    </PortalLink>
+                )}
+                {trialUrl && <PortalLink href={trialUrl}>Start a 14-day trial</PortalLink>}
+                {accountUrl && <PortalLink href={accountUrl}>Your licenses</PortalLink>}
+                <LicenseDocsLink
+                    href={LICENSE_DOCS.plansAndLimits}
+                    className="px-2 text-[13px] font-medium"
+                >
+                    Plans and limits
+                </LicenseDocsLink>
+            </div>
         </section>
     );
 }

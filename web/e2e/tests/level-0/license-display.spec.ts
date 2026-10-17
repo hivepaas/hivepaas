@@ -17,6 +17,9 @@ const LICENSE_PAGE = "/system/license/overview/";
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
+// The docs' pages on plans and keys, which the dashboard leads to.
+const LICENSE_DOCS = "https://docs.hivepaas.com/plans-and-licenses";
+
 const INSTALLATION = "e2efixtureinstallation01";
 const PORTAL = {
     url: "https://portal.e2e.example",
@@ -296,6 +299,33 @@ test("no key: a trial is offered, and there is nothing to check for a newer key"
     );
 });
 
+// Each docs page where it is wanted; and, beside the daily check, where it is
+// turned off - hivepaas.toml, which outlasts a redeploy, or the variable.
+test("the License page leads to the docs, and says where the daily check is turned off", async ({ page }) => {
+    await answerLicense(page, licenseOf({ refresh: { enabled: false } }));
+
+    await page.goto(LICENSE_PAGE);
+    const plan = page.getByRole("region", { name: "Plan", exact: true });
+    await expect(plan.getByRole("link", { name: "Plans and limits" })).toHaveAttribute(
+        "href",
+        `${LICENSE_DOCS}/plans-and-limits`,
+    );
+    const install = page.getByRole("region", { name: "Install a key" });
+    await expect(install.getByRole("link", { name: "Installing a license key" })).toHaveAttribute(
+        "href",
+        `${LICENSE_DOCS}/install-a-license-key`,
+    );
+
+    const renewal = page.getByRole("region", { name: "Online renewal" });
+    const daily = renewal.getByRole("group", { name: "Daily check" });
+    await expect(daily).toContainText("Off");
+    await expect(daily).toContainText("Turned off with refresh_disabled = true under [license] in hivepaas.toml");
+    await expect(daily).toContainText("or with HP_LICENSE_REFRESH_DISABLED=true");
+    const sent = daily.getByRole("link", { name: "What is sent, and turning it off" });
+    await expect(sent).toHaveAttribute("href", `${LICENSE_DOCS}/renewal-and-privacy`);
+    await expect(sent).toHaveAttribute("target", "_blank");
+});
+
 test("over several limits: one banner says what can no longer be done for each", async ({ page }) => {
     await answerLicense(
         page,
@@ -470,6 +500,10 @@ for (const c of REFUSALS) {
         }
         await expect(dialog.getByRole("link", { name: "Upgrade" })).toHaveAttribute("href", PORTAL.pricingUrl);
         await expect(dialog.getByRole("link", { name: "View license" })).toHaveAttribute("href", LICENSE_PAGE);
+        await expect(dialog.getByRole("link", { name: "Plans and limits" })).toHaveAttribute(
+            "href",
+            `${LICENSE_DOCS}/plans-and-limits`,
+        );
         await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 
         await dialog.getByRole("button", { name: "Close" }).first().click();

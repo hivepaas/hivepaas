@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { SectionHeader } from "~/system-settings/module-shared";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { LICENSE_DOCS, MODULE_IDS } from "@application/shared/constants";
 import { LicenseCommands } from "@application/shared/data/commands";
 import type { License } from "@application/shared/entities";
 import { ELicenseRefreshResult, ELicenseStatus } from "@application/shared/enums";
@@ -14,6 +14,7 @@ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
+import { LicenseDocsLink } from "./license-docs-link.com";
 import { licenseInForceSummary, refreshResultText } from "./license-labels";
 
 /**
@@ -44,6 +45,10 @@ interface Props {
  * The daily check with the portal for a newer key - a renewal, a plan change, a
  * paid key in place of a trial - how the last one went, and asking now. Asking
  * now asks whether or not the daily check is on.
+ *
+ * Where it is turned off is said on the page, not in a tooltip: hivepaas.toml
+ * is the switch that lasts, while the variable is dropped when the installer
+ * deploys the stack again.
  */
 export function LicenseRefreshSection({ license }: Props) {
     const headingId = useId();
@@ -73,11 +78,22 @@ export function LicenseRefreshSection({ license }: Props) {
                         title={
                             <LabelWithInfo
                                 label="Daily check"
-                                content="Once a day HivePaaS sends the key and this installation's ID to the license portal, and installs any newer key it answers with. It sends nothing else. HP_LICENSE_REFRESH_DISABLED switches it off."
+                                content="Once a day HivePaaS sends the key and this installation's ID to the license portal, and installs any newer key it answers with. It sends nothing else."
                             />
                         }
                     >
-                        <span>{refresh.enabled ? "On" : "Off"}</span>
+                        <div className="flex flex-col items-start gap-1">
+                            <span>{refresh.enabled ? "On" : "Off"}</span>
+                            <p className="text-muted-foreground">
+                                {refresh.enabled ? "Turn it off with" : "Turned off with"}{" "}
+                                <code>refresh_disabled = true</code> under <code>[license]</code> in{" "}
+                                <code>hivepaas.toml</code>, in HivePaaS&apos;s data directory, or with{" "}
+                                <code>HP_LICENSE_REFRESH_DISABLED=true</code> on the app and worker services.
+                            </p>
+                            <LicenseDocsLink href={LICENSE_DOCS.renewalAndPrivacy}>
+                                What is sent, and turning it off
+                            </LicenseDocsLink>
+                        </div>
                     </InfoBlock>
                 )}
                 <InfoBlock

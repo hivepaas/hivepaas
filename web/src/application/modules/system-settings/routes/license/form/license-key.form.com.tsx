@@ -8,7 +8,7 @@ import { SectionHeader } from "~/system-settings/module-shared";
 
 import { licenseKeyRefusalMessage } from "@application/shared/api";
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { LICENSE_DOCS, MODULE_IDS } from "@application/shared/constants";
 import { LicenseCommands } from "@application/shared/data/commands";
 import { useGlobalAlertDialogState } from "@application/shared/dialogs";
 import type { License } from "@application/shared/entities";
@@ -18,7 +18,7 @@ import { licensePlanName } from "@application/shared/utils";
 import { Button } from "@/components/ui";
 import { FieldError } from "@/components/ui/field";
 
-import { keyInForce, licenseInForceSummary } from "../building-blocks";
+import { LicenseDocsLink, keyInForce, licenseInForceSummary } from "../building-blocks";
 import { type LicenseKeyFormInput, type LicenseKeyFormOutput, LicenseKeyFormSchema } from "../schemas";
 
 interface Props {
@@ -139,21 +139,29 @@ export function LicenseKeyForm({ license, canWrite }: Props) {
                                 className="whitespace-pre-wrap"
                                 errors={[errors.key]}
                             />
-                            <PermissionTooltipAction
-                                id={MODULE_IDS.System}
-                                action="write"
-                            >
-                                {({ isDenied }) => (
-                                    <Button
-                                        type="submit"
-                                        className="min-w-[100px]"
-                                        disabled={isPending || isDenied}
-                                        isLoading={isPending}
-                                    >
-                                        Install key
-                                    </Button>
-                                )}
-                            </PermissionTooltipAction>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.System}
+                                    action="write"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            type="submit"
+                                            className="min-w-[100px]"
+                                            disabled={isPending || isDenied}
+                                            isLoading={isPending}
+                                        >
+                                            Install key
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                                <LicenseDocsLink
+                                    href={LICENSE_DOCS.installAKey}
+                                    className="px-2 text-[13px] font-medium"
+                                >
+                                    Installing a license key
+                                </LicenseDocsLink>
+                            </div>
                         </div>
                     </InfoBlock>
                 </fieldset>

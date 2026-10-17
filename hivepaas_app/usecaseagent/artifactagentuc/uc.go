@@ -17,11 +17,9 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
-
-// cacheSubdir is where artifacts are kept under HivePaaS's host directory.
-const cacheSubdir = "cache/artifacts/sha256"
 
 // downloadTimeout bounds one download, so a source that trickles cannot hold a
 // deploy for ever.
@@ -44,7 +42,7 @@ type UC struct {
 }
 
 func New(logger logging.Logger) *UC {
-	hostCacheDir := filepath.Join(config.Current().Storage.HostDir, cacheSubdir)
+	hostCacheDir := filepath.Join(config.Current().Storage.HostDir, artifactservice.CacheSubdir)
 	return newUC(logger, volumeservice.HostPathPrefix+hostCacheDir, hostCacheDir)
 }
 

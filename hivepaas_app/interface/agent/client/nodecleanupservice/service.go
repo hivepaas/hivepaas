@@ -72,6 +72,8 @@ func (c *grpcNodeCleanupServiceClient) NodeCleanup(
 		CleanupNetworks:   int32(req.CleanupNetworks),
 		CleanupBuildCache: int32(req.CleanupBuildCache),
 		KeepImages:        req.KeepImages,
+		KeepArtifacts:     req.KeepArtifacts,
+		ArtifactsKnown:    req.ArtifactsKnown,
 	}
 
 	resp, err := c.protoClient.NodeCleanup(authCtx, protoReq)
@@ -95,6 +97,8 @@ func (c *grpcNodeCleanupServiceClient) NodeCleanup(
 			NetworksPruneError:    resp.GetNetworksPruneError(),
 			BuildCachesDeleted:    int(resp.GetBuildCachesDeleted()),
 			BuildCachesPruneError: resp.GetBuildCachesPruneError(),
+			ArtifactsDeleted:      int(resp.GetArtifactsDeleted()),
+			ArtifactsPruneError:   resp.GetArtifactsPruneError(),
 			SpaceReclaimed:        resp.GetSpaceReclaimed(),
 		},
 	}, nil

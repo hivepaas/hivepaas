@@ -262,7 +262,9 @@ already schedules any scheduled-job settings that `Configure` returns.
 
 ### State: the `app-managed` setting
 
-A new setting type, scope app, versioned with a `Migrate` like every other:
+A new setting type, scope app, versioned with a `Migrate` like every other. The
+artifacts an app was created with are not in it: they are in `app-artifacts`, which
+§2's mounts read whatever the engine.
 
 ```go
 type AppManagedSettings struct {
@@ -277,7 +279,6 @@ type ManagedPostgres struct {
     ArchiveTimeout time.Duration
     RetainFull     int
     Jobs           ManagedPostgresJobs // the scheduled jobs it created, by role
-    Artifacts      []ArtifactRef       // name, version, sha256 per arch, as created
     RestorePoints  []RestorePoint      // §4, named by users
 }
 

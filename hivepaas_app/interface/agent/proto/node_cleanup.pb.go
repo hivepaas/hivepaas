@@ -32,9 +32,13 @@ type NodeCleanupReq struct {
 	CleanupBuildCache int32                   `protobuf:"varint,7,opt,name=cleanup_build_cache,json=cleanupBuildCache,proto3" json:"cleanup_build_cache,omitempty"`
 	// The images the node keeps, used or not. None, from an older manager:
 	// only the images no tag names are pruned.
-	KeepImages    []string `protobuf:"bytes,8,rep,name=keep_images,json=keepImages,proto3" json:"keep_images,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	KeepImages []string `protobuf:"bytes,8,rep,name=keep_images,json=keepImages,proto3" json:"keep_images,omitempty"`
+	// The artifacts the node keeps, when artifacts_known. Not known, from an older
+	// manager: no artifact is removed.
+	KeepArtifacts  []string `protobuf:"bytes,9,rep,name=keep_artifacts,json=keepArtifacts,proto3" json:"keep_artifacts,omitempty"`
+	ArtifactsKnown bool     `protobuf:"varint,10,opt,name=artifacts_known,json=artifactsKnown,proto3" json:"artifacts_known,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *NodeCleanupReq) Reset() {
@@ -121,6 +125,20 @@ func (x *NodeCleanupReq) GetKeepImages() []string {
 		return x.KeepImages
 	}
 	return nil
+}
+
+func (x *NodeCleanupReq) GetKeepArtifacts() []string {
+	if x != nil {
+		return x.KeepArtifacts
+	}
+	return nil
+}
+
+func (x *NodeCleanupReq) GetArtifactsKnown() bool {
+	if x != nil {
+		return x.ArtifactsKnown
+	}
+	return false
 }
 
 type ClusterCleanupSettings struct {
@@ -240,6 +258,8 @@ type NodeCleanupResp struct {
 	BuildCachesDeleted    int32                  `protobuf:"varint,13,opt,name=build_caches_deleted,json=buildCachesDeleted,proto3" json:"build_caches_deleted,omitempty"`
 	BuildCachesPruneError string                 `protobuf:"bytes,14,opt,name=build_caches_prune_error,json=buildCachesPruneError,proto3" json:"build_caches_prune_error,omitempty"`
 	SpaceReclaimed        uint64                 `protobuf:"varint,15,opt,name=space_reclaimed,json=spaceReclaimed,proto3" json:"space_reclaimed,omitempty"`
+	ArtifactsDeleted      int32                  `protobuf:"varint,16,opt,name=artifacts_deleted,json=artifactsDeleted,proto3" json:"artifacts_deleted,omitempty"`
+	ArtifactsPruneError   string                 `protobuf:"bytes,17,opt,name=artifacts_prune_error,json=artifactsPruneError,proto3" json:"artifacts_prune_error,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -379,11 +399,25 @@ func (x *NodeCleanupResp) GetSpaceReclaimed() uint64 {
 	return 0
 }
 
+func (x *NodeCleanupResp) GetArtifactsDeleted() int32 {
+	if x != nil {
+		return x.ArtifactsDeleted
+	}
+	return 0
+}
+
+func (x *NodeCleanupResp) GetArtifactsPruneError() string {
+	if x != nil {
+		return x.ArtifactsPruneError
+	}
+	return ""
+}
+
 var File_node_cleanup_proto protoreflect.FileDescriptor
 
 const file_node_cleanup_proto_rawDesc = "" +
 	"\n" +
-	"\x12node_cleanup.proto\x12\x05agent\"\xee\x02\n" +
+	"\x12node_cleanup.proto\x12\x05agent\"\xbe\x03\n" +
 	"\x0eNodeCleanupReq\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12H\n" +
 	"\x10cleanup_settings\x18\x02 \x01(\v2\x1d.agent.ClusterCleanupSettingsR\x0fcleanupSettings\x12-\n" +
@@ -393,7 +427,10 @@ const file_node_cleanup_proto_rawDesc = "" +
 	"\x10cleanup_networks\x18\x06 \x01(\x05R\x0fcleanupNetworks\x12.\n" +
 	"\x13cleanup_build_cache\x18\a \x01(\x05R\x11cleanupBuildCache\x12\x1f\n" +
 	"\vkeep_images\x18\b \x03(\tR\n" +
-	"keepImages\"\xd9\x02\n" +
+	"keepImages\x12%\n" +
+	"\x0ekeep_artifacts\x18\t \x03(\tR\rkeepArtifacts\x12'\n" +
+	"\x0fartifacts_known\x18\n" +
+	" \x01(\bR\x0eartifactsKnown\"\xd9\x02\n" +
 	"\x16ClusterCleanupSettings\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12+\n" +
 	"\x11general_retention\x18\x02 \x01(\x03R\x10generalRetention\x122\n" +
@@ -402,7 +439,7 @@ const file_node_cleanup_proto_rawDesc = "" +
 	"\rprune_volumes\x18\x05 \x01(\bR\fpruneVolumes\x12%\n" +
 	"\x0eprune_networks\x18\x06 \x01(\bR\rpruneNetworks\x12)\n" +
 	"\x10prune_containers\x18\a \x01(\bR\x0fpruneContainers\x12*\n" +
-	"\x11prune_build_cache\x18\b \x01(\bR\x0fpruneBuildCache\"\xb7\x05\n" +
+	"\x11prune_build_cache\x18\b \x01(\bR\x0fpruneBuildCache\"\x98\x06\n" +
 	"\x0fNodeCleanupResp\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1b\n" +
 	"\tnode_name\x18\x02 \x01(\tR\bnodeName\x12%\n" +
@@ -419,7 +456,9 @@ const file_node_cleanup_proto_rawDesc = "" +
 	"\x14networks_prune_error\x18\f \x01(\tR\x12networksPruneError\x120\n" +
 	"\x14build_caches_deleted\x18\r \x01(\x05R\x12buildCachesDeleted\x127\n" +
 	"\x18build_caches_prune_error\x18\x0e \x01(\tR\x15buildCachesPruneError\x12'\n" +
-	"\x0fspace_reclaimed\x18\x0f \x01(\x04R\x0espaceReclaimed2R\n" +
+	"\x0fspace_reclaimed\x18\x0f \x01(\x04R\x0espaceReclaimed\x12+\n" +
+	"\x11artifacts_deleted\x18\x10 \x01(\x05R\x10artifactsDeleted\x122\n" +
+	"\x15artifacts_prune_error\x18\x11 \x01(\tR\x13artifactsPruneError2R\n" +
 	"\x12NodeCleanupService\x12<\n" +
 	"\vNodeCleanup\x12\x15.agent.NodeCleanupReq\x1a\x16.agent.NodeCleanupRespBLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
 

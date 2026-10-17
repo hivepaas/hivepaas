@@ -294,7 +294,29 @@ Work on a branch per repository, in a worktree.
     after the cleanup's retention. The backend sends the referenced hashes.
 - Test: one per touchpoint, plus `TestProvisionEnsuresArtifactsBeforeServiceCreate`.
 
-- [ ] **Step 1:** Write the tests:
+**As built** (commits e267df37 and the cleanup after it). It differs from the list
+above:
+- **No `PreCreate` hook.** `ProvisionApp`'s `Configure` already runs before
+  `ServiceCreate` and writes the spec. It runs inside the transaction, though, so Task
+  7 ensures the artifacts *before* the transaction and `Configure` only attaches the
+  mounts.
+- **The artifacts live in their own setting, `app-artifacts`**
+  (`entity.AppArtifactsSettings`), written from the template with
+  `artifactservice.FromTemplate`. It is not part of `app-managed`, so the mechanism
+  stays engine-agnostic. Task 5's `ManagedPostgres.Artifacts` is dropped. The setting
+  is a singleton block `artifacts`, skipped by spec export and import.
+- `artifactservice.MountsFor(artifacts, spec)` ensures them on every Ready, active
+  node the spec's placement constraints allow. Nodes that would need different builds
+  are refused, since one bind names one file. The deploy steps call it through
+  `prepareArtifacts`, from the service's current placement.
+- **Cleanup works like images do.** `clusterCleanupService.KeptArtifacts` reads the
+  binds of the swarm's services, current and previous spec. `KeepArtifacts` and
+  `ArtifactsKnown` go to each node (proto fields 9-10, output 16-17), and
+  `artifactservice.PruneCache` removes files no service binds after the general
+  retention. It runs only when images are pruned, and never on a request from an
+  older manager.
+
+- [x] **Step 1:** Write the tests:
   - storage GET hides the mount;
   - a storage save keeps it;
   - export leaves it out;
@@ -302,10 +324,10 @@ Work on a branch per repository, in a worktree.
   - a failed ensure fails the deploy, and no `ServiceUpdate` happens;
   - provision calls ensure before create;
   - cleanup never removes a referenced hash.
-- [ ] **Step 2:** Watch them fail.
-- [ ] **Step 3:** Write the code.
-- [ ] **Step 4:** Run the task's packages and the global checks.
-- [ ] **Step 5:** Commit: `feat(apps): artifact mounts that HivePaaS owns`.
+- [x] **Step 2:** Watch them fail.
+- [x] **Step 3:** Write the code.
+- [x] **Step 4:** Run the task's packages and the global checks.
+- [x] **Step 5:** Commit: `feat(apps): artifact mounts that HivePaaS owns`.
 
 ## Task 5: The `app-managed` setting, owned jobs and the engine registry
 
@@ -313,8 +335,8 @@ Work on a branch per repository, in a worktree.
 - Create:
   - `hivepaas_app/entity/setting_app_managed.go`: `AppManagedSettings`, `ManagedPostgres`
     and `ManagedStorage{BackupRepo, CloudStorage, KeyAuth, Prefix}` (spec §3),
-    `RestoreTest{Mode container|verifier, VerifierAppID, NodeID, CheckQuery}`,
-    `ArtifactRef`, `CurrentAppManagedSettingsVersion = 1`, and `GetRefObjectIDs` (repo,
+    `RestoreTest{Mode container|verifier, VerifierAppID, NodeID, CheckQuery}`
+    (artifacts are in `app-artifacts`, Task 4), `CurrentAppManagedSettingsVersion = 1`, and `GetRefObjectIDs` (repo,
     storage, key and jobs).
   - `setting_app_managed_migration.go`, a no-op template.
   - `hivepaas_app/service/managedservice/service.go` and `managedmodel/engine.go`: the

@@ -15,9 +15,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
-// cacheSubdir is where every node's agent keeps artifacts under HivePaaS's host
-// directory: artifactagentuc's.
-const cacheSubdir = "cache/artifacts/sha256"
+// CacheSubdir is where every node's agent keeps artifacts under HivePaaS's host
+// directory.
+const CacheSubdir = "cache/artifacts/sha256"
 
 // CacheHostDir is the artifacts cache as the host sees it, the same on every
 // node: the stack gives every agent the one HP_STORAGE_HOST_DIR. It is "" when
@@ -27,7 +27,7 @@ func CacheHostDir() string {
 	if cfg == nil || cfg.Storage.HostDir == "" {
 		return ""
 	}
-	return filepath.Join(cfg.Storage.HostDir, cacheSubdir)
+	return filepath.Join(cfg.Storage.HostDir, CacheSubdir)
 }
 
 // Mount binds a cached artifact into a container, read-only. It never creates

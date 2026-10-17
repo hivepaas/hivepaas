@@ -29,16 +29,7 @@ func (s *service) sysCleanupCluster(
 		data.TaskOutput.ClusterCleanup = &entity.ClusterCleanupOutput{}
 	}
 
-	keepImages, err := s.keptImages(ctx, data)
-	nodeReq := clustercleanupservice.ClusterCleanupReq{
-		CleanupSettings:   clusterCleanup,
-		CleanupContainers: data.CleanupClusterContainers,
-		CleanupImages:     data.CleanupClusterImages,
-		CleanupVolumes:    data.CleanupClusterVolumes,
-		CleanupNetworks:   data.CleanupClusterNetworks,
-		CleanupBuildCache: data.CleanupClusterBuildCache,
-		KeepImages:        keepImages,
-	}
+	nodeReq, err := s.clusterCleanupReq(ctx, data)
 
 	// 1. Cleanup cluster on current node (manager node)
 	managerNodeID, _ := s.dockerManager.NodeCurrentID(ctx)
@@ -139,6 +130,28 @@ func (s *service) sysCleanupCluster(
 	}
 
 	return hperrors.Wrap(err)
+}
+
+// clusterCleanupReq is what every node is asked to do, with what it keeps. A
+// list that could not be made is an error of the run, and the request says so:
+// a node that does not know what is used removes none of it.
+func (s *service) clusterCleanupReq(
+	ctx context.Context,
+	data *sysCleanupData,
+) (clustercleanupservice.ClusterCleanupReq, error) {
+	keepImages, err := s.keptImages(ctx, data)
+	keepArtifacts, artifactsErr := s.clusterCleanupService.KeptArtifacts(ctx)
+	return clustercleanupservice.ClusterCleanupReq{
+		CleanupSettings:   &data.SysCleanupSettings.ClusterCleanup,
+		CleanupContainers: data.CleanupClusterContainers,
+		CleanupImages:     data.CleanupClusterImages,
+		CleanupVolumes:    data.CleanupClusterVolumes,
+		CleanupNetworks:   data.CleanupClusterNetworks,
+		CleanupBuildCache: data.CleanupClusterBuildCache,
+		KeepImages:        keepImages,
+		KeepArtifacts:     keepArtifacts,
+		ArtifactsKnown:    artifactsErr == nil,
+	}, errors.Join(err, hperrors.Wrap(artifactsErr))
 }
 
 // keptImages are what every node keeps of its images, when the run prunes

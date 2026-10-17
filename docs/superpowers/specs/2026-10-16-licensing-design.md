@@ -1,7 +1,7 @@
 # Plans and licensing
 
-Status: settled 2026-10-16. Phases 1 (HivePaaS core) and 2 (portal) built;
-phase 3 (dashboard) being built. The limits are enforced from the first release that carries them,
+Status: settled 2026-10-16. Phases 1 (HivePaaS core), 2 (portal) and 3 (dashboard) built;
+phase 4 (live) in progress. The limits are enforced from the first release that carries them,
 so that release also carries the production license public keys.
 
 HivePaaS stays Apache 2.0 and self-hosted. What is sold is a license key that
@@ -161,7 +161,11 @@ it is. It uses its own key pair, kept apart from the release keys:
   the portal (`POST /api/licenses/refresh`, at `https://portal.hivepaas.com` by
   default). It stores any newer key it gets back, or the news that the key was
   moved to another installation. It sends nothing else. It is on by default
-  and can be switched off. When it fails, the next day tries again.
+  and can be switched off: `[license] refresh_disabled = true` in the managed
+  `hivepaas.toml`, in the app's data directory, which outlasts a redeploy of
+  the stack, or `HP_LICENSE_REFRESH_DISABLED=true` on the app and the worker.
+  "Check for a newer key" still asks while it is off. When it fails, the next
+  day tries again.
   - The key is what authenticates the request: the portal answers only for a
     key it issued, and only for the installation that key names. So an
     installation with no key cannot refresh, and its first key, trial or paid,
@@ -221,6 +225,7 @@ key like any other, so it works offline and needs no new path in HivePaaS.
   | `subscription.past_due`  | nothing more: the key's grace covers Paddle's retries                    |
   | `subscription.paused`    | no further keys until it resumes                                         |
   | `subscription.canceled`  | no further keys; the last one runs out with its grace                    |
+  | `adjustment.created`, `adjustment.updated` | a refund of a whole payment, approved: the license is revoked (see Refunds) |
 
   A key runs to the end of the latest period paid for, not of the period
   Paddle is in: that one moves on even while a renewal is failing. Paddle has
@@ -248,6 +253,15 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 - **Grace and Paddle's retries.** The 14 days of grace cover Paddle's retries
   of a failed renewal only while its payment recovery runs 14 days or less:
   set it so in live, or raise the grace.
+- **Refunds.** Paddle handles them, as merchant of record: a full refund on
+  request within 14 days of a payment, asked for through Paddle (paddle.net),
+  never by email to HivePaaS, so that nothing waits on a person answering
+  mail. When a payment of a license is refunded in full (an `adjustment`
+  with action `refund`, status `approved`, for the whole amount), the portal
+  revokes the license by itself: no further keys, and the key already issued
+  runs out on its own, as an offline key cannot be revoked. Partial refunds
+  and credits change nothing. The live webhook destination subscribes to the
+  adjustment events for this.
 
 ## In HivePaaS
 
@@ -321,11 +335,13 @@ key like any other, so it works offline and needs no new path in HivePaaS.
    sign-in providers on Bee.
 4. **Live:**
    - Paddle live, and the production license private keys in the portal;
+   - a full refund revoking its license;
    - the website's pricing page and the docs, including which data online
-     renewal sends.
+     renewal sends;
+   - the refresh opt-out in `hivepaas.toml`, and a release gate on the
+     production license public keys.
 
 ## Open questions
 
-- **Refunds.** What is the policy? Paddle, as merchant of record, handles tax.
-  For now nothing is automatic: staff revoke a license through the staff API,
-  and a key already issued runs out on its own.
+None. Refunds, the last one, were settled on 2026-10-17: see Refunds under
+Paddle and the portal.

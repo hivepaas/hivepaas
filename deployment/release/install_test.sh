@@ -848,6 +848,7 @@ test_secret_file() {
   check "readable by root alone" 600 "$(stat -c %a "$(secret_file)" 2>/dev/null || stat -f %Lp "$(secret_file)")"
   check "the secret reads back" "$saved" "$(toml_secret "$(secret_file)")"
   check_contains "the security settings, explained" "$(cat "$(secret_file)")" "# allow_privileged_apps = false"
+  check_contains "the refresh opt-out, explained" "$(cat "$(secret_file)")" "# refresh_disabled = false"
   load_secret_file
   check "it is the app secret" "$saved" "$HIVEPAAS_APP_SECRET"
   out=$(HIVEPAAS_APP_SECRET=${saved}X; (load_secret_file) 2>&1)

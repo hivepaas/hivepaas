@@ -35,6 +35,7 @@ var ErrManagedSettingsPermissive = errors.New("managed settings file is too perm
 type ManagedSettings struct {
 	Secret   string          `toml:"secret"`
 	Security ManagedSecurity `toml:"security"`
+	License  ManagedLicense  `toml:"license"`
 }
 
 // ManagedSecurity is the security section of the managed file.
@@ -48,6 +49,20 @@ type ManagedSecurity struct {
 	ReturnSecretsViaAPI     *bool     `toml:"return_secrets_via_api"`
 	AlwaysReturnSecretTypes *[]string `toml:"always_return_secret_types"`
 	AllowPrivilegedApps     *bool     `toml:"allow_privileged_apps"`
+}
+
+// ManagedLicense is the license section of the managed file. HivePaaS never sets
+// it: the operator writes it by hand, and the app's own rewrites carry it over.
+//
+// The daily refresh can also be switched off with HP_LICENSE_REFRESH_DISABLED on
+// the app and the worker, but that does not last: the installer's --redeploy, and
+// an install over a kept database, deploy the stack again from its own file and
+// drop a variable added to a service since. The refresh would be back on, and
+// nobody told. This file is in the app's volume and outlives both. Set here, it
+// wins over the environment, as every managed setting does; left out, the
+// environment decides. A pointer for the reason ManagedSecurity gives.
+type ManagedLicense struct {
+	RefreshDisabled *bool `toml:"refresh_disabled"`
 }
 
 // applyTo overlays the settings that are set. A field the file omits leaves the
@@ -67,6 +82,9 @@ func (s *ManagedSettings) applyTo(config *Config) {
 	}
 	if v := s.Security.AllowPrivilegedApps; v != nil {
 		config.Security.AllowPrivilegedApps = *v
+	}
+	if v := s.License.RefreshDisabled; v != nil {
+		config.License.RefreshDisabled = *v
 	}
 }
 

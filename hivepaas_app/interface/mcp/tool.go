@@ -192,7 +192,21 @@ func toolError(err error) *mcpsdk.CallToolResult {
 	return &mcpsdk.CallToolResult{IsError: true, Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: text}}}
 }
 
+// codePlanLimitReached is the installation's plan refusing a creation: one more
+// app, function, user, node, preview or sign-in provider than it allows.
+const codePlanLimitReached = "ERR_PLAN_LIMIT_REACHED"
+
+// describeAPIError says what an API error means for the model's next step.
+//
+// A plan limit gets more than its words. The API's message ends "Remove one, or
+// upgrade", which a model could take as leave to delete the person's apps, and
+// asking again is refused the same way. Only a person can choose between the two.
 func describeAPIError(e *APIError) string {
+	if e.Code == codePlanLimitReached {
+		return "the installation's plan limit was reached: its plan allows no more of this kind. Do not retry: " +
+			"asking again is refused the same way. Tell the person: an admin upgrades the plan in System > License " +
+			"of the dashboard. Remove nothing to make room unless the person asks. " + e.Error()
+	}
 	switch e.Status {
 	case http.StatusUnauthorized, http.StatusForbidden:
 		return "not permitted: the API key's user may not do this, or the key is limited to less. " + e.Error()

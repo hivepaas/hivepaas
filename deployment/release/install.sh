@@ -838,6 +838,16 @@ secret = "$2"
 # Let apps mount the Docker socket or a host directory, which makes them root
 # on their node. Default: false.
 # allow_privileged_apps = false
+
+[license]
+# Once a license key is installed, HivePaaS asks the license portal daily for a
+# newer one, sending the key and this installation's ID and nothing else. Set
+# this to true to switch that off; renewed keys are then pasted in System >
+# License, where "Check for a newer key" still asks. The variable
+# HP_LICENSE_REFRESH_DISABLED=true on the app and the worker does the same, but
+# only until the stack is deployed again. A change takes effect as the app and
+# the worker restart. Default: false.
+# refresh_disabled = false
 EOF
   ) && mv -f "$1.tmp" "$1"
 }

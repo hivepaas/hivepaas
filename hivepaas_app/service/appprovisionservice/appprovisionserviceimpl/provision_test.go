@@ -144,12 +144,9 @@ func (f *fakeEnvVarService) ApplyEnvVarsForApps(
 
 type fakeRoutingService struct {
 	approutingservice.Service
-	req *approutingservice.ApplyAppRoutingReq
-	err error
-	// failTimes is how many of the first calls fail with err before it succeeds;
-	// err alone fails every call.
-	failTimes int
-	calls     int
+	req   *approutingservice.ApplyAppRoutingReq
+	err   error
+	calls int
 }
 
 func (f *fakeRoutingService) ApplyRoutingSettings(
@@ -157,7 +154,7 @@ func (f *fakeRoutingService) ApplyRoutingSettings(
 ) (*approutingservice.ApplyAppRoutingResp, error) {
 	f.req = req
 	f.calls++
-	if f.err != nil && (f.failTimes == 0 || f.calls <= f.failTimes) {
+	if f.err != nil {
 		return nil, f.err
 	}
 	return &approutingservice.ApplyAppRoutingResp{}, nil

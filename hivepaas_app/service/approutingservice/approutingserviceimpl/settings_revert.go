@@ -3,8 +3,6 @@ package approutingserviceimpl
 import (
 	"context"
 
-	"github.com/moby/moby/api/types/swarm"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -12,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
-
-// updateMaxFailureRatio matches what every other swarm update in the codebase
-// sets, so a revert converges on the same terms as the change it undoes.
-const updateMaxFailureRatio = 0.5
 
 // RevertSettings implements approutingservice.Service
 func (s *service) RevertSettings(
@@ -67,19 +61,7 @@ func (s *service) RevertSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	service := resp.Service
-	if service.Spec.UpdateConfig == nil {
-		service.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	service.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	service.Spec.UpdateConfig.MaxFailureRatio = updateMaxFailureRatio
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	return &approutingservice.RevertSettingsResp{Reverted: true, Service: service}, nil
+	return &approutingservice.RevertSettingsResp{Reverted: true, Service: resp.Service}, nil
 }
 
 func findSettingByID(app *entity.App, settingID string) *entity.Setting {
@@ -93,8 +75,10 @@ func findSettingByID(app *entity.App, settingID string) *entity.Setting {
 
 // revertApplyReq is the request the routing revert makes.
 //
-// The service update is done by the caller afterwards, with the rollback terms
-// set on it - see RevertSettings.
+// The update rolls back when it fails, as the change it undoes did. It is the
+// apply's own update that carries those terms, rather than a second one made
+// afterwards, so that it is retried with the rest when swarm refuses it as out
+// of sequence.
 func revertApplyReq(
 	app *entity.App,
 	routingSettings *entity.AppRoutingSettings,
@@ -102,7 +86,7 @@ func revertApplyReq(
 	return &approutingservice.ApplyAppRoutingReq{
 		App:                   app,
 		RoutingSettings:       routingSettings,
-		SkipUpdatingService:   true,
+		RollbackOnFailure:     true,
 		SkipMissingRefObjects: true,
 	}
 }

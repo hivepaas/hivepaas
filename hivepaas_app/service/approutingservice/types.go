@@ -14,7 +14,15 @@ type ApplyAppRoutingReq struct {
 	SkipApplyingSslCerts      bool
 	ForceRecreateSslCertFiles bool
 	SkipApplyingNetworks      bool
-	SkipUpdatingService       bool
+
+	// RollbackOnFailure has swarm roll the service back when the update fails,
+	// instead of leaving it on a configuration that does not come up.
+	//
+	// Set for the HivePaaS app's own routing, the change and its revert. It is a
+	// term of the apply's own update rather than of a second update the caller
+	// makes afterwards, so that it is retried with the rest of the apply when swarm
+	// refuses it as out of sequence - see ApplyRoutingSettings.
+	RollbackOnFailure bool
 
 	// SkipMissingRefObjects keeps a reference that has gone since from being fatal.
 	//

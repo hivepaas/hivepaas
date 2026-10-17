@@ -91,13 +91,13 @@ func TestMissingReferencesAreToleratedOnlyOnTheWayBack(t *testing.T) {
 	t.Run("the revert asks for leniency", func(t *testing.T) {
 		req := revertApplyReq(&entity.App{ID: "app"}, &entity.AppRoutingSettings{})
 		assert.True(t, req.SkipMissingRefObjects)
-		assert.True(t, req.SkipUpdatingService, "the revert pushes the service itself, afterwards")
+		assert.True(t, req.RollbackOnFailure, "the revert rolls back an update that fails, as the change did")
 	})
 
 	t.Run("the forward sweep does not", func(t *testing.T) {
 		req := sweepApplyReq(&entity.App{ID: "app"}, &entity.AppRoutingSettings{}, false)
 		assert.False(t, req.SkipMissingRefObjects)
-		assert.False(t, req.SkipUpdatingService, "the sweep exists to push labels onto the service")
+		assert.False(t, req.RollbackOnFailure, "the sweep's update is labels only, nothing restarts")
 	})
 
 	t.Run("a sweep running inside a revert does", func(t *testing.T) {

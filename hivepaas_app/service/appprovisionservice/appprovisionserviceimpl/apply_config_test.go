@@ -4,13 +4,23 @@ import (
 	"context"
 	"testing"
 
+	"github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type fakeTaskQueue struct {
@@ -63,24 +73,90 @@ func TestApplyAppConfigurationTouchesDockerOnlyForWhatTheAppHas(t *testing.T) {
 	assert.Zero(t, fakes.routing.calls, "an app with no routing settings is not routed")
 }
 
+// settlingSwarm is a service swarm has just created: its allocator is still
+// writing to it, so the version moves on with every inspect and the first update
+// is refused as out of sequence.
+type settlingSwarm struct {
+	docker.Manager
+	version  uint64
+	versions []uint64
+}
+
+func (f *settlingSwarm) ServiceInspect(
+	_ context.Context, serviceID string, _ ...docker.ServiceInspectOption,
+) (*client.ServiceInspectResult, error) {
+	f.version++
+	return &client.ServiceInspectResult{Service: swarm.Service{
+		ID: serviceID, Meta: swarm.Meta{Version: swarm.Version{Index: f.version}},
+	}}, nil
+}
+
+func (f *settlingSwarm) ServiceUpdate(
+	_ context.Context, _ string, version *swarm.Version, _ *swarm.ServiceSpec, _ ...docker.ServiceUpdateOption,
+) (*client.ServiceUpdateResult, error) {
+	f.versions = append(f.versions, version.Index)
+	if len(f.versions) == 1 {
+		return nil, hperrors.NewInfra(errdefs.ErrInternal.WithMessage(
+			"Error response from daemon: rpc error: code = Unknown desc = update out of sequence"))
+	}
+	return &client.ServiceUpdateResult{}, nil
+}
+
+// The routing service's other dependencies only have to answer: what they write
+// is not what this test is about.
+type (
+	stubRoutingNetworks struct{ networkservice.Service }
+	stubRefObjects      struct{ settingservice.Service }
+	stubCertFiles       struct{ sslservice.Service }
+	stubTraefik         struct{ traefikservice.Service }
+)
+
+func (stubRoutingNetworks) UpdateAppGlobalRoutingNetwork(
+	_ context.Context, _ *entity.App, _ *swarm.Service, _ *entity.AppRoutingSettings,
+) error {
+	return nil
+}
+
+func (stubRefObjects) LoadRefObjectsByIDs(
+	_ context.Context, _ database.IDB, refObjects **entity.RefObjects,
+	_ *entity.ObjectScope, _ bool, _ *entity.RefObjectIDs,
+) error {
+	if *refObjects == nil {
+		*refObjects = entity.NewRefObjects()
+	}
+	return nil
+}
+
+func (stubCertFiles) WriteCertFiles(_ bool, _ ...*entity.Setting) error { return nil }
+
+func (stubTraefik) ApplyAppConfig(
+	_ context.Context, _ database.IDB, req *traefikservice.ApplyAppConfigReq,
+) (*traefikservice.ApplyAppConfigResp, error) {
+	return &traefikservice.ApplyAppConfigResp{Service: req.Service}, nil
+}
+
 // Swarm is still writing to a service it has just created, so the first routing
 // update can be refused as out of sequence. Failing the create for that would
-// leave a user with a template that works two times in three.
-func TestApplyAppConfigurationRetriesRoutingWhileSwarmSettles(t *testing.T) {
-	svc, fakes := newProvisionTest(t)
-	fakes.routing.err = errTestRouting
-	fakes.routing.failTimes = routingApplyRetryMax
+// leave a user with a template that works two times in three. The retry is the
+// routing service's own, so this runs the real one.
+func TestApplyAppConfigurationSurvivesSwarmSettling(t *testing.T) {
+	svc, _ := newProvisionTest(t)
+	settling := &settlingSwarm{}
+	svc.appRoutingService = approutingserviceimpl.New(nil, settling, nil, nil,
+		stubRoutingNetworks{}, stubRefObjects{}, stubCertFiles{}, stubTraefik{})
 	app := appWithSettings(routingSetting(t, &entity.AppRoutingSettings{Port: 5432}))
 
 	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
 
 	assert.NoError(t, err)
-	assert.Equal(t, routingApplyRetryMax+1, fakes.routing.calls)
-	assert.Equal(t, 5432, fakes.routing.req.RoutingSettings.Port)
+	assert.Equal(t, []uint64{1, 2}, settling.versions, "the retry carries the version swarm moved on to")
 }
 
-func TestApplyAppConfigurationGivesUpOnRoutingThatKeepsFailing(t *testing.T) {
+// Retrying is left to the routing service, which knows which failures are worth
+// it. A loop here as well would multiply its attempts, and repeat the ones that
+// are not.
+func TestApplyAppConfigurationDoesNotRetryRoutingItself(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
 	fakes.routing.err = errTestRouting
 	app := appWithSettings(routingSetting(t, &entity.AppRoutingSettings{Port: 5432}))
@@ -89,7 +165,8 @@ func TestApplyAppConfigurationGivesUpOnRoutingThatKeepsFailing(t *testing.T) {
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
 
 	assert.ErrorIs(t, err, errTestRouting)
-	assert.Equal(t, routingApplyRetryMax+1, fakes.routing.calls)
+	assert.Equal(t, 1, fakes.routing.calls)
+	assert.Equal(t, 5432, fakes.routing.req.RoutingSettings.Port)
 }
 
 func TestApplyAppConfigurationSchedulesTheAppsJobs(t *testing.T) {

@@ -1,6 +1,8 @@
 package approutingserviceimpl
 
 import (
+	"time"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
@@ -23,6 +25,10 @@ type service struct {
 	settingService settingservice.Service
 	sslService     sslservice.Service
 	traefikService traefikservice.Service
+
+	// routingApplyRetryDelay is how long ApplyRoutingSettings waits before trying
+	// again an update swarm refused as out of sequence.
+	routingApplyRetryDelay time.Duration
 }
 
 func New(
@@ -48,5 +54,7 @@ func New(
 		settingService: settingService,
 		sslService:     sslService,
 		traefikService: traefikService,
+
+		routingApplyRetryDelay: routingApplyRetryDelay,
 	}
 }

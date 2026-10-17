@@ -109,9 +109,6 @@ func (s *service) reapplyAppClientIPStrategy(
 	// re-query exactly the ones a lenient load had left out. Whether a missing one
 	// is fatal is decided by the flag instead - strict on the way forward, lenient
 	// when this sweep is running as part of a revert.
-	//
-	// SkipUpdatingService is not set: the whole point is to push the regenerated
-	// labels onto the swarm service.
 	_, err = s.ApplyRoutingSettings(ctx, db, sweepApplyReq(app, routingSettings, skipMissingRefObjects))
 	if err != nil {
 		return false, hperrors.Wrap(err)

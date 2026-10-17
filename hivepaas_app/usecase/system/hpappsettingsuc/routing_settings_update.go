@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/moby/moby/api/types/swarm"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
@@ -227,24 +225,15 @@ func (uc *UC) applyRoutingSettings(
 		return hperrors.Wrap(err)
 	}
 
-	resp, err := uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
-		App:                 data.App,
-		RoutingSettings:     routingSettings,
-		RefObjects:          data.RefObjects,
-		SkipUpdatingService: true,
+	// The apply sets the rollback terms on its own update rather than leaving the
+	// update to this usecase, so that one swarm refuses as out of sequence is
+	// retried along with the steps that built it.
+	_, err = uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
+		App:               data.App,
+		RoutingSettings:   routingSettings,
+		RefObjects:        data.RefObjects,
+		RollbackOnFailure: true,
 	})
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	service := resp.Service
-	if service.Spec.UpdateConfig == nil {
-		service.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	service.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	service.Spec.UpdateConfig.MaxFailureRatio = 0.5
-
-	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

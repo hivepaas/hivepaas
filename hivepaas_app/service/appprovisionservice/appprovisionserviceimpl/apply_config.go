@@ -2,7 +2,6 @@ package appprovisionserviceimpl
 
 import (
 	"context"
-	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -12,11 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
-)
-
-const (
-	routingApplyRetryMax   = 3
-	routingApplyRetryDelay = 500 * time.Millisecond
 )
 
 func (s *service) ApplyAppConfiguration(
@@ -64,12 +58,11 @@ func (s *service) applyEnvVars(ctx context.Context, db database.IDB, app *entity
 
 // applyRouting writes the app's routing settings to traefik and to its service.
 //
-// It retries, which applying routing to an app that has been running does not
-// have to: the service was created moments ago and swarm's own allocator is
-// still writing to it, so an update carrying the version an inspect has just
-// returned comes back as "update out of sequence" - about one create in three on
-// a developer machine. Each attempt re-inspects the service and writes the same
-// settings, so repeating it changes nothing beyond the version it carries.
+// The service was created moments ago and swarm's own allocator is still writing
+// to it, so the update is often refused as out of sequence. The routing service
+// retries that itself - see ApplyRoutingSettings - so it is not retried here: a
+// loop around it would multiply its attempts, and repeat failures that are not
+// going to go away.
 func (s *service) applyRouting(
 	ctx context.Context,
 	db database.IDB,
@@ -94,25 +87,11 @@ func (s *service) applyRouting(
 	}
 	*tasks = append(*tasks, certTasks...)
 
-	for attempt := range routingApplyRetryMax + 1 {
-		if attempt > 0 {
-			timer := time.NewTimer(routingApplyRetryDelay)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return hperrors.Wrap(ctx.Err())
-			case <-timer.C:
-			}
-		}
-		_, err = s.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
-			App:             app,
-			RoutingSettings: routingSettings,
-			RefObjects:      refObjects,
-		})
-		if err == nil {
-			return nil
-		}
-	}
+	_, err = s.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
+		App:             app,
+		RoutingSettings: routingSettings,
+		RefObjects:      refObjects,
+	})
 	return hperrors.Wrap(err)
 }
 

@@ -13,8 +13,14 @@ export const CreateOrEditOAuthFormSchema = z.object({
     profileURL: z.string(),
     autoDiscoveryURL: z.string(),
     scopes: z.string(),
+    trustEmail: z.boolean(),
     default: z.boolean(),
 });
+
+/** A GitLab or a Gitea of one's own is signed in with by its URLs; every other kind has its provider's own. */
+export function hasCustomURLs(kind: EOAuthKind): boolean {
+    return kind === EOAuthKind.Gitlab || kind === EOAuthKind.Gitea;
+}
 
 export type CreateOrEditOAuthFormInput = z.input<typeof CreateOrEditOAuthFormSchema>;
 export type CreateOrEditOAuthFormOutput = z.output<typeof CreateOrEditOAuthFormSchema>;

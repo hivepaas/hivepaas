@@ -18,7 +18,7 @@ import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
 import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type { CreateOrEditOAuthFormInput, CreateOrEditOAuthFormOutput } from "./create-or-edit-oauth.form.schema";
-import { CreateOrEditOAuthFormSchema } from "./create-or-edit-oauth.form.schema";
+import { CreateOrEditOAuthFormSchema, hasCustomURLs } from "./create-or-edit-oauth.form.schema";
 import { OAUTH_KEPT_ON_BEE_NOTE, OAUTH_UNAVAILABLE_ON_BEE_NOTE, PaidPlanUpgradeLink } from "./oauth-on-bee.com";
 
 const providerOptions = [
@@ -64,6 +64,7 @@ export function CreateOrEditOAuthForm({
             profileURL: initialValues?.profileURL ?? "",
             autoDiscoveryURL: initialValues?.autoDiscoveryURL ?? "",
             scopes: initialValues?.scopes ?? "",
+            trustEmail: initialValues?.trustEmail ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditOAuthFormSchema),
@@ -85,6 +86,8 @@ export function CreateOrEditOAuthForm({
 
     const currentProvider = useWatch({ control, name: "kind" });
     const showAutoDiscoveryURL = currentProvider === EOAuthKind.OpenIDConnect;
+    const showTrustEmail = currentProvider === EOAuthKind.OpenIDConnect;
+    const showCustomURLs = hasCustomURLs(currentProvider);
     // On Bee the paid kinds can't be picked, wherever a kind is picked. One that
     // exists stays editable - its secret may need replacing - and says what Bee
     // leaves it.
@@ -131,6 +134,7 @@ export function CreateOrEditOAuthForm({
         field: scopes,
         fieldState: { invalid: isScopesInvalid },
     } = useController({ name: "scopes", control });
+    const { field: trustEmail } = useController({ name: "trustEmail", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditOAuthFormOutput) {
@@ -290,50 +294,58 @@ export function CreateOrEditOAuthForm({
                         </FieldGroup>
                     </InfoBlock>
 
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Auth URL" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Input
-                                    {...authURL}
-                                    aria-invalid={isAuthURLInvalid}
-                                />
-                                <FieldError errors={[errors.authURL]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
+                    {showCustomURLs && (
+                        <>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Auth URL" />}
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            {...authURL}
+                                            aria-invalid={isAuthURLInvalid}
+                                        />
+                                        <FieldError errors={[errors.authURL]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
 
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Token URL" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Input
-                                    {...tokenURL}
-                                    aria-invalid={isTokenURLInvalid}
-                                />
-                                <FieldError errors={[errors.tokenURL]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Token URL" />}
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            {...tokenURL}
+                                            aria-invalid={isTokenURLInvalid}
+                                        />
+                                        <FieldError errors={[errors.tokenURL]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
 
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Profile URL" />}
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <Input
-                                    {...profileURL}
-                                    aria-invalid={isProfileURLInvalid}
-                                />
-                                <FieldError errors={[errors.profileURL]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Profile URL" />}
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            {...profileURL}
+                                            aria-invalid={isProfileURLInvalid}
+                                        />
+                                        <FieldError errors={[errors.profileURL]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+                            <FieldDescription className="text-xs">
+                                For a GitLab or Gitea of your own, all three. Leave them empty for gitlab.com or
+                                gitea.com.
+                            </FieldDescription>
+                        </>
+                    )}
 
                     {showAutoDiscoveryURL && (
                         <InfoBlock
@@ -367,6 +379,37 @@ export function CreateOrEditOAuthForm({
                             </Field>
                         </FieldGroup>
                     </InfoBlock>
+
+                    {showTrustEmail && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Trust emails" />}
+                        >
+                            <Field>
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        id="oauth-trust-email"
+                                        checked={trustEmail.value}
+                                        onCheckedChange={checked => {
+                                            trustEmail.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="oauth-trust-email"
+                                        className="text-sm"
+                                    >
+                                        Take every email this provider gives as verified
+                                    </label>
+                                </div>
+                                <FieldDescription className="text-xs">
+                                    A sign-in is matched to a user by email, so it is refused unless the provider says
+                                    the email is verified (email_verified). Turn this on only for an identity provider
+                                    whose users and emails you manage: with one anybody can sign up to, whoever types in
+                                    a user&apos;s email could sign in as them.
+                                </FieldDescription>
+                            </Field>
+                        </InfoBlock>
+                    )}
 
                     <InfoBlock
                         titleWidth={220}

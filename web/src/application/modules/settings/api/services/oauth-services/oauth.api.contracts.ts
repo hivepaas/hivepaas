@@ -29,6 +29,7 @@ export type OAuth_CreateOne_Payload = {
     profileURL: string;
     autoDiscoveryURL: string;
     scopes: string[];
+    trustEmail: boolean;
 };
 
 export type OAuth_CreateOne_Req = ApiRequestBase<{ payload: OAuth_CreateOne_Payload }>;

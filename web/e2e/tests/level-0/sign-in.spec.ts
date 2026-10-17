@@ -15,6 +15,23 @@ test.describe("signed out", () => {
         await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     });
 
+    // A sign-in with a provider comes back to this page with the error's code,
+    // never a JSON error the browser would stop on.
+    test("a failed sign-in with a provider says why, on the sign-in page", async ({ page }) => {
+        await page.goto("/auth/sign-in/?ssoError=ERR_OAUTH_EMAIL_NOT_VERIFIED");
+
+        await expect(page.getByRole("alert")).toContainText("does not confirm that your email address is verified");
+    });
+
+    test("a sign-in with no such provider is sent back to the sign-in page", async ({ playwright }) => {
+        const request = await playwright.request.newContext({ baseURL: `${env.baseURL}/api/` });
+        const res = await request.get("auth/sso/e2e-no-such-provider", { maxRedirects: 0 });
+
+        expect(res.status()).toBe(302);
+        expect(res.headers().location).toMatch(/\/auth\/sign-in\?ssoError=ERR_NOT_FOUND$/);
+        await request.dispose();
+    });
+
     // An unknown user, never a real one with a wrong password: failed attempts
     // block an account for 15 minutes.
     test("an unknown user is turned away, on the sign-in page", async ({ page }) => {

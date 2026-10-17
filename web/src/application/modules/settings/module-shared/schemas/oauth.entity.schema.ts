@@ -15,5 +15,6 @@ export const OAuthSettingEntitySchema = SettingsBaseEntitySchema.omit({ descript
     profileURL: z.string().optional(),
     autoDiscoveryURL: z.string().optional(),
     scopes: z.array(z.string()).optional(),
+    trustEmail: z.boolean().optional(),
     secretMasked: z.boolean().optional(),
 });

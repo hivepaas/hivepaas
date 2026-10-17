@@ -1,7 +1,7 @@
 # Plans and licensing
 
-Status: settled 2026-10-16. Phase 1 (HivePaaS core) built; phase 2 (portal)
-being built. The limits are enforced from the first release that carries them,
+Status: settled 2026-10-16. Phases 1 (HivePaaS core) and 2 (portal) built;
+phase 3 (dashboard) being built. The limits are enforced from the first release that carries them,
 so that release also carries the production license public keys.
 
 HivePaaS stays Apache 2.0 and self-hosted. What is sold is a license key that
@@ -277,23 +277,31 @@ key like any other, so it works offline and needs no new path in HivePaaS.
 
 ## Dashboard
 
-- **System > License**:
-  - the plan and the status with its dates;
+- **System > License** (`/system/license/overview/`):
+  - the plan and the status with its dates, and whether the key is a
+    development one;
   - usage against each limit;
   - the installation ID, with a copy button;
-  - a box to paste a key, and "Check for a newer key".
-  - an Upgrade link to the portal's pricing, carrying the installation ID.
-- **Banners**, shown to admins:
+  - a box to paste a key, which asks before replacing a key in force, and
+    "Check for a newer key";
+  - an Upgrade link to the portal's pricing, carrying the installation ID, and
+    "Start a 14-day trial" while there is no key.
+- **Banners**, shown to whoever may read the System module, as the license
+  itself is; each can be put off for a day, or a week once on Bee:
   - trial (n days left);
   - grace (n days left);
   - expired (now on Bee);
   - moved (the key now belongs to another installation);
-  - over a limit ("7 of 5 nodes: no node can be added").
+  - a key for another installation, or one that cannot be verified (on Bee);
+  - over a limit ("7 of 5 nodes: no node can be added"). Sign-in providers
+    are left out: Settings > OAuth marks them.
 - **Limit errors.** A refused creation opens a dialog that names the limit and
-  links to Upgrade.
+  links to Upgrade. A clone or a preview refused in its task is told where
+  that task's failure is: the task, and for a preview its pull request.
 - **Sign-in providers.** On Bee, a paid sign-in kind shows as unavailable in
-  Settings > OAuth. One that already exists is marked as working but not
-  editable.
+  Settings > OAuth. One that already exists is marked as kept: it can still
+  be edited, so an expiring client secret can be replaced, but once disabled
+  it cannot be enabled again on Bee.
 
 ## Phases
 

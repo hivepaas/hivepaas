@@ -753,6 +753,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "the device to trust, so no passcode is asked on it for a while",
+          "in" : "query",
+          "name" : "trustedDeviceId",
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "302" : {

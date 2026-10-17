@@ -31,6 +31,12 @@ func (cfg *Config) DashboardSsoSuccessURL() string {
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/sso/success"))
 }
 
+// DashboardSsoErrorURL is the sign-in page, told why a sign-in with a provider failed: the error's code, which the
+// page puts in words.
+func (cfg *Config) DashboardSsoErrorURL(code string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/sign-in")) + "?ssoError=" + url.QueryEscape(code)
+}
+
 func (cfg *Config) DashboardUserSignupURL(token string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/sign-up")) +
 		fmt.Sprintf("?token=%s", token)

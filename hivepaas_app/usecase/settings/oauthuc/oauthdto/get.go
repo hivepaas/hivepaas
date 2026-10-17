@@ -40,6 +40,7 @@ type OAuthResp struct {
 	ProfileURL       string   `json:"profileURL,omitempty"`
 	AutoDiscoveryURL string   `json:"autoDiscoveryURL,omitempty"`
 	Scopes           []string `json:"scopes,omitempty"`
+	TrustEmail       bool     `json:"trustEmail,omitempty"`
 	SecretMasked     bool     `json:"secretMasked,omitempty"`
 }
 

@@ -14,6 +14,11 @@ var (
 	ErrTooManyLoginFailures        = NewErr(ErrUnauthorized, "ERR_TOO_MANY_LOGIN_FAILURES")
 	ErrTooManyPasscodeAttempts     = NewErr(ErrUnauthorized, "ERR_TOO_MANY_PASSCODE_ATTEMPTS")
 	ErrOAuthUserEmailNotReturned   = NewErr(ErrPreconditionFailed, "ERR_OAUTH_USER_EMAIL_NOT_RETURNED")
+	// ErrOAuthEmailNotVerified refuses a sign-in with a provider that does not vouch the person proved they hold the
+	// email: matched to a user by it, it would let whoever typed it in sign in as them.
+	ErrOAuthEmailNotVerified = NewErr(ErrUnauthorized, "ERR_OAUTH_EMAIL_NOT_VERIFIED")
+	// ErrOAuthUserNotFound is a sign-in with a provider whose email no user has: SSO signs in users that exist.
+	ErrOAuthUserNotFound = NewErr(ErrUnauthorized, "ERR_OAUTH_USER_NOT_FOUND")
 )
 
 // Errors for user

@@ -12,7 +12,7 @@
     },
     "title" : "HivePaaS API",
     "version" : "0.1",
-    "x-api-level" : 2
+    "x-api-level" : 3
   },
   "servers" : [ {
     "url" : "/api"
@@ -711,27 +711,7 @@
         "responses" : {
           "302" : {
             "content" : { },
-            "description" : "on success redirect to the dashboard page"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
+            "description" : "redirect to the dashboard; on a failure, to the sign-in page with ssoError, the error's code"
           }
         },
         "security" : [ ],
@@ -753,27 +733,7 @@
         "responses" : {
           "302" : {
             "content" : { },
-            "description" : "on success redirect to the dashboard page"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
+            "description" : "redirect to the dashboard; on a failure, to the sign-in page with ssoError, the error's code"
           }
         },
         "security" : [ ],
@@ -797,27 +757,7 @@
         "responses" : {
           "302" : {
             "content" : { },
-            "description" : "on success redirect to provider OAuth URL"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
+            "description" : "redirect to the provider; on a failure, to the sign-in page with ssoError, the error's code"
           }
         },
         "security" : [ ],
@@ -72340,9 +72280,13 @@
           },
           "tokenURL" : {
             "type" : "string"
+          },
+          "trustEmail" : {
+            "description" : "TrustEmail, for an OpenID Connect provider only, takes the email it gives as verified without email_verified.",
+            "type" : "boolean"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL", "trustEmail" ],
         "type" : "object"
       },
       "oauthdto.CreateOAuthResp" : {
@@ -72489,6 +72433,9 @@
           "tokenURL" : {
             "type" : "string"
           },
+          "trustEmail" : {
+            "type" : "boolean"
+          },
           "type" : {
             "$ref" : "#/components/schemas/base.SettingType"
           },
@@ -72544,11 +72491,15 @@
           "tokenURL" : {
             "type" : "string"
           },
+          "trustEmail" : {
+            "description" : "TrustEmail, for an OpenID Connect provider only, takes the email it gives as verified without email_verified.",
+            "type" : "boolean"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL", "updateVer" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL", "trustEmail", "updateVer" ],
         "type" : "object"
       },
       "oauthdto.UpdateOAuthResp" : {

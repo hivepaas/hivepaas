@@ -46,6 +46,8 @@ const (
 	auditReasonTooManyPasscodes = "too-many-passcodes"
 	auditReasonInvalidAPIKey    = "invalid-api-key"
 	auditReasonUserUnavailable  = "user-unavailable"
+	// auditReasonEmailNotVerified is a sign-in with a provider that does not vouch for the email it gave.
+	auditReasonEmailNotVerified = "email-not-verified"
 )
 
 // recordLogin records a session handed out to somebody who proved who they are.

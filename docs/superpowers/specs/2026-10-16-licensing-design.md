@@ -74,8 +74,6 @@ Each count is installation-wide and read when something is created.
 
 ## What a limit does
 
-| Limit      | Checked at                                                                                          |
-|------------|-----------------------------------------------------------------------------------------------------|
 | Limit      | Checked at                                                                     |
 |------------|--------------------------------------------------------------------------------|
 | Apps       | create app, from template, clone, spec import, project from compose            |
@@ -308,12 +306,12 @@ key like any other, so it works offline and needs no new path in HivePaaS.
   - moved (the key now belongs to another installation);
   - a key for another installation, or one that cannot be verified (on Bee);
   - over a limit ("7 of 5 nodes: no node can be added"). Sign-in providers
-    are left out: Settings > OAuth marks them.
+    are left out: Integrations > OAuth marks them.
 - **Limit errors.** A refused creation opens a dialog that names the limit and
   links to Upgrade. A clone or a preview refused in its task is told where
   that task's failure is: the task, and for a preview its pull request.
 - **Sign-in providers.** On Bee, a paid sign-in kind shows as unavailable in
-  Settings > OAuth. One that already exists is marked as kept: it can still
+  Integrations > OAuth. One that already exists is marked as kept: it can still
   be edited, so an expiring client secret can be replaced, but once disabled
   it cannot be enabled again on Bee.
 

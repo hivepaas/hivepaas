@@ -95,7 +95,20 @@ task edits a script, so the sources come first.
 - `generate.sh` against the committed template gives no diff.
 - `scripts/test/walg/run.sh` passes on 17 and 18, unchanged.
 
-- [ ] Commit: `walg: the scripts' sources, and the template generated from them`.
+- [x] Commit: `walg: the scripts' sources, and the template generated from them`.
+
+**As built** (`../app-templates`, commit 02c4eae, merged as ad53dda):
+- **The sources.** The header and the eight scripts were cut from the committed
+  template as text, de-indented, rather than parsed as YAML. They are identical to the
+  sources phase 1 generated it from.
+- **`generate.sh`** is bash, so CI needs nothing more. It writes the template from them,
+  byte for byte. `-check` exits 1 and shows the start of the diff when the template
+  differs.
+- **Checks.** Lint and `index -check` pass. shellcheck is clean on `generate.sh`.
+  - The scripts themselves have warnings for variables `walg-lib` defines. shellcheck
+    cannot follow the source path, so CI does not run it on them.
+- **Not rerun:** the harness. It reads the scripts from the template, which did not
+  change.
 
 ## Task 1 (`app-templates`): archive_timeout holds from the start
 

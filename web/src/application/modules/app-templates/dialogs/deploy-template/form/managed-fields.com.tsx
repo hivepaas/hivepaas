@@ -44,8 +44,8 @@ export function ManagedFields({ control, archive, archives, keyAuths, defaults, 
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
                 Every change is archived as it happens, so a failure loses about the archive timeout&apos;s worth of
-                writes. The data volume must be pinned to a node: the archive and the engine&apos;s tools are placed by
-                it.
+                writes. The data volume is pinned to a node, where the engine&apos;s tools are put, or is on storage
+                every node reaches: the database may then start on any node, and archives to object storage.
             </p>
 
             <Controller

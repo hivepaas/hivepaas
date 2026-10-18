@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { type AppManagedRestorePayload } from "~/projects/api/services";
 import { AppManagedCommands, AppManagedQueries, ProjectClusterVolumesQueries } from "~/projects/data";
 import { MANAGED_RESTORE_TARGET } from "~/projects/domain";
+import { isVolumeInMemory, volumePlaceOf } from "~/projects/module-shared/utils";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -42,7 +43,9 @@ export function ManagedRestoreDialog() {
     const volumes: ManagedRestoreVolumeOption[] = (volumesData?.data ?? []).map(volume => ({
         id: volume.id,
         name: volume.name,
-        pinnedTo: pinOf(volume.nodeId, volume.nodeLabel),
+        place: volumePlaceOf(volume),
+        shared: !volume.nodeId && !volume.nodeLabel,
+        inMemory: isVolumeInMemory(volume),
     }));
 
     const { mutate: restore, isPending } = AppManagedCommands.useRestore({
@@ -131,12 +134,4 @@ export function ManagedRestoreDialog() {
             </DialogFixedContent>
         </Dialog>
     );
-}
-
-/** Where a volume's data is, as a person reads it: null for a volume pinned to no node. */
-function pinOf(nodeId: string | undefined, nodeLabel: string | undefined): string | null {
-    if (nodeId) {
-        return `node ${nodeId}`;
-    }
-    return nodeLabel ? `nodes labeled ${nodeLabel}` : null;
 }

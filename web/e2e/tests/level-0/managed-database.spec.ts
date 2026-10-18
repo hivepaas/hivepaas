@@ -328,6 +328,12 @@ async function answerManaged(
                 json: paged([
                     { ...settingRow(VOLUME.id, VOLUME.name, "cluster-volume"), driver: "local", nodeId: "e2enode01" },
                     { ...settingRow("e2eunpinnedvol01", "e2e-unpinned", "cluster-volume"), driver: "local" },
+                    {
+                        ...settingRow("e2etmpfsvol01", "e2e-in-memory", "cluster-volume"),
+                        driver: "local",
+                        nodeId: "e2enode01",
+                        tmpfsOptions: { size: "64m" },
+                    },
                 ]),
             }),
     );
@@ -436,8 +442,11 @@ test("a managed database is restored to a restore point into a new app", async (
     await dialog.getByRole("combobox", { name: "Restore point" }).click();
     await page.getByRole("option", { name: new RegExp(`^${POINT}`) }).click();
     await dialog.getByRole("combobox", { name: "Data volume" }).click();
-    // A volume pinned to no node cannot hold the new app's data.
-    await expect(page.getByRole("option", { name: /^e2e-unpinned/ })).toBeDisabled();
+    // A volume on every node may hold the new app's data, as the archive is off-site; one in memory never.
+    await expect(page.getByRole("option", { name: /^e2e-unpinned/ })).toBeEnabled();
+    await expect(page.getByRole("option", { name: /^e2e-unpinned/ })).toContainText("every node");
+    await expect(page.getByRole("option", { name: /^e2e-in-memory/ })).toBeDisabled();
+    await expect(page.getByRole("option", { name: /^e2e-in-memory/ })).toContainText("kept in memory");
     await page.getByRole("option", { name: new RegExp(`^${VOLUME.name}`) }).click();
     await dialog.getByRole("button", { name: "Restore", exact: true }).click();
 

@@ -51,6 +51,8 @@ type ManagedStatusResp struct {
 	// LastDump is the dump's last run, null while dumps are off or before the
 	// first.
 	LastDump *ManagedDumpResp `json:"lastDump"`
+	// Members are the replicas, each as the database's last health check saw it.
+	Members []*ManagedMemberStatusResp `json:"members"`
 	// Placement is where the archive is from the database: off-site, shared or
 	// same-node, which the dashboard warns about.
 	Placement string `json:"placement"`
@@ -109,6 +111,21 @@ type ManagedDumpResp struct {
 	Bytes      int64     `json:"bytes"`
 }
 
+// ManagedMemberStatusResp is a replica: streaming, catchup and the like as
+// pg_stat_replication says, disconnected when the database has no connection
+// from it, unknown before a health check has looked; and how far behind it is,
+// in bytes of WAL and in seconds, null while nothing is written.
+type ManagedMemberStatusResp struct {
+	App        *basedto.ObjectIDResp `json:"app"`
+	Key        string                `json:"key"`
+	Role       string                `json:"role"`
+	Node       string                `json:"node"`
+	State      string                `json:"state"`
+	LagBytes   int64                 `json:"lagBytes"`
+	LagSeconds *float64              `json:"lagSeconds"`
+	CheckedAt  *time.Time            `json:"checkedAt"`
+}
+
 type ManagedRestoreTestResp struct {
 	Passed          bool      `json:"passed"`
 	EndedAt         time.Time `json:"endedAt"`
@@ -155,6 +172,14 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 	if test := status.LastRestoreTest; test != nil {
 		resp.LastRestoreTest = &ManagedRestoreTestResp{Passed: test.Passed, EndedAt: test.EndedAt,
 			DurationSeconds: int64(test.Duration / time.Second), RestoredTo: test.RestoredTo}
+	}
+	resp.Members = make([]*ManagedMemberStatusResp, 0, len(status.Members))
+	for _, member := range status.Members {
+		resp.Members = append(resp.Members, &ManagedMemberStatusResp{
+			App: &basedto.ObjectIDResp{ID: member.Member.App.ID}, Key: member.Member.Key, Role: member.Member.Role,
+			Node: member.Member.Node, State: member.State, LagBytes: member.LagBytes, LagSeconds: member.LagSeconds,
+			CheckedAt: member.CheckedAt,
+		})
 	}
 	if dump := status.LastDump; dump != nil {
 		resp.LastDump = &ManagedDumpResp{Succeeded: dump.Succeeded, EndedAt: dump.EndedAt,

@@ -208,3 +208,25 @@ type MarkCommand struct {
 // MarkExitNotArchived is EX_TEMPFAIL: the point is made, but the WAL it is in
 // was not archived in time, so it cannot be restored to yet.
 const MarkExitNotArchived = 75
+
+// ReplicaReq is a replica about to be made of a primary: the primary, its
+// engine's setting, the replica's key, and the paths the primary's setting
+// mounts put files at, which say what its scripts can do.
+type ReplicaReq struct {
+	Primary    *entity.App
+	Managed    *entity.AppManagedSettings
+	Key        string
+	MountPaths []string
+}
+
+// ReplicaSpec is what a replica is given beside the primary's settings, copied:
+// variables, the replication password as a file at PasswordFile from the secret
+// SecretName, and its data volume at DataTarget. Allow is the command that lets
+// replicas into the primary, run there with the password on its stdin.
+type ReplicaSpec struct {
+	Env          [][2]string
+	SecretName   string
+	PasswordFile string
+	DataTarget   string
+	Allow        *entity.CommandTemplate
+}

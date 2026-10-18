@@ -96,6 +96,17 @@ func unmanagedSettings(app *entity.App, now time.Time) ([]*entity.Setting, error
 	if managed == nil {
 		return nil, hperrors.NewNotFound("Managed engine")
 	}
+	// A member is removed from its primary; a primary loses its members first.
+	data, err := managed.AsAppManagedSettings()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if data.MemberOf != nil {
+		return nil, hperrors.Wrap(hperrors.ErrAppManagedIsMember).WithParam("App", app.Name).ExposeParams("App")
+	}
+	if data.Postgres != nil && len(data.Postgres.Members) > 0 {
+		return nil, hperrors.Wrap(hperrors.ErrAppManagedHasMembers).WithParam("App", app.Name).ExposeParams("App")
+	}
 	deleting := []*entity.Setting{managed}
 	for _, setting := range app.Settings {
 		if setting.Type != base.SettingTypeSchedJob {

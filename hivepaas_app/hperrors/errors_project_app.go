@@ -87,6 +87,18 @@ var (
 	// ErrAppManagedSwitchSourceGone refuses a switch from a source no longer in
 	// the environment: the key its consumers name cannot be read.
 	ErrAppManagedSwitchSourceGone = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_SWITCH_SOURCE_GONE")
+	// ErrAppManagedReplicaUnsupported refuses a replica of a database whose
+	// scripts predate replicas: its own would start empty, not as a standby.
+	ErrAppManagedReplicaUnsupported = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_REPLICA_UNSUPPORTED")
+	// ErrAppManagedReplicaNeedsObjectStorage refuses a replica of a database whose
+	// archive is on a volume: the replica is seeded from the archive, on its own
+	// node.
+	ErrAppManagedReplicaNeedsObjectStorage = NewErr(ErrPreconditionFailed,
+		"ERR_APP_MANAGED_REPLICA_NEEDS_OBJECT_STORAGE")
+	// ErrAppManagedIsMember refuses on a member what only its primary does.
+	ErrAppManagedIsMember = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_IS_MEMBER")
+	// ErrAppManagedHasMembers refuses to unmanage a primary while it has members.
+	ErrAppManagedHasMembers = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_HAS_MEMBERS")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

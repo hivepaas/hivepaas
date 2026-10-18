@@ -63,4 +63,7 @@ type Engine interface {
 	// of the base backups a nightly run's outputs list reaches: none starts
 	// before the point. Without the list, none is stale.
 	StaleDeployPoints(managed *entity.AppManagedSettings, outputs map[string]string) []string
+	// Replica is how a replica of the database is made, refusing a database that
+	// cannot have one.
+	Replica(req *ReplicaReq) (*ReplicaSpec, error)
 }

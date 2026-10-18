@@ -56,6 +56,34 @@ type AppManagedSettings struct {
 	// switched to: this one's jobs are paused since, and it is left running for
 	// the person to stop or delete.
 	SwitchedTo *ManagedSwitch `json:"switchedTo,omitempty"`
+	// MemberOf is the primary a member of a cluster belongs to, nil for a
+	// database of its own. A member's setting holds its locks, and no engine
+	// state: that is its primary's.
+	MemberOf *ManagedMemberOf `json:"memberOf,omitempty"`
+}
+
+// ManagedMemberOf is the primary a member belongs to, and its role there.
+type ManagedMemberOf struct {
+	App  ObjectID `json:"app"`
+	Role string   `json:"role"`
+}
+
+// ManagedRoleReplica is an asynchronous read replica: a standby that streams from
+// its primary, the archive its fallback.
+const ManagedRoleReplica = "replica"
+
+// ManagedMember is a member of a primary's cluster: an app, a logical child of the
+// primary, on a volume of its own.
+type ManagedMember struct {
+	App ObjectID `json:"app"`
+	// Key is the member app's key, which the primary knows its connection by.
+	Key  string `json:"key"`
+	Role string `json:"role"`
+	// Volume is the member's data volume, and Node the node it is pinned to: an
+	// id, or a label.
+	Volume ObjectID  `json:"volume"`
+	Node   string    `json:"node,omitempty"`
+	At     time.Time `json:"at"`
 }
 
 // ManagedSwitch is a switch of a database's consumers to the database restored
@@ -104,6 +132,21 @@ type ManagedPostgres struct {
 	RestorePoints []*ManagedRestorePoint `json:"restorePoints,omitempty"`
 	// Restore is where this database was restored from, when it was.
 	Restore *ManagedRestore `json:"restore,omitempty"`
+	// Members are the database's replicas.
+	Members []*ManagedMember `json:"members,omitempty"`
+	// ReplicationPassword is what the replicas stream with, made with the first
+	// one.
+	ReplicationPassword EncryptedField `json:"replicationPassword,omitzero"`
+}
+
+// Member is the member of that app, nil for none.
+func (s *ManagedPostgres) Member(appID string) *ManagedMember {
+	for _, member := range s.Members {
+		if member.App.ID == appID {
+			return member
+		}
+	}
+	return nil
 }
 
 // ManagedRestorePoint is a moment a person named. A restore targets its LSN:
@@ -209,6 +252,9 @@ func (s *AppManagedSettings) GetRefObjectIDs() *RefObjectIDs {
 	if s.SwitchedTo != nil && s.SwitchedTo.App.ID != "" {
 		refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.SwitchedTo.App.ID)
 	}
+	if s.MemberOf != nil && s.MemberOf.App.ID != "" {
+		refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.MemberOf.App.ID)
+	}
 	if s.Postgres == nil {
 		return refIDs
 	}
@@ -222,6 +268,12 @@ func (s *AppManagedSettings) GetRefObjectIDs() *RefObjectIDs {
 	if id := s.Postgres.RestoreTest.VerifierApp.ID; id != "" {
 		refIDs.RefAppIDs = append(refIDs.RefAppIDs, id)
 	}
+	for _, member := range s.Postgres.Members {
+		refIDs.RefAppIDs = append(refIDs.RefAppIDs, member.App.ID)
+		if member.Volume.ID != "" {
+			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, member.Volume.ID)
+		}
+	}
 	return refIDs
 }
 
@@ -234,6 +286,9 @@ func (s *AppManagedSettings) Decrypt() error {
 		return nil
 	}
 	if _, err := s.Postgres.EncryptionKey.GetPlain(); err != nil {
+		return hperrors.Wrap(err)
+	}
+	if _, err := s.Postgres.ReplicationPassword.GetPlain(); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil

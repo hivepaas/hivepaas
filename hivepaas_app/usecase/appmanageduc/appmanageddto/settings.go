@@ -68,6 +68,25 @@ type ManagedSettingsResp struct {
 	// SwitchedTo is the database restored from this one that its consumers were
 	// switched to, null for none: this one's jobs are paused since.
 	SwitchedTo *ManagedSwitchedToResp `json:"switchedTo"`
+	// Members are the database's replicas.
+	Members []*ManagedMemberResp `json:"members"`
+	// MemberOf is the primary this database is a replica of, null for a
+	// database of its own.
+	MemberOf *ManagedMemberOfResp `json:"memberOf"`
+}
+
+type ManagedMemberResp struct {
+	App    *basedto.ObjectIDResp `json:"app"`
+	Key    string                `json:"key"`
+	Role   string                `json:"role"`
+	Volume *basedto.ObjectIDResp `json:"volume"`
+	Node   string                `json:"node"`
+	At     time.Time             `json:"at"`
+}
+
+type ManagedMemberOfResp struct {
+	App  *basedto.ObjectIDResp `json:"app"`
+	Role string                `json:"role"`
 }
 
 type ManagedSwitchedToResp struct {
@@ -153,6 +172,16 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 	}
 	if switched := managed.SwitchedTo; switched != nil {
 		resp.SwitchedTo = &ManagedSwitchedToResp{App: objectID(switched.App), At: switched.At}
+	}
+	if memberOf := managed.MemberOf; memberOf != nil {
+		resp.MemberOf = &ManagedMemberOfResp{App: objectID(memberOf.App), Role: memberOf.Role}
+	}
+	resp.Members = []*ManagedMemberResp{}
+	if managed.Postgres != nil {
+		for _, member := range managed.Postgres.Members {
+			resp.Members = append(resp.Members, &ManagedMemberResp{App: objectID(member.App), Key: member.Key,
+				Role: member.Role, Volume: objectID(member.Volume), Node: member.Node, At: member.At})
+		}
 	}
 	pg := managed.Postgres
 	if pg == nil {

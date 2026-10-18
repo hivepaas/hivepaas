@@ -2,6 +2,7 @@ package managedserviceimpl
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -204,4 +205,36 @@ func TestPruneDeployPoints(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, pruned)
 	assert.Empty(t, settings.saved, "nothing to prune, nothing saved")
+}
+
+// stdinExec answers as the allow command does, keeping what it read.
+type stdinExec struct {
+	schedjobexecservice.Service
+	exit  int
+	stdin string
+}
+
+func (f *stdinExec) RunCommand(_ context.Context, _ database.Tx, req *schedjobexecservice.RunCommandReq) (
+	*schedjobexecservice.RunCommandResp, error) {
+	read, _ := io.ReadAll(req.Stdin)
+	f.stdin = string(read)
+	exit := f.exit
+	return &schedjobexecservice.RunCommandResp{ExitCode: &exit}, nil
+}
+
+// The password reaches the command on its stdin, not in it.
+func TestReplicasAreLetInWithThePasswordOnStdin(t *testing.T) {
+	exec := &stdinExec{}
+	svc := &service{schedJobExecService: exec}
+	allow := &entity.CommandTemplate{Command: "/opt/hivepaas/bin/walg-replication"}
+
+	err := svc.AllowReplicas(context.Background(), database.Tx{}, &entity.App{Name: "db"}, allow, "s3cretPassw0rd1234")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "s3cretPassw0rd1234\n", exec.stdin)
+	assert.NotContains(t, allow.Command, "s3cret")
+
+	exec.exit = 2
+	err = svc.AllowReplicas(context.Background(), database.Tx{}, &entity.App{Name: "db"}, allow, "s3cretPassw0rd1234")
+	assert.ErrorIs(t, err, hperrors.ErrActionFailed)
 }

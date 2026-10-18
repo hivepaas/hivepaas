@@ -132,7 +132,7 @@ func (uc *UC) updateManagedSettings(
 		Scope:    base.ObjectScopeApp,
 		ObjectID: loaded.app.ID,
 		Source:   base.AuditLogSourceAPIUpdate,
-		Section:  "managed",
+		Section:  auditSectionManaged,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
 		ResID:    loaded.app.ID,

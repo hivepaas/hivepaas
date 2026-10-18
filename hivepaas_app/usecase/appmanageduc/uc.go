@@ -21,6 +21,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc"
 )
 
+// auditSectionManaged is the section a managed app's changes are audited under.
+const auditSectionManaged = "managed"
+
 type UC struct {
 	db        *database.DB
 	taskQueue queue.TaskQueue

@@ -34,6 +34,11 @@ type Service interface {
 	// names. A person's points are never removed.
 	PruneDeployPoints(ctx context.Context, db database.IDB, projectID, appID string, outputs map[string]string) (
 		[]string, error)
+	// AllowReplicas runs the engine's command that lets replicas into a database,
+	// in its task, the replication password on its stdin: never an argument, never
+	// the environment.
+	AllowReplicas(ctx context.Context, db database.Tx, app *entity.App, allow *entity.CommandTemplate,
+		password string) error
 }
 
 // MarkPointReq asks for a restore point on a managed database.

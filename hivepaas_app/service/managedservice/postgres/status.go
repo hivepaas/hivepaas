@@ -96,6 +96,7 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 		}
 	}
 	status.LastDump = dumpStatus(run(pg.Jobs.Dump))
+	status.Members = membersStatus(pg.Members, health)
 	status.RestorePoints = pointsStatus(pg.RestorePoints, status.Backups, pg.RetainFull,
 		req.Schedules[pg.Jobs.Nightly.ID], req.Now)
 	if pg.RestoreTest.Mode != entity.ManagedRestoreTestVerifier && needsVerifier(health, status.LastRestoreTest) {

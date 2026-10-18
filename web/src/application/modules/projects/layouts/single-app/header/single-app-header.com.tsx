@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import {
     AppDeploymentsQueries,
+    AppManagedQueries,
     AppServiceTasksQueries,
     ProjectAppsCommands,
     ProjectAppsQueries,
@@ -84,6 +85,11 @@ function View({ projectId, env, appId }: Props) {
         { refetchInterval: APP_ACTIVE_DEPLOYMENT_REFETCH_INTERVAL_MS },
     );
     const activeDeployment = activeDeploymentResponse?.data ?? null;
+    // Only a database can have an engine looking after it: any other app is not asked.
+    const { isSuccess: isManaged } = AppManagedQueries.useFindSettings(
+        { projectID: projectId, env, appID: appId },
+        { enabled: app?.data.category === "database" },
+    );
     useReadAgainWhenDeploymentEnds(projectId, activeDeployment?.id ?? null);
     const instancesHealth = useMemo(
         () => (serviceTasks ? computeAppInstancesHealth(serviceTasks) : null),
@@ -220,6 +226,15 @@ function View({ projectId, env, appId }: Props) {
             route: ROUTE.projects.single.apps.single.metrics.$route(projectId, env, appId),
             label: "Metrics",
         },
+        // A managed database's engine: its archive, restores and restore points.
+        ...(isManaged
+            ? [
+                  {
+                      route: ROUTE.projects.single.apps.single.database.$route(projectId, env, appId),
+                      label: "Database",
+                  },
+              ]
+            : []),
         // What its images carry: every app runs one.
         {
             route: ROUTE.projects.single.apps.single.security.$route(projectId, env, appId),

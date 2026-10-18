@@ -38,6 +38,9 @@ import {
     ImportProjectSettingsDialog,
     useImportProjectSettingsDialogState,
 } from "~/projects/dialogs/import-project-settings";
+import { ManagedRestoreDialog, useManagedRestoreDialogState } from "~/projects/dialogs/managed-restore";
+import { ManagedRestorePointDialog, useManagedRestorePointDialogState } from "~/projects/dialogs/managed-restore-point";
+import { ManagedUnmanageDialog, useManagedUnmanageDialogState } from "~/projects/dialogs/managed-unmanage";
 import { ProjectUserAccessesDialog, useProjectUserAccessesDialogState } from "~/projects/dialogs/project-user-accesses";
 import {
     QuickInstallSslCertDialog,
@@ -135,6 +138,9 @@ function View() {
     const updateProjectCommandTemplateStatusDialog = useUpdateProjectCommandTemplateStatusDialogState();
     const exportContainerFilesDialog = useExportContainerFilesDialogState();
     const importFilesToContainerDialog = useImportFilesToContainerDialogState();
+    const managedRestoreDialog = useManagedRestoreDialogState();
+    const managedRestorePointDialog = useManagedRestorePointDialogState();
+    const managedUnmanageDialog = useManagedUnmanageDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -173,6 +179,9 @@ function View() {
         updateProjectCommandTemplateStatusDialog.destroy();
         exportContainerFilesDialog.destroy();
         importFilesToContainerDialog.destroy();
+        managedRestoreDialog.destroy();
+        managedRestorePointDialog.destroy();
+        managedUnmanageDialog.destroy();
     }, [location]);
 
     return (
@@ -212,6 +221,9 @@ function View() {
             <UpdateProjectCommandPipeStatusDialog />
             <UpdateProjectCommandTemplateStatusDialog />
             <ExportContainerFilesDialog />
+            <ManagedRestoreDialog />
+            <ManagedRestorePointDialog />
+            <ManagedUnmanageDialog />
             <ImportFilesToContainerDialog />
         </>
     );

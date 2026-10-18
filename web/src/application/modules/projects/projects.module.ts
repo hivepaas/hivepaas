@@ -90,6 +90,7 @@ export {
     AppInstancesRoute,
     AppCodeRoute,
     AppMetricsRoute,
+    AppDatabaseRoute,
     AppSecurityRoute,
     ProjectSecurityRoute,
     AppLogsRoute,

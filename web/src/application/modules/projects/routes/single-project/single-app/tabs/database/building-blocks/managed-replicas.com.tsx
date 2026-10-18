@@ -4,7 +4,7 @@ import { ArrowUpCircle, CopyPlus, Loader2, PauseCircle, Trash2 } from "lucide-re
 import { toast } from "sonner";
 import { AppManagedCommands, ProjectClusterVolumesQueries } from "~/projects/data";
 import type { AppManagedMemberStatus, ManagedPlacement } from "~/projects/domain";
-import { formatManagedTime } from "~/projects/module-shared/utils";
+import { formatManagedTime, isVolumeInMemory, volumePlaceOf } from "~/projects/module-shared/utils";
 
 import { AppLink, PopConfirm } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -42,7 +42,7 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
         { projectID: projectId, env, pagination: LIST_ALL_PAGE },
         { enabled: canWrite && offSite },
     );
-    const volumes = (volumesData?.data ?? []).filter(one => Boolean(one.nodeId) || Boolean(one.nodeLabel));
+    const volumes = (volumesData?.data ?? []).filter(one => !isVolumeInMemory(one));
 
     const { mutate: addReplica, isPending: isAdding } = AppManagedCommands.useAddReplica({
         onSuccess: () => {
@@ -107,7 +107,7 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                                     <span className="text-sm font-medium">{member.key}</span>
                                 )}
                                 <span className="text-muted-foreground">
-                                    On node {member.node || "unknown"}
+                                    {member.node ? `On node ${member.node}` : "On any node"}
                                     {member.checkedAt ? `, as of ${formatManagedTime(member.checkedAt)}` : ""}
                                 </span>
                             </div>
@@ -179,7 +179,7 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                                     className="h-8 w-full max-w-[320px] text-xs"
                                     aria-label="Replica volume"
                                 >
-                                    <SelectValue placeholder="A volume pinned to a node" />
+                                    <SelectValue placeholder="A volume for its data" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {volumes.map(one => (
@@ -189,11 +189,12 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                                             className="text-xs"
                                         >
                                             {one.name}
+                                            <span className="ml-2 text-muted-foreground">{volumePlaceOf(one)}</span>
                                         </SelectItem>
                                     ))}
                                     {volumes.length === 0 && (
                                         <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                                            No cluster volume pinned to a node in this environment.
+                                            No cluster volume that keeps its data in this environment.
                                         </div>
                                     )}
                                 </SelectContent>
@@ -214,7 +215,8 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                                 Add replica
                             </Button>
                             <span className="text-xs text-muted-foreground">
-                                Preferably on another node than this database&apos;s.
+                                Preferably on another node than this database&apos;s. One on every node lets the replica
+                                start on any.
                             </span>
                         </>
                     ) : (

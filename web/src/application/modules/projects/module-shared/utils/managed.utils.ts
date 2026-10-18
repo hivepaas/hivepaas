@@ -1,9 +1,23 @@
 import { format } from "date-fns";
+import type { ClusterVolume } from "~/cluster/domain";
 import type { AppManagedSettings } from "~/projects/domain";
 
 /** A moment as the managed screens show it: to the minute, on this browser's clock. */
 export function formatManagedTime(date: Date): string {
     return format(date, "yyyy-MM-dd HH:mm");
+}
+
+/** Where a volume's data is, as a person reads it: a node, the nodes with a label, or every node - shared storage. */
+export function volumePlaceOf(volume: Pick<ClusterVolume, "nodeId" | "nodeLabel">): string {
+    if (volume.nodeId) {
+        return `node ${volume.nodeId}`;
+    }
+    return volume.nodeLabel ? `nodes labeled ${volume.nodeLabel}` : "every node";
+}
+
+/** A tmpfs volume keeps its data in memory, gone at each restart: never a database's data. */
+export function isVolumeInMemory(volume: Pick<ClusterVolume, "tmpfsOptions">): boolean {
+    return Boolean(volume.tmpfsOptions);
 }
 
 /** A restored database is restoring until its engine has seen it recover and back up. */

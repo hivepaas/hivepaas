@@ -29,11 +29,16 @@ const TARGET_LABEL: Record<ManagedRestoreTargetKind, string> = {
     [MANAGED_RESTORE_TARGET.backup]: "A base backup",
 };
 
-/** A cluster volume the new app could keep its data on; one pinned to no node cannot be. */
+/**
+ * A cluster volume the new app could keep its data on: where its data is, whether that is every node - shared
+ * storage, which needs the archive in object storage - and whether it is kept in memory, which it never can be.
+ */
 export interface ManagedRestoreVolumeOption {
     id: string;
     name: string;
-    pinnedTo: string | null;
+    place: string;
+    shared: boolean;
+    inMemory: boolean;
 }
 
 export function ManagedRestoreForm({
@@ -46,6 +51,7 @@ export function ManagedRestoreForm({
     readOnly = false,
 }: Props) {
     const { restoreWindow } = status;
+    const offSite = status.placement === "off-site";
     const {
         handleSubmit,
         control,
@@ -291,11 +297,11 @@ export function ManagedRestoreForm({
                                                 key={volume.id}
                                                 value={volume.id}
                                                 textValue={volume.name}
-                                                disabled={volume.pinnedTo === null}
+                                                disabled={volumeRefusal(volume, offSite) !== null}
                                             >
                                                 {volume.name}
                                                 <span className="ml-2 text-xs text-muted-foreground">
-                                                    {volume.pinnedTo ?? "not pinned to a node"}
+                                                    {volumeRefusal(volume, offSite) ?? volume.place}
                                                 </span>
                                             </SelectItem>
                                         ))}
@@ -307,8 +313,8 @@ export function ManagedRestoreForm({
                                     </SelectContent>
                                 </Select>
                                 <FieldDescription>
-                                    A volume of its own, pinned to a node: the new app runs there, and recovers its data
-                                    into it.
+                                    A volume of its own: the new app runs where it is, and recovers its data into it.
+                                    One on every node needs the archive in object storage.
                                 </FieldDescription>
                                 <FieldError errors={[errors.dataVolume]} />
                             </InfoBlock>
@@ -354,4 +360,12 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: ManagedRestoreFormOutput) => Promise<void> | void;
     readOnly?: boolean;
+}
+
+/** Why the new app cannot keep its data on a volume, null when it can. */
+function volumeRefusal(volume: ManagedRestoreVolumeOption, offSite: boolean): string | null {
+    if (volume.inMemory) {
+        return "kept in memory";
+    }
+    return volume.shared && !offSite ? "every node: needs an archive in object storage" : null;
 }

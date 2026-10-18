@@ -15,6 +15,7 @@ import {
     ProjectKeyAuthQueries,
 } from "~/projects/data";
 import { type AppManagedSettings, MANAGED_RESTORE_TEST_MODE } from "~/projects/domain";
+import { volumePlaceOf } from "~/projects/module-shared/utils";
 
 import { CronTimezoneNote, InfoBlock } from "@application/shared/components";
 
@@ -137,7 +138,7 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
         { projectID: projectId, pagination: LIST_ALL_PAGE },
         { enabled: movingToVerifier },
     );
-    const volumes = (volumesData?.data ?? []).filter(volume => Boolean(volume.nodeId) || Boolean(volume.nodeLabel));
+    const volumes = volumesData?.data ?? [];
     const keyAuths = keyAuthsData?.data ?? [];
     // The environment's: a database dumps into what its environment sees.
     const { data: reposData } = ProjectBackupRepoQueries.useFindManyPaginated({
@@ -471,17 +472,20 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                                         value={volume.id}
                                                     >
                                                         {volume.name}
+                                                        <span className="ml-2 text-xs text-muted-foreground">
+                                                            {volumePlaceOf(volume)}
+                                                        </span>
                                                     </SelectItem>
                                                 ))}
                                                 {volumes.length === 0 && (
                                                     <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                                                        No cluster volume pinned to a node in this project.
+                                                        No cluster volume in this project.
                                                     </div>
                                                 )}
                                             </SelectContent>
                                         </Select>
                                         <FieldDescription>
-                                            Pinned to the node the verifier runs on: preferably not the database&apos;s.
+                                            The verifier runs where it is: preferably not on the database&apos;s node.
                                         </FieldDescription>
                                         <FieldError errors={[errors.verifierVolume]} />
                                     </InfoBlock>

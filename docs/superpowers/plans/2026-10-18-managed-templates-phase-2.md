@@ -839,7 +839,118 @@ d9b41b09; CLI 6e9bd1f, merged as 3661a52):
 - Live: promote a replica. The old primary is stopped, an app using the RW URL writes
   to the new primary, and the remaining replica follows it.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (app-templates 38dc260, merged as b0235e5; backend fad42d26, merged as
+97b56b9e; dashboard cf1db0c5, merged as ce1999a0; CLI 9bc62b5, merged as 6a48fd5):
+- **The cluster's app stays the cluster's.** Nothing moves between apps: its setting,
+  its jobs and the addresses consumers name all stay on the app.
+  - `ManagedPostgres.Writer` is the member promoted, and `FencedAt` is when the app was
+    fenced. A member promoted over is given role `fenced`.
+  - Everything that runs "on the database" runs on the writer: marks (person's and
+    deployments'), letting replicas in, the nightly's retention (the executor looks up
+    the writer, loading it if the run's refs lack it), and the jobs' `App`.
+  - New replicas stream from the writer.
+  - `engine.Reconfigure` with `Writer` moves the jobs: health, dump and restore test
+    (container mode) to the writer, and the nightly to `BackupFrom` or the writer. In
+    verifier mode the restore test's source host follows. Schedules do not move.
+- **Template.**
+  - `walg-promote` runs `pg_promote(true, 60)` and leaves a marker beside the data. It
+    is idempotent.
+  - Its exit codes: 0 when the server is the primary, 3 when it certainly is not (the
+    server does not answer, or is still in recovery), 1 when that is not known.
+  - In `walg-entrypoint`:
+    - a standby with the marker starts as the primary whatever its standby variables
+      say, so the promoted member is never restarted by the promotion;
+    - `HIVEPAAS_FENCED` makes it idle, never starting the server, with the health
+      check passing so Swarm does not restart it.
+- **The steps, `runPromotion` over `promotionSteps`:**
+  1. fence: `HIVEPAAS_FENCED` is written to the writer's variables and locked;
+  2. stop: `SetAppRunning(false)`, then `ServiceWaitUntilStopped` for up to 90s;
+  3. applyFence: the variables are applied to the stopped service;
+  4. promote;
+  5. allow: `walg-replication` on the new primary. **The plan did not have this.** The
+     live run showed a replica's `pg_hba.conf` is its base backup's, which may predate
+     the replicas' line;
+  6. record (one transaction): writer, roles and jobs; the promoted member's standby
+     variables are removed from its settings only; the other replicas'
+     `HIVEPAAS_STANDBY_HOST` is set;
+  7. restart: the other replicas' variables are applied.
+
+  The outcome of each failure:
+  - the fence not written: nothing happened;
+  - not seen stopped, or certainly not promoted: the fence is lifted (variables removed
+    and applied, app started), reporting "… runs again";
+  - not known whether promoted, or promoted but not recorded: the fence stays, and
+    promoting again finishes. A fence already written is skipped, and `walg-promote`
+    answers 0 for a primary;
+  - allow and restart only add warnings.
+
+  `ServiceWaitUntilStopped` does not finish for a task on a node that does not answer.
+  So a primary whose node is lost is never promoted over: that is §9's line.
+- **The stable address.**
+  - `HIVEPAAS_DATABASE_URL_RW/RO` are shared system variables of a managed postgres
+    app that is no member's, and secret like the password. They are built by
+    `clusterEnvVars`, from the kind's credentials.
+  - Hosts: the writer first, then the replicas. The app is listed only while it is
+    not fenced, and fenced members not at all. The port is the routing port, or 5432.
+  - `sslmode`, `connect_timeout=5` (a stopped member's VIP would hold a client), and
+    `target_session_attrs=read-write` or `prefer-standby`.
+  - The link dialog recommends a "Cluster address" group, `DATABASE_URL` /
+    `DATABASE_READ_URL`, for a Postgres target that shares them.
+  - A consumer's resolved string is refreshed only when its variables are next
+    applied, which a promotion does not do. It still reaches the new primary: it was
+    one of the replicas listed, and libpq passes over the stopped one after its
+    timeout.
+- **Guards:**
+  - a member is not deleted as an app (`ERR_APP_MANAGED_IS_MEMBER`); it is removed
+    from the primary's tab;
+  - the app a replica was promoted over is not deleted while it holds the cluster
+    (`ERR_APP_MANAGED_CLUSTER_HELD`);
+  - the writer member is not removed (`ERR_APP_MANAGED_IS_WRITER`);
+  - promotion needs a primary with `walg-promote` (`ERR_APP_MANAGED_PROMOTE_UNSUPPORTED`)
+    and a member with role `replica`.
+- **Dashboard.**
+  - "Promote" on a replica's row, with a PopConfirm saying what stops and that apps
+    using the old host lose the database.
+  - The primary member shows as `primary`, can be neither promoted nor removed, and
+    has no lag.
+  - The app promoted over shows a fenced banner naming the writer.
+  - The Replicas section shows the two `${key.HIVEPAAS_DATABASE_URL_RW/RO}`
+    references.
+- **Not done:**
+  - rejoining a fenced database as a replica (it would need re-seeding, or
+    `pg_rewind`);
+  - the health job's `wal-verify timeline` (the nightly's retain still runs it);
+  - PgBouncer;
+  - refreshing consumers' resolved addresses on a promotion;
+  - a way to retire the fenced app other than keeping it: it holds the cluster.
+- **Tests:**
+  - engine: the spec, the refusals, first and second promotions (roles, the fence,
+    the jobs, `BackupFrom`), replicas of a writer, and the members' states;
+  - usecase: the step order, and each failure's steps and reason; `changedEnv`;
+  - executor: retention on the writer;
+  - env: the addresses with 1 and 3 members, before and after a promotion, and none
+    for a member;
+  - link: the cluster group first;
+  - delete guards;
+  - e2e level-0: 13, all pass;
+  - harness: 198 checks on 17 and 18.
+- **Live check, on the e2e stack (`lc/check13.sh`), with the template copied into
+  dind:**
+  - pg18b, from the previous template, is refused (`…_PROMOTE_UNSUPPORTED`);
+  - pg18c got two replicas and an app writing through
+    `PGURL=${pg18c.HIVEPAAS_DATABASE_URL_RW}`, which resolved to
+    `pg18c:5432,pg18c-r1:5432,pg18c-r2:5432`;
+  - promoting r1 answered writer r1, fenced pg18c, restarted [r2]. pg18c's service is
+    at 0, runs nothing, and carries the fence;
+  - r1 is out of recovery. The app's next write, through the unchanged address, landed
+    on r1, and r2 has it and streams from r1;
+  - the nightly, health and restore test jobs run on r1. The status shows r1 `primary`
+    and r2 `streaming`. A nightly run on r1 took `base_00000002…` on timeline 2, and a
+    restore point was marked on r1;
+  - deleting pg18c is refused (`…_CLUSTER_HELD`). Started again, it logs its fence and
+    runs no server.
 
 ## Task 8: unpinned volumes
 

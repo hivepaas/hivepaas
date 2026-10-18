@@ -83,8 +83,9 @@ async function answerTemplates(page: Page, projectId: string): Promise<void> {
                 json: { meta: {}, data: { repository: "postgres", currentTag: "18.6", truncated: false, tags: [] } },
             }),
     );
+    // The environment's list: what the environment chosen can archive to.
     await page.route(
-        url => url.pathname === `/api/projects/${projectId}/backup-repos`,
+        url => url.pathname.startsWith(`/api/projects/${projectId}/`) && url.pathname.endsWith("/backup-repos"),
         route =>
             route.fulfill({
                 json: paged([{ ...settingRow(REPO.id, REPO.name, "backup-repo"), cloudStorage: { id: "cs1" } }]),

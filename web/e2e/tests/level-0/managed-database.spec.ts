@@ -250,7 +250,7 @@ test("a managed template is created with the archive chosen", async ({ page, api
     await dialog.getByPlaceholder("e.g. my-app").fill("e2e-db");
     await dialog.getByRole("combobox", { name: "Archive to" }).click();
     await page.getByRole("option", { name: `${REPO.name} (S3)` }).click();
-    await dialog.getByRole("button", { name: "Deploy", exact: true }).click();
+    await dialog.getByRole("button", { name: "Deploy Template", exact: true }).click();
 
     await expect.poll(() => created, { message: "the create request was sent" }).toBeDefined();
     expect(created).toMatchObject({

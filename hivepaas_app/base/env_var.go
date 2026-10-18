@@ -82,6 +82,12 @@ const (
 	AppSystemEnvVarRootPassword       = "HIVEPAAS_ROOT_PASSWORD"       //nolint:gosec // G101: env name
 	AppSystemEnvVarDatabaseName       = "HIVEPAAS_DATABASE_NAME"
 	AppSystemEnvVarSSLMode            = "HIVEPAAS_SSL_MODE"
+	// AppSystemEnvVarDatabaseURLRW and AppSystemEnvVarDatabaseURLRO are a managed
+	// PostgreSQL cluster's stable addresses: multi-host connection strings that
+	// reach whichever member writes, and a standby if there is one, through a
+	// promotion.
+	AppSystemEnvVarDatabaseURLRW = "HIVEPAAS_DATABASE_URL_RW" //nolint:gosec // G101: env name
+	AppSystemEnvVarDatabaseURLRO = "HIVEPAAS_DATABASE_URL_RO" //nolint:gosec // G101: env name
 
 	AppSystemEnvVarKeyID  = "HIVEPAAS_KEY_ID"
 	AppSystemEnvVarSecret = "HIVEPAAS_SECRET" //nolint:gosec // G101: env name
@@ -155,6 +161,8 @@ var (
 		AppSystemEnvVarPasswordURLEncoded: {},
 		AppSystemEnvVarRootPassword:       {},
 		AppSystemEnvVarSecret:             {},
+		AppSystemEnvVarDatabaseURLRW:      {},
+		AppSystemEnvVarDatabaseURLRO:      {},
 	}
 )
 

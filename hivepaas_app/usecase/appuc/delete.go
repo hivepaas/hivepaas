@@ -23,12 +23,19 @@ func (uc *UC) DeleteApp(
 		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, false, false,
 			bunex.SelectFor("UPDATE OF app"),
 			bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
+			bunex.SelectRelation("Settings",
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppManaged),
+				bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+			),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 		if err = entity.CheckAppDeletion(app.Project, app); err != nil {
 			return hperrors.Wrap(err)
+		}
+		if err = refuseClusterDeletion(app); err != nil {
+			return err
 		}
 
 		// Recorded before the removal. DeleteApp reaches past the database into the
@@ -61,4 +68,26 @@ func (uc *UC) DeleteApp(
 	}
 
 	return &appdto.DeleteAppResp{}, nil
+}
+
+// refuseClusterDeletion keeps a managed cluster whole: a member is removed from
+// its primary's Database tab, which keeps the members it lists true; and the
+// app a replica was promoted over still holds the cluster - its setting, its
+// jobs and its members - so deleting it would delete the primary with it.
+func refuseClusterDeletion(app *entity.App) error {
+	setting := app.GetSettingByType(base.SettingTypeAppManaged)
+	if setting == nil {
+		return nil
+	}
+	managed, err := setting.AsAppManagedSettings()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if managed.MemberOf != nil {
+		return hperrors.Wrap(hperrors.ErrAppManagedIsMember).WithParam("App", app.Name).ExposeParams("App")
+	}
+	if managed.Postgres != nil && managed.Postgres.Writer.ID != "" {
+		return hperrors.Wrap(hperrors.ErrAppManagedClusterHeld).WithParam("App", app.Name).ExposeParams("App")
+	}
+	return nil
 }

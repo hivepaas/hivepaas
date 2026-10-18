@@ -27,6 +27,8 @@ type Target struct {
 type Facts struct {
 	HasPort     bool
 	HasPassword bool
+	// HasClusterURL says the target shares a managed cluster's stable addresses.
+	HasClusterURL bool
 	// SharedVars are the keys of the variables the target's own settings share,
 	// not its system variables.
 	SharedVars []string
@@ -76,6 +78,8 @@ func FactsOf(shared []*envvarservice.EnvVar) *Facts {
 			facts.HasPort = env.Value != ""
 		case env.IsSystem && env.Key == base.AppSystemEnvVarPassword:
 			facts.HasPassword = env.Value != ""
+		case env.IsSystem && env.Key == base.AppSystemEnvVarDatabaseURLRW:
+			facts.HasClusterURL = env.Value != ""
 		case !env.IsSystem:
 			facts.SharedVars = append(facts.SharedVars, env.Key)
 		}

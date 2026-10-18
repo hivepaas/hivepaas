@@ -97,6 +97,9 @@ type SettingsChange struct {
 	// BackupFrom is the member the base backups are taken on: empty for the
 	// database itself.
 	BackupFrom *string
+	// Writer is the member promoted to the cluster's primary: the engine's jobs
+	// move to it, and the member that was the primary is fenced.
+	Writer *string
 }
 
 // RestoreTestChange moves the restore test: into the verifier app given, or,
@@ -216,8 +219,11 @@ const MarkExitNotArchived = 75
 // engine's setting, the replica's key, and the paths the primary's setting
 // mounts put files at, which say what its scripts can do.
 type ReplicaReq struct {
-	Primary    *entity.App
-	Managed    *entity.AppManagedSettings
+	Primary *entity.App
+	Managed *entity.AppManagedSettings
+	// Writer is the cluster's primary the replica streams from: Primary, or the
+	// member promoted.
+	Writer     *entity.App
 	Key        string
 	MountPaths []string
 }
@@ -233,3 +239,34 @@ type ReplicaSpec struct {
 	DataTarget   string
 	Allow        *entity.CommandTemplate
 }
+
+// PromoteReq is a member about to be promoted to the cluster's primary: the
+// cluster's app, its engine's setting, the member, and the paths its setting
+// mounts put files at.
+type PromoteReq struct {
+	Primary    *entity.App
+	Managed    *entity.AppManagedSettings
+	Member     *entity.ManagedMember
+	MountPaths []string
+}
+
+// PromoteSpec is how a promotion is done: the variables that fence the member
+// that writes now, the command that promotes the member - exiting
+// PromoteExitNotPromoted when it certainly did not - and the variables that make
+// a member a standby, which the promoted one sheds and the others are pointed
+// at it by.
+type PromoteSpec struct {
+	FenceEnv [][2]string
+	Promote  *entity.CommandTemplate
+	// Allow lets the replicas into the promoted member, the replication password
+	// on its stdin: its pg_hba.conf is the base backup's it was seeded from, which
+	// may predate theirs.
+	Allow          *entity.CommandTemplate
+	StandbyEnvKeys []string
+	// StandbyHostKey is the variable that names the primary a standby follows.
+	StandbyHostKey string
+}
+
+// PromoteExitNotPromoted is the promote command's exit when nothing was
+// promoted: the fence can be lifted.
+const PromoteExitNotPromoted = 3

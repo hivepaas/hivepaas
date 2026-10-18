@@ -95,6 +95,17 @@ var (
 	// node.
 	ErrAppManagedReplicaNeedsObjectStorage = NewErr(ErrPreconditionFailed,
 		"ERR_APP_MANAGED_REPLICA_NEEDS_OBJECT_STORAGE")
+	// ErrAppManagedPromoteUnsupported refuses a promotion in a cluster whose
+	// scripts predate it: they could not fence the old primary.
+	ErrAppManagedPromoteUnsupported = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_PROMOTE_UNSUPPORTED")
+	// ErrAppManagedPromoteFailed is a promotion that did not happen: the fence
+	// was lifted, or is kept when whether the member was promoted is not known.
+	ErrAppManagedPromoteFailed = NewErr(ErrActionFailed, "ERR_APP_MANAGED_PROMOTE_FAILED")
+	// ErrAppManagedClusterHeld refuses to delete the app a replica was promoted
+	// over: it holds the cluster, its new primary among its members.
+	ErrAppManagedClusterHeld = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_CLUSTER_HELD")
+	// ErrAppManagedIsWriter refuses to remove the cluster's primary.
+	ErrAppManagedIsWriter = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_IS_WRITER")
 	// ErrAppManagedIsMember refuses on a member what only its primary does.
 	ErrAppManagedIsMember = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_IS_MEMBER")
 	// ErrAppManagedHasMembers refuses to unmanage a primary while it has members.

@@ -2,6 +2,7 @@ package envvarserviceimpl
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sort"
 	"strconv"
@@ -30,7 +31,7 @@ func (s *service) BuildSystemEnvVarsInApp(
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind,
-			base.SettingTypeAppDockerAPI),
+			base.SettingTypeAppDockerAPI, base.SettingTypeAppManaged),
 		bunex.SelectWhere("setting.object_id = ?", req.App.ID),
 	)
 	if err != nil {
@@ -113,7 +114,8 @@ func (s *service) BuildSystemEnvVarsInApp(
 	}
 
 	settingEnvs, err := settingEnvVars(kindSettings,
-		settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI), req.App)
+		settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI), req.App,
+		settinghelper.FindSettingByType(settings, base.SettingTypeAppManaged), portStr)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +146,8 @@ func (s *service) BuildSystemEnvVarsInApp(
 
 // settingEnvVars are the system variables an app's settings add: its kind's,
 // and its Docker API's.
-func settingEnvVars(kind *entity.AppKindSettings, dockerAPI *entity.Setting, app *entity.App) (
-	[]*envvarservice.EnvVar, error) {
+func settingEnvVars(kind *entity.AppKindSettings, dockerAPI *entity.Setting, app *entity.App,
+	managed *entity.Setting, port string) ([]*envvarservice.EnvVar, error) {
 	kindEnvs, err := kindEnvVars(kind)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -154,7 +156,11 @@ func settingEnvVars(kind *entity.AppKindSettings, dockerAPI *entity.Setting, app
 	if err != nil {
 		return nil, err
 	}
-	return append(kindEnvs, dockerAPIEnvs...), nil
+	clusterEnvs, err := managedEnvVars(managed, kind, app, port)
+	if err != nil {
+		return nil, err
+	}
+	return append(append(kindEnvs, dockerAPIEnvs...), clusterEnvs...), nil
 }
 
 // kindEnvVars is the part of an app's system environment that comes from its
@@ -315,6 +321,59 @@ func envNetworkName(app *entity.App) string {
 
 // percentEncode escapes every byte outside RFC 3986's unreserved set, which is
 // safe in any part of a URL: user info, path or query.
+// managedEnvVars are what a managed app's engine adds to its system
+// environment: a cluster's stable addresses.
+func managedEnvVars(setting *entity.Setting, kind *entity.AppKindSettings, app *entity.App, port string) (
+	[]*envvarservice.EnvVar, error) {
+	if setting == nil {
+		return nil, nil
+	}
+	managed, err := setting.AsAppManagedSettings()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return clusterEnvVars(kind, managed, app, port)
+}
+
+// clusterPort is a cluster's members' port when the app sets none.
+const clusterPort = "5432"
+
+// clusterEnvVars are a managed PostgreSQL database's stable addresses (design
+// §9, "The stable address"): every member that may serve, the one that writes
+// first, in a multi-host connection string. libpq tries them in turn and keeps
+// the first whose session is read-write, for RW, or a standby if there is one,
+// for RO; connect_timeout keeps a stopped member from holding a client up. A
+// replica of the cluster has none: its primary's app has them.
+func clusterEnvVars(kind *entity.AppKindSettings, managed *entity.AppManagedSettings, app *entity.App,
+	port string) ([]*envvarservice.EnvVar, error) {
+	pg := managed.Postgres
+	if pg == nil || managed.MemberOf != nil || kind == nil || kind.Database == nil {
+		return nil, nil
+	}
+	if err := kind.Decrypt(); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	port = gofn.Coalesce(port, clusterPort)
+	writer := pg.WriterKey(app)
+	hosts := []string{writer + ":" + port}
+	if pg.Writer.ID != "" && pg.FencedAt.IsZero() {
+		hosts = append(hosts, app.Key+":"+port)
+	}
+	for _, member := range pg.Members {
+		if member.Role == entity.ManagedRoleReplica {
+			hosts = append(hosts, member.Key+":"+port)
+		}
+	}
+	db := kind.Database
+	url := fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=%s&connect_timeout=5&target_session_attrs=",
+		percentEncode(db.Username), percentEncode(gofn.Must(db.Password.GetPlain())), strings.Join(hosts, ","),
+		percentEncode(db.DbName), gofn.Coalesce(db.SSLMode, base.DatabaseSslModeDisable))
+	return []*envvarservice.EnvVar{
+		sharedEnv(base.AppSystemEnvVarDatabaseURLRW, url+"read-write"),
+		sharedEnv(base.AppSystemEnvVarDatabaseURLRO, url+"prefer-standby"),
+	}, nil
+}
+
 func percentEncode(s string) string {
 	const hexDigits = "0123456789ABCDEF"
 	var b strings.Builder

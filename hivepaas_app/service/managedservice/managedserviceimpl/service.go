@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type service struct {
@@ -17,6 +18,8 @@ type service struct {
 	appService  appservice.Service
 	// schedJobExecService runs the engine's commands in the database: a mark.
 	schedJobExecService schedjobexecservice.Service
+	// dockerManager sees a fenced database's tasks stop.
+	dockerManager docker.Manager
 }
 
 //nolint:ireturn // the constructor of a service returns its interface
@@ -25,9 +28,10 @@ func New(
 	settingRepo repository.SettingRepo,
 	appService appservice.Service,
 	schedJobExecService schedjobexecservice.Service,
+	dockerManager docker.Manager,
 ) managedservice.Service {
 	return &service{registry: newRegistry(), db: db, settingRepo: settingRepo, appService: appService,
-		schedJobExecService: schedJobExecService}
+		schedJobExecService: schedJobExecService, dockerManager: dockerManager}
 }
 
 func (s *service) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {

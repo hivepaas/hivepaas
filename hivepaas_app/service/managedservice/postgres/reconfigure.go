@@ -78,6 +78,9 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 	if err := moveBaseBackups(req, resp); err != nil {
 		return nil, err
 	}
+	if err := promoteWriter(req, resp); err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
 
@@ -103,7 +106,7 @@ func moveBaseBackups(req *managedmodel.ReconfigureReq, resp *managedmodel.Reconf
 	if target == nil {
 		return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("moving the base backups needs the app")
 	}
-	where := gofn.Coalesce(pg.BackupFrom.ID, target.ID)
+	where := gofn.Coalesce(pg.BackupFrom.ID, pg.Writer.ID, target.ID)
 	setting := req.Jobs[pg.Jobs.Nightly.ID]
 	if setting == nil {
 		return nil

@@ -68,9 +68,13 @@ func (e *Engine) Replica(req *managedmodel.ReplicaReq) (*managedmodel.ReplicaSpe
 	if target == "" {
 		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("postgres: the primary's data mount is not known")
 	}
+	writer := req.Primary
+	if req.Writer != nil {
+		writer = req.Writer
+	}
 	return &managedmodel.ReplicaSpec{
 		Env: [][2]string{
-			{envStandbyHost, req.Primary.Key},
+			{envStandbyHost, writer.Key},
 			{envStandbyName, req.Key},
 			{envStandbyPasswordFile, replicaPasswordFile},
 		},
@@ -97,6 +101,12 @@ func membersStatus(members []*entity.ManagedMember, health *managedmodel.JobRun)
 	out := make([]*managedmodel.MemberStatus, 0, len(members))
 	for _, member := range members {
 		status := &managedmodel.MemberStatus{Member: member, State: managedmodel.MemberUnknown}
+		// The primary and a fenced member stream from none.
+		if member.Role == entity.ManagedRolePrimary || member.Role == entity.ManagedRoleFenced {
+			status.State = member.Role
+			out = append(out, status)
+			continue
+		}
 		if seen != nil {
 			status.State, status.CheckedAt = managedmodel.MemberDisconnected, checkedAt
 			if one := seen[member.Key]; one != nil {

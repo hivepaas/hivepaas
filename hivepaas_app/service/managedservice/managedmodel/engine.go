@@ -66,4 +66,7 @@ type Engine interface {
 	// Replica is how a replica of the database is made, refusing a database that
 	// cannot have one.
 	Replica(req *ReplicaReq) (*ReplicaSpec, error)
+	// Promote is how a member is promoted to the cluster's primary, refusing one
+	// that cannot be.
+	Promote(req *PromoteReq) (*PromoteSpec, error)
 }

@@ -166,6 +166,7 @@
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/compute": "6b8cbb19bbfecac553368b168183a7b788574c837ad1834d5f6868d1cd5c021a",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run": "4743f2f831669e29e4762cc360483cd24757d6129b51c3c99c85eee6a7653240",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/image-scan": "cffe9b28a2cd27cefbdf169aec583831a2b6be20df90a722c88bf7155773af08",
+    "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/promote": "a59f7008a0547a3022bab25a9aa4fdd8ac740cac09700ebbcbaa4d883da1318f",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/refresh-credentials": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/replicas": "d1e5544faa1c057d81e698f31ec0e0871ffac790394d8fb98b927c1090f7c5a0",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore": "0ed733830f69b0d5904e54641ab3b6f10b5be9bfcf6f5584b61ca4e14100a9dc",

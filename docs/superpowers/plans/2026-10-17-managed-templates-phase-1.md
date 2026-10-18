@@ -689,7 +689,7 @@ above:
       `dataVolume`. A template with more than one volume parameter is refused;
     - the same storage and key;
     - its options and schedules.
-  - Its name defaults to `<app>-restored-<yyyymmdd-hhmm>`, and its prefix is its
+  - Its name defaults to `<app>-restored-<yyyymmdd-hhmmss>`, and its prefix is its
     own, as any creation's is. It is not the source's child.
   - **The plan's app count still applies to a restore**, as the user decided on
     2026-10-18: a restore makes an app. Only the feature check is skipped.

@@ -56877,7 +56877,7 @@
             "type" : "object"
           },
           "name" : {
-            "description" : "Name is the new app's: <app>-restored-<yyyymmdd-hhmm> when empty.",
+            "description" : "Name is the new app's: <app>-restored-<yyyymmdd-hhmmss> when empty.",
             "type" : "string"
           },
           "target" : {

@@ -487,7 +487,7 @@ command. A migration that breaks data then has its way back already marked.
 
 1. **Pick a target.** The user picks one of the four targets above, inside the restore
    window, and a data volume for the new app.
-2. **Create the new app.** The use case creates `<app>-restored-<yyyymmdd-hhmm>` from
+2. **Create the new app.** The use case creates `<app>-restored-<yyyymmdd-hhmmss>` from
    the same managed template, version and parameters, with a new prefix
    `walg/<new app key>`. It is not a logical child of the source: it must outlive it.
 3. **Recover.** The new app's container starts through `walg-entrypoint`, with the

@@ -20,6 +20,7 @@ const (
 	// maxRetainFull and restoreTestQueryMaxLen bound a managed app's options.
 	maxRetainFull          = 365
 	restoreTestQueryMaxLen = 2000
+	cronMaxLen             = 100
 )
 
 type CreateAppFromTemplateReq struct {
@@ -60,6 +61,18 @@ type ManagedCreateReq struct {
 	BaseBackupSchedule  string            `json:"baseBackupSchedule,omitempty"`
 	RestoreTestSchedule string            `json:"restoreTestSchedule,omitempty"`
 	RestoreTestQuery    string            `json:"restoreTestQuery,omitempty"`
+	// Dump is the database's pg_dump into a backup repository. Left out, a
+	// database that archives into a backup repository is dumped into it too, and
+	// one that archives into cloud storage is not dumped until a repository is
+	// chosen.
+	Dump *ManagedDumpReq `json:"dump,omitempty"`
+}
+
+// ManagedDumpReq is where and when the database is dumped: a repository of null
+// makes no dumps, and an empty schedule is the engine's default.
+type ManagedDumpReq struct {
+	Repo     *basedto.ObjectIDReq `json:"repo"`
+	Schedule string               `json:"schedule,omitempty"`
 }
 
 // ManagedStorageReq is where the engine archives: a backup repository, S3 or
@@ -113,6 +126,13 @@ func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 			basedto.ValidateCond(managed.RetainFull >= 0 && managed.RetainFull <= maxRetainFull, "managed.retainFull")...)
 		validators = append(validators, basedto.ValidateStr(&managed.RestoreTestQuery, false, 1,
 			restoreTestQueryMaxLen, "managed.restoreTestQuery")...)
+		if dump := managed.Dump; dump != nil {
+			if dump.Repo != nil && dump.Repo.ID != "" {
+				validators = append(validators, basedto.ValidateObjectIDReq(dump.Repo, true, "managed.dump.repo")...)
+			}
+			validators = append(validators,
+				basedto.ValidateStr(&dump.Schedule, false, 1, cronMaxLen, "managed.dump.schedule")...)
+		}
 	}
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

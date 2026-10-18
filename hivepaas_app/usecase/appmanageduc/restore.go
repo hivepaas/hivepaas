@@ -192,6 +192,8 @@ func restoreCreateReq(
 			BaseBackupSchedule:  loaded.cronOf(pg.Jobs.Nightly.ID),
 			RestoreTestSchedule: loaded.cronOf(pg.Jobs.RestoreTest.ID),
 			RestoreTestQuery:    pg.RestoreTest.CheckQuery,
+			// Dumped where and when the source is, or not at all.
+			Dump: &apptemplatedto.ManagedDumpReq{Repo: objectIDReq(pg.Dump.Repo), Schedule: pg.Dump.Schedule},
 		},
 	}
 	if create.Name == "" {

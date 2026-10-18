@@ -82,11 +82,13 @@ type ManagedPostgres struct {
 	// its prefix never changes: the archive is there.
 	Storage ManagedStorage `json:"storage"`
 	// EncryptionKey is WAL-G's libsodium key. Losing it loses the archive.
-	EncryptionKey  EncryptedField      `json:"encryptionKey,omitzero"`
-	ArchiveTimeout timeutil.Duration   `json:"archiveTimeout"`
-	RetainFull     int                 `json:"retainFull"`
-	RestoreTest    ManagedRestoreTest  `json:"restoreTest"`
-	Jobs           ManagedPostgresJobs `json:"jobs"`
+	EncryptionKey  EncryptedField     `json:"encryptionKey,omitzero"`
+	ArchiveTimeout timeutil.Duration  `json:"archiveTimeout"`
+	RetainFull     int                `json:"retainFull"`
+	RestoreTest    ManagedRestoreTest `json:"restoreTest"`
+	// Dump is the logical dump the engine takes beside the archive.
+	Dump ManagedDump         `json:"dump,omitzero"`
+	Jobs ManagedPostgresJobs `json:"jobs"`
 	// RestorePoints are the moments a person named, to restore to exactly.
 	RestorePoints []*ManagedRestorePoint `json:"restorePoints,omitempty"`
 	// Restore is where this database was restored from, when it was.
@@ -156,6 +158,14 @@ type ManagedStorage struct {
 	Placement string `json:"placement,omitempty"`
 }
 
+// ManagedDump is a pg_dump of the database into a backup repository, a data
+// backup like any other, run on the person's schedule. Without a repository
+// there is no dump: the schedule is kept for when there is one.
+type ManagedDump struct {
+	Repo     ObjectID `json:"repo,omitzero"`
+	Schedule string   `json:"schedule,omitempty"`
+}
+
 type ManagedRestoreTest struct {
 	Mode        string   `json:"mode"`
 	VerifierApp ObjectID `json:"verifierApp,omitzero"`
@@ -173,6 +183,8 @@ type ManagedPostgresJobs struct {
 	Nightly     ObjectID `json:"nightly,omitzero"`
 	Health      ObjectID `json:"health,omitzero"`
 	RestoreTest ObjectID `json:"restoreTest,omitzero"`
+	// Dump is the data backup that dumps the database; empty while dumps are off.
+	Dump ObjectID `json:"dump,omitzero"`
 }
 
 func (s *AppManagedSettings) GetType() base.SettingType {
@@ -185,7 +197,8 @@ func (s *AppManagedSettings) GetRefObjectIDs() *RefObjectIDs {
 		return refIDs
 	}
 	storage := s.Postgres.Storage
-	for _, id := range []string{storage.BackupRepo.ID, storage.CloudStorage.ID, storage.KeyAuth.ID} {
+	for _, id := range []string{storage.BackupRepo.ID, storage.CloudStorage.ID, storage.KeyAuth.ID,
+		s.Postgres.Dump.Repo.ID} {
 		if id != "" {
 			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, id)
 		}

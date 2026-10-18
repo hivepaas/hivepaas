@@ -3,6 +3,8 @@ package appmanageduc
 import (
 	"context"
 	"errors"
+	"slices"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -11,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
@@ -94,30 +97,20 @@ func (uc *UC) updateManagedSettings(
 	if req.UpdateVer != loaded.setting.UpdateVer {
 		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	if err = uc.checkDumpRepo(ctx, db, loaded.app, req.DumpRepo); err != nil {
+		return nil, err
+	}
 	move, deleting, err := uc.restoreTestMove(ctx, db, auth, loaded, req, plan, &made)
 	if err != nil {
 		return made, err
 	}
-	changed, rescheduled, err := reconfigureManaged(loaded, req, move)
+	now := timeutil.NowUTC()
+	reconfigured, err := reconfigureManaged(loaded, req, move, now)
 	if err != nil {
 		return made, err
 	}
-	now := timeutil.NowUTC()
-	for _, setting := range append([]*entity.Setting{loaded.setting}, changed...) {
-		setting.UpdatedAt = now
-		if err = uc.settingRepo.Update(ctx, db, setting,
-			bunex.UpdateColumns("kind", "data", "update_ver", "updated_at")); err != nil {
-			return made, hperrors.Wrap(err)
-		}
-	}
-	for _, setting := range changed {
-		moved := false
-		for _, one := range rescheduled {
-			moved = moved || one.ID == setting.ID
-		}
-		if err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, setting, moved); err != nil {
-			return made, hperrors.Wrap(err)
-		}
+	if err = uc.storeReconfigured(ctx, db, loaded.setting, reconfigured, now); err != nil {
+		return made, err
 	}
 	// Last: a deletion reaches past the database, and nothing after it may fail
 	// the transaction it cannot be rolled back with.
@@ -126,7 +119,11 @@ func (uc *UC) updateManagedSettings(
 			return made, err
 		}
 	}
-	detail := auditdetail.New().Set("changedJobs", len(changed))
+	detail := auditdetail.New().Set("changedJobs", len(reconfigured.Changed)+len(reconfigured.Created)+
+		len(reconfigured.Deleted))
+	if req.DumpRepo != nil {
+		detail = detail.Set("dumpRepo", req.DumpRepo.ID)
+	}
 	if move != nil {
 		detail = detail.Set("restoreTest", req.RestoreTest.Mode)
 	}
@@ -177,39 +174,112 @@ func (uc *UC) restoreTestMove(
 }
 
 // reconfigureManaged has the engine apply a change to the app's setting, which it
-// stores back, and to its jobs, which it returns as rewritten and as moved.
+// stores back, and to its jobs, which it returns as rewritten, moved, made and
+// removed.
 func reconfigureManaged(
 	loaded *loadedManaged,
 	req *appmanageddto.UpdateManagedSettingsReq,
 	move *managedmodel.RestoreTestChange,
-) (changed, rescheduled []*entity.Setting, err error) {
+	now time.Time,
+) (*managedmodel.ReconfigureResp, error) {
 	if req.UpdateVer != loaded.setting.UpdateVer {
-		return nil, nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
+		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	jobs := make(map[string]*entity.Setting, len(loaded.jobs))
 	for _, job := range loaded.jobs {
 		jobs[job.ID] = job
 	}
+	var dumpRepo *string
+	if req.DumpRepo != nil {
+		dumpRepo = &req.DumpRepo.ID
+	}
 	resp, err := loaded.engine.Reconfigure(&managedmodel.ReconfigureReq{
-		App:     loaded.app,
-		Managed: loaded.managed,
-		Jobs:    jobs,
+		App:       loaded.app,
+		ManagedID: loaded.setting.ID,
+		Managed:   loaded.managed,
+		Jobs:      jobs,
 		Change: &managedmodel.SettingsChange{
 			RetainFull:          req.RetainFull,
 			BaseBackupSchedule:  req.BaseBackupSchedule,
 			RestoreTestSchedule: req.RestoreTestSchedule,
 			RestoreTestQuery:    req.RestoreTestQuery,
 			RestoreTest:         move,
+			DumpRepo:            dumpRepo,
+			DumpSchedule:        req.DumpSchedule,
 		},
+		Now: now,
 	})
 	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if err = loaded.setting.SetData(loaded.managed); err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	loaded.setting.UpdateVer++
-	return resp.Changed, resp.Rescheduled, nil
+	return resp, nil
+}
+
+// storeReconfigured stores the engine's setting and its jobs as the change left
+// them, and schedules them again: a job rewritten keeps its coming runs unless
+// its schedule moved, one made gets its first, and one removed loses them, as
+// when a person deletes a job.
+func (uc *UC) storeReconfigured(
+	ctx context.Context,
+	db database.Tx,
+	managed *entity.Setting,
+	resp *managedmodel.ReconfigureResp,
+	now time.Time,
+) error {
+	for _, setting := range append([]*entity.Setting{managed}, resp.Changed...) {
+		setting.UpdatedAt = now
+		if err := uc.settingRepo.Update(ctx, db, setting,
+			bunex.UpdateColumns("kind", "data", "update_ver", "updated_at")); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	for _, setting := range resp.Changed {
+		if err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, setting,
+			slices.Contains(resp.Rescheduled, setting)); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	for _, setting := range resp.Created {
+		if err := uc.settingRepo.Insert(ctx, db, setting); err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, setting, false); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	for _, setting := range resp.Deleted {
+		setting.DeletedAt = now
+		setting.UpdateVer++
+		if err := uc.settingRepo.Update(ctx, db, setting, bunex.UpdateColumns("deleted_at", "update_ver")); err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, setting, true); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+// checkDumpRepo refuses a repository to dump into that is not a backup
+// repository the app's environment can use, or that is not active.
+func (uc *UC) checkDumpRepo(ctx context.Context, db database.IDB, app *entity.App, repo *basedto.ObjectIDReq) error {
+	if repo == nil || repo.ID == "" {
+		return nil
+	}
+	_, envKey := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
+	setting, err := uc.settingRepo.GetByID(ctx, db, entity.NewObjectScopeProjectEnv(app.ProjectID, envKey),
+		base.SettingTypeBackupRepo, repo.ID, true)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !setting.IsActive() {
+		return hperrors.NewArgumentInvalid("dumpRepo").WithExtraDetail("the backup repository is not active")
+	}
+	return nil
 }
 
 // view is what the settings are read from.

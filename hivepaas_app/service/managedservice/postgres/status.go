@@ -95,10 +95,15 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 			RestoredTo: test.Outputs[outRestoredTo],
 		}
 	}
+	status.LastDump = dumpStatus(run(pg.Jobs.Dump))
 	status.RestorePoints = pointsStatus(pg.RestorePoints, status.Backups, pg.RetainFull,
 		req.Schedules[pg.Jobs.Nightly.ID], req.Now)
 	if pg.RestoreTest.Mode != entity.ManagedRestoreTestVerifier && needsVerifier(health, status.LastRestoreTest) {
 		status.Suggestions = append(status.Suggestions, managedmodel.SuggestVerifier)
+	}
+	if pg.Jobs.Dump.ID != "" &&
+		firesTogether(req.Schedules[pg.Jobs.Nightly.ID], req.Schedules[pg.Jobs.Dump.ID], req.Now) {
+		status.Suggestions = append(status.Suggestions, managedmodel.SuggestDumpApart)
 	}
 	return status, nil
 }

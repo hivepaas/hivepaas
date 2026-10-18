@@ -4,6 +4,7 @@ import (
 	"time"
 
 	vld "github.com/tiendc/go-validator"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -14,6 +15,7 @@ import (
 const (
 	maxRetainFull          = 365
 	restoreTestQueryMaxLen = 2000
+	cronMaxLen             = 100
 )
 
 type GetManagedSettingsReq struct {
@@ -57,6 +59,7 @@ type ManagedSettingsResp struct {
 	BaseBackupSchedule  string                    `json:"baseBackupSchedule"`
 	RestoreTestSchedule string                    `json:"restoreTestSchedule"`
 	RestoreTest         *ManagedRestoreTestCfgRsp `json:"restoreTest"`
+	Dump                *ManagedDumpCfgResp       `json:"dump"`
 	Locks               *ManagedLocksResp         `json:"locks"`
 	Jobs                *ManagedJobsResp          `json:"jobs"`
 	// Restore is where the database was restored from, null for one that was
@@ -96,6 +99,13 @@ type ManagedRestoreTestCfgRsp struct {
 	CheckQuery string                `json:"checkQuery"`
 }
 
+// ManagedDumpCfgResp is the dump: the backup repository it goes into, null
+// while dumps are off, and when it runs - empty for the engine's default.
+type ManagedDumpCfgResp struct {
+	Repo     *basedto.ObjectIDResp `json:"repo"`
+	Schedule string                `json:"schedule"`
+}
+
 type ManagedLocksResp struct {
 	Image     string   `json:"image"`
 	ImageLine string   `json:"imageLine"`
@@ -109,6 +119,8 @@ type ManagedJobsResp struct {
 	Nightly     *basedto.ObjectIDResp `json:"nightly"`
 	Health      *basedto.ObjectIDResp `json:"health"`
 	RestoreTest *basedto.ObjectIDResp `json:"restoreTest"`
+	// Dump is null while dumps are off.
+	Dump *basedto.ObjectIDResp `json:"dump"`
 }
 
 // ManagedSettingsView is what the settings are read from: the app-managed
@@ -146,7 +158,9 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		VerifierApp: objectID(pg.RestoreTest.VerifierApp), NodeID: pg.RestoreTest.NodeID,
 		KeyAuth: objectID(pg.RestoreTest.KeyAuth), CheckQuery: pg.RestoreTest.CheckQuery}
 	resp.Jobs = &ManagedJobsResp{Nightly: objectID(pg.Jobs.Nightly), Health: objectID(pg.Jobs.Health),
-		RestoreTest: objectID(pg.Jobs.RestoreTest)}
+		RestoreTest: objectID(pg.Jobs.RestoreTest), Dump: objectID(pg.Jobs.Dump)}
+	resp.Dump = &ManagedDumpCfgResp{Repo: objectID(pg.Dump.Repo),
+		Schedule: gofn.Coalesce(cronOf(view.Jobs[pg.Jobs.Dump.ID]), pg.Dump.Schedule)}
 	if restore := pg.Restore; restore != nil {
 		target := restore.Target
 		resp.Restore = &ManagedRestoreResp{SourceApp: objectID(restore.SourceApp),
@@ -199,6 +213,12 @@ type UpdateManagedSettingsReq struct {
 	BaseBackupSchedule  *string `json:"baseBackupSchedule,omitempty"`
 	RestoreTestSchedule *string `json:"restoreTestSchedule,omitempty"`
 	RestoreTestQuery    *string `json:"restoreTestQuery,omitempty"`
+	// DumpRepo is the backup repository the database is dumped into: one turns
+	// dumps on, {"id": ""} turns them off.
+	DumpRepo *basedto.ObjectIDReq `json:"dumpRepo,omitempty"`
+	// DumpSchedule is when the dump runs, a cron expression read in the
+	// installation's timezone; kept while dumps are off.
+	DumpSchedule *string `json:"dumpSchedule,omitempty"`
 	// RestoreTest moves the restore test: into a verifier app, made for it, or
 	// back into the database's container, which deletes the verifier.
 	RestoreTest *ManagedRestoreTestReq `json:"restoreTest,omitempty"`
@@ -234,6 +254,12 @@ func (req *UpdateManagedSettingsReq) Validate() hperrors.ValidationErrors {
 	if req.RestoreTestQuery != nil {
 		validators = append(validators,
 			basedto.ValidateCond(len(*req.RestoreTestQuery) <= restoreTestQueryMaxLen, "restoreTestQuery")...)
+	}
+	if req.DumpRepo != nil && req.DumpRepo.ID != "" {
+		validators = append(validators, basedto.ValidateObjectIDReq(req.DumpRepo, true, "dumpRepo")...)
+	}
+	if req.DumpSchedule != nil {
+		validators = append(validators, basedto.ValidateStr(req.DumpSchedule, true, 1, cronMaxLen, "dumpSchedule")...)
 	}
 	if test := req.RestoreTest; test != nil {
 		verifier := test.Mode == entity.ManagedRestoreTestVerifier

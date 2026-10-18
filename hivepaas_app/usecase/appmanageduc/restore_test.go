@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc/appmanageddto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
 var (
@@ -143,6 +144,14 @@ func TestTheRestoredAppArchivesWhereTheSourceDoesUnderItsOwnName(t *testing.T) {
 	assert.Equal(t, "0 2 * * *", managed.BaseBackupSchedule)
 	assert.Equal(t, "0 4 * * 0", managed.RestoreTestSchedule)
 	assert.Equal(t, "SELECT 1", managed.RestoreTestQuery)
+	assert.Equal(t, &apptemplatedto.ManagedDumpReq{}, managed.Dump, "the source is not dumped: neither is it")
+
+	loaded.managed.Postgres.Dump = entity.ManagedDump{Repo: entity.ObjectID{ID: "repo-2"}, Schedule: "0 5 * * *"}
+	req, err = restoreCreateReq(loaded, binding, defs, &appmanageddto.RestoreManagedReq{
+		DataVolume: &basedto.ObjectIDReq{ID: "vol-new"}}, now)
+	assert.NoError(t, err)
+	assert.Equal(t, &apptemplatedto.ManagedDumpReq{Repo: &basedto.ObjectIDReq{ID: "repo-2"}, Schedule: "0 5 * * *"},
+		req.Managed.Dump, "dumped where and when the source is")
 }
 
 func TestAnImagesTag(t *testing.T) {

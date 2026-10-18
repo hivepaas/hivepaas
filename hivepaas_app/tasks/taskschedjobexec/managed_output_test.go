@@ -37,3 +37,21 @@ func TestOtherJobsOutputsAreLeftAlone(t *testing.T) {
 		assert.Empty(t, task.Output, name)
 	}
 }
+
+// A managed data backup's run keeps the snapshot it took beside its outputs: its
+// run's page links the snapshot, and its engine reads the outputs.
+func TestAManagedDataBackupKeepsItsSnapshot(t *testing.T) {
+	task := &entity.Task{ID: "t1"}
+	result := &entity.SchedJobDataBackupResult{SnapshotID: "k1a2b3", SizeBytes: 42}
+	task.MustSetOutput(result)
+	job := &entity.SchedJob{JobType: base.SchedJobTypeDataBackup, ManagedBy: entity.ObjectID{ID: "m1"}}
+
+	keepManagedOutputs(task, job, &jobResult{outputs: dataBackupOutputs(result)})
+
+	output, err := task.OutputAsSchedJobOutputs()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"SNAPSHOT_ID": "k1a2b3", "SNAPSHOT_SIZE_BYTES": "42"}, output.Outputs)
+	snapshot, err := task.OutputAsDataBackup()
+	assert.NoError(t, err)
+	assert.Equal(t, result, snapshot)
+}

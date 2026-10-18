@@ -49,41 +49,16 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 		return nil, err
 	}
 
-	newSetting := func(typ base.SettingType, name string, version int, data entity.SettingData) *entity.Setting {
-		setting := &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeApp,
-			ObjectID:  req.App.ID,
-			Type:      typ,
-			Name:      name,
-			Status:    base.SettingStatusActive,
-			Version:   version,
-			CreatedAt: req.Now,
-			UpdatedAt: req.Now,
-		}
-		setting.MustSetData(data)
-		return setting
-	}
-
 	managedID := gofn.Must(ulid.NewStringULID())
+	restoring := req.Prepared.Restore != nil
 	job := func(jobType base.SchedJobType, name, script string, schedule *entity.SchedJobSchedule,
 		timeout time.Duration, env ...*entity.EnvVar) *entity.Setting {
-		setting := newSetting(base.SettingTypeSchedJob, name, entity.CurrentSchedJobVersion, &entity.SchedJob{
-			JobType:      jobType,
-			Schedule:     schedule,
-			App:          entity.ObjectID{ID: req.App.ID},
-			Timeout:      timeutil.Duration(timeout),
-			Command:      &entity.CommandTemplate{Command: scriptDir + "/" + script, EnvVars: env},
-			Notification: &entity.BaseEventNotification{FailureUseDefault: true},
-			ManagedBy:    entity.ObjectID{ID: managedID},
-		})
-		setting.Kind = string(jobType)
-		// A restored database's jobs wait for it to recover: until then there is
-		// no server to check, back up or test, and each run would fail.
-		if req.Prepared.Restore != nil {
-			setting.Status = base.SettingStatusDisabled
-		}
-		return setting
+		return newJob(req.App.ID, managedID, name, &entity.SchedJob{
+			JobType:  jobType,
+			Schedule: schedule,
+			Timeout:  timeutil.Duration(timeout),
+			Command:  &entity.CommandTemplate{Command: scriptDir + "/" + script, EnvVars: env},
+		}, restoring, req.Now)
 	}
 	// The nightly run is two steps, its retention decided by the engine between
 	// them (see Retention).
@@ -95,25 +70,35 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 	restoreTest := job(base.SchedJobTypeContainerCommand, "Restore test", "walg-restore-test",
 		&entity.SchedJobSchedule{CronExpr: options.RestoreTestSchedule, InitialTime: req.Now}, restoreTestTimeout,
 		&entity.EnvVar{Key: envRestoreCheckQuery, Value: options.RestoreTestQuery})
+	jobs := []*entity.Setting{nightly, health, restoreTest}
+	dump := entity.ManagedDump{Repo: entity.ObjectID{ID: options.DumpRepo}, Schedule: options.DumpSchedule}
+	var dumpJob *entity.Setting
+	if dump.Repo.ID != "" {
+		dumpJob = newDumpJob(req.App, managedID, dump, restoring, req.Now)
+		jobs = append(jobs, dumpJob)
+	}
 
-	managed := newSetting(base.SettingTypeAppManaged, "", entity.CurrentAppManagedVersion, &entity.AppManagedSettings{
-		Engine:    string(e.Name()),
-		EngineAPI: maxAPI,
-		Locks:     locks(req, source),
-		Postgres: &entity.ManagedPostgres{
-			Storage:        req.Storage,
-			EncryptionKey:  entity.NewEncryptedField(req.Prepared.EncryptionKey),
-			ArchiveTimeout: timeutil.Duration(options.ArchiveTimeout),
-			RetainFull:     options.RetainFull,
-			RestoreTest: entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer,
-				CheckQuery: options.RestoreTestQuery},
-			Jobs: entity.ManagedPostgresJobs{
-				Nightly:     entity.ObjectID{ID: nightly.ID},
-				Health:      entity.ObjectID{ID: health.ID},
-				RestoreTest: entity.ObjectID{ID: restoreTest.ID},
+	managed := newAppSetting(req.App.ID, base.SettingTypeAppManaged, "", entity.CurrentAppManagedVersion,
+		req.Now, &entity.AppManagedSettings{
+			Engine:    string(e.Name()),
+			EngineAPI: maxAPI,
+			Locks:     locks(req, source),
+			Postgres: &entity.ManagedPostgres{
+				Storage:        req.Storage,
+				EncryptionKey:  entity.NewEncryptedField(req.Prepared.EncryptionKey),
+				ArchiveTimeout: timeutil.Duration(options.ArchiveTimeout),
+				RetainFull:     options.RetainFull,
+				RestoreTest: entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer,
+					CheckQuery: options.RestoreTestQuery},
+				Dump: dump,
+				Jobs: entity.ManagedPostgresJobs{
+					Nightly:     entity.ObjectID{ID: nightly.ID},
+					Health:      entity.ObjectID{ID: health.ID},
+					RestoreTest: entity.ObjectID{ID: restoreTest.ID},
+					Dump:        settingID(dumpJob),
+				},
 			},
-		},
-	})
+		})
 	managed.ID = managedID
 	if restore := req.Prepared.Restore; restore != nil {
 		data := managed.MustAsAppManagedSettings()
@@ -122,7 +107,48 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 		managed.MustSetData(data)
 	}
 
-	return &managedmodel.ConfigureResp{Settings: []*entity.Setting{managed, nightly, health, restoreTest}}, nil
+	return &managedmodel.ConfigureResp{Settings: append([]*entity.Setting{managed}, jobs...)}, nil
+}
+
+// newAppSetting is a setting of the app's, active, made now.
+func newAppSetting(appID string, typ base.SettingType, name string, version int, now time.Time,
+	data entity.SettingData) *entity.Setting {
+	setting := &entity.Setting{
+		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     base.ObjectScopeApp,
+		ObjectID:  appID,
+		Type:      typ,
+		Name:      name,
+		Status:    base.SettingStatusActive,
+		Version:   version,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	setting.MustSetData(data)
+	return setting
+}
+
+// newJob is one of the engine's jobs on the app: managed by its setting, and
+// notifying when it fails. A restored database's jobs wait for it to recover:
+// until then there is no server to check, back up, test or dump, and each run
+// would fail.
+func newJob(appID, managedID, name string, job *entity.SchedJob, restoring bool, now time.Time) *entity.Setting {
+	job.App = entity.ObjectID{ID: appID}
+	job.ManagedBy = entity.ObjectID{ID: managedID}
+	job.Notification = &entity.BaseEventNotification{FailureUseDefault: true}
+	setting := newAppSetting(appID, base.SettingTypeSchedJob, name, entity.CurrentSchedJobVersion, now, job)
+	setting.Kind = string(job.JobType)
+	if restoring {
+		setting.Status = base.SettingStatusDisabled
+	}
+	return setting
+}
+
+func settingID(setting *entity.Setting) entity.ObjectID {
+	if setting == nil {
+		return entity.ObjectID{}
+	}
+	return entity.ObjectID{ID: setting.ID}
 }
 
 func withDefaults(options *managedmodel.Options) managedmodel.Options {
@@ -134,6 +160,7 @@ func withDefaults(options *managedmodel.Options) managedmodel.Options {
 	out.RetainFull = gofn.Coalesce(out.RetainFull, defaultRetainFull)
 	out.BaseBackupSchedule = gofn.Coalesce(out.BaseBackupSchedule, defaultBaseBackupSchedule)
 	out.RestoreTestSchedule = gofn.Coalesce(out.RestoreTestSchedule, defaultRestoreTestSchedule)
+	out.DumpSchedule = gofn.Coalesce(out.DumpSchedule, defaultDumpSchedule)
 	return out
 }
 

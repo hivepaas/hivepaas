@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -33,7 +34,7 @@ func loadedPostgres(t *testing.T) *loadedManaged {
 			Schedule: &entity.SchedJobSchedule{CronExpr: cron}, ManagedBy: entity.ObjectID{ID: "managed-1"},
 			Command: &entity.CommandTemplate{Command: "/opt/hivepaas/bin/walg"}})
 	}
-	loaded := &loadedManaged{setting: managed, engine: postgres.New(),
+	loaded := &loadedManaged{app: &entity.App{ID: "app-1", Key: "db"}, setting: managed, engine: postgres.New(),
 		jobs: []*entity.Setting{job("job-1", "0 2 * * *"), job("job-2", ""), job("job-3", "0 4 * * 0")}}
 	loaded.managed = managed.MustAsAppManagedSettings()
 	return loaded
@@ -57,20 +58,54 @@ func TestTheSettingsSayWhatTheEngineKeepsAndWhen(t *testing.T) {
 func TestReconfiguringRewritesTheSettingAndItsJobs(t *testing.T) {
 	loaded := loadedPostgres(t)
 
-	changed, rescheduled, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{
-		UpdateVer: 3, RetainFull: new(14), BaseBackupSchedule: new("30 1 * * *")}, nil)
+	resp, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{
+		UpdateVer: 3, RetainFull: new(14), BaseBackupSchedule: new("30 1 * * *")}, nil, time.Now())
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, loaded.setting.UpdateVer)
 	assert.Equal(t, 14, loaded.setting.MustAsAppManagedSettings().Postgres.RetainFull, "stored, not only parsed")
-	assert.Equal(t, []string{"job-1"}, settingIDs(changed))
-	assert.Equal(t, []string{"job-1"}, settingIDs(rescheduled))
-	assert.Equal(t, "30 1 * * *", changed[0].MustAsSchedJob().Schedule.CronExpr)
+	assert.Equal(t, []string{"job-1"}, settingIDs(resp.Changed))
+	assert.Equal(t, []string{"job-1"}, settingIDs(resp.Rescheduled))
+	assert.Equal(t, "30 1 * * *", resp.Changed[0].MustAsSchedJob().Schedule.CronExpr)
+	assert.Empty(t, resp.Created)
+}
+
+// A repository chosen turns dumps on: the engine makes the job, managed by the
+// app's setting, and the settings then name both.
+func TestReconfiguringTurnsDumpsOn(t *testing.T) {
+	loaded := loadedPostgres(t)
+
+	resp, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 3,
+		DumpRepo: &basedto.ObjectIDReq{ID: "repo-2"}, DumpSchedule: new("0 */6 * * *")}, nil, time.Now())
+
+	assert.NoError(t, err)
+	if !assert.Len(t, resp.Created, 1) {
+		return
+	}
+	job := resp.Created[0].MustAsSchedJob()
+	assert.Equal(t, "managed-1", job.ManagedBy.ID)
+	assert.Equal(t, "app-1", job.App.ID)
+	assert.Equal(t, "repo-2", job.DataBackup.TargetRepository.ID)
+	loaded.jobs = append(loaded.jobs, resp.Created[0])
+	settings := appmanageddto.TransformManagedSettings(loaded.view())
+	assert.Equal(t, "repo-2", settings.Dump.Repo.ID)
+	assert.Equal(t, "0 */6 * * *", settings.Dump.Schedule)
+	assert.Equal(t, resp.Created[0].ID, settings.Jobs.Dump.ID)
+
+	// {"id": ""} turns them off again.
+	resp, err = reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 4,
+		DumpRepo: &basedto.ObjectIDReq{}}, nil, time.Now())
+	assert.NoError(t, err)
+	assert.Len(t, resp.Deleted, 1)
+	settings = appmanageddto.TransformManagedSettings(loaded.view())
+	assert.Nil(t, settings.Dump.Repo)
+	assert.Nil(t, settings.Jobs.Dump)
+	assert.Equal(t, "0 */6 * * *", settings.Dump.Schedule, "kept for when they are on")
 }
 
 func TestReconfiguringAnOlderVersionIsRefused(t *testing.T) {
-	_, _, err := reconfigureManaged(loadedPostgres(t), &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 2,
-		RetainFull: new(14)}, nil)
+	_, err := reconfigureManaged(loadedPostgres(t), &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 2,
+		RetainFull: new(14)}, nil, time.Now())
 
 	assert.ErrorIs(t, err, hperrors.ErrUpdateVerMismatched)
 }

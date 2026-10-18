@@ -21519,6 +21519,81 @@
         "tags" : [ "Apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
+      "get" : {
+        "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
+        "operationId" : "appManagedStatusGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a managed app's state",
+        "tags" : [ "Managed apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/unmanage" : {
       "post" : {
         "description" : "Removes the engine's state and the jobs it made, and with them the locks. The database keeps\narchiving where it did; base backups, retention, the health check and the restore test stop.",
@@ -55575,6 +55650,154 @@
           }
         },
         "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
+        "type" : "object"
+      },
+      "appmanageddto.GetManagedStatusResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedStatusResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedArchivingResp" : {
+        "properties" : {
+          "checkedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "failedCount" : {
+            "type" : "integer"
+          },
+          "lastArchivedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "pgWalBytes" : {
+            "type" : "integer"
+          },
+          "stale" : {
+            "description" : "Stale says the health check has not run for a while.",
+            "type" : "boolean"
+          },
+          "state" : {
+            "description" : "State is ok, failing, or unknown before the first health check.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "checkedAt", "failedCount", "lastArchivedAt", "pgWalBytes", "stale", "state" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedBackupResp" : {
+        "properties" : {
+          "at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "bytes" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "succeeded" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestResp" : {
+        "properties" : {
+          "durationSeconds" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "passed" : {
+            "type" : "boolean"
+          },
+          "restoredTo" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "durationSeconds", "endedAt", "passed", "restoredTo" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedStatusResp" : {
+        "properties" : {
+          "archiving" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedArchivingResp"
+            } ],
+            "nullable" : true
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "engineApi" : {
+            "type" : "integer"
+          },
+          "lastBackup" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedBackupResp"
+            } ],
+            "nullable" : true
+          },
+          "lastRestoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestResp"
+            } ],
+            "nullable" : true
+          },
+          "placement" : {
+            "description" : "Placement is where the archive is from the database: off-site, shared or\nsame-node, which the dashboard warns about.",
+            "type" : "string"
+          },
+          "restoreWindow" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedTimeWindowResp"
+            } ],
+            "description" : "RestoreWindow is what a restore may target; null before the first base\nbackup.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "suggestions" : {
+            "description" : "Suggestions are changes worth making: verifier, to run the restore test\nin a verifier app.",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          }
+        },
+        "required" : [ "archiving", "engine", "engineApi", "lastBackup", "lastRestoreTest", "placement", "restoreWindow", "suggestions" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedTimeWindowResp" : {
+        "properties" : {
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "from", "to" ],
         "type" : "object"
       },
       "appmanageddto.UnmanageAppReq" : {

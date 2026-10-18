@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
@@ -16,9 +17,11 @@ type UC struct {
 	taskQueue queue.TaskQueue
 
 	settingRepo repository.SettingRepo
+	taskRepo    repository.TaskRepo
 
-	appService   appservice.Service
-	auditService auditservice.Service
+	appService     appservice.Service
+	auditService   auditservice.Service
+	managedService managedservice.Service
 }
 
 func New(
@@ -26,17 +29,21 @@ func New(
 	taskQueue queue.TaskQueue,
 
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 
 	appService appservice.Service,
 	auditService auditservice.Service,
+	managedService managedservice.Service,
 ) *UC {
 	return &UC{
 		db:        db,
 		taskQueue: taskQueue,
 
 		settingRepo: settingRepo,
+		taskRepo:    taskRepo,
 
-		appService:   appService,
-		auditService: auditService,
+		appService:     appService,
+		auditService:   auditService,
+		managedService: managedService,
 	}
 }

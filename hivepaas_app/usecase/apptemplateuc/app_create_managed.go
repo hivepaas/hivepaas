@@ -221,6 +221,7 @@ func (uc *UC) resolveArchive(
 	}
 	planned.storage.Prefix = prefix
 	planned.placement = managedPlacementOffSite
+	planned.storage.Placement = planned.placement
 
 	s3, err := uc.s3Archive(ctx, scope, storageID, prefix)
 	if err != nil {
@@ -264,6 +265,7 @@ func (uc *UC) volumeArchive(
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedArchiveUnreachable)
 	}
 	planned.storage.Prefix = prefix
+	planned.storage.Placement = planned.placement
 	return &managedmodel.Archive{Volume: &managedmodel.VolumeArchive{VolumeID: volumeID, Subpath: prefix}}, nil
 }
 

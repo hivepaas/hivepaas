@@ -80,6 +80,9 @@ type ManagedStorage struct {
 	CloudStorage ObjectID `json:"cloudStorage,omitzero"`
 	KeyAuth      ObjectID `json:"keyAuth,omitzero"`
 	Prefix       string   `json:"prefix"`
+	// Placement is where the archive is from the database, as it was when the
+	// app was made: off-site, shared, same-node.
+	Placement string `json:"placement,omitempty"`
 }
 
 type ManagedRestoreTest struct {

@@ -264,6 +264,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 
 	{ // Managed apps: what their engine looks after
 		managedGroup := appGroup.Group("/:appID/managed")
+		managedGroup.GET("/status", appManagedHandler.GetManagedStatus)
 		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
 	}
 

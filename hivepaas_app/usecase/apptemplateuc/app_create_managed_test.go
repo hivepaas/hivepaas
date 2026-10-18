@@ -65,6 +65,10 @@ func (e *fakeEngine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Co
 	return &managedmodel.ConfigureResp{Settings: []*entity.Setting{managed}}, nil
 }
 
+func (e *fakeEngine) Status(*managedmodel.StatusReq) (*managedmodel.Status, error) {
+	return &managedmodel.Status{}, nil
+}
+
 type fakeManaged struct{ engine *fakeEngine }
 
 func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
@@ -202,8 +206,8 @@ func TestAManagedAppArchivesToAnS3Repository(t *testing.T) {
 		assert.Equal(t, 9, prepared.Options.RetainFull, "the template's default")
 		assert.Equal(t, "0 3 * * *", prepared.Options.BaseBackupSchedule)
 	}
-	assert.Equal(t, entity.ManagedStorage{BackupRepo: entity.ObjectID{ID: "repo-s3"}, Prefix: "kopia/walg/main-db"},
-		planned.storage)
+	assert.Equal(t, entity.ManagedStorage{BackupRepo: entity.ObjectID{ID: "repo-s3"}, Prefix: "kopia/walg/main-db",
+		Placement: managedPlacementOffSite}, planned.storage)
 	if assert.Len(t, fakes.artifacts.specs, 1) {
 		assert.Equal(t, []string{"node.id==n1"}, fakes.artifacts.specs[0].TaskTemplate.Placement.Constraints,
 			"the artifacts go where the data is")
@@ -228,7 +232,8 @@ func TestTheRequestOverridesTheTemplatesDefaults(t *testing.T) {
 	assert.Equal(t, "AKIA-NARROW", prepared.Archive.S3.AccessKey, "the narrower key, not the storage's")
 	assert.Equal(t, "narrow-secret", prepared.Archive.S3.SecretKey)
 	assert.Equal(t, entity.ManagedStorage{CloudStorage: entity.ObjectID{ID: "cs-1"},
-		KeyAuth: entity.ObjectID{ID: "ka-narrow"}, Prefix: "walg/main-db"}, planned.storage)
+		KeyAuth: entity.ObjectID{ID: "ka-narrow"}, Prefix: "walg/main-db", Placement: managedPlacementOffSite},
+		planned.storage)
 }
 
 func TestAVolumeRepositoryArchivesWhereTheDatabaseCanMountIt(t *testing.T) {
@@ -243,6 +248,7 @@ func TestAVolumeRepositoryArchivesWhereTheDatabaseCanMountIt(t *testing.T) {
 
 		assert.NoError(t, err, repo)
 		assert.Equal(t, want, planned.placement, repo)
+		assert.Equal(t, want, planned.storage.Placement, "%s: kept for Status", repo)
 		if volume := fakes.engine.prepared.Archive.Volume; assert.NotNil(t, volume, repo) {
 			assert.Equal(t, "repo/walg/main-db", volume.Subpath, repo)
 		}

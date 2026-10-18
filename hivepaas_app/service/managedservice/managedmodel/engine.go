@@ -25,4 +25,7 @@ type Engine interface {
 	// template may say, such as the server's arguments - and returns the
 	// engine's own: its state and its scheduled jobs.
 	Configure(req *ConfigureReq) (*ConfigureResp, error)
+
+	// Status is a managed app's state, read from its jobs' last runs.
+	Status(req *StatusReq) (*Status, error)
 }

@@ -78,7 +78,7 @@ Work on a branch per repository, in a worktree.
   - Setting types: `app-managed`.
   - Feature: `managed-databases`.
   - Engine: `postgres`, `engineApi` 1.
-  - Errors: `ERR_PLAN_FEATURE_REQUIRED` (412) and `ERR_APP_MANAGED_FIELD_LOCKED` (422),
+  - Errors: `ERR_PLAN_FEATURE_REQUIRED` (412) and `ERR_APP_MANAGED_FIELD_LOCKED` (412, under `ErrNonEditable` like the function rules),
     whose param is `Field`.
   - Host cache: `<HP_STORAGE_HOST_DIR>/cache/artifacts/sha256/<hex>`, files `0755`.
   - Container paths: artifacts under `/opt/hivepaas/bin/`.
@@ -350,7 +350,24 @@ above:
 - Test: entity round trip, the job refusals, and resource links that block deleting a
   storage a managed app uses.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the app-managed setting, owned jobs, the engine registry`.
+**As built:**
+- `entity.AppManagedSettings` holds `Engine` and `EngineAPI`, and
+  `ManagedPostgres{Storage, EncryptionKey (encrypted), ArchiveTimeout, RetainFull,
+  RestoreTest{Mode, VerifierApp, NodeID, CheckQuery}, Jobs{Nightly, Health,
+  RestoreTest}}`.
+- It references the repository, the storage, the key and the verifier app. It does
+  not reference its jobs. Each job references it through `SchedJob.ManagedBy`, so
+  removing the whole is not a cycle.
+- `app-managed` is a singleton block `managed`, skipped by spec export and import.
+- Update, status and delete of a managed job are refused through
+  `refuseManagedJob`, with `ERR_APP_MANAGED_FIELD_LOCKED{Field: schedJob}`. Running
+  one now is allowed.
+- The job response carries `managedBy`.
+- `managedmodel.Engine` starts with `Name` and `APIRange` only. Each task adds the
+  methods it needs. The registry (`managedserviceimpl`) is tested against
+  `templatemodel.ManagedEngines`.
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the app-managed setting, owned jobs, the engine registry`.
 
 ## Task 6: The Postgres engine's `Configure` and `Apply`
 

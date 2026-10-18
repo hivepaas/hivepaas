@@ -63351,9 +63351,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired", "SettingStatusMissing" ]
       },
       "base.SettingType" : {
-        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore", "license" ],
+        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-artifacts", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-managed", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore", "license" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore", "SettingTypeLicense" ]
+        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppArtifacts", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppManaged", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore", "SettingTypeLicense" ]
       },
       "base.SubjectType" : {
         "enum" : [ "app", "cluster", "deployment", "network", "node", "project", "project-env", "user" ],
@@ -75646,6 +75646,14 @@
           "kind" : {
             "type" : "string"
           },
+          "managedBy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "ManagedBy is the app-managed setting of the engine that made the job, and\nnull for a job a person made. The dashboard shows a managed job read-only:\nediting, pausing and deleting it are refused.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "maxRetry" : {
             "type" : "integer"
           },
@@ -75723,7 +75731,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "scope", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "managedBy", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "scope", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "schedjobdto.ExecuteSchedJobDataResp" : {
@@ -75998,6 +76006,14 @@
           "kind" : {
             "type" : "string"
           },
+          "managedBy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "ManagedBy is the app-managed setting of the engine that made the job, and\nnull for a job a person made. The dashboard shows a managed job read-only:\nediting, pausing and deleting it are refused.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "maxRetry" : {
             "type" : "integer"
           },
@@ -76069,7 +76085,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "managedBy", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "schedjobdto.SchedJobSequenceReq" : {

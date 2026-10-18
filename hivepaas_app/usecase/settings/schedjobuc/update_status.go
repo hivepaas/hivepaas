@@ -26,7 +26,7 @@ func (uc *UC) UpdateSchedJobStatus(
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
 				return hperrors.Wrap(err)
 			}
-			return nil
+			return hperrors.Wrap(refuseManagedJob(data.Setting))
 		},
 		AfterPersisting: uc.scheduleWithStatus,
 	})

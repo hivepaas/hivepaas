@@ -16,6 +16,7 @@ const (
 	SettingTypeAppDockerAPI      SettingType = "app-docker-api"
 	SettingTypeAppFeatures       SettingType = "app-features"
 	SettingTypeAppKind           SettingType = "app-kind"
+	SettingTypeAppManaged        SettingType = "app-managed"
 	SettingTypeAppPlacement      SettingType = "app-placement"
 	SettingTypeAppRouting        SettingType = "app-routing"
 	SettingTypeAppSettingMount   SettingType = "app-setting-mount"

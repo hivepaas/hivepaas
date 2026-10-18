@@ -194,6 +194,8 @@ var (
 	_ = registerSpecPolicy(base.SettingTypeVulnerabilityIgnore, vulnerabilityIgnoreSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeAppArtifacts, skipSpecPolicy{
 		reason: "a managed engine's: written when the app is created from its template, and fetched on its node"})
+	_ = registerSpecPolicy(base.SettingTypeAppManaged, skipSpecPolicy{
+		reason: "a managed engine's state, tied to this installation's archive and jobs"})
 	_ = registerSpecPolicy(base.SettingTypeLicense, skipSpecPolicy{
 		reason: "a license is for one installation, and carries the customer's email"})
 

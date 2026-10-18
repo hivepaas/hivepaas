@@ -57,6 +57,10 @@ type SchedJobResp struct {
 	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
 	DataBackup         *SchedJobDataBackupResp                 `json:"dataBackup,omitempty" copy:"-"`
 	FunctionInvoke     *SchedJobFunctionInvokeResp             `json:"functionInvoke,omitempty"`
+	// ManagedBy is the app-managed setting of the engine that made the job, and
+	// null for a job a person made. The dashboard shows a managed job read-only:
+	// editing, pausing and deleting it are refused.
+	ManagedBy *basedto.ObjectIDResp `json:"managedBy" copy:"-"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`
@@ -122,6 +126,9 @@ func TransformSchedJob(
 		}
 	} else {
 		resp.App = nil
+	}
+	if job.ManagedBy.ID != "" {
+		resp.ManagedBy = &basedto.ObjectIDResp{ID: job.ManagedBy.ID}
 	}
 
 	// Transform the script part of command template if presents

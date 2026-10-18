@@ -25,6 +25,7 @@ var singletonBlockNames = map[base.SettingType]string{
 	base.SettingTypeAppDockerAPI:  "dockerApi",
 	base.SettingTypeAppFeatures:   "features",
 	base.SettingTypeAppKind:       "kind",
+	base.SettingTypeAppManaged:    "managed",
 	base.SettingTypeAppPlacement:  "placement",
 	base.SettingTypeAppRouting:    "routing",
 	base.SettingTypeAppTemplate:   "template",

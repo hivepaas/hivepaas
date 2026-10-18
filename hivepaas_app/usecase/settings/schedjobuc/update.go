@@ -28,6 +28,9 @@ func (uc *UC) UpdateSchedJob(
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
+			if err = refuseManagedJob(data.Setting); err != nil {
+				return hperrors.Wrap(err)
+			}
 			oldJob, err = data.Setting.AsSchedJob()
 			if err != nil {
 				return hperrors.Wrap(err)

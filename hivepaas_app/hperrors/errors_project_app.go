@@ -38,6 +38,10 @@ var (
 	ErrDeploymentMethodFunctionUnallowed = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED")
 	// An app is a function from its creation, and stays one.
 	ErrAppKindFunctionUnchangeable = NewErr(ErrNonEditable, "ERR_APP_KIND_FUNCTION_UNCHANGEABLE")
+	// ErrAppManagedFieldLocked refuses an edit to what an app's managed engine
+	// owns, naming the field. It is changed through the engine's settings, or the
+	// app unmanaged first.
+	ErrAppManagedFieldLocked = NewErr(ErrNonEditable, "ERR_APP_MANAGED_FIELD_LOCKED")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

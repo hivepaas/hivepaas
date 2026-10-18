@@ -56393,6 +56393,39 @@
         "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedDumpCfgResp" : {
+        "properties" : {
+          "repo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "schedule" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "repo", "schedule" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedDumpResp" : {
+        "properties" : {
+          "bytes" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "snapshotId" : {
+            "type" : "string"
+          },
+          "succeeded" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "bytes", "endedAt", "snapshotId", "succeeded" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedHeldBackResp" : {
         "properties" : {
           "backups" : {
@@ -56407,6 +56440,14 @@
       },
       "appmanageddto.ManagedJobsResp" : {
         "properties" : {
+          "dump" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Dump is null while dumps are off.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "health" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/basedto.ObjectIDResp"
@@ -56426,7 +56467,7 @@
             "nullable" : true
           }
         },
-        "required" : [ "health", "nightly", "restoreTest" ],
+        "required" : [ "dump", "health", "nightly", "restoreTest" ],
         "type" : "object"
       },
       "appmanageddto.ManagedLocksResp" : {
@@ -56650,6 +56691,12 @@
           "baseBackupSchedule" : {
             "type" : "string"
           },
+          "dump" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedDumpCfgResp"
+            } ],
+            "nullable" : true
+          },
           "engine" : {
             "type" : "string"
           },
@@ -56698,7 +56745,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "archiveTimeout", "baseBackupSchedule", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -56737,6 +56784,14 @@
             } ],
             "nullable" : true
           },
+          "lastDump" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedDumpResp"
+            } ],
+            "description" : "LastDump is the dump's last run, null while dumps are off or before the\nfirst.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "lastRestoreTest" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestResp"
@@ -56764,7 +56819,7 @@
             "type" : "object"
           },
           "suggestions" : {
-            "description" : "Suggestions are changes worth making: verifier, to run the restore test\nin a verifier app.",
+            "description" : "Suggestions are changes worth making: verifier, to run the restore test\nin a verifier app; dump-apart, to dump at another time than the base\nbackup, as both read the whole database.",
             "items" : {
               "type" : "string"
             },
@@ -56772,7 +56827,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastRestoreTest", "placement", "restorePoints", "restoreWindow", "suggestions" ],
+        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastDump", "lastRestoreTest", "placement", "restorePoints", "restoreWindow", "suggestions" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStorageResp" : {
@@ -56927,6 +56982,17 @@
       "appmanageddto.UpdateManagedSettingsReq" : {
         "properties" : {
           "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "dumpRepo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "DumpRepo is the backup repository the database is dumped into: one turns\ndumps on, {\"id\": \"\"} turns them off.",
+            "type" : "object"
+          },
+          "dumpSchedule" : {
+            "description" : "DumpSchedule is when the dump runs, a cron expression read in the\ninstallation's timezone; kept while dumps are off.",
             "type" : "string"
           },
           "restoreTest" : {
@@ -63291,6 +63357,13 @@
           "baseBackupSchedule" : {
             "type" : "string"
           },
+          "dump" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.ManagedDumpReq"
+            } ],
+            "description" : "Dump is the database's pg_dump into a backup repository. Left out, a\ndatabase that archives into a backup repository is dumped into it too, and\none that archives into cloud storage is not dumped until a repository is\nchosen.",
+            "type" : "object"
+          },
           "restoreTestQuery" : {
             "type" : "string"
           },
@@ -63305,6 +63378,21 @@
           }
         },
         "required" : [ "storage" ],
+        "type" : "object"
+      },
+      "apptemplatedto.ManagedDumpReq" : {
+        "properties" : {
+          "repo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "nullable" : true
+          },
+          "schedule" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "repo" ],
         "type" : "object"
       },
       "apptemplatedto.ManagedStorageReq" : {

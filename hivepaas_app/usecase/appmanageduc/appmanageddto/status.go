@@ -48,11 +48,15 @@ type ManagedStatusResp struct {
 	// may name.
 	Backups         []*ManagedBackupRefResp `json:"backups"`
 	LastRestoreTest *ManagedRestoreTestResp `json:"lastRestoreTest"`
+	// LastDump is the dump's last run, null while dumps are off or before the
+	// first.
+	LastDump *ManagedDumpResp `json:"lastDump"`
 	// Placement is where the archive is from the database: off-site, shared or
 	// same-node, which the dashboard warns about.
 	Placement string `json:"placement"`
 	// Suggestions are changes worth making: verifier, to run the restore test
-	// in a verifier app.
+	// in a verifier app; dump-apart, to dump at another time than the base
+	// backup, as both read the whole database.
 	Suggestions []string `json:"suggestions"`
 	// RestorePoints are the points recorded, oldest first.
 	RestorePoints []*ManagedRestorePointResp `json:"restorePoints"`
@@ -94,6 +98,15 @@ type ManagedBackupResp struct {
 type ManagedBackupRefResp struct {
 	Name string    `json:"name"`
 	At   time.Time `json:"at"`
+}
+
+// ManagedDumpResp is a dump's run, and the snapshot it took when it succeeded:
+// the app's backup snapshots list it.
+type ManagedDumpResp struct {
+	Succeeded  bool      `json:"succeeded"`
+	EndedAt    time.Time `json:"endedAt"`
+	SnapshotID string    `json:"snapshotId"`
+	Bytes      int64     `json:"bytes"`
 }
 
 type ManagedRestoreTestResp struct {
@@ -142,6 +155,10 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 	if test := status.LastRestoreTest; test != nil {
 		resp.LastRestoreTest = &ManagedRestoreTestResp{Passed: test.Passed, EndedAt: test.EndedAt,
 			DurationSeconds: int64(test.Duration / time.Second), RestoredTo: test.RestoredTo}
+	}
+	if dump := status.LastDump; dump != nil {
+		resp.LastDump = &ManagedDumpResp{Succeeded: dump.Succeeded, EndedAt: dump.EndedAt,
+			SnapshotID: dump.SnapshotID, Bytes: dump.Bytes}
 	}
 	return resp
 }

@@ -34,6 +34,9 @@ const (
 
 	// SuggestVerifier suggests running the restore test in a verifier app.
 	SuggestVerifier = "verifier"
+	// SuggestDumpApart says the dump fires in the same minute as the base
+	// backup: both read the whole database at once.
+	SuggestDumpApart = "dump-apart"
 )
 
 // Status is a managed database's state as its engine reads it from its jobs'
@@ -48,6 +51,9 @@ type Status struct {
 	// left them: what a restore to a backup may name.
 	Backups         []BackupRef
 	LastRestoreTest *RestoreTestStatus
+	// LastDump is the dump's last run, nil while dumps are off or before the
+	// first.
+	LastDump *DumpStatus
 	// Placement is where the archive is from the database: off-site, shared,
 	// same-node.
 	Placement   string
@@ -106,6 +112,14 @@ type BackupRef struct {
 	Name  string
 	At    time.Time
 	Bytes int64
+}
+
+// DumpStatus is a dump's run, and the snapshot it took when it succeeded.
+type DumpStatus struct {
+	Succeeded  bool
+	EndedAt    time.Time
+	SnapshotID string
+	Bytes      int64
 }
 
 type RestoreTestStatus struct {

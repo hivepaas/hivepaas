@@ -328,3 +328,54 @@ func TestAManagedRequestForAnOrdinaryTemplateIsRefused(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
 }
+
+// A database archiving into a backup repository is dumped into it unless the
+// request says otherwise; one archiving into cloud storage is not dumped until
+// a repository is chosen.
+func TestWhereADatabaseIsDumped(t *testing.T) {
+	s3Repo := apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}}
+	cloud := apptemplatedto.ManagedStorageReq{CloudStorage: &basedto.ObjectIDReq{ID: "cs-1"}}
+	for name, tc := range map[string]struct {
+		storage  apptemplatedto.ManagedStorageReq
+		dump     *apptemplatedto.ManagedDumpReq
+		repo     string
+		schedule string
+	}{
+		"the archive's repository":  {s3Repo, nil, "repo-s3", ""},
+		"cloud storage, not dumped": {cloud, nil, "", ""},
+		"a repository chosen": {cloud, &apptemplatedto.ManagedDumpReq{
+			Repo: &basedto.ObjectIDReq{ID: "repo-vol-shared"}, Schedule: " 0 */6 * * * "},
+			"repo-vol-shared", "0 */6 * * *"},
+		"no dumps asked for":        {s3Repo, &apptemplatedto.ManagedDumpReq{}, "", ""},
+		"a schedule, no repository": {s3Repo, &apptemplatedto.ManagedDumpReq{Schedule: "0 5 * * *"}, "", "0 5 * * *"},
+	} {
+		uc, fakes := newManagedTest(t)
+		req := managedReq(tc.storage)
+		req.Managed.Dump = tc.dump
+
+		_, err := plan(t, uc, fakes, req)
+
+		assert.NoError(t, err, name)
+		assert.Equal(t, tc.repo, fakes.engine.prepared.Options.DumpRepo, name)
+		assert.Equal(t, tc.schedule, fakes.engine.prepared.Options.DumpSchedule, name)
+	}
+}
+
+func TestADumpRepositoryMustBeUsable(t *testing.T) {
+	uc, fakes := newManagedTest(t)
+	fakes.settings.byID["repo-s3"].Status = base.SettingStatusDisabled
+	for name, repo := range map[string]string{"one that is not there": "repo-gone", "one disabled": "repo-s3"} {
+		req := managedReq(apptemplatedto.ManagedStorageReq{CloudStorage: &basedto.ObjectIDReq{ID: "cs-1"}})
+		req.Managed.Dump = &apptemplatedto.ManagedDumpReq{Repo: &basedto.ObjectIDReq{ID: repo}}
+
+		_, err := plan(t, uc, fakes, req)
+
+		assert.Error(t, err, name)
+	}
+
+	req := managedReq(apptemplatedto.ManagedStorageReq{CloudStorage: &basedto.ObjectIDReq{ID: "cs-1"}})
+	req.Managed.Dump = &apptemplatedto.ManagedDumpReq{Repo: &basedto.ObjectIDReq{ID: "repo-vol-same"},
+		Schedule: "at three"}
+	_, err := plan(t, uc, fakes, req)
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
+}

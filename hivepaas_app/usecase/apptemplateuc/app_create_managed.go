@@ -97,6 +97,9 @@ func (uc *UC) planManaged(
 	if err = checkSchedules(options); err != nil {
 		return nil, err
 	}
+	if options.DumpRepo, err = uc.dumpRepo(ctx, scope, req.Managed.Dump, planned.storage); err != nil {
+		return nil, err
+	}
 	planned.prepared = &managedmodel.PrepareReq{
 		Doc:           main.result.Doc,
 		Version:       main.result.Version.Name,
@@ -279,7 +282,36 @@ func managedOptions(
 	options.RestoreTestSchedule = gofn.Coalesce(strings.TrimSpace(req.RestoreTestSchedule),
 		options.RestoreTestSchedule)
 	options.RestoreTestQuery = strings.TrimSpace(req.RestoreTestQuery)
+	if req.Dump != nil {
+		options.DumpSchedule = strings.TrimSpace(req.Dump.Schedule)
+	}
 	return options
+}
+
+// dumpRepo is the backup repository the database is dumped into: the one asked
+// for, none when null is asked for, and when dumps are not mentioned, the
+// archive's own repository - none for an archive in cloud storage.
+func (uc *UC) dumpRepo(
+	ctx context.Context,
+	scope *entity.ObjectScope,
+	req *apptemplatedto.ManagedDumpReq,
+	storage entity.ManagedStorage,
+) (string, error) {
+	if req == nil {
+		return storage.BackupRepo.ID, nil
+	}
+	if req.Repo == nil || req.Repo.ID == "" {
+		return "", nil
+	}
+	setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeBackupRepo, req.Repo.ID, true)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	if !setting.IsActive() {
+		return "", hperrors.Wrap(hperrors.ErrAppTemplateParamInvalid).
+			WithExtraDetail("managed.dump.repo: the backup repository is not active")
+	}
+	return setting.ID, nil
 }
 
 // checkSchedules refuses a schedule the jobs could not run by, before anything
@@ -287,6 +319,7 @@ func managedOptions(
 func checkSchedules(options *managedmodel.Options) error {
 	for field, cron := range map[string]string{
 		"baseBackupSchedule": options.BaseBackupSchedule, "restoreTestSchedule": options.RestoreTestSchedule,
+		"dump.schedule": options.DumpSchedule,
 	} {
 		if cron == "" {
 			continue

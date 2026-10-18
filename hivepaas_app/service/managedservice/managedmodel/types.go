@@ -39,6 +39,10 @@ type Options struct {
 	BaseBackupSchedule  string
 	RestoreTestSchedule string
 	RestoreTestQuery    string
+	// DumpRepo is the backup repository the database is dumped into, empty for
+	// no dumps; DumpSchedule is when.
+	DumpRepo     string
+	DumpSchedule string
 }
 
 // PrepareReq is an app's rendered document, before it is built, and what the
@@ -87,6 +91,9 @@ type SettingsChange struct {
 	RestoreTestSchedule *string
 	RestoreTestQuery    *string
 	RestoreTest         *RestoreTestChange
+	// DumpRepo is the backup repository dumps go into: empty turns them off.
+	DumpRepo     *string
+	DumpSchedule *string
 }
 
 // RestoreTestChange moves the restore test: into the verifier app given, or,
@@ -104,18 +111,24 @@ type RestoreTestChange struct {
 // ReconfigureReq is a managed app with its setting, the jobs its engine made by
 // id, and the change asked for.
 type ReconfigureReq struct {
-	App     *entity.App
-	Managed *entity.AppManagedSettings
-	Jobs    map[string]*entity.Setting
-	Change  *SettingsChange
+	App *entity.App
+	// ManagedID is the app-managed setting's id: what a job the change makes is
+	// managed by.
+	ManagedID string
+	Managed   *entity.AppManagedSettings
+	Jobs      map[string]*entity.Setting
+	Change    *SettingsChange
+	Now       time.Time
 }
 
 // ReconfigureResp is the jobs the change rewrote, and of those, the ones whose
-// schedule moved, which are scheduled again. The setting itself is changed in
-// place.
+// schedule moved, which are scheduled again; and the jobs it made and the ones
+// it removes. The setting itself is changed in place.
 type ReconfigureResp struct {
 	Changed     []*entity.Setting
 	Rescheduled []*entity.Setting
+	Created     []*entity.Setting
+	Deleted     []*entity.Setting
 }
 
 // VerifierSpec is what an engine's verifier app runs: a command that idles, for

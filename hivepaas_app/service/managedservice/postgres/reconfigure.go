@@ -15,7 +15,7 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 	if pg == nil || change == nil {
 		return resp, nil
 	}
-	for _, schedule := range []*string{change.BaseBackupSchedule, change.RestoreTestSchedule} {
+	for _, schedule := range []*string{change.BaseBackupSchedule, change.RestoreTestSchedule, change.DumpSchedule} {
 		if schedule == nil {
 			continue
 		}
@@ -69,6 +69,9 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 		if moved && !slices.Contains(resp.Changed, setting) {
 			resp.Changed = append(resp.Changed, setting)
 		}
+	}
+	if err := reconfigureDump(req, resp); err != nil {
+		return nil, err
 	}
 	return resp, nil
 }

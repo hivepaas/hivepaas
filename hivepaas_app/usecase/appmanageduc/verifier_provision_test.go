@@ -11,7 +11,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc/appmanageddto"
 )
 
@@ -109,4 +112,45 @@ func TestAMoveToWhereTheTestRunsIsNone(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, move)
 	assert.Empty(t, deleting)
+}
+
+// volumeSettings has the cluster volumes it is given, by id.
+type volumeSettings struct {
+	repository.SettingRepo
+	volumes map[string]*entity.ClusterVolume
+}
+
+func (f *volumeSettings) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, typ base.SettingType,
+	id string, _ bool, _ ...bunex.SelectQueryOption) (*entity.Setting, error) {
+	volume, found := f.volumes[id]
+	if !found {
+		return nil, hperrors.NewNotFound("Volume")
+	}
+	return setting(id, typ, volume), nil
+}
+
+// A verifier or a replica runs where its volume is, anywhere for one every node
+// reaches; a replica's data is never in memory, a verifier's scratch may be.
+func TestAMembersVolumePin(t *testing.T) {
+	tmpfs := map[string]string{"type": "tmpfs", "device": "tmpfs"}
+	uc := &UC{settingRepo: &volumeSettings{volumes: map[string]*entity.ClusterVolume{
+		"pinned": {NodeID: "n1"}, "shared": {Driver: "local", DriverOpts: map[string]string{"type": "nfs"}},
+		"memory": {Driver: "local", DriverOpts: tmpfs},
+	}}}
+	pin := func(volume string, keepsData bool) (placementservice.VolumePin, error) {
+		return uc.memberVolumePin(context.Background(), nil, volume, "/var/lib/postgresql", keepsData)
+	}
+
+	got, err := pin("pinned", true)
+	assert.NoError(t, err)
+	assert.Equal(t, placementservice.VolumePin{VolumeName: "pinned", NodeID: "n1"}, got)
+
+	got, err = pin("shared", true)
+	assert.NoError(t, err)
+	assert.Equal(t, placementservice.VolumePin{VolumeName: "shared"}, got, "no node")
+
+	_, err = pin("memory", true)
+	assert.ErrorIs(t, err, hperrors.ErrAppManagedVolumeInMemory)
+	_, err = pin("memory", false)
+	assert.NoError(t, err, "a verifier's scratch")
 }

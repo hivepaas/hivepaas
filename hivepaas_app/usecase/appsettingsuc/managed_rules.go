@@ -13,6 +13,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
@@ -114,6 +116,22 @@ func checkManagedDeployment(locks *entity.ManagedLocks, current, next *entity.Ap
 		return err
 	}
 	return checkManagedCommand(locks, next.Command)
+}
+
+// checkManagedMode keeps a managed app's service at one task or none: two would
+// be two servers on one data directory, which a volume every node reaches lets
+// start on two nodes.
+func checkManagedMode(locks *entity.ManagedLocks, mode *appsettingsdto.ServiceModeSpec) error {
+	if locks == nil || mode == nil {
+		return nil
+	}
+	if mode.Mode != docker.ServiceModeReplicated {
+		return managedFieldLocked("mode")
+	}
+	if mode.ServiceReplicas != nil && *mode.ServiceReplicas > 1 {
+		return managedFieldLocked("replicas")
+	}
+	return nil
 }
 
 // checkManagedContainer keeps the same on the container screen, which writes the

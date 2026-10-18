@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/clusteraudit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
@@ -86,6 +87,9 @@ func (uc *UC) JoinNode(
 	if err != nil {
 		return nil, hperrors.Wrap(hperrors.ErrInfraActionFailed).WithParam("Error", err.Error())
 	}
+	// The node has joined whatever this says: failing to bring the managed
+	// artifacts' run forward leaves it to the job's own turn, minutes away.
+	_, _ = uc.scheduleArtifactsRun(ctx, timeutil.NowUTC())
 
 	return &nodedto.JoinNodeResp{
 		Data: &nodedto.JoinNodeDataResp{

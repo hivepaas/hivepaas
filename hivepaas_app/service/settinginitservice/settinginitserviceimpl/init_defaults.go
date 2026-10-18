@@ -2,6 +2,7 @@ package settinginitserviceimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -144,10 +145,20 @@ func (s *service) InitDefaultsWithTx(
 		}
 	}
 
-	// License refresh: on every start, as the license setting may predate its job
-	if err = s.initDefaultLicense(ctx, db, timeNow); err != nil {
+	// On every start, as an installation may predate them
+	if err = s.initEveryStart(ctx, db, timeNow); err != nil {
 		return hperrors.Wrap(err)
 	}
 
 	return nil
+}
+
+// initEveryStart makes what an installation from before it may lack: the
+// license refresh's job, which its setting may predate, and the managed
+// artifacts' job. Each changes nothing once it is there.
+func (s *service) initEveryStart(ctx context.Context, db database.Tx, timeNow time.Time) error {
+	if err := s.initDefaultLicense(ctx, db, timeNow); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return s.initDefaultManagedArtifacts(ctx, db, timeNow)
 }

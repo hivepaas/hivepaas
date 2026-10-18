@@ -63,7 +63,7 @@ func (uc *UC) planVerifier(ctx context.Context, req *appmanageddto.UpdateManaged
 
 	plan := &verifierPlan{spec: loaded.engine.Verifier()}
 	scope := appScope(loaded.app)
-	pin, err := uc.verifierVolumePin(ctx, scope, req.RestoreTest.Volume.ID, plan.spec.ScratchDir)
+	pin, err := uc.memberVolumePin(ctx, scope, req.RestoreTest.Volume.ID, plan.spec.ScratchDir, false)
 	if err != nil {
 		return nil, err
 	}
@@ -83,20 +83,19 @@ func (uc *UC) planVerifier(ctx context.Context, req *appmanageddto.UpdateManaged
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	constraint, _ := placementservice.VolumePinConstraint([]placementservice.VolumePin{pin})
-	plan.artifactMounts, err = uc.artifactService.MountsFor(ctx, artifacts, &swarm.ServiceSpec{
-		TaskTemplate: swarm.TaskSpec{Placement: &swarm.Placement{Constraints: []string{constraint}}},
-	})
+	plan.artifactMounts, err = uc.artifactService.MountsFor(ctx, artifacts, placementservice.PinnedSpec(pin))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return plan, nil
 }
 
-// verifierVolumePin is the node the verifier's volume is on, which is the node
-// it runs on: a volume pinned to none gives no node to put its artifacts on.
-func (uc *UC) verifierVolumePin(ctx context.Context, scope *entity.ObjectScope, volumeID, target string) (
-	placementservice.VolumePin, error) {
+// memberVolumePin is the node a verifier's or a replica's volume is on, which
+// is the node it runs on: none for a volume every node reaches, on which its
+// artifacts are then had. A volume that keeps a replica's data at target is
+// refused when it keeps it in memory; a verifier's scratch may.
+func (uc *UC) memberVolumePin(ctx context.Context, scope *entity.ObjectScope, volumeID, target string,
+	keepsData bool) (placementservice.VolumePin, error) {
 	setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeClusterVolume, volumeID, true)
 	if err != nil {
 		return placementservice.VolumePin{}, hperrors.Wrap(err)
@@ -105,8 +104,8 @@ func (uc *UC) verifierVolumePin(ctx context.Context, scope *entity.ObjectScope, 
 	if err != nil {
 		return placementservice.VolumePin{}, hperrors.Wrap(err)
 	}
-	if volume.NodeID == "" && volume.NodeLabel == "" {
-		return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeNotPinned).
+	if keepsData && volumeservice.DriverOptsInMemory(volume.DriverOpts) {
+		return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeInMemory).
 			WithParam("Target", target).ExposeParams("Target")
 	}
 	return placementservice.VolumePin{VolumeName: volumeID, NodeID: volume.NodeID, NodeLabel: volume.NodeLabel}, nil

@@ -3,6 +3,8 @@ package placementservice
 import (
 	"fmt"
 	"strings"
+
+	"github.com/moby/moby/api/types/swarm"
 )
 
 // VolumePin is a volume's claim about which node its data is on.
@@ -72,4 +74,15 @@ func VolumePinConstraint(pins []VolumePin) (string, *VolumePinConflict) {
 		}
 	}
 	return chosen.constraint(), nil
+}
+
+// PinnedSpec is a service placed by a volume's pin: on any node for a volume
+// every node reaches.
+func PinnedSpec(pin VolumePin) *swarm.ServiceSpec {
+	constraint := pin.constraint()
+	if constraint == "" {
+		return &swarm.ServiceSpec{}
+	}
+	return &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{Placement: &swarm.Placement{
+		Constraints: []string{constraint}}}}
 }

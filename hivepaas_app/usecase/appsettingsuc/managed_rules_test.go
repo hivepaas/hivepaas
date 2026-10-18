@@ -10,6 +10,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 const lockedCommand = `postgres -c archive_mode=on -c "archive_command=/opt/hivepaas/bin/walg-run wal-push %p"`
@@ -162,4 +164,18 @@ func TestAManagedAppsVariablesKeepTheirValues(t *testing.T) {
 		{Key: "WALG_S3_PREFIX", Value: "s3://elsewhere"}}), "envVars")
 	assertLocked(t, checkManagedEnv(testLocks(), current, []*entity.EnvVar{prefix, mine,
 		{Key: "PGDATA", Value: "/tmp"}}), "envVars")
+}
+
+func TestAManagedAppRunsOneTaskAtMost(t *testing.T) {
+	replicated := func(n uint64) *appsettingsdto.ServiceModeSpec {
+		return &appsettingsdto.ServiceModeSpec{Mode: docker.ServiceModeReplicated, ServiceReplicas: &n}
+	}
+
+	assert.NoError(t, checkManagedMode(testLocks(), replicated(1)))
+	assert.NoError(t, checkManagedMode(testLocks(), replicated(0)), "stopped")
+	assert.NoError(t, checkManagedMode(testLocks(), nil), "the mode not asked about")
+	assertLocked(t, checkManagedMode(testLocks(), replicated(2)), "replicas")
+	assertLocked(t, checkManagedMode(testLocks(), &appsettingsdto.ServiceModeSpec{Mode: docker.ServiceModeGlobal}),
+		"mode")
+	assert.NoError(t, checkManagedMode(nil, replicated(3)), "an ordinary app scales")
 }

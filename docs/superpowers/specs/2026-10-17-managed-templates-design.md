@@ -194,15 +194,36 @@ Swarm reschedules tasks without HivePaaS: node loss, scale, and about forty othe
 `ServiceUpdate` callers. A check at deploy time alone is not enough. Phase 1 makes
 the question small:
 
-- **A managed database's data volume must be pinned to a node.** The app is then
-  pinned through the existing `VolumePin` constraint, and the artifact is ensured on
-  that node only. An unpinned (shared) volume is refused, with the reason given.
+- **A data volume pinned to a node** pins the app through the existing `VolumePin`
+  constraint, and the artifact is ensured on that node only.
 - The node's architecture is read from Swarm (`Description.Platform.Architecture`,
   mapping `x86_64` to amd64 and `aarch64` to arm64). Nothing stores it today.
 
-Unpinned volumes are Later. They need artifacts on every node that is eligible for
-the app, and HivePaaS has no helper that evaluates a spec's constraints against
-nodes.
+**A data volume that every node reaches** has `NodeID` and `NodeLabel` empty. The
+volume claims shared storage, for example NFS or a bind mount of a directory that
+is mounted at the same path on every node (phase 2, Task 8).
+- **Allowed only with an archive in object storage.** The database may start on any
+  node, and only object storage is reached from each. A volume archive is refused
+  with `ERR_APP_MANAGED_SHARED_VOLUME_NEEDS_OBJECT_STORAGE`.
+- **The artifact goes on every eligible node.** `MountsFor` evaluates the service's
+  placement constraints against Ready, active nodes. One bind names one file, so
+  eligible nodes of two architectures are refused.
+- **Its service runs one task at most.** Two tasks would be two servers on one data
+  directory, so the service settings refuse another mode or more replicas.
+- **A tmpfs volume is refused for data,** pinned or not, with
+  `ERR_APP_MANAGED_VOLUME_IN_MEMORY`.
+- **A reconcile keeps the artifacts on nodes that join later.** The global
+  `managed-artifacts` job runs every 10 minutes, and two minutes after a join through
+  HivePaaS. It calls `MountsFor` against every app's service as it stands. A task
+  placed on a node that lacks the file fails, and Swarm retries elsewhere, until the
+  reconcile has run.
+- **A volume that claims to be shared but is not** gives an empty directory on another
+  node. That database initializes afresh and archives into the same prefix.
+  - `WALG_PREVENT_WAL_OVERWRITE` refuses the segments the archive already has, so
+    archiving fails where status shows it.
+  - Nothing else stops it yet: its nightly base backup would join the archive's.
+  - Refusing an empty data directory over an archive that has backups is a
+    follow-up.
 
 ### When
 

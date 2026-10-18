@@ -28,6 +28,7 @@ const (
 
 	timeoutSettingMountRefresh = 15 * time.Minute
 	timeoutImageScan           = 30 * time.Minute
+	timeoutManagedRestore      = 15 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -63,6 +64,10 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// one, a cold Java DB - so one wait and one scan fit, with room; a scan
 	// with no time left to end is not started (imagescanserviceimpl's runLocked).
 	base.TaskTypeImageScan: timeoutImageScan,
+	// One step of a managed database's restore, each a few minutes at most: a
+	// recovery that takes hours is waited for over many runs, each continuing
+	// the task (see tasks/taskmanagedrestore).
+	base.TaskTypeManagedRestore: timeoutManagedRestore,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

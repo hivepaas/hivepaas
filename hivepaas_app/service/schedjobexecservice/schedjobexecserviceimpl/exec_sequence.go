@@ -135,6 +135,7 @@ func (s *service) readOutputs(
 	ctx context.Context,
 	req *schedjobexecservice.SchedJobExecReq,
 	execResp *containerexecservice.ContainerExecResp,
+	outputFile string,
 ) map[string]string {
 	if execResp == nil || execResp.ContainerID == "" {
 		return nil
@@ -149,7 +150,7 @@ func (s *service) readOutputs(
 		ExecOptions: func(opts *client.ExecCreateOptions) {
 			opts.AttachStdout = true
 			opts.AttachStderr = true
-			opts.Cmd = []string{"sh", "-c", `cat "$1" 2>/dev/null; rm -f "$1"`, "sh", req.Sequence.OutputFile}
+			opts.Cmd = []string{"sh", "-c", `cat "$1" 2>/dev/null; rm -f "$1"`, "sh", outputFile}
 		},
 	})
 	if err != nil {

@@ -19,6 +19,10 @@ message NodeCleanupReq {
   // The images the node keeps, used or not. None, from an older manager:
   // only the images no tag names are pruned.
   repeated string keep_images = 8;
+  // The artifacts the node keeps, when artifacts_known. Not known, from an older
+  // manager: no artifact is removed.
+  repeated string keep_artifacts = 9;
+  bool artifacts_known = 10;
 }
 
 message ClusterCleanupSettings {
@@ -48,4 +52,6 @@ message NodeCleanupResp {
   int32 build_caches_deleted = 13;
   string build_caches_prune_error = 14;
   uint64 space_reclaimed = 15;
+  int32 artifacts_deleted = 16;
+  string artifacts_prune_error = 17;
 }

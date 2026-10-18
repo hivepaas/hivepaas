@@ -78,6 +78,8 @@ type fakeProvisionService struct {
 	names     []string
 	failName  string
 	deployFor []string
+	// specs are the service specs Configure wrote, by app.
+	specs []*swarm.ServiceSpec
 }
 
 func (f *fakeProvisionService) ProvisionApps(
@@ -121,6 +123,7 @@ func (f *fakeProvisionService) ProvisionApp(
 		ProjectEnv: &entity.ProjectEnv{ID: req.ProjectEnvID, Key: "prod", Name: "prod"},
 	}
 	spec := &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{ContainerSpec: &swarm.ContainerSpec{}}}
+	f.specs = append(f.specs, spec)
 	settings, err := req.Configure(ctx, db, app, spec)
 	if err != nil {
 		return nil, err
@@ -227,7 +230,7 @@ func provisionOne(t *testing.T, uc *UC, fakes *createFakes) *appprovisionservice
 	t.Helper()
 	req := testCreateReq()
 	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, fakes.templates.resp))
+		planApps(req, fakes.templates.resp), nil)
 	assert.NoError(t, err)
 	assert.Len(t, provisioned.Apps, 1)
 	return provisioned.Apps[0]
@@ -395,7 +398,7 @@ func TestProvisionAllRecordsBothDirections(t *testing.T) {
 	req.Name = "blog"
 
 	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, renderedWithDependency(t, fakes)))
+		planApps(req, renderedWithDependency(t, fakes)), nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"blog-db", "blog"}, fakes.provision.names, "the database first")
@@ -413,7 +416,7 @@ func TestProvisionAllNamesTheDependencyThatFailed(t *testing.T) {
 	req.Name = "blog"
 
 	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, renderedWithDependency(t, fakes)))
+		planApps(req, renderedWithDependency(t, fakes)), nil)
 
 	assert.ErrorIs(t, err, errTestProvision)
 	assert.Contains(t, errDetail(t, err), "blog-db")
@@ -427,7 +430,7 @@ func TestTransformCreatedSeparatesTheAppFromItsDependencies(t *testing.T) {
 	req.Name = "blog"
 	apps := planApps(req, renderedWithDependency(t, fakes))
 
-	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps, nil)
 	assert.NoError(t, err)
 	resp := transformCreated(apps, provisioned.Apps)
 

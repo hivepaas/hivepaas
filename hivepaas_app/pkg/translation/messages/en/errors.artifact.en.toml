@@ -1,0 +1,7 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_artifact.go.
+# Adding or removing an error there means editing this file.
+
+ERR_ARTIFACT_INVALID = "This file cannot be downloaded as asked: {{.Reason}}"
+ERR_ARTIFACT_HASH_MISMATCH = "The file {{.Name}} downloaded is not the one its hash names, and was not kept"
+ERR_ARTIFACT_DOWNLOAD_FAILED = "The file {{.Name}} could not be downloaded"
+ERR_ARTIFACT_ARCH_UNSUPPORTED = "{{.Name}} has no build for node {{.Node}}, which is {{.Arch}}"

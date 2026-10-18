@@ -53,7 +53,8 @@ var Purpose = releasesig.Purpose{
 //
 // Limits is by limit name, as written: a name this binary does not know is
 // passed over, so a key from a newer portal still works here. A limit left out
-// is no limit.
+// is no limit. Features are the same: names, of which those this binary knows
+// are granted, and a feature left out is not granted.
 type Payload struct {
 	Version        int              `json:"version"`
 	LicenseID      string           `json:"licenseId"`
@@ -61,6 +62,7 @@ type Payload struct {
 	Customer       Customer         `json:"customer"`
 	Plan           base.LicensePlan `json:"plan"`
 	Limits         map[string]int   `json:"limits,omitempty"`
+	Features       []string         `json:"features,omitempty"`
 	Installations  []string         `json:"installations"`
 	IssuedAt       time.Time        `json:"issuedAt"`
 	ExpiresAt      time.Time        `json:"expiresAt"`

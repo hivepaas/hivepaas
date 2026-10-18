@@ -65,7 +65,7 @@ func TestTransformAppTemplateSummaries(t *testing.T) {
 	useBasePath(t)
 
 	resp := TransformAppTemplateSummaries(
-		[]*templatemodel.IndexEntry{testEntry("v000001"), testEntry("v999999")}, "v000001")
+		[]*templatemodel.IndexEntry{testEntry("v000001"), testEntry("v999999")}, "v000001", nil)
 
 	summary := resp[0]
 	assert.Equal(t, "/api/app-templates/icons/postgres.3a18fec853.svg", summary.IconURL,
@@ -92,7 +92,7 @@ func TestTransformAppTemplateNeverSendsASecretDefault(t *testing.T) {
 		},
 	}
 
-	resp := TransformAppTemplate(tmpl, "v000001")
+	resp := TransformAppTemplate(tmpl, "v000001", nil)
 
 	assert.Equal(t, "Long text.", resp.Description)
 	assert.Equal(t, "https://www.postgresql.org", resp.Links.Website)
@@ -157,7 +157,7 @@ func TestTransformAppTemplateSummaryListsDependencies(t *testing.T) {
 	entry := testEntry("v000001")
 	entry.Dependencies = []*templatemodel.IndexDependency{{Name: "db", Title: "Database", Template: "mysql"}}
 
-	summary := transformSummary(entry, "v000001")
+	summary := transformSummary(entry, "v000001", nil)
 
 	assert.Equal(t, []*AppTemplateDependencySummaryResp{{Name: "db", Title: "Database", Template: "mysql"}},
 		summary.Dependencies)
@@ -186,7 +186,7 @@ func TestTransformAppTemplateAsksOnlyWhatADependencyNeeds(t *testing.T) {
 		},
 	}
 
-	resp := TransformAppTemplate(tmpl, "v000001")
+	resp := TransformAppTemplate(tmpl, "v000001", nil)
 
 	assert.Len(t, resp.Dependencies, 1)
 	db := resp.Dependencies[0]
@@ -217,7 +217,7 @@ func TestTransformAppTemplateShowsWhatEachComponentIsGranted(t *testing.T) {
 		},
 	}
 
-	resp := TransformAppTemplate(tmpl, "v000001")
+	resp := TransformAppTemplate(tmpl, "v000001", nil)
 
 	assert.Nil(t, resp.DockerAPI)
 	assert.Len(t, resp.Components, 2)

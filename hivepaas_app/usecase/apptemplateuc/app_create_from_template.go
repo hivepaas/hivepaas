@@ -3,6 +3,7 @@ package apptemplateuc
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -30,6 +31,17 @@ func (uc *UC) CreateAppFromTemplate(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
+) (*apptemplatedto.CreateAppFromTemplateResp, error) {
+	return uc.createFromTemplate(ctx, auth, req, nil)
+}
+
+// createFromTemplate creates the apps a template renders to; restore, when it
+// is not nil, makes the creation a managed database's restore.
+func (uc *UC) createFromTemplate(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	restore *managedRestore,
 ) (resp *apptemplatedto.CreateAppFromTemplateResp, err error) {
 	// Before the transaction: rendering may reach GitHub, and nothing is locked
 	// while it does. Every app of the request is rendered here, before any exists.
@@ -52,24 +64,17 @@ func (uc *UC) CreateAppFromTemplate(
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
 	}
-	if err = uc.checkAppRefs(ctx, req, rendered); err != nil {
+	if err = uc.checkRequest(ctx, auth, req, rendered, apps, restore); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = uc.checkCapabilities(ctx, auth, apps); err != nil {
+	// A managed template's archive is resolved and its artifacts downloaded
+	// here, before the transaction: a download is not something to hold one open
+	// for.
+	managed, err := uc.planManaged(ctx, req, apps, restore)
+	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = uc.checkDockerAPI(ctx, auth, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkPublishedPorts(ctx, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = uc.checkDomains(ctx, req, apps); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
+	managed.attach(apps)
 	// Whatever a previous install of these apps left on the volumes goes first,
 	// and only when the request says so. The preflight endpoint is where anybody
 	// is told there is something to clear; this is where it is cleared.
@@ -101,7 +106,7 @@ func (uc *UC) CreateAppFromTemplate(
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var txErr error
-		provisioned, txErr = uc.provisionAll(ctx, db, auth, req, apps)
+		provisioned, txErr = uc.provisionAll(ctx, db, auth, req, apps, restore)
 		return txErr
 	})
 	if err != nil {
@@ -119,7 +124,51 @@ func (uc *UC) CreateAppFromTemplate(
 			return nil, hperrors.Wrap(err)
 		}
 	}
-	return transformCreated(apps, provisioned.Apps), nil
+	if restore != nil {
+		if err = uc.taskQueue.ScheduleTask(ctx, restore.task); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
+	resp = transformCreated(apps, provisioned.Apps)
+	if managed != nil {
+		resp.Data.Managed = &apptemplatedto.CreatedManagedResp{Placement: managed.placement}
+	}
+	return resp, nil
+}
+
+// checkRequest runs every check that can refuse a request before anything is
+// created for it, in the order a person would want to hear about them: what the
+// license grants first, then what the request asks of the cluster. A restore
+// asks the license nothing: restoring is never gated.
+func (uc *UC) checkRequest(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	rendered *apptemplateservice.RenderResp,
+	apps []*appToProvision,
+	restore *managedRestore,
+) error {
+	if restore == nil {
+		if err := uc.checkFeatures(ctx, apps); err != nil {
+			return err
+		}
+	}
+	if err := uc.checkAppRefs(ctx, req, rendered); err != nil {
+		return err
+	}
+	if err := uc.checkCapabilities(ctx, auth, apps); err != nil {
+		return err
+	}
+	if err := uc.checkDockerAPI(ctx, auth, apps); err != nil {
+		return err
+	}
+	if err := uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
+		return err
+	}
+	if err := uc.checkPublishedPorts(ctx, apps); err != nil {
+		return err
+	}
+	return uc.checkDomains(ctx, req, apps)
 }
 
 // checkDomains refuses a request whose domains cannot be served before anything
@@ -170,6 +219,7 @@ func (uc *UC) provisionAll(
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	apps []*appToProvision,
+	restore *managedRestore,
 ) (*appprovisionservice.ProvisionAppsResp, error) {
 	if err := uc.checkPlanLimit(ctx, db, apps); err != nil {
 		return nil, err
@@ -179,7 +229,10 @@ func (uc *UC) provisionAll(
 	if err != nil {
 		return provisioned, hperrors.Wrap(err)
 	}
-	return provisioned, uc.recordCreated(ctx, db, auth, apps, provisioned.Apps)
+	if err = uc.recordCreated(ctx, db, auth, apps, provisioned.Apps); err != nil {
+		return provisioned, err
+	}
+	return provisioned, uc.insertRestoreTask(ctx, db, req, apps, provisioned.Apps, restore)
 }
 
 // provisionRequests turns the plan into what provisioning is asked for. The apps
@@ -234,7 +287,15 @@ func (uc *UC) configureFromTemplate(
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		return append(built.Settings, binding), nil
+		settings := append(slices.Clone(built.Settings), binding)
+		if target.managed != nil {
+			managed, managedErr := target.managed.configure(app, spec, settings, timeNow)
+			if managedErr != nil {
+				return nil, managedErr
+			}
+			settings = append(settings, managed...)
+		}
+		return settings, nil
 	}
 }
 
@@ -298,6 +359,9 @@ type appToProvision struct {
 	// these per component, and they differ in every way that matters.
 	result *templaterender.Result
 	links  appTemplateLinks
+	// managed is what a managed template's engine sets up, for the app the
+	// request is about; nil for every other.
+	managed *managedPlan
 }
 
 // key is the name this app will answer to on the project's network, and the

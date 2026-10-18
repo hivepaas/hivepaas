@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
@@ -35,6 +36,7 @@ type service struct {
 
 	agentService         agentservice.Service
 	appService           appservice.Service
+	artifactService      artifactservice.Service
 	clusterService       clusterservice.Service
 	containerExecService containerexecservice.Service
 	dockerAPIService     dockerapiservice.Service
@@ -64,6 +66,7 @@ func New(
 
 	agentService agentservice.Service,
 	appService appservice.Service,
+	artifactService artifactservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
 	dockerAPIService dockerapiservice.Service,
@@ -89,6 +92,7 @@ func New(
 
 		agentService:           agentService,
 		appService:             appService,
+		artifactService:        artifactService,
 		clusterService:         clusterService,
 		containerExecService:   containerExecService,
 		dockerAPIService:       dockerAPIService,

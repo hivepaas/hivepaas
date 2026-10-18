@@ -13,6 +13,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	appSettingsHandler := s.handlerRegistry.appSettingsHandler
 	appDeploymentHandler := s.handlerRegistry.appDeploymentHandler
 	appActionHandler := s.handlerRegistry.appActionHandler
+	appManagedHandler := s.handlerRegistry.appManagedHandler
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
 	appContainerHandler := s.handlerRegistry.appContainerHandler
 	appMetricsHandler := s.handlerRegistry.appMetricsHandler
@@ -259,6 +260,19 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appActionGroup.POST("/restart", appActionHandler.RestartApp)
 		// Set app running status
 		appActionGroup.POST("/running-status", appActionHandler.SetAppRunning)
+	}
+
+	{ // Managed apps: what their engine looks after
+		managedGroup := appGroup.Group("/:appID/managed")
+		managedGroup.GET("", appManagedHandler.GetManagedSettings)
+		managedGroup.PUT("", appManagedHandler.UpdateManagedSettings)
+		managedGroup.GET("/status", appManagedHandler.GetManagedStatus)
+		managedGroup.POST("/refresh-credentials", appManagedHandler.RefreshManagedCredentials)
+		managedGroup.POST("/restore", appManagedHandler.RestoreManagedApp)
+		managedGroup.POST("/restore-points", appManagedHandler.CreateRestorePoint)
+		managedGroup.PUT("/restore-points/:name", appManagedHandler.UpdateRestorePoint)
+		managedGroup.DELETE("/restore-points/:name", appManagedHandler.DeleteRestorePoint)
+		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
 	}
 
 	{ // App previews

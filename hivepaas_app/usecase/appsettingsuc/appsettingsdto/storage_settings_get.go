@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
@@ -165,8 +166,9 @@ func TransformStorageMounts(
 	mounts := input.Service.Spec.TaskTemplate.ContainerSpec.Mounts
 	resp := make([]*Mount, 0, len(mounts))
 	for i := range mounts {
-		// The Docker API socket is given with the app's access, not chosen here.
-		if dockerapiservice.IsSocketMount(&mounts[i]) {
+		// The Docker API socket is given with the app's access, not chosen here,
+		// and artifacts by the app's engine.
+		if dockerapiservice.IsSocketMount(&mounts[i]) || artifactservice.IsArtifactMount(&mounts[i]) {
 			continue
 		}
 		var desc *volumeservice.AppMountDesc

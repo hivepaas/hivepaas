@@ -35,6 +35,17 @@ var SchedJobTypeImageScan SchedJobType = "image-scan"
 // and it is a variable for the same reason.
 var SchedJobTypeLicenseRefresh SchedJobType = "license-refresh"
 
+// SchedJobTypeManagedRestoreTest restores a managed database's latest backup in
+// its verifier app: the app is scaled up for the test, and down after it. The
+// engine makes the job, so it is a variable for the image scan's reason.
+var SchedJobTypeManagedRestoreTest SchedJobType = "managed-restore-test"
+
+// SchedJobTypeManagedNightly is a managed database's nightly run: its base
+// backup, then the retention its engine decides from the backups the first step
+// listed and the restore points kept. The engine makes the job; a variable, as
+// the others are.
+var SchedJobTypeManagedNightly SchedJobType = "managed-nightly"
+
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,

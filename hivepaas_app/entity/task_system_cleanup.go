@@ -131,6 +131,8 @@ type ClusterNodeCleanupOutput struct {
 	NetworksPruneError    string `json:"networksPruneError,omitempty"`
 	BuildCachesDeleted    int    `json:"buildCachesDeleted"`
 	BuildCachesPruneError string `json:"buildCachesPruneError,omitempty"`
+	ArtifactsDeleted      int    `json:"artifactsDeleted"`
+	ArtifactsPruneError   string `json:"artifactsPruneError,omitempty"`
 	SpaceReclaimed        uint64 `json:"spaceReclaimed"`
 }
 

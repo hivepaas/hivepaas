@@ -20,6 +20,11 @@ type ClusterCleanupReq struct {
 	// them, from KeptImages. None, from a manager of an older version, prunes
 	// only the images no tag names, as that version did.
 	KeepImages []string
+	// KeepArtifacts are the artifacts every node keeps, from KeptArtifacts, when
+	// ArtifactsKnown. A manager of an older version knows nothing of them, and a
+	// node it asks removes none.
+	KeepArtifacts  []string
+	ArtifactsKnown bool
 }
 
 func (req *ClusterCleanupReq) SetCleanupFlagsDefault() {

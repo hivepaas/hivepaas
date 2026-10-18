@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appimagescanhandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmanagedhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
@@ -51,6 +52,7 @@ func allRoutes(t *testing.T) gin.RoutesInfo {
 	s := &HTTPServer{handlerRegistry: &HandlerRegistry{
 		authHandler:               &authhandler.Handler{},
 		appActionHandler:          &appactionhandler.Handler{},
+		appManagedHandler:         &appmanagedhandler.Handler{},
 		appContainerHandler:       &appcontainerhandler.Handler{},
 		appDeploymentHandler:      &appdeploymenthandler.Handler{},
 		appHandler:                &apphandler.Handler{},

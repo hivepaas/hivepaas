@@ -108,6 +108,13 @@ func (uc *UC) loadAppKindSettingsForUpdate(
 	if err = checkKindCategoryChange(currKindSettings, req.Category); err != nil {
 		return hperrors.Wrap(err)
 	}
+	locks, err := uc.loadManagedLocks(ctx, db, app.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if err = checkManagedKind(locks, currKindSettings, req.Category, req.Engine); err != nil {
+		return hperrors.Wrap(err)
+	}
 	newKindSettings := req.ToEntity()
 	req.KeepMaskedSecrets(newKindSettings, currKindSettings)
 

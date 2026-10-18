@@ -46,6 +46,9 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			RequiresDockerAPI:    requires(repo, tmpl, (*templatemodel.Template).RequiresDockerAPI),
 			Stats:                repo.indexStats(tmpl.Metadata.Name),
 		}
+		if tmpl.Managed != nil {
+			entry.Managed = string(tmpl.Managed.Engine)
+		}
 		for _, variant := range tmpl.Variants {
 			entry.Variants = append(entry.Variants,
 				&templatemodel.IndexVariant{Name: variant.Name, Default: variant.Default})

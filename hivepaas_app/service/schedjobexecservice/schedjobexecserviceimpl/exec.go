@@ -68,6 +68,8 @@ func (s *service) SchedJobExec(
 	}
 	env = append(env, sequenceEnv(req.Sequence)...)
 	env = append(env, triggerEnv(req.Task)...)
+	outputFile, outputEnv := outputFileFor(req, schedJob)
+	env = append(env, outputEnv...)
 
 	var stdoutWriter io.Writer
 	if req.StdoutWriter != nil {
@@ -116,9 +118,9 @@ func (s *service) SchedJobExec(
 		exitCode := execResp.ExitCode
 		resp.ExitCode = &exitCode
 	}
-	if req.Sequence != nil {
+	if outputFile != "" {
 		// Read even after a failure: a step may say why in its outputs.
-		resp.Outputs = s.readOutputs(ctx, req, execResp)
+		resp.Outputs = s.readOutputs(ctx, req, execResp, outputFile)
 	}
 
 	err = s.finalize(ctx, db, err, data)

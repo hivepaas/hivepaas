@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+// ArtifactService keeps the files managed templates mount into containers, on
+// the agent's node.
+service ArtifactService {
+  // Ensure has the file on the node, downloaded by the agent from mirror_url
+  // then url and checked against sha256 and size, and says where the host has it.
+  rpc Ensure(EnsureArtifactReq) returns (EnsureArtifactResp);
+}
+
+message EnsureArtifactReq {
+  string url = 1;
+  string mirror_url = 2;
+  string sha256 = 3;
+  int64 size = 4;
+}
+
+message EnsureArtifactResp {
+  string host_path = 1;
+  bool downloaded = 2;
+}

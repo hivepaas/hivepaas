@@ -8,6 +8,9 @@ var (
 	// ErrPlanLimitReached refuses a creation that would take a limited kind past
 	// the limit of the plan in force. The dashboard turns it into an upgrade prompt.
 	ErrPlanLimitReached = NewErr(ErrPreconditionFailed, "ERR_PLAN_LIMIT_REACHED")
+	// ErrPlanFeatureRequired refuses creating what needs a feature the plan in
+	// force does not include, such as an app from a managed database template.
+	ErrPlanFeatureRequired = NewErr(ErrPreconditionFailed, "ERR_PLAN_FEATURE_REQUIRED")
 	// ErrLicenseInvalid is a license key whose signatures or content do not
 	// verify. Its detail says what failed, never what the key holds: a key carries
 	// the customer's email.

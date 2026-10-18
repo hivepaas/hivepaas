@@ -12,7 +12,7 @@
     },
     "title" : "HivePaaS API",
     "version" : "0.1",
-    "x-api-level" : 3
+    "x-api-level" : 4
   },
   "servers" : [ {
     "url" : "/api"
@@ -21517,6 +21517,765 @@
         },
         "summary" : "Gets log info",
         "tags" : [ "Apps" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed" : {
+      "get" : {
+        "description" : "Where the engine archives, how long it keeps what, when its jobs run, and what it owns of the app.",
+        "operationId" : "appManagedSettingsGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a managed app's settings",
+        "tags" : [ "Managed apps" ]
+      },
+      "put" : {
+        "description" : "Changes the retention, when the base backup and the restore test run, and the restore test's query.\nA field left out is left as it is.",
+        "operationId" : "appManagedSettingsUpdate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UpdateManagedSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UpdateManagedSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates a managed app's settings",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/refresh-credentials" : {
+      "post" : {
+        "description" : "The credentials were copied into the app when it was made: after rotating the storage's key, this\ngives the database the new one. The secrets that changed are mounted again, restarting its task.",
+        "operationId" : "appManagedCredentialsRefresh",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.RefreshManagedCredentialsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.RefreshManagedCredentialsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gives a managed app its archive storage's current credentials",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore" : {
+      "post" : {
+        "description" : "To the latest, a time, a restore point or a base backup, inside its restore window. The new app is\nmade from the same template, version and parameters, on the data volume given, and archives to its\nown prefix; the source is only read. The task returned sees the restore through.",
+        "operationId" : "appManagedRestore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.RestoreManagedReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.RestoreManagedResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a managed database into a new app",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points" : {
+      "post" : {
+        "description" : "The point is made, and listed once the WAL it is in is archived; it can then be restored to for\nas long as retention keeps the base backup before it, or until keepUntil, which holds retention\nback. Names are labels: letters, digits, '.', '_' and '-', at most 63, not starting with \"hp-\".",
+        "operationId" : "appManagedRestorePointCreate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.CreateRestorePointReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.CreateRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Names a moment of a managed database, to restore to exactly",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points/{name}" : {
+      "delete" : {
+        "description" : "The archive is not touched, and the mark stays in the WAL, harmlessly: restores target an LSN.",
+        "operationId" : "appManagedRestorePointDelete",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "restore point name",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.DeleteRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Removes a restore point's record",
+        "tags" : [ "Managed apps" ]
+      },
+      "put" : {
+        "description" : "Both as given: a null keepUntil keeps the point no longer, and retention moves on at its next run.",
+        "operationId" : "appManagedRestorePointUpdate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "restore point name",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UpdateRestorePointReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UpdateRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Changes how long a restore point is kept, and its note",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
+      "get" : {
+        "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
+        "operationId" : "appManagedStatusGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a managed app's state",
+        "tags" : [ "Managed apps" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/unmanage" : {
+      "post" : {
+        "description" : "Removes the engine's state and the jobs it made, and with them the locks. The database keeps\narchiving where it did; base backups, retention, the health check and the restore test stop.",
+        "operationId" : "appManagedUnmanage",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UnmanageAppReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UnmanageAppResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Makes a managed app an ordinary one",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/network-settings" : {
@@ -55490,6 +56249,742 @@
         "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
         "type" : "object"
       },
+      "appmanageddto.CreateRestorePointReq" : {
+        "properties" : {
+          "keepUntil" : {
+            "description" : "KeepUntil holds retention back for the point until then, at most 90 days\nahead; without it, the point lasts as long as retention keeps what it needs.",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "appmanageddto.CreateRestorePointResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestorePointResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.DeleteRestorePointResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.GetManagedSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSettingsResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.GetManagedStatusResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedStatusResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedArchivingResp" : {
+        "properties" : {
+          "checkedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "failedCount" : {
+            "type" : "integer"
+          },
+          "lastArchivedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "pgWalBytes" : {
+            "type" : "integer"
+          },
+          "stale" : {
+            "description" : "Stale says the health check has not run for a while.",
+            "type" : "boolean"
+          },
+          "state" : {
+            "description" : "State is ok, failing, or unknown before the first health check.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "checkedAt", "failedCount", "lastArchivedAt", "pgWalBytes", "stale", "state" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedBackupRefResp" : {
+        "properties" : {
+          "at" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "name" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedBackupResp" : {
+        "properties" : {
+          "at" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "bytes" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "succeeded" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedHeldBackResp" : {
+        "properties" : {
+          "backups" : {
+            "type" : "integer"
+          },
+          "bytes" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "backups", "bytes" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedJobsResp" : {
+        "properties" : {
+          "health" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "nightly" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "health", "nightly", "restoreTest" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedLocksResp" : {
+        "properties" : {
+          "command" : {
+            "type" : "string"
+          },
+          "envKeys" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "image" : {
+            "type" : "string"
+          },
+          "imageLine" : {
+            "type" : "string"
+          },
+          "mounts" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "settings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          }
+        },
+        "required" : [ "command", "envKeys", "image", "imageLine", "mounts", "settings" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestorePointResp" : {
+        "properties" : {
+          "at" : {
+            "type" : "string"
+          },
+          "by" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "By is the user who made it.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "keepUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "kept" : {
+            "description" : "Kept says retention is held back for it now.",
+            "type" : "boolean"
+          },
+          "lsn" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "restorableUntil" : {
+            "description" : "RestorableUntil is until when it can be restored, as retention's next runs\ngo; null when no base backup kept reaches it, or the schedule says nothing.",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "by", "keepUntil", "kept", "lsn", "name", "note", "restorableUntil" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreResp" : {
+        "properties" : {
+          "readyAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "sourceApp" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "target" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTargetResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "readyAt", "sourceApp", "target" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTargetReq" : {
+        "properties" : {
+          "backup" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "point" : {
+            "type" : "string"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTargetResp" : {
+        "properties" : {
+          "backup" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "lsn" : {
+            "type" : "string"
+          },
+          "point" : {
+            "type" : "string"
+          },
+          "time" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "backup", "kind", "lsn", "point", "time" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestCfgRsp" : {
+        "properties" : {
+          "checkQuery" : {
+            "type" : "string"
+          },
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "KeyAuth is the verifier's narrower key, nil when it has the database's.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "mode" : {
+            "description" : "Mode is container or verifier.",
+            "type" : "string"
+          },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "verifierApp" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "checkQuery", "keyAuth", "mode", "nodeId", "verifierApp" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestReq" : {
+        "properties" : {
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "KeyAuth is a narrower key for the verifier, read-only where the storage\nhas one; without, it has the database's. Verifier mode only.",
+            "type" : "object"
+          },
+          "mode" : {
+            "description" : "Mode is container or verifier.",
+            "type" : "string"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is the cluster volume the verifier restores into, pinned to the node\nit runs on - preferably not the database's. Verifier mode only.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "mode" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestResp" : {
+        "properties" : {
+          "durationSeconds" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "passed" : {
+            "type" : "boolean"
+          },
+          "restoredTo" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "durationSeconds", "endedAt", "passed", "restoredTo" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSettingsResp" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "engineApi" : {
+            "type" : "integer"
+          },
+          "jobs" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedJobsResp"
+            } ],
+            "nullable" : true
+          },
+          "locks" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedLocksResp"
+            } ],
+            "nullable" : true
+          },
+          "restore" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreResp"
+            } ],
+            "description" : "Restore is where the database was restored from, null for one that was\nnot; it is restoring until readyAt is set.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestCfgRsp"
+            } ],
+            "nullable" : true
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "storage" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedStorageResp"
+            } ],
+            "nullable" : true
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedStatusResp" : {
+        "properties" : {
+          "archiving" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedArchivingResp"
+            } ],
+            "nullable" : true
+          },
+          "backups" : {
+            "description" : "Backups are the base backups kept, oldest first: what a restore to a backup\nmay name.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedBackupRefResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "engineApi" : {
+            "type" : "integer"
+          },
+          "heldBack" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedHeldBackResp"
+            } ],
+            "description" : "HeldBack is what the kept points make retention keep beyond its own: the\nbase backups and their size, the WAL after them not counted. Null when\nthey keep nothing more.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "lastBackup" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedBackupResp"
+            } ],
+            "nullable" : true
+          },
+          "lastRestoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestResp"
+            } ],
+            "nullable" : true
+          },
+          "placement" : {
+            "description" : "Placement is where the archive is from the database: off-site, shared or\nsame-node, which the dashboard warns about.",
+            "type" : "string"
+          },
+          "restorePoints" : {
+            "description" : "RestorePoints are the points recorded, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestorePointResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "restoreWindow" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedTimeWindowResp"
+            } ],
+            "description" : "RestoreWindow is what a restore may target; null before the first base\nbackup.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "suggestions" : {
+            "description" : "Suggestions are changes worth making: verifier, to run the restore test\nin a verifier app.",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          }
+        },
+        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastRestoreTest", "placement", "restorePoints", "restoreWindow", "suggestions" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedStorageResp" : {
+        "properties" : {
+          "backupRepo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "cloudStorage" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "placement" : {
+            "type" : "string"
+          },
+          "prefix" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "backupRepo", "cloudStorage", "keyAuth", "placement", "prefix" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedTimeWindowResp" : {
+        "properties" : {
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "from", "to" ],
+        "type" : "object"
+      },
+      "appmanageddto.RefreshManagedCredentialsDataResp" : {
+        "properties" : {
+          "changed" : {
+            "description" : "Changed says the app's credentials changed and are being mounted again,\nwhich restarts the database's task.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "changed" ],
+        "type" : "object"
+      },
+      "appmanageddto.RefreshManagedCredentialsReq" : {
+        "type" : "object"
+      },
+      "appmanageddto.RefreshManagedCredentialsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.RefreshManagedCredentialsDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedDataResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "App is the new app, restoring until the task says it is ready.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Task sees the restore through: the recovery, the first base backup, and\nwhat the app was restored with dropped.",
+            "nullable" : true,
+            "type" : "object"
+          }
+        },
+        "required" : [ "app", "task" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedReq" : {
+        "properties" : {
+          "dataVolume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "DataVolume is the cluster volume the new app keeps its data on, pinned to\na node the archive can be reached from.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "name" : {
+            "description" : "Name is the new app's: <app>-restored-<yyyymmdd-hhmm> when empty.",
+            "type" : "string"
+          },
+          "target" : {
+            "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTargetReq"
+          }
+        },
+        "required" : [ "dataVolume", "target" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.RestoreManagedDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UnmanageAppReq" : {
+        "type" : "object"
+      },
+      "appmanageddto.UnmanageAppResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateManagedSettingsReq" : {
+        "properties" : {
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestReq"
+            } ],
+            "description" : "RestoreTest moves the restore test: into a verifier app, made for it, or\nback into the database's container, which deletes the verifier.",
+            "type" : "object"
+          },
+          "restoreTestQuery" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "updateVer" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateManagedSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateRestorePointReq" : {
+        "properties" : {
+          "keepUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "keepUntil", "note" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateRestorePointResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
       "appmetricsdto.AppDependencyAppResp" : {
         "properties" : {
           "id" : {
@@ -61074,6 +62569,24 @@
         },
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateManagedDefaultsResp" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "restoreTestSchedule", "retainFull" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateParamOptionResp" : {
         "properties" : {
           "title" : {
@@ -61218,6 +62731,25 @@
             } ],
             "nullable" : true
           },
+          "managed" : {
+            "description" : "Managed, RequiresFeatures and MissingFeatures are the listing's.",
+            "type" : "string"
+          },
+          "managedDefaults" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateManagedDefaultsResp"
+            } ],
+            "description" : "ManagedDefaults are what a managed template's create form starts from; null\nfor any other template. A zero field is the engine's own default.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "missingFeatures" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "name" : {
             "type" : "string"
           },
@@ -61232,6 +62764,13 @@
             "description" : "PublishedPorts are the addresses this app claims on the cluster itself,\nbeside the web addresses the reverse proxy serves. Two apps cannot share\none, so they are shown before anybody deploys.",
             "items" : {
               "$ref" : "#/components/schemas/apptemplatedto.AppTemplatePortResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "requiresFeatures" : {
+            "items" : {
+              "type" : "string"
             },
             "nullable" : true,
             "type" : "array"
@@ -61270,7 +62809,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "managed", "managedDefaults", "missingFeatures", "name", "parameters", "publishedPorts", "requiresFeatures", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -61319,6 +62858,17 @@
           "license" : {
             "type" : "string"
           },
+          "managed" : {
+            "description" : "Managed is the engine that looks after what the template creates, and \"\"\nfor an ordinary template. The store marks the managed ones.",
+            "type" : "string"
+          },
+          "missingFeatures" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "name" : {
             "type" : "string"
           },
@@ -61329,6 +62879,14 @@
           "requiresDockerApi" : {
             "description" : "RequiresDockerAPI says creating this template gives an app the Docker API,\nbehind the same permission. The store marks those too.",
             "type" : "boolean"
+          },
+          "requiresFeatures" : {
+            "description" : "RequiresFeatures are the license features creating the template needs, and\nMissingFeatures those of them the license in force does not grant. The\nstore shows what is missing, and the plans that include it, instead of a\nform that would be refused.",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
           },
           "stars" : {
             "description" : "Stars are the GitHub stars of the project the template runs, and\nStarsGained the ones of the last 28 days; 0 for a project not counted.",
@@ -61365,7 +62923,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "added", "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "requiresDockerApi", "stars", "starsGained", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "added", "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "managed", "missingFeatures", "name", "requiresCapabilities", "requiresDockerApi", "requiresFeatures", "stars", "starsGained", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {
@@ -61481,9 +63039,17 @@
             "description" : "Deployment is the app's first deployment, already queued: it pulls the\ntemplate's image.",
             "nullable" : true,
             "type" : "object"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.CreatedManagedResp"
+            } ],
+            "description" : "Managed is what the engine of a managed template set up, and null for any\nother template.",
+            "nullable" : true,
+            "type" : "object"
           }
         },
-        "required" : [ "app", "components", "dependencies", "deployment" ],
+        "required" : [ "app", "components", "dependencies", "deployment", "managed" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateReq" : {
@@ -61500,6 +63066,13 @@
           "imageTag" : {
             "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
             "type" : "string"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.ManagedCreateReq"
+            } ],
+            "description" : "Managed is how the engine of a managed template looks after the app: where\nit archives, and what the template's defaults are changed to. Required for\na managed template, and refused for any other.",
+            "type" : "object"
           },
           "name" : {
             "type" : "string"
@@ -61588,6 +63161,15 @@
           }
         },
         "required" : [ "app", "deployment", "name" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreatedManagedResp" : {
+        "properties" : {
+          "placement" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "placement" ],
         "type" : "object"
       },
       "apptemplatedto.GetAppTemplateBindingResp" : {
@@ -61681,6 +63263,44 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "apptemplatedto.ManagedCreateReq" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTestQuery" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/apptemplatedto.ManagedStorageReq"
+          }
+        },
+        "required" : [ "storage" ],
+        "type" : "object"
+      },
+      "apptemplatedto.ManagedStorageReq" : {
+        "properties" : {
+          "backupRepo" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "keyAuth" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "type" : "object"
+      },
       "apptemplatedto.PreflightAppFromTemplateReq" : {
         "properties" : {
           "dependencyParams" : {
@@ -61695,6 +63315,13 @@
           "imageTag" : {
             "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
             "type" : "string"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.ManagedCreateReq"
+            } ],
+            "description" : "Managed is how the engine of a managed template looks after the app: where\nit archives, and what the template's defaults are changed to. Required for\na managed template, and refused for any other.",
+            "type" : "object"
           },
           "name" : {
             "type" : "string"
@@ -63314,9 +64941,9 @@
         "x-enum-varnames" : [ "SettingStatusActive", "SettingStatusPending", "SettingStatusDisabled", "SettingStatusExpired", "SettingStatusMissing" ]
       },
       "base.SettingType" : {
-        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore", "license" ],
+        "enum" : [ "access-token", "acme-dns-provider", "api-key", "app", "app-artifacts", "app-autoscale", "app-clone", "app-deployment", "app-docker-api", "app-features", "app-kind", "app-managed", "app-placement", "app-routing", "app-setting-mount", "app-template", "backup-repo", "backup-repo-cleanup", "backup-snapshot", "basic-auth", "cloud-storage", "cluster-network", "cluster-node", "cluster-volume", "command-pipe", "command-template", "config-file", "domain-settings", "email", "env-var", "github-app", "image-build", "key-auth", "im-service", "hivepaas-service", "logging", "mcp", "notification", "oauth", "periodic-job", "project", "registry", "registry-auth", "repo-webhook", "script", "ssh-key", "ssl-cert", "ssl-provider", "ssl-renewal", "registry-auth-renewal", "sched-job", "secret", "system-backup", "system-cleanup", "traefik-config", "traefik-service", "image-scan", "vulnerability-ignore", "license" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore", "SettingTypeLicense" ]
+        "x-enum-varnames" : [ "SettingTypeAccessToken", "SettingTypeAcmeDnsProvider", "SettingTypeAPIKey", "SettingTypeApp", "SettingTypeAppArtifacts", "SettingTypeAppAutoscale", "SettingTypeAppClone", "SettingTypeAppDeployment", "SettingTypeAppDockerAPI", "SettingTypeAppFeatures", "SettingTypeAppKind", "SettingTypeAppManaged", "SettingTypeAppPlacement", "SettingTypeAppRouting", "SettingTypeAppSettingMount", "SettingTypeAppTemplate", "SettingTypeBackupRepo", "SettingTypeBackupRepoCleanup", "SettingTypeBackupSnapshot", "SettingTypeBasicAuth", "SettingTypeCloudStorage", "SettingTypeClusterNetwork", "SettingTypeClusterNode", "SettingTypeClusterVolume", "SettingTypeCommandPipe", "SettingTypeCommandTemplate", "SettingTypeConfigFile", "SettingTypeDomainSettings", "SettingTypeEmail", "SettingTypeEnvVar", "SettingTypeGithubApp", "SettingTypeImageBuild", "SettingTypeKeyAuth", "SettingTypeIMService", "SettingTypeHivePaaSService", "SettingTypeLogging", "SettingTypeMCP", "SettingTypeNotification", "SettingTypeOAuth", "SettingTypePeriodicJob", "SettingTypeProject", "SettingTypeRegistry", "SettingTypeRegistryAuth", "SettingTypeRepoWebhook", "SettingTypeScript", "SettingTypeSSHKey", "SettingTypeSSLCert", "SettingTypeSSLProvider", "SettingTypeSSLRenewal", "SettingTypeRegistryAuthRenewal", "SettingTypeSchedJob", "SettingTypeSecret", "SettingTypeSystemBackup", "SettingTypeSystemCleanup", "SettingTypeTraefikConfig", "SettingTypeTraefikService", "SettingTypeImageScan", "SettingTypeVulnerabilityIgnore", "SettingTypeLicense" ]
       },
       "base.SubjectType" : {
         "enum" : [ "app", "cluster", "deployment", "network", "node", "project", "project-env", "user" ],
@@ -63339,9 +64966,9 @@
         "x-enum-varnames" : [ "TaskTargetTypeSchedJob", "TaskTargetTypePeriodicJob" ]
       },
       "base.TaskType" : {
-        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load", "task:image-scan" ],
+        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load", "task:image-scan", "task:managed-restore" ],
         "type" : "string",
-        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad", "TaskTypeImageScan" ]
+        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad", "TaskTypeImageScan", "TaskTypeManagedRestore" ]
       },
       "base.TemplatesRef" : {
         "properties" : {
@@ -75609,6 +77236,14 @@
           "kind" : {
             "type" : "string"
           },
+          "managedBy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "ManagedBy is the app-managed setting of the engine that made the job, and\nnull for a job a person made. The dashboard shows a managed job read-only:\nediting, pausing and deleting it are refused.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "maxRetry" : {
             "type" : "integer"
           },
@@ -75686,7 +77321,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "scope", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "managedBy", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "scope", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "schedjobdto.ExecuteSchedJobDataResp" : {
@@ -75961,6 +77596,14 @@
           "kind" : {
             "type" : "string"
           },
+          "managedBy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "ManagedBy is the app-managed setting of the engine that made the job, and\nnull for a job a person made. The dashboard shows a managed job read-only:\nediting, pausing and deleting it are refused.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "maxRetry" : {
             "type" : "integer"
           },
@@ -76032,7 +77675,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "controlDisabled", "createdAt", "id", "inheritable", "jobType", "kind", "managedBy", "maxRetry", "name", "notification", "priority", "retryDelay", "schedule", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "schedjobdto.SchedJobSequenceReq" : {

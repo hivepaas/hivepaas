@@ -50,6 +50,10 @@ type SchedJob struct {
 	Triggers []*SchedJobTrigger `json:"triggers,omitempty"`
 	// DataBackup is what a data-backup job backs up and where; nil for every other type.
 	DataBackup *SchedJobDataBackup `json:"dataBackup,omitempty"`
+	// ManagedBy is the app-managed setting of the engine that made the job, and
+	// empty for a job a person made. The generic screens refuse to change a
+	// managed job; the engine's settings do.
+	ManagedBy ObjectID `json:"managedBy,omitzero"`
 	// FunctionInvoke is the request a function-invoke job calls its function
 	// with; nil for every other type.
 	FunctionInvoke *SchedJobFunctionInvoke `json:"functionInvoke,omitempty"`
@@ -309,7 +313,16 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Sequence.MemberIDs()...)
 	refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.TriggerAppIDs()...)
 	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.DataBackup.refSettingIDs()...)
+	if s.ManagedBy.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.ManagedBy.ID)
+	}
 	return refIDs
+}
+
+// IsManaged reports a job an app's managed engine made, which only the engine
+// changes.
+func (s *SchedJob) IsManaged() bool {
+	return s != nil && s.ManagedBy.ID != ""
 }
 
 func (s *SchedJob) GetResourceLinks(setting *Setting) []*ResLink {

@@ -36,9 +36,10 @@ func (s *service) RunCommand(
 	}
 
 	execResp, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
-		App:         req.App,
-		LogStore:    req.LogStore,
-		StdinReader: req.Stdin,
+		App:          req.App,
+		LogStore:     req.LogStore,
+		StdinReader:  req.Stdin,
+		StdoutWriter: req.StdoutWriter,
 		ExecOptions: func(opts *client.ExecCreateOptions) {
 			opts.AttachStdout = true
 			opts.AttachStderr = true

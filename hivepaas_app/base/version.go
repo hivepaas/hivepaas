@@ -20,10 +20,13 @@ import (
 // not have. Codes are fixed-width, so they compare as strings.
 const (
 	VersionCodeV1 = "v000001" // Date: 2026-01-01
+	// VersionCodeV2 lets a template be managed by an engine, carry artifacts and
+	// require license features.
+	VersionCodeV2 = "v000002" // Date: 2026-10-18
 )
 
 // CurrentVersion is the version code this binary is.
-const CurrentVersion = VersionCodeV1
+const CurrentVersion = VersionCodeV2
 
 // The repositories the app's and the agent's images are released to.
 const (

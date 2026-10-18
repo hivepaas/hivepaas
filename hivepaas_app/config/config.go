@@ -123,6 +123,7 @@ type Config struct {
 	Files      Files      `toml:"files"`
 	Security   Security   `toml:"security"`
 	Agent      Agent      `toml:"agent"`
+	Artifacts  Artifacts  `toml:"artifacts"`
 	License    License    `toml:"license"`
 
 	AppTemplates AppTemplates `toml:"app_templates"`

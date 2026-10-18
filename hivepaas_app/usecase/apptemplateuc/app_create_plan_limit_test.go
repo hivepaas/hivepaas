@@ -9,15 +9,33 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 )
 
-// fakeLicenseService records each plan check, and refuses with err.
+// fakeLicenseService records each plan check, and refuses with err; and each
+// feature check, refused with featuresErr. Its license is current, or Bee.
 type fakeLicenseService struct {
 	licenseservice.Service
 	dbs  []database.IDB
 	reqs []*licenseservice.CheckReq
 	err  error
+
+	features    [][]string
+	featuresErr error
+	current     *license.State
+}
+
+func (f *fakeLicenseService) CheckFeatures(_ context.Context, features []string) error {
+	f.features = append(f.features, features)
+	return f.featuresErr
+}
+
+func (f *fakeLicenseService) Current(context.Context) (*license.State, error) {
+	if f.current != nil {
+		return f.current, nil
+	}
+	return &license.State{Plan: base.LicensePlanBee}, nil
 }
 
 func (f *fakeLicenseService) Check(_ context.Context, db database.IDB, req *licenseservice.CheckReq) error {
@@ -36,7 +54,7 @@ func TestATemplateCountsTheAppItIsAskedFor(t *testing.T) {
 	req.Name = "shop"
 	apps := planApps(req, renderedWithComponents(t, fakes))
 
-	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
+	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps, nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, fakes.provision.names, 3, "a database, a component and the app")
@@ -52,7 +70,7 @@ func TestATemplatePastThePlanProvisionsNothing(t *testing.T) {
 	req := testCreateReq()
 
 	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, fakes.templates.resp))
+		planApps(req, fakes.templates.resp), nil)
 
 	assert.ErrorIs(t, err, hperrors.ErrPlanLimitReached)
 	assert.False(t, fakes.provision.called)

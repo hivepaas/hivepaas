@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -50,6 +51,10 @@ func (s *service) repoDeployStepServiceApply(
 	if err = s.prepareDockerAPI(ctx, db, data.appDeploymentData); err != nil {
 		return hperrors.Wrap(err)
 	}
+	artifactMounts, err := s.prepareArtifacts(ctx, db, data.appDeploymentData)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID, nil,
 		func(i int, svc *swarm.Service) (bool, error) {
@@ -70,6 +75,8 @@ func (s *service) repoDeployStepServiceApply(
 			if err := s.dockerAPIService.ApplyToService(ctx, db, data.App.ID, &svc.Spec); err != nil {
 				return false, hperrors.Wrap(err)
 			}
+			// Artifacts too: the files the app's engine binds, ensured above.
+			artifactservice.Attach(&svc.Spec, artifactMounts)
 			// Mounted settings too: a refresh that failed is put right here.
 			if err := s.settingMountService.ApplyToService(ctx, db, data.App, &svc.Spec); err != nil {
 				return false, hperrors.Wrap(err)

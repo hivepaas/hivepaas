@@ -37,6 +37,10 @@ func (s *service) cleanupCluster(
 		err = errors.Join(err, e)
 	}
 
+	if e := cleanupArtifacts(data); e != nil {
+		err = errors.Join(err, e)
+	}
+
 	return hperrors.Wrap(err)
 }
 

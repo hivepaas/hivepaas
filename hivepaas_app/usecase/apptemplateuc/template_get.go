@@ -23,8 +23,12 @@ func (uc *UC) GetAppTemplate(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	granted, err := uc.licenseService.Current(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	return &apptemplatedto.GetAppTemplateResp{
-		Data: apptemplatedto.TransformAppTemplate(tmpl, base.CurrentVersion),
+		Data: apptemplatedto.TransformAppTemplate(tmpl, base.CurrentVersion, granted),
 	}, nil
 }
 
@@ -45,7 +49,11 @@ func (uc *UC) getIncompatibleAppTemplate(
 	if entry == nil || templatemodel.IsCompatible(entry.Requires, base.CurrentVersion) {
 		return nil, hperrors.Wrap(refused)
 	}
+	granted, err := uc.licenseService.Current(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	return &apptemplatedto.GetAppTemplateResp{
-		Data: apptemplatedto.TransformIncompatibleAppTemplate(index, entry, base.CurrentVersion),
+		Data: apptemplatedto.TransformIncompatibleAppTemplate(index, entry, base.CurrentVersion, granted),
 	}, nil
 }

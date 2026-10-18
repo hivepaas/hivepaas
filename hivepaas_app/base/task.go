@@ -47,6 +47,11 @@ const (
 	// vulnerabilities: after a deployment, or when asked. See
 	// service/imagescanservice.
 	TaskTypeImageScan TaskType = "task:image-scan"
+
+	// TaskTypeManagedRestore sees a managed database restored into a new app
+	// through: its recovery, its first base backup, and what it was restored with
+	// dropped. See tasks/taskmanagedrestore.
+	TaskTypeManagedRestore TaskType = "task:managed-restore"
 )
 
 var (
@@ -54,14 +59,14 @@ var (
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
 		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore, TaskTypeDataFileLoad,
-		TaskTypeImageScan}
+		TaskTypeImageScan, TaskTypeManagedRestore}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)
 	AllHivepaasTaskTypes = []TaskType{}
 	AllProjectTaskTypes  = []TaskType{TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec, TaskTypeBackupRestore,
-		TaskTypeDataFileLoad, TaskTypeImageScan}
+		TaskTypeDataFileLoad, TaskTypeImageScan, TaskTypeManagedRestore}
 	AllAppTaskTypes  = AllProjectTaskTypes
 	AllUserTaskTypes = []TaskType{}
 )

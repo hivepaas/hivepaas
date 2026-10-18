@@ -38,6 +38,41 @@ var (
 	ErrDeploymentMethodFunctionUnallowed = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED")
 	// An app is a function from its creation, and stays one.
 	ErrAppKindFunctionUnchangeable = NewErr(ErrNonEditable, "ERR_APP_KIND_FUNCTION_UNCHANGEABLE")
+	// ErrAppManagedFieldLocked refuses an edit to what an app's managed engine
+	// owns, naming the field. It is changed through the engine's settings, or the
+	// app unmanaged first.
+	ErrAppManagedFieldLocked = NewErr(ErrNonEditable, "ERR_APP_MANAGED_FIELD_LOCKED")
+	// ErrAppManagedVolumeNotPinned refuses a managed app whose data volume is not
+	// pinned to a node: its archive and its artifacts are decided by that node.
+	ErrAppManagedVolumeNotPinned = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VOLUME_NOT_PINNED")
+	// ErrAppManagedArchiveUnreachable refuses a volume backup repository the
+	// database's node cannot mount: one pinned to another node.
+	ErrAppManagedArchiveUnreachable = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_ARCHIVE_UNREACHABLE")
+	// ErrAppManagedVerifierNeedsObjectStorage refuses a verifier app for a
+	// database archiving to a volume: a verifier reads the archive from where any
+	// node can, which a volume is not.
+	ErrAppManagedVerifierNeedsObjectStorage = NewErr(ErrPreconditionFailed,
+		"ERR_APP_MANAGED_VERIFIER_NEEDS_OBJECT_STORAGE")
+	// ErrAppManagedVerifierExists refuses a second verifier app: the restore test
+	// moves back into the database's container first, which deletes the one there is.
+	ErrAppManagedVerifierExists = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VERIFIER_EXISTS")
+	// ErrAppManagedRestoreTargetInvalid refuses a restore target that does not
+	// say what to recover to.
+	ErrAppManagedRestoreTargetInvalid = NewErr(ErrArgumentInvalid, "ERR_APP_MANAGED_RESTORE_TARGET_INVALID")
+	// ErrAppManagedRestoreOutsideWindow refuses a restore target the archive does
+	// not reach: before its oldest base backup, after its last archived WAL, or
+	// with no base backup yet.
+	ErrAppManagedRestoreOutsideWindow = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_RESTORE_OUTSIDE_WINDOW")
+	// ErrAppManagedRestoreNoBackup refuses a restore of a database whose first
+	// base backup is not taken yet.
+	ErrAppManagedRestoreNoBackup = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_RESTORE_NO_BACKUP")
+	// ErrAppManagedRestoreFailed ends a restore that cannot go on: the recovery
+	// failed, or the first base backup did. What went wrong is in the task's log.
+	ErrAppManagedRestoreFailed = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_FAILED")
+	// ErrAppManagedRestorePointNotArchived refuses a restore point whose WAL was
+	// not archived in time: it could not be restored to yet, so it is not
+	// recorded. Archiving may be failing.
+	ErrAppManagedRestorePointNotArchived = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

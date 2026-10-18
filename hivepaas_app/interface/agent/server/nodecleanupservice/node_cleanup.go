@@ -47,6 +47,8 @@ func NodeCleanup(
 			CleanupNetworks:   base.CleanupFlag(req.GetCleanupNetworks()),
 			CleanupBuildCache: base.CleanupFlag(req.GetCleanupBuildCache()),
 			KeepImages:        req.GetKeepImages(),
+			KeepArtifacts:     req.GetKeepArtifacts(),
+			ArtifactsKnown:    req.GetArtifactsKnown(),
 		},
 	}
 
@@ -74,6 +76,8 @@ func NodeCleanup(
 		NetworksPruneError:    resp.NetworksPruneError,
 		BuildCachesDeleted:    int32(resp.BuildCachesDeleted),
 		BuildCachesPruneError: resp.BuildCachesPruneError,
+		ArtifactsDeleted:      int32(resp.ArtifactsDeleted),
+		ArtifactsPruneError:   resp.ArtifactsPruneError,
 		SpaceReclaimed:        resp.SpaceReclaimed,
 	}, nil
 }

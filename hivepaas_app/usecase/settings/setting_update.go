@@ -164,6 +164,9 @@ func (uc *BaseUC) loadSettingForUpdate(
 	if req.UpdateVer != setting.UpdateVer {
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	if err = uc.refuseManagedSetting(ctx, db, setting); err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	if setting.ObjectID != req.Scope.ScopeObjectID() {
 		return hperrors.Wrap(hperrors.ErrInheritedSettingNonUpdatable)

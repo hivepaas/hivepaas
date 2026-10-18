@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appimagescanhandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmanagedhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
@@ -58,6 +59,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/apptemplateserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice/artifactserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice/attentionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
@@ -85,6 +87,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice/licenseserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice/notificationserviceimpl"
@@ -127,6 +130,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdatafileload"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskimagescan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskmanagedrestore"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingmountrefresh"
@@ -139,6 +143,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appimagescanuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
@@ -212,6 +217,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/artifactagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
@@ -265,6 +271,7 @@ var Provides = []any{
 	tasksslobtain.NewExecutor,
 	taskimagescan.NewExecutor,
 	taskbackuprestore.NewExecutor,
+	taskmanagedrestore.NewExecutor,
 	taskdatafileload.NewExecutor,
 	tasksettingmountrefresh.NewExecutor,
 	taskworkflow.NewExecutor,
@@ -275,6 +282,7 @@ var Provides = []any{
 
 	// Route handler
 	appactionhandler.New,
+	appmanagedhandler.New,
 	appbasehandler.New,
 	appcontainerhandler.New,
 	appdeploymenthandler.New,
@@ -317,6 +325,7 @@ var Provides = []any{
 	acmednsprovideruc.New,
 	apikeyuc.New,
 	appactionuc.New,
+	appmanageduc.New,
 	appcontaineruc.New,
 	appdeploymentuc.New,
 	appfeaturesettingsuc.New,
@@ -436,6 +445,8 @@ var Provides = []any{
 	attentionserviceimpl.New,
 	networkserviceimpl.New,
 	nodeexecserviceimpl.New,
+	artifactserviceimpl.New,
+	managedserviceimpl.New,
 	notificationserviceimpl.New,
 	placementserviceimpl.New,
 	projectserviceimpl.New,
@@ -516,5 +527,6 @@ var Provides = []any{
 	reposerveragentuc.New,
 	nodecleanupagentuc.New,
 	volumeagentuc.New,
+	artifactagentuc.New,
 	fileagentuc.New,
 }

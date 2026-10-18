@@ -93,6 +93,9 @@ func (t *Template) Validate(fileName string) error {
 	validateComponents(t, &p)
 	validateCapabilities(t, &p)
 	validateDockerAPI(t, &p)
+	validateFeatures(t, &p)
+	validateManaged(t, &p)
+	validateArtifacts(t, &p)
 
 	name := t.Metadata.Name
 	if name == "" {

@@ -22,11 +22,15 @@ func (uc *UC) ListAppTemplates(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	granted, err := uc.licenseService.Current(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	matched := sortTemplates(filterTemplates(index.Index.Templates, req), req.Paging.Sort)
 	page, pagingMeta := pageTemplates(matched, req.Paging)
 	return &apptemplatedto.ListAppTemplatesResp{
 		Meta: &basedto.ListMeta{Page: pagingMeta},
-		Data: apptemplatedto.TransformAppTemplateSummaries(page, base.CurrentVersion),
+		Data: apptemplatedto.TransformAppTemplateSummaries(page, base.CurrentVersion, granted),
 	}, nil
 }
 

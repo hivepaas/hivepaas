@@ -23,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
@@ -32,12 +33,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type Executor struct {
 	logger      logging.Logger
 	db          *database.DB
 	redisClient rediscache.Client
+
+	dockerManager docker.Manager
 
 	settingRepo repository.SettingRepo
 	taskLogRepo repository.TaskLogRepo
@@ -48,6 +52,7 @@ type Executor struct {
 	dataBackupService        databackupservice.Service
 	imageScanService         imagescanservice.Service
 	licenseService           licenseservice.Service
+	managedService           managedservice.Service
 	notificationService      notificationservice.Service
 	registryAuthService      registryauthservice.Service
 	schedJobExecService      schedjobexecservice.Service
@@ -63,6 +68,7 @@ func NewExecutor(
 	db *database.DB,
 	redisClient rediscache.Client,
 	taskQueue queue.TaskQueue,
+	dockerManager docker.Manager,
 
 	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
@@ -73,6 +79,7 @@ func NewExecutor(
 	dataBackupService databackupservice.Service,
 	imageScanService imagescanservice.Service,
 	licenseService licenseservice.Service,
+	managedService managedservice.Service,
 	notificationService notificationservice.Service,
 	registryAuthService registryauthservice.Service,
 	schedJobExecService schedjobexecservice.Service,
@@ -87,6 +94,8 @@ func NewExecutor(
 		db:          db,
 		redisClient: redisClient,
 
+		dockerManager: dockerManager,
+
 		settingRepo: settingRepo,
 		taskLogRepo: taskLogRepo,
 		taskRepo:    taskRepo,
@@ -96,6 +105,7 @@ func NewExecutor(
 		dataBackupService:        dataBackupService,
 		imageScanService:         imageScanService,
 		licenseService:           licenseService,
+		managedService:           managedService,
 		notificationService:      notificationService,
 		registryAuthService:      registryAuthService,
 		schedJobExecService:      schedJobExecService,
@@ -148,6 +158,7 @@ func (e *Executor) execute(
 		jobSetting: data.SchedJob,
 		refObjects: data.RefObjects,
 	})
+	keepManagedOutputs(data.Task, data.SchedJob.MustAsSchedJob(), result)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

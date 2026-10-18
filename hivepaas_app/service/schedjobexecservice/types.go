@@ -33,6 +33,9 @@ type RunCommandReq struct {
 	Command *entity.CommandTemplate
 	// Stdin is what the command reads; its end is the command's input's end.
 	Stdin io.Reader
+	// StdoutWriter takes the command's stdout in place of the log: what it
+	// prints is its answer, a restore point's LSN.
+	StdoutWriter io.Writer
 }
 
 type RunCommandResp struct {

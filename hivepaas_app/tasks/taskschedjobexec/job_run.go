@@ -44,20 +44,7 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 	schedJob := run.jobSetting.MustAsSchedJob()
 	switch schedJob.JobType {
 	case base.SchedJobTypeContainerCommand:
-		resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
-			TaskExecData:    run.execData,
-			SchedJobSetting: run.jobSetting,
-			DestApp:         run.refObjects.RefApps[schedJob.App.ID],
-			Sequence:        run.sequence,
-		})
-		if resp != nil {
-			result.skipNotification = resp.SkipResultNotification
-			result.exitCode = resp.ExitCode
-			result.outputs = resp.Outputs
-		}
-		if err != nil {
-			return result, hperrors.Wrap(err)
-		}
+		return e.runContainerCommand(ctx, db, run, schedJob)
 
 	case base.SchedJobTypeSystemCleanup:
 		setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]
@@ -154,11 +141,39 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 	case base.SchedJobTypeFunctionInvoke:
 		return e.invokeFunction(ctx, db, run, schedJob)
 
+	case base.SchedJobTypeManagedRestoreTest:
+		return e.runRestoreTest(ctx, db, run, schedJob)
+
+	case base.SchedJobTypeManagedNightly:
+		return e.runNightly(ctx, db, run, schedJob)
+
 	case base.SchedJobTypeJobSequence:
 		// Never a step: a sequence does not run another (checked on save).
 		return nil, hperrors.NewUnsupported("A job sequence as a step")
 	}
 
+	return result, nil
+}
+
+// runContainerCommand runs the job's command in its app. Its exit code and its
+// outputs are kept even when it fails.
+func (e *Executor) runContainerCommand(ctx context.Context, db database.Tx, run *jobRun,
+	schedJob *entity.SchedJob) (*jobResult, error) {
+	result := &jobResult{}
+	resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
+		TaskExecData:    run.execData,
+		SchedJobSetting: run.jobSetting,
+		DestApp:         run.refObjects.RefApps[schedJob.App.ID],
+		Sequence:        run.sequence,
+	})
+	if resp != nil {
+		result.skipNotification = resp.SkipResultNotification
+		result.exitCode = resp.ExitCode
+		result.outputs = resp.Outputs
+	}
+	if err != nil {
+		return result, hperrors.Wrap(err)
+	}
 	return result, nil
 }
 

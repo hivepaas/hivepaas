@@ -100,6 +100,22 @@ var (
 		LicenseLimitFunctions, LicenseLimitPreviews, LicenseLimitSignInProviders}
 )
 
+// LicenseFeature is something a plan includes or leaves out, rather than counts:
+// what a template requires and a key grants. A key names features, not plans
+// alone, so which plans grant one can change without a template changing.
+type LicenseFeature string
+
+const (
+	// LicenseFeatureManagedDatabases is creating apps from managed database
+	// templates. What exists keeps running without it, and restoring is never
+	// refused for want of it.
+	LicenseFeatureManagedDatabases LicenseFeature = "managed-databases"
+)
+
+var (
+	AllLicenseFeatures = []LicenseFeature{LicenseFeatureManagedDatabases}
+)
+
 // LicenseRefreshResult is how a check with the portal for a newer key went.
 type LicenseRefreshResult string
 

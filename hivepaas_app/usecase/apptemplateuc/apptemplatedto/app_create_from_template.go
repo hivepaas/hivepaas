@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
@@ -16,6 +17,9 @@ const (
 	templateNameMinLen = 1
 	// imageTagMaxLen is docker's own limit on a tag.
 	imageTagMaxLen = 128
+	// maxRetainFull and restoreTestQueryMaxLen bound a managed app's options.
+	maxRetainFull          = 365
+	restoreTestQueryMaxLen = 2000
 )
 
 type CreateAppFromTemplateReq struct {
@@ -41,6 +45,30 @@ type CreateAppFromTemplateReq struct {
 	// directories before the new ones are created. It is what the preflight
 	// endpoint's findings are answered with, and it is off unless asked for.
 	ResetStorage bool `json:"resetStorage,omitempty"`
+	// Managed is how the engine of a managed template looks after the app: where
+	// it archives, and what the template's defaults are changed to. Required for
+	// a managed template, and refused for any other.
+	Managed *ManagedCreateReq `json:"managed,omitempty"`
+}
+
+// ManagedCreateReq is what a managed app is created with. A zero field takes
+// the template's default, then the engine's.
+type ManagedCreateReq struct {
+	Storage             ManagedStorageReq `json:"storage"`
+	ArchiveTimeout      timeutil.Duration `json:"archiveTimeout,omitempty"`
+	RetainFull          int               `json:"retainFull,omitempty"`
+	BaseBackupSchedule  string            `json:"baseBackupSchedule,omitempty"`
+	RestoreTestSchedule string            `json:"restoreTestSchedule,omitempty"`
+	RestoreTestQuery    string            `json:"restoreTestQuery,omitempty"`
+}
+
+// ManagedStorageReq is where the engine archives: a backup repository, S3 or
+// volume, or any cloud storage - exactly one. KeyAuth is a narrower key than the
+// storage's own, for an S3 archive.
+type ManagedStorageReq struct {
+	BackupRepo   *basedto.ObjectIDReq `json:"backupRepo,omitempty"`
+	CloudStorage *basedto.ObjectIDReq `json:"cloudStorage,omitempty"`
+	KeyAuth      *basedto.ObjectIDReq `json:"keyAuth,omitempty"`
 }
 
 func NewCreateAppFromTemplateReq() *CreateAppFromTemplateReq {
@@ -72,6 +100,20 @@ func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 		basedto.ValidateCond(req.ImageTag == "" || templatemodel.ValidImageTag(req.ImageTag), "imageTag")...)
 	validators = append(validators,
 		basedto.ValidateCond(len(req.DependencyParams) <= templatemodel.MaxDependencies, "dependencyParams")...)
+	if managed := req.Managed; managed != nil {
+		storages := 0
+		for _, ref := range []*basedto.ObjectIDReq{managed.Storage.BackupRepo, managed.Storage.CloudStorage} {
+			if ref != nil && ref.ID != "" {
+				storages++
+			}
+		}
+		validators = append(validators,
+			basedto.ValidateCond(storages == 1, "managed.storage")...)
+		validators = append(validators,
+			basedto.ValidateCond(managed.RetainFull >= 0 && managed.RetainFull <= maxRetainFull, "managed.retainFull")...)
+		validators = append(validators, basedto.ValidateStr(&managed.RestoreTestQuery, false, 1,
+			restoreTestQueryMaxLen, "managed.restoreTestQuery")...)
+	}
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
@@ -91,6 +133,16 @@ type CreateAppFromTemplateDataResp struct {
 	// each with its first deployment. The app above is the primary component, so
 	// it is not repeated here.
 	Components []*CreatedComponentResp `json:"components"`
+	// Managed is what the engine of a managed template set up, and null for any
+	// other template.
+	Managed *CreatedManagedResp `json:"managed"`
+}
+
+// CreatedManagedResp says where the archive is relative to the database:
+// off-site, on storage the database's node shares, or on the same node, which
+// the dashboard warns about - losing the node loses both.
+type CreatedManagedResp struct {
+	Placement string `json:"placement"`
 }
 
 type CreatedComponentResp struct {

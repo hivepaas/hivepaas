@@ -982,7 +982,89 @@ d9b41b09; CLI 6e9bd1f, merged as 3661a52):
 - Live: needs a second node; the dind stack has one. This task is checked on the Linux
   server or a two-node dind.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend f7e91542, merged as 3f6e21f6; dashboard aec27247, merged as
+e4ea929d; no template change, and the API is unchanged, at level 4, so no CLI change):
+- **Accepted:**
+  - An unpinned data volume is accepted, as the volume's own claim of shared storage.
+    `dataVolumePin` returns the pin the volumes share, or none.
+  - With no pin, `volumeArchive` refuses a volume archive with
+    `ERR_APP_MANAGED_SHARED_VOLUME_NEEDS_OBJECT_STORAGE`. An archive on a shared volume
+    is refused too, as the plan said: only off-site.
+  - `memberVolumePin` replaces `verifierVolumePin`, for the verifier and replicas, and
+    accepts an unpinned volume. Those already require off-site. A replica on one
+    records node `""`, and the dashboard shows "On any node".
+  - `placementservice.PinnedSpec(pin)` is the spec `MountsFor` is given: no placement
+    for no pin, so every eligible node.
+- **Added beyond the plan:**
+  - **tmpfs is refused** (`volumeservice.DriverOptsInMemory`, driver option
+    `type=tmpfs`) with `ERR_APP_MANAGED_VOLUME_IN_MEMORY`. This applies to the data
+    volume, pinned or not, and a replica's. A verifier's scratch may be in memory.
+  - **One task at most.** `checkManagedMode` in the service settings refuses another
+    mode than replicated, or more than 1 replica, as field `mode` / `replicas`. Two
+    tasks would be two servers on one data directory, which shared storage lets start
+    on two nodes.
+  - `ERR_APP_MANAGED_VOLUME_NOT_PINNED` now means no volume, or volumes pinned to
+    different nodes. Its message changed and it takes no parameter.
+- **The reconcile:**
+  - `artifactService.ReconcileAll` lists the active app-artifacts settings (the
+    database's, its replicas', its verifier's) and loads their apps. For each it
+    inspects the service and calls `MountsFor` with its spec as it stands.
+  - A service that is gone is skipped. A failure (two architectures, no Ready node, a
+    download) is recorded per app, and the others go on. It changes no service.
+  - The global job `managed-artifacts` (`base.SchedJobTypeManagedArtifacts`, a
+    variable as the others are) is made on every start by `initDefaultManagedArtifacts`
+    if missing. It runs every 10 minutes from that start, with no target, no retry and
+    no notification.
+  - Its run logs "The artifacts of N app(s) are on every node they may start on", and
+    one line per failed app with its reason. It fails when any app did.
+  - `JoinNode` (over SSH) then creates a task of that job, run two minutes later
+    (`RunAt`), for the node to be Ready and its agent up. A failure to schedule it
+    does not fail the join. A node joined by the join command alone waits for the next
+    turn.
+- **Not done:**
+  - **A volume that claims to be shared but is not.** It gives an empty directory on
+    another node, where the database initializes afresh.
+    - `WALG_PREVENT_WAL_OVERWRITE` makes its archiving fail on the segments the archive
+      has. Its nightly base backup would still join the archive's.
+    - Refusing an empty data directory over an archive with backups, in
+      `walg-entrypoint`, is a follow-up. The spec says so.
+  - **No two-node live check.** That is for the Linux server.
+- **Dashboard:**
+  - The verifier, replica and restore volume pickers list every volume with where it
+    is: `node …`, `nodes labeled …` or `every node`.
+  - Replicas and restore leave out or disable tmpfs ("kept in memory").
+  - Restore disables a shared volume unless the source archives off-site.
+  - The create form's note says a shared data volume archives to object storage.
+- **Tests:**
+  - create plan: shared accepted and unpinned; refused with a volume archive, and for
+    tmpfs pinned or not;
+  - `memberVolumePin`;
+  - `PinnedSpec`;
+  - the mode lock;
+  - `ReconcileAll` (pinned, shared, mixed architectures fails alone, service gone,
+    none);
+  - the job's log;
+  - the job's init, once;
+  - the join's scheduled run;
+  - e2e level-0: 13, all pass. The restore test now expects the shared volume enabled
+    and a tmpfs one disabled.
+- **Live check, on the e2e stack (`lc/check14.sh`):**
+  - At start: one `managed-artifacts` job, every 10m.
+  - Refusals:
+    - pg18s on an unpinned bind volume with the dumps' volume repository is refused
+      (`…_SHARED_VOLUME_NEEDS_OBJECT_STORAGE`);
+    - a tmpfs data volume is refused (`…_VOLUME_IN_MEMORY`).
+  - pg18s with S3:
+    - answers; its service has no node constraint and binds the WAL-G artifact;
+    - its nightly is done.
+  - A replica on another unpinned volume has node `""`, and streams.
+  - Service settings:
+    - 2 replicas is refused (`…_FIELD_LOCKED`, replicas);
+    - 1 is saved.
+  - Reconcile: the cached artifact file was removed from the node. The job's next run
+    (7.9s) was done, logged 10 apps, and the file was back.
 
 ## Task 9: scanning the artifact
 

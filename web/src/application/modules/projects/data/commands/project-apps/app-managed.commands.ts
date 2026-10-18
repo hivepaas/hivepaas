@@ -10,6 +10,8 @@ import type {
     AppManaged_RefreshCredentials_Res,
     AppManaged_Restore_Req,
     AppManaged_Restore_Res,
+    AppManaged_Switch_Req,
+    AppManaged_Switch_Res,
     AppManaged_Unmanage_Req,
     AppManaged_Unmanage_Res,
     AppManaged_UpdateRestorePoint_Req,
@@ -102,6 +104,27 @@ function useRestore({ onSuccess, ...options }: Options<AppManaged_Restore_Res, A
     });
 }
 
+function useSwitch({ onSuccess, ...options }: Options<AppManaged_Switch_Res, AppManaged_Switch_Req["data"]> = {}) {
+    const { mutations } = useAppManagedApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.switchConsumers,
+        onSuccess: (response, request, ...rest) => {
+            // Both databases' settings say so, the source's jobs pause, and the
+            // consumers' variables and settings change.
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.managed.$.find-settings"]] });
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.managed.$.find-switch"]] });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]],
+            });
+            invalidateManaged(queryClient, request);
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
 function useCreateRestorePoint({
     onSuccess,
     ...options
@@ -154,6 +177,7 @@ function useDeleteRestorePoint({
 }
 
 export const AppManagedCommands = Object.freeze({
+    useSwitch,
     useUpdateSettings,
     useRefreshCredentials,
     useUnmanage,

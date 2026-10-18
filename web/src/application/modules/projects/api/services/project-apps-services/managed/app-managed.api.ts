@@ -13,10 +13,14 @@ import type {
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Req,
     AppManaged_FindStatus_Res,
+    AppManaged_FindSwitch_Req,
+    AppManaged_FindSwitch_Res,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RefreshCredentials_Res,
     AppManaged_Restore_Req,
     AppManaged_Restore_Res,
+    AppManaged_Switch_Req,
+    AppManaged_Switch_Res,
     AppManaged_Unmanage_Req,
     AppManaged_Unmanage_Res,
     AppManaged_UpdateRestorePoint_Req,
@@ -83,6 +87,20 @@ export class AppManagedApi extends BaseApi {
         return this.run(
             this.client.v1.post(`${this.base(req.data)}/restore`, req.data.payload),
             this.validator.restore,
+        );
+    }
+
+    async findSwitch(
+        req: AppManaged_FindSwitch_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppManaged_FindSwitch_Res, Error>> {
+        return this.run(this.client.v1.get(`${this.base(req.data)}/switch`, { signal }), this.validator.findSwitch);
+    }
+
+    async switchConsumers(req: AppManaged_Switch_Req): Promise<Result<AppManaged_Switch_Res, Error>> {
+        return this.run(
+            this.client.v1.post(`${this.base(req.data)}/switch`, req.data.payload),
+            this.validator.switchConsumers,
         );
     }
 

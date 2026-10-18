@@ -6,8 +6,10 @@ import type {
     AppManaged_CreateRestorePoint_Res,
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Res,
+    AppManaged_FindSwitch_Res,
     AppManaged_RefreshCredentials_Res,
     AppManaged_Restore_Res,
+    AppManaged_Switch_Res,
 } from "./app-managed.api.contracts";
 
 const ObjectRefSchema = z
@@ -89,9 +91,45 @@ const SettingsSchema = z.object({
             sourceApp: ObjectRefSchema,
             target: RestoreTargetSchema.nullish().transform(value => value ?? undefined),
             readyAt: OptionalDateSchema,
+            switchedAt: OptionalDateSchema,
         })
         .nullish()
         .transform(value => value ?? undefined),
+    switchedTo: z
+        .object({ app: ObjectRefSchema, at: z.coerce.date() })
+        .nullish()
+        .transform(value => value ?? undefined),
+});
+
+const SwitchAppSchema = z.object({ id: z.string(), name: z.string(), key: z.string() });
+
+const SwitchSchema = z.object({
+    source: SwitchAppSchema,
+    consumers: z
+        .array(
+            z.object({
+                app: SwitchAppSchema,
+                envVars: StringListSchema,
+                previewClone: z.boolean().optional().default(false),
+                deployRestorePoint: z.boolean().optional().default(false),
+            }),
+        )
+        .nullish()
+        .transform(value => value ?? []),
+    switchedAt: OptionalDateSchema,
+});
+
+const IdSchema = z.object({ id: z.string() });
+
+const SwitchResultSchema = z.object({
+    switched: z
+        .array(IdSchema)
+        .nullish()
+        .transform(value => value ?? []),
+    deployments: z
+        .array(z.object({ app: IdSchema, deployment: IdSchema, task: IdSchema }))
+        .nullish()
+        .transform(value => value ?? []),
 });
 
 const RestorePointSchema = z.object({
@@ -185,6 +223,14 @@ export class AppManagedApiValidator {
             response,
             schema: withMeta(z.object({ app: z.object({ id: z.string() }), task: z.object({ id: z.string() }) })),
         });
+    };
+
+    findSwitch = (response: ApiHttpResponse): AppManaged_FindSwitch_Res => {
+        return parseApiResponse({ response, schema: withMeta(SwitchSchema) });
+    };
+
+    switchConsumers = (response: ApiHttpResponse): AppManaged_Switch_Res => {
+        return parseApiResponse({ response, schema: withMeta(SwitchResultSchema) });
     };
 
     createRestorePoint = (response: ApiHttpResponse): AppManaged_CreateRestorePoint_Res => {

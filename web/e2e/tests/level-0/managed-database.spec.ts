@@ -133,6 +133,39 @@ function managedSettings() {
     };
 }
 
+// What switching to the database would repoint: the source it was restored
+// from, and two apps that use it.
+function managedSwitch() {
+    return {
+        source: { id: "e2esourcedb0001", name: "shop-db", key: "shop-db" },
+        consumers: [
+            {
+                app: { id: "e2ewebapp000001", name: "shop-web", key: "shop-web" },
+                envVars: ["DATABASE_URL"],
+                previewClone: true,
+                deployRestorePoint: false,
+            },
+            {
+                app: { id: "e2eworkerapp001", name: "shop-worker", key: "shop-worker" },
+                envVars: ["PGHOST", "PGPORT"],
+                previewClone: false,
+                deployRestorePoint: true,
+            },
+        ],
+        switchedAt: null,
+    };
+}
+
+// A restored database, ready.
+const RESTORED = {
+    restore: {
+        sourceApp: { id: "e2esourcedb0001" },
+        target: { kind: "latest", time: null, point: "", lsn: "", backup: "" },
+        readyAt: at(-HOUR),
+        switchedAt: null,
+    },
+};
+
 function managedStatus() {
     return {
         engine: "postgres",
@@ -189,10 +222,36 @@ function managedStatus() {
 async function answerManaged(
     page: Page,
     app: { projectId: string; env: string; id: string },
-): Promise<{ restores: Request[]; updates: Request[] }> {
+    settings: Record<string, unknown> = {},
+): Promise<{ restores: Request[]; updates: Request[]; switches: Request[] }> {
     const appPath = `/api/projects/${app.projectId}/${app.env}/apps/${app.id}`;
     const restores: Request[] = [];
     const updates: Request[] = [];
+    const switches: Request[] = [];
+    await page.route(
+        url => url.pathname === `${appPath}/managed/switch`,
+        route => {
+            if (route.request().method() === "POST") {
+                switches.push(route.request());
+                return route.fulfill({
+                    json: {
+                        meta: {},
+                        data: {
+                            switched: [{ id: "e2eworkerapp001" }],
+                            deployments: [
+                                {
+                                    app: { id: "e2eworkerapp001" },
+                                    deployment: { id: "e2edeployment002" },
+                                    task: { id: "e2edeploytask002" },
+                                },
+                            ],
+                        },
+                    },
+                });
+            }
+            return route.fulfill({ json: { meta: {}, data: managedSwitch() } });
+        },
+    );
     await page.route(
         url => url.pathname === appPath,
         async route => {
@@ -210,7 +269,7 @@ async function answerManaged(
                 return route.fulfill({ json: { meta: {} } });
             }
             if (route.request().method() !== "GET") return route.abort();
-            return route.fulfill({ json: { meta: {}, data: managedSettings() } });
+            return route.fulfill({ json: { meta: {}, data: { ...managedSettings(), ...settings } } });
         },
     );
     // What the environment can dump into.
@@ -247,7 +306,7 @@ async function answerManaged(
                 ]),
             }),
     );
-    return { restores, updates };
+    return { restores, updates, switches };
 }
 
 // A managed template is deployed with the archive it is given: the store marks
@@ -407,4 +466,44 @@ test("a managed database's dumps are turned off from its settings", async ({ pag
 
     await expect.poll(() => updates.length, { message: "the settings were saved" }).toBe(1);
     expect(updates[0]?.postDataJSON()).toEqual({ updateVer: 3, dumpRepo: { id: "" } });
+});
+
+// A restored database lists the apps that use its source; the ones kept checked
+// are switched, redeployed when asked, once the switch is confirmed.
+test("a restored database switches its source's consumers to it", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { switches } = await answerManaged(page, app, RESTORED);
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Switch consumers" });
+    await expect(section.getByText("variable DATABASE_URL; its previews clone it")).toBeVisible();
+    await expect(
+        section.getByText("variables PGHOST, PGPORT; its deployments mark a restore point on it"),
+    ).toBeVisible();
+
+    await section.getByRole("checkbox", { name: "shop-web" }).click();
+    await section.getByRole("checkbox", { name: "Redeploy them" }).click();
+    await section.getByRole("button", { name: "Switch" }).click();
+    await expect(page.getByText("shop-db keeps running, its jobs paused.")).toBeVisible();
+    await page.getByRole("button", { name: "Switch", exact: true }).last().click();
+
+    await expect.poll(() => switches.length, { message: "the switch was asked for" }).toBe(1);
+    expect(switches[0]?.postDataJSON()).toEqual({ consumers: [{ id: "e2eworkerapp001" }], redeploy: true });
+});
+
+// A database whose consumers were switched says so, and that its jobs are paused.
+test("a switched database says its jobs are paused", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    await answerManaged(page, app, { switchedTo: { app: { id: "e2erestoredapp01" }, at: at(-HOUR) } });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const banner = page.getByRole("status").filter({ hasText: "Its consumers were switched to" });
+    await expect(banner).toContainText("are paused");
+    await expect(banner.getByRole("link", { name: "the database restored from it" })).toHaveAttribute(
+        "href",
+        /\/apps\/e2erestoredapp01\/database\/?$/,
+    );
+    await expect(page.getByRole("region", { name: "Switch consumers" })).toHaveCount(0);
 });

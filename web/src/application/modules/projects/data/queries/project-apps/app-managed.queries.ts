@@ -1,7 +1,11 @@
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { useAppManagedApi } from "../../../api/hooks/project-apps";
-import type { AppManaged_FindSettings_Res, AppManaged_FindStatus_Res } from "../../../api/services";
+import type {
+    AppManaged_FindSettings_Res,
+    AppManaged_FindStatus_Res,
+    AppManaged_FindSwitch_Res,
+} from "../../../api/services";
 import { QK } from "../../constants/projects.query-keys";
 
 type AppScope = { projectID: string; env: string; appID: string };
@@ -34,7 +38,21 @@ function useFindStatus(
     });
 }
 
+function useFindSwitch(
+    request: AppScope,
+    options: Omit<UseQueryOptions<AppManaged_FindSwitch_Res>, "queryKey" | "queryFn"> = {},
+) {
+    const { queries } = useAppManagedApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.managed.$.find-switch"], request],
+        queryFn: ({ signal }) => queries.findSwitch(request, signal),
+        ...options,
+    });
+}
+
 export const AppManagedQueries = Object.freeze({
     useFindSettings,
     useFindStatus,
+    useFindSwitch,
 });

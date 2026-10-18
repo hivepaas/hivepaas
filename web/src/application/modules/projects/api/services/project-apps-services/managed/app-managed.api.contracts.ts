@@ -2,6 +2,7 @@ import type {
     AppManagedRestorePoint,
     AppManagedSettings,
     AppManagedStatus,
+    AppManagedSwitch,
     ManagedRestoreTargetKind,
     ManagedRestoreTestMode,
 } from "~/projects/domain";
@@ -68,3 +69,15 @@ export type AppManaged_UpdateRestorePoint_Res = ApiResponseBase<{ type: "success
 
 export type AppManaged_DeleteRestorePoint_Req = ApiRequestBase<AppScope & { name: string }>;
 export type AppManaged_DeleteRestorePoint_Res = ApiResponseBase<{ type: "success" }>;
+
+export type AppManaged_FindSwitch_Req = ApiRequestBase<AppScope>;
+export type AppManaged_FindSwitch_Res = ApiResponseBase<AppManagedSwitch>;
+
+/** The consumers chosen are switched; with redeploy, each whose variables changed is deployed too. */
+export type AppManagedSwitchPayload = { consumers: { id: string }[]; redeploy: boolean };
+
+export type AppManaged_Switch_Req = ApiRequestBase<AppScope & { payload: AppManagedSwitchPayload }>;
+export type AppManaged_Switch_Res = ApiResponseBase<{
+    switched: { id: string }[];
+    deployments: { app: { id: string }; deployment: { id: string }; task: { id: string } }[];
+}>;

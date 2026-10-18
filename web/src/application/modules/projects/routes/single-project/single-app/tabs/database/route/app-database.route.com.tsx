@@ -16,7 +16,13 @@ import { useConditionalModule } from "@application/shared/permissions";
 
 import { Button } from "@/components/ui/button";
 
-import { ManagedRestorePoints, ManagedSettingsForm, ManagedStatusCards } from "../building-blocks";
+import {
+    ManagedRestorePoints,
+    ManagedSettingsForm,
+    ManagedStatusCards,
+    ManagedSwitch,
+    ManagedSwitchedBanner,
+} from "../building-blocks";
 
 const STATUS_REFETCH_INTERVAL_MS = 30_000;
 const RESTORING_REFETCH_INTERVAL_MS = 10_000;
@@ -135,6 +141,14 @@ export function AppDatabaseRoute() {
                 />
             )}
 
+            {settings.switchedTo && (
+                <ManagedSwitchedBanner
+                    projectId={projectID}
+                    env={env}
+                    switchedTo={settings.switchedTo}
+                />
+            )}
+
             {isLoadingStatus || !status ? (
                 <AppLoader />
             ) : (
@@ -158,6 +172,16 @@ export function AppDatabaseRoute() {
                         canMark={!restoring}
                     />
                 </>
+            )}
+
+            {settings.restore?.readyAt && (
+                <ManagedSwitch
+                    projectId={projectID}
+                    env={env}
+                    appId={appID}
+                    appName={appName}
+                    canWrite={canWrite}
+                />
             )}
 
             <ManagedSettingsForm

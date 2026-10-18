@@ -64,6 +64,33 @@ export interface AppManagedRestoreOrigin {
     sourceApp?: ManagedObjectRef;
     target?: AppManagedRestoreTarget;
     readyAt?: Date;
+    /** When the source's consumers were last switched to it. */
+    switchedAt?: Date;
+}
+
+/** An app of the environment as a switch names it. */
+export interface AppManagedSwitchApp {
+    id: string;
+    name: string;
+    key: string;
+}
+
+/** An app that uses the database a restored one was restored from, and how. */
+export interface AppManagedSwitchConsumer {
+    app: AppManagedSwitchApp;
+    /** Its variables that name the source's. */
+    envVars: string[];
+    /** Its previews clone the source. */
+    previewClone: boolean;
+    /** Its deployments mark a restore point on the source. */
+    deployRestorePoint: boolean;
+}
+
+/** What switching to a restored database would repoint: its source, which keeps running, and its consumers. */
+export interface AppManagedSwitch {
+    source: AppManagedSwitchApp;
+    consumers: AppManagedSwitchConsumer[];
+    switchedAt?: Date;
 }
 
 /** The pg_dump into a backup repository: none while dumps are off; the schedule is kept either way, empty for the engine's default. */
@@ -91,6 +118,8 @@ export interface AppManagedSettings {
         dump?: ManagedObjectRef;
     };
     restore?: AppManagedRestoreOrigin;
+    /** The database restored from this one that its consumers were switched to: this one's jobs are paused since. */
+    switchedTo?: { app?: ManagedObjectRef; at: Date };
 }
 
 export const MANAGED_ARCHIVING_STATE = {

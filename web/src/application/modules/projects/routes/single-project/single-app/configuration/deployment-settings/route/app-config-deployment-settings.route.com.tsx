@@ -8,7 +8,7 @@ import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/p
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
-import { useAppManagedLocks } from "~/projects/module-shared/hooks";
+import { useAppManagedLocks, useManagedDatabases } from "~/projects/module-shared/hooks";
 import { imageRepositoryOf } from "~/projects/module-shared/utils";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
@@ -55,6 +55,7 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
         workingDir: values.workingDir ?? "",
         preDeploymentCommand: values.preDeploymentCommand ?? "",
         postDeploymentCommand: values.postDeploymentCommand ?? "",
+        restorePointBeforeDeploy: values.restorePointBeforeDeploy ? { id: values.restorePointBeforeDeploy } : null,
         notification: buildNotificationPayload(values.notification),
     };
 
@@ -105,6 +106,7 @@ export function AppConfigDeploymentSettingsRoute() {
     invariant(appId, "appId must be defined");
 
     const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const { databases: managedDatabases } = useManagedDatabases({ projectID: projectId, env, appID: appId });
 
     const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
         {
@@ -171,6 +173,7 @@ export function AppConfigDeploymentSettingsRoute() {
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                managedDatabases={managedDatabases}
                 managedLock={
                     managed
                         ? {

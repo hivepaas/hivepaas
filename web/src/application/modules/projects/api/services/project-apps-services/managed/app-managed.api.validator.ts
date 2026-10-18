@@ -94,6 +94,7 @@ const RestorePointSchema = z.object({
     keepUntil: OptionalDateSchema,
     kept: z.boolean().optional().default(false),
     restorableUntil: OptionalDateSchema,
+    origin: z.enum(["person", "deploy"]).catch("person").optional().default("person"),
 });
 
 const StatusSchema = z.object({

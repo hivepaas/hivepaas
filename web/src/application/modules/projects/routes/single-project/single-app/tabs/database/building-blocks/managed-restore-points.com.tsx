@@ -84,7 +84,18 @@ export function ManagedRestorePoints({ projectId, env, appId, appName, points, c
                                 <TableRow key={point.name}>
                                     <TableCell className="align-top">
                                         <div className="flex flex-col gap-0.5">
-                                            <span className="font-medium">{point.name}</span>
+                                            <span className="inline-flex items-center gap-1.5 font-medium">
+                                                {point.name}
+                                                {point.origin === "deploy" && (
+                                                    <Badge
+                                                        tone="sky"
+                                                        className="text-[10px]"
+                                                        title="A deployment made it. It is removed once no base backup reaches it."
+                                                    >
+                                                        Deploy
+                                                    </Badge>
+                                                )}
+                                            </span>
                                             {point.note !== "" && (
                                                 <span className="text-xs text-muted-foreground whitespace-pre-wrap">
                                                     {point.note}

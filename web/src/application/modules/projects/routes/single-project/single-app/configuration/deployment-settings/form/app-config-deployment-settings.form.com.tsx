@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { type ImageMethod, type RepoMethod } from "~/projects/domain";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+import type { ManagedDatabaseOption } from "~/projects/module-shared/hooks";
 
 import { ContentBlock } from "@application/shared/components";
 
@@ -34,6 +35,7 @@ function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
         workingDir: data.workingDir ?? "",
         preDeploymentCommand: data.preDeploymentCommand ?? "",
         postDeploymentCommand: data.postDeploymentCommand ?? "",
+        restorePointBeforeDeploy: data.restorePointBeforeDeploy?.id ?? "",
         notification: {
             successUseDefault: data.notification?.successUseDefault ?? true,
             success: data.notification?.success
@@ -100,6 +102,7 @@ export function AppConfigDeploymentSettingsForm({
     onSubmit,
     readOnly = false,
     managedLock,
+    managedDatabases,
     children,
 }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -113,6 +116,7 @@ export function AppConfigDeploymentSettingsForm({
                   workingDir: "",
                   preDeploymentCommand: "",
                   postDeploymentCommand: "",
+                  restorePointBeforeDeploy: "",
                   notification: {
                       successUseDefault: true,
                       failureUseDefault: true,
@@ -206,7 +210,10 @@ export function AppConfigDeploymentSettingsForm({
                         <ContentBlock label="Run Configuration">
                             <div className="flex flex-col gap-6">
                                 {managedLock?.run}
-                                <RunConfigurationFields entrypointLocked={Boolean(managedLock)} />
+                                <RunConfigurationFields
+                                    entrypointLocked={Boolean(managedLock)}
+                                    managedDatabases={managedDatabases}
+                                />
                             </div>
                         </ContentBlock>
 
@@ -232,4 +239,6 @@ type Props = PropsWithChildren<{
     readOnly?: boolean;
     /** Why a managed database's method, image and entrypoint are its engine's: a notice for each section. */
     managedLock?: { image: React.ReactNode; run: React.ReactNode };
+    /** The environment's managed databases a deployment can mark a restore point on. */
+    managedDatabases?: ManagedDatabaseOption[];
 }>;

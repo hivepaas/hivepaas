@@ -99,6 +99,8 @@ export interface AppManagedRestorePoint {
     kept: boolean;
     /** Until when it can be restored, as retention's next runs go; none when no base backup kept reaches it. */
     restorableUntil?: Date;
+    /** What made it: a person, or a deployment of an app that asks for one before each deploy. */
+    origin: "person" | "deploy";
 }
 
 export interface AppManagedStatus {

@@ -919,10 +919,31 @@ above:
 
 ## Task 13 (`hivepaas-portal`): keys carry features
 
-- [ ] Every paid plan's key, Comb, Hive, Colony and Apiary, and the trial's, carries
+- [x] Every paid plan's key, Comb, Hive, Colony and Apiary, and the trial's, carries
   `features: ["managed-databases"]`. Bee has no key.
-- [ ] A test of the issued payload per plan.
-- [ ] Commit: `feat(keys): managed-databases on every paid plan`.
+- [x] A test of the issued payload per plan.
+- [x] Commit: `feat(keys): managed-databases on every paid plan`.
+
+**As built** (`../hivepaas-portal`, branch `feat/key-features`, commit ddfee0c, based on
+`main`; the checkout was left on `main`):
+- **Where they come from.** `base.PlanFeatures(plan)` gives the features at key
+  issue. The payload gained `features`, placed after `limits` as in
+  `tools/licensesign`, so the bytes signed are the same. It is validated as
+  licensesign validates it.
+- **Old keys.** `license_keys` gained a `features` column (migration
+  `20261018090000`, `NOT NULL DEFAULT '[]'`). `keySays` compares the column with
+  the plan's features, so a key issued before carries too little and is issued
+  again at its license's next check. The schema test now reads `ADD COLUMN`
+  migrations too.
+- **Compatibility.** No released HivePaaS reads keys: beta4 has no licensing. Local
+  `main`'s `json.Unmarshal` passes over the new field.
+- **Tests.**
+  - The keys of all four plans, and the trial's, carry the feature, in both the
+    payload and the row.
+  - An old key without it is issued again, once.
+  - A golden vector with features was signed by this branch's licensesign
+    (`7c99d601`), and the portal signs the same bytes.
+  - `TestHivePaaSVerifiesPortalKeys` passes against this branch, with features.
 
 ## Task 14 (`hivepaas-dashboard`): the managed screens
 

@@ -322,7 +322,7 @@ export function ManagedRestoreForm({
                                 <Input
                                     {...nameField}
                                     aria-label="App name"
-                                    placeholder={`${sourceName}-restored-yyyymmdd-hhmm`}
+                                    placeholder={`${sourceName}-restored-yyyymmdd-hhmmss`}
                                     aria-invalid={Boolean(errors.name)}
                                 />
                                 <FieldDescription>Optional.</FieldDescription>

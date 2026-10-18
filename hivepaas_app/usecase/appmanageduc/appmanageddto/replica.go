@@ -64,3 +64,39 @@ func (req *RemoveManagedReplicaReq) Validate() hperrors.ValidationErrors {
 type RemoveManagedReplicaResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
+
+// PromoteManagedMemberReq promotes a replica of a managed database to the
+// cluster's primary.
+type PromoteManagedMemberReq struct {
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+
+	Member *basedto.ObjectIDReq `json:"member"`
+}
+
+func NewPromoteManagedMemberReq() *PromoteManagedMemberReq {
+	return &PromoteManagedMemberReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *PromoteManagedMemberReq) Validate() hperrors.ValidationErrors {
+	if errs := validateAppPath(req.ProjectID, req.ProjectEnvID, req.AppID); len(errs) > 0 {
+		return errs
+	}
+	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateObjectIDReq(req.Member, true, "member")...))
+}
+
+type PromoteManagedMemberResp struct {
+	Meta *basedto.Meta                 `json:"meta"`
+	Data *PromoteManagedMemberDataResp `json:"data"`
+}
+
+// PromoteManagedMemberDataResp is the cluster's primary now, what was fenced -
+// stopped, and kept from starting its server - and the replicas restarted to
+// follow the new primary.
+type PromoteManagedMemberDataResp struct {
+	Writer    *basedto.ObjectIDResp   `json:"writer"`
+	Fenced    *basedto.ObjectIDResp   `json:"fenced"`
+	Restarted []*basedto.ObjectIDResp `json:"restarted"`
+}

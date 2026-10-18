@@ -39,6 +39,19 @@ type Service interface {
 	// the environment.
 	AllowReplicas(ctx context.Context, db database.Tx, app *entity.App, allow *entity.CommandTemplate,
 		password string) error
+	// WriterOf is the cluster's primary the engine's commands run on: the app, or
+	// the member promoted over it.
+	WriterOf(ctx context.Context, db database.IDB, app *entity.App, managed *entity.AppManagedSettings) (
+		*entity.App, error)
+	// RunCommand runs one of the engine's commands in the app's task and answers
+	// its exit code: nil when it did not start, the app running no container.
+	RunCommand(ctx context.Context, db database.Tx, app *entity.App, command *entity.CommandTemplate) (*int, error)
+	// StopAndWait stops the app's service and waits, up to wait, until none of
+	// its tasks runs: false when that was not seen in time - a task on a node
+	// that does not answer is never seen stopped.
+	StopAndWait(ctx context.Context, app *entity.App, wait time.Duration) (bool, error)
+	// Start starts the app's service again, at the replicas it was stopped at.
+	Start(ctx context.Context, app *entity.App) error
 }
 
 // MarkPointReq asks for a restore point on a managed database.

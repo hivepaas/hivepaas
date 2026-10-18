@@ -68,9 +68,16 @@ type ManagedMemberOf struct {
 	Role string   `json:"role"`
 }
 
-// ManagedRoleReplica is an asynchronous read replica: a standby that streams from
-// its primary, the archive its fallback.
-const ManagedRoleReplica = "replica"
+// The roles of a member. ManagedRoleReplica is an asynchronous read replica: a
+// standby that streams from the cluster's primary, the archive its fallback.
+// ManagedRolePrimary is the member promoted to the cluster's primary.
+// ManagedRoleFenced is a member that was the primary before another was
+// promoted: stopped, and kept from starting its server.
+const (
+	ManagedRoleReplica = "replica"
+	ManagedRolePrimary = "primary"
+	ManagedRoleFenced  = "fenced"
+)
 
 // ManagedMember is a member of a primary's cluster: an app, a logical child of the
 // primary, on a volume of its own.
@@ -137,9 +144,25 @@ type ManagedPostgres struct {
 	// BackupFrom is the member the base backups are taken on, to spare the
 	// database; empty, they are taken on the database itself.
 	BackupFrom ObjectID `json:"backupFrom,omitzero"`
+	// Writer is the member promoted to the cluster's primary, which archives and
+	// which the engine's commands run on; empty, this app is. This app stays the
+	// cluster's: its setting, its jobs, and the address its consumers name.
+	Writer ObjectID `json:"writer,omitzero"`
+	// FencedAt is when this app was fenced for a promotion: stopped, and kept
+	// from starting its server.
+	FencedAt time.Time `json:"fencedAt,omitzero"`
 	// ReplicationPassword is what the replicas stream with, made with the first
 	// one.
 	ReplicationPassword EncryptedField `json:"replicationPassword,omitzero"`
+}
+
+// WriterKey is the key of the cluster's primary: the writer member's, or app's
+// own.
+func (s *ManagedPostgres) WriterKey(app *App) string {
+	if member := s.Member(s.Writer.ID); member != nil {
+		return member.Key
+	}
+	return app.Key
 }
 
 // Member is the member of that app, nil for none.

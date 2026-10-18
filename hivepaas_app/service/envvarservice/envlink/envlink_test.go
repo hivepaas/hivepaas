@@ -177,3 +177,23 @@ func TestFactsOfASharedEnvironment(t *testing.T) {
 	})
 	assert.Equal(t, &Facts{HasPort: true, HasPassword: false, SharedVars: []string{"API_VERSION"}}, facts)
 }
+
+// A managed PostgreSQL cluster's stable addresses come first, recommended: its
+// host stops being the primary's once a replica is promoted.
+func TestAPostgresClusterGetsItsStableAddressesFirst(t *testing.T) {
+	pg := &Target{Key: "db", Name: "DB", Category: base.AppCategoryDatabase, Engine: "postgres"}
+	groups := Suggest(pg, &Facts{HasPort: true, HasPassword: true, HasClusterURL: true})
+
+	if assert.NotEmpty(t, groups) {
+		assert.Equal(t, "cluster", groups[0].ID)
+		assert.True(t, groups[0].Recommended)
+		assert.Equal(t, "${db.HIVEPAAS_DATABASE_URL_RW}", groups[0].Vars[0].Value)
+		assert.Equal(t, "${db.HIVEPAAS_DATABASE_URL_RO}", groups[0].Vars[1].Value)
+	}
+	for _, g := range groups[1:] {
+		assert.False(t, g.Recommended, g.ID)
+	}
+
+	plain := Suggest(pg, &Facts{HasPort: true, HasPassword: true})
+	assert.Equal(t, "connection-url", plain[0].ID, "a database of its own keeps its URL first")
+}

@@ -73,6 +73,10 @@ type ManagedSettingsResp struct {
 	// BackupFrom is the replica the base backups are taken on, null for the
 	// database itself.
 	BackupFrom *basedto.ObjectIDResp `json:"backupFrom"`
+	// Writer is the member promoted to the cluster's primary, null while this
+	// database is; FencedAt is when this one was fenced for it.
+	Writer   *basedto.ObjectIDResp `json:"writer"`
+	FencedAt *time.Time            `json:"fencedAt"`
 	// MemberOf is the primary this database is a replica of, null for a
 	// database of its own.
 	MemberOf *ManagedMemberOfResp `json:"memberOf"`
@@ -182,6 +186,8 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 	resp.Members = []*ManagedMemberResp{}
 	if managed.Postgres != nil {
 		resp.BackupFrom = objectID(managed.Postgres.BackupFrom)
+		resp.Writer = objectID(managed.Postgres.Writer)
+		resp.FencedAt = timeOrNil(managed.Postgres.FencedAt)
 		for _, member := range managed.Postgres.Members {
 			resp.Members = append(resp.Members, &ManagedMemberResp{App: objectID(member.App), Key: member.Key,
 				Role: member.Role, Volume: objectID(member.Volume), Node: member.Node, At: member.At})

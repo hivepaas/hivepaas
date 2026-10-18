@@ -56,7 +56,7 @@ func moveRestoreTest(app *entity.App, pg *entity.ManagedPostgres, setting *entit
 	job.JobType, job.App = jobType, entity.ObjectID{ID: target}
 	setting.Kind = string(jobType)
 	if change.Verifier != nil {
-		changed = setCommandEnv(job.Command, envRestoreSourceHost, app.Key) || changed
+		changed = setCommandEnv(job.Command, envRestoreSourceHost, pg.WriterKey(app)) || changed
 		changed = setCommandEnv(job.Command, envRestoreScratchDir, verifierScratchDir) || changed
 	} else if job.Command != nil {
 		kept := slices.DeleteFunc(slices.Clone(job.Command.EnvVars), func(env *entity.EnvVar) bool {

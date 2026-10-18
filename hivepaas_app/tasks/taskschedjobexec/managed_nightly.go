@@ -32,10 +32,15 @@ func (e *Executor) runNightly(
 	if err != nil {
 		return nil, err
 	}
-	primary := run.refObjects.RefApps[run.jobSetting.ObjectID]
+	cluster := run.refObjects.RefApps[run.jobSetting.ObjectID]
 	backupOn := run.refObjects.RefApps[job.App.ID]
-	if primary == nil {
-		primary = backupOn
+	if cluster == nil {
+		cluster = backupOn
+	}
+	// Retention runs on the cluster's primary: the app, or the member promoted.
+	primary, err := e.writerOf(ctx, db, run, cluster, managed)
+	if err != nil {
+		return nil, err
 	}
 	if backupOn == nil {
 		// The replica named is gone: the database takes its own backup.
@@ -67,8 +72,21 @@ func (e *Executor) runNightly(
 	if err != nil {
 		return result, hperrors.Wrap(err)
 	}
-	e.pruneDeployPoints(ctx, db, run, primary, result.outputs)
+	e.pruneDeployPoints(ctx, db, run, cluster, result.outputs)
 	return result, nil
+}
+
+// writerOf is the cluster's primary, from the run's apps when they hold it.
+func (e *Executor) writerOf(ctx context.Context, db database.Tx, run *jobRun, cluster *entity.App,
+	managed *entity.AppManagedSettings) (*entity.App, error) {
+	if managed.Postgres == nil || managed.Postgres.Writer.ID == "" || cluster == nil {
+		return cluster, nil
+	}
+	if writer := run.refObjects.RefApps[managed.Postgres.Writer.ID]; writer != nil {
+		return writer, nil
+	}
+	writer, err := e.managedService.WriterOf(ctx, db, cluster, managed)
+	return writer, hperrors.Wrap(err)
 }
 
 // pruneDeployPoints removes the points deployments made that retention left no

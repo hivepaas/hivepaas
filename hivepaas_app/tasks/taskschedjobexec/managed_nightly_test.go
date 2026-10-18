@@ -167,3 +167,28 @@ func TestANightlyRunBacksUpOnTheReplicaItNames(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"db-1", "db-1"}, exec.apps)
 }
+
+// In a promoted cluster, retention runs on the member promoted, not on the
+// fenced database the job belongs to; pruning is still the database's setting's.
+func TestANightlyRunRetainsOnThePromotedMember(t *testing.T) {
+	exec := &nightlyExec{outputs: map[string]map[string]string{
+		"backup": {"BACKUP_NAME": "base_000000000000000000000002", "BACKUPS": keptBackups(2)},
+	}}
+	managed := &fakeManaged{}
+	e := &Executor{schedJobExecService: exec, managedService: managed}
+	run := nightlyRun()
+	job := run.jobSetting.MustAsSchedJob()
+	job.App = entity.ObjectID{ID: "db-1-r1"}
+	run.jobSetting.MustSetData(job)
+	run.refObjects.RefApps["db-1-r1"] = &entity.App{ID: "db-1-r1", LogicalParentID: "db-1"}
+	setting := run.refObjects.RefSettings["m1"]
+	data := setting.MustAsAppManagedSettings()
+	data.Postgres.Writer = entity.ObjectID{ID: "db-1-r1"}
+	setting.MustSetData(data)
+
+	_, err := e.runJob(context.Background(), database.Tx{}, run)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"db-1-r1", "db-1-r1"}, exec.apps)
+	assert.Equal(t, []string{"db-1"}, managed.prunedApps)
+}

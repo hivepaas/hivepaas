@@ -21679,6 +21679,103 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/promote" : {
+      "post" : {
+        "description" : "In order: what writes now is fenced - kept from starting its server, its service stopped, and\nseen stopped; the replica is promoted; the engine's jobs move to it, and the other replicas are\nrestarted to follow it. Before the replica is promoted, a failure lifts the fence; once whether it\nwas is not known, the fence stays, and promoting it again finishes the promotion.",
+        "operationId" : "appManagedPromote",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.PromoteManagedMemberReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.PromoteManagedMemberResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Promotes a replica to a managed database's primary",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/refresh-credentials" : {
       "post" : {
         "description" : "The credentials were copied into the app when it was made: after rotating the storage's key, this\ngives the database the new one. The secrets that changed are mounted again, restarting its task.",
@@ -57222,6 +57319,10 @@
           "engineApi" : {
             "type" : "integer"
           },
+          "fencedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
           "jobs" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedJobsResp"
@@ -57286,9 +57387,17 @@
           },
           "updateVer" : {
             "type" : "integer"
+          },
+          "writer" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Writer is the member promoted to the cluster's primary, null while this\ndatabase is; FencedAt is when this one was fenced for it.",
+            "nullable" : true,
+            "type" : "object"
           }
         },
-        "required" : [ "archiveTimeout", "backupFrom", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
+        "required" : [ "archiveTimeout", "backupFrom", "baseBackupSchedule", "dump", "engine", "engineApi", "fencedAt", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer", "writer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -57528,6 +57637,61 @@
           }
         },
         "required" : [ "from", "to" ],
+        "type" : "object"
+      },
+      "appmanageddto.PromoteManagedMemberDataResp" : {
+        "properties" : {
+          "fenced" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "restarted" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "writer" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "fenced", "restarted", "writer" ],
+        "type" : "object"
+      },
+      "appmanageddto.PromoteManagedMemberReq" : {
+        "properties" : {
+          "member" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "member" ],
+        "type" : "object"
+      },
+      "appmanageddto.PromoteManagedMemberResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.PromoteManagedMemberDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appmanageddto.RefreshManagedCredentialsDataResp" : {

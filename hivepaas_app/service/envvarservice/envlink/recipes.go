@@ -43,6 +43,9 @@ func Suggest(target *Target, facts *Facts) []*Group {
 	switch target.Category {
 	case base.AppCategoryDatabase:
 		groups = databaseGroups(r, EngineFamily(target.Engine))
+		if facts.HasClusterURL && EngineFamily(target.Engine) == FamilyPostgres {
+			groups = append([]*Group{clusterGroup(r)}, unrecommended(groups)...)
+		}
 	case base.AppCategoryCache:
 		groups = cacheGroups(r, EngineFamily(target.Engine), facts.HasPassword)
 	case base.AppCategoryStorage:
@@ -69,6 +72,29 @@ func Suggest(target *Target, facts *Facts) []*Group {
 	}
 	if shared := sharedGroup(r, target, facts.SharedVars); shared != nil {
 		groups = append(groups, shared)
+	}
+	return groups
+}
+
+// clusterGroup is a managed PostgreSQL cluster's stable addresses, which reach
+// its primary through a promotion, where its own host would not.
+func clusterGroup(r refs) *Group {
+	return &Group{
+		ID: "cluster", Title: "Cluster address", Recommended: true,
+		Description: "Connection strings that reach whichever member is the primary, through a promotion: " +
+			"the client tries each member and keeps the one that writes, or a replica for reads.",
+		Vars: []*Var{
+			{Key: "DATABASE_URL", Value: r.of(base.AppSystemEnvVarDatabaseURLRW),
+				Description: "Reads and writes, on the primary"},
+			{Key: "DATABASE_READ_URL", Value: r.of(base.AppSystemEnvVarDatabaseURLRO),
+				Description: "Reads, on a replica when there is one"},
+		},
+	}
+}
+
+func unrecommended(groups []*Group) []*Group {
+	for _, g := range groups {
+		g.Recommended = false
 	}
 	return groups
 }

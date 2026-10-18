@@ -160,9 +160,14 @@ func (uc *UC) addReplica(
 	}
 	pg := loaded.managed.Postgres
 	key := replicaKey(loaded.app.Key, pg)
+	// It streams from, and is let in by, the cluster's primary.
+	writer, err := uc.managedService.WriterOf(ctx, db, loaded.app, loaded.managed)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	// Checked again under the lock: a restore or a move may have happened since.
 	spec, err := loaded.engine.Replica(&managedmodel.ReplicaReq{Primary: loaded.app, Managed: loaded.managed,
-		Key: key, MountPaths: mountPathsOf(sources)})
+		Writer: writer, Key: key, MountPaths: mountPathsOf(sources)})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -175,7 +180,7 @@ func (uc *UC) addReplica(
 		pg.ReplicationPassword = entity.NewEncryptedField(password)
 	}
 	// First: a database that does not let the replica in would leave it waiting.
-	if err = uc.managedService.AllowReplicas(ctx, db, loaded.app, spec.Allow, password); err != nil {
+	if err = uc.managedService.AllowReplicas(ctx, db, writer, spec.Allow, password); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	made, err := uc.provisionReplica(ctx, db, auth, loaded, sources, plan, spec, key, password)
@@ -259,6 +264,10 @@ func (uc *UC) RemoveManagedReplica(
 		pg := loaded.managed.Postgres
 		if pg == nil || pg.Member(req.MemberID) == nil {
 			return hperrors.NewNotFound("Replica")
+		}
+		if pg.Writer.ID == req.MemberID {
+			return hperrors.Wrap(hperrors.ErrAppManagedIsWriter).
+				WithParam("App", pg.Member(req.MemberID).Key).ExposeParams("App")
 		}
 		now := timeutil.NowUTC()
 		// The base backups taken on it are taken on the database again.

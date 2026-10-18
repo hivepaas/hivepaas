@@ -2,6 +2,7 @@ package envvarserviceimpl
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -296,4 +297,69 @@ func TestKindEnvVars_TheURLEncodedPasswordIsShared(t *testing.T) {
 	}
 	assert.False(t, base.IsAppRuntimeEnvAllowed(base.AppSystemEnvVarPasswordURLEncoded), "a person cannot define it")
 	assert.True(t, base.IsAppSecretEnv(base.AppSystemEnvVarPasswordURLEncoded), "it is masked as the password is")
+}
+
+func clusterKind() *entity.AppKindSettings {
+	return &entity.AppKindSettings{Category: base.AppCategoryDatabase, Engine: "postgres",
+		Database: &entity.AppKindDatabase{DbName: "shop", Username: "app",
+			Password: entity.NewEncryptedField("p@ss word")}}
+}
+
+// One database: its own address, in the strings a cluster's would be.
+func TestClusterEnvVars_OneMember(t *testing.T) {
+	managed := &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{}}
+
+	vars, err := clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
+
+	assert.NoError(t, err)
+	got := envMap(vars)
+	assert.Equal(t, "postgresql://app:p%40ss%20word@shop-db:5432/shop?sslmode=disable&connect_timeout=5"+
+		"&target_session_attrs=read-write", got[base.AppSystemEnvVarDatabaseURLRW])
+	assert.Equal(t, "postgresql://app:p%40ss%20word@shop-db:5432/shop?sslmode=disable&connect_timeout=5"+
+		"&target_session_attrs=prefer-standby", got[base.AppSystemEnvVarDatabaseURLRO])
+	assert.True(t, base.IsAppSecretEnv(base.AppSystemEnvVarDatabaseURLRW), "it holds the password")
+	for _, env := range vars {
+		assert.True(t, env.IsShared)
+	}
+}
+
+// Three members, one promoted over the database: the writer first, then the
+// replicas; the fenced database and a fenced member are not tried.
+func TestClusterEnvVars_ThreeMembers(t *testing.T) {
+	managed := &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{
+		Writer:   entity.ObjectID{ID: "r2"},
+		FencedAt: time.Now(),
+		Members: []*entity.ManagedMember{
+			{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRoleReplica},
+			{App: entity.ObjectID{ID: "r2"}, Key: "shop-db-r2", Role: entity.ManagedRolePrimary},
+			{App: entity.ObjectID{ID: "r3"}, Key: "shop-db-r3", Role: entity.ManagedRoleFenced},
+		},
+	}}
+
+	vars, err := clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "6432")
+
+	assert.NoError(t, err)
+	assert.Contains(t, envMap(vars)[base.AppSystemEnvVarDatabaseURLRW], "@shop-db-r2:6432,shop-db-r1:6432/shop?")
+
+	// Before a promotion: the database first, then its replicas.
+	managed.Postgres.Writer, managed.Postgres.FencedAt = entity.ObjectID{}, time.Time{}
+	managed.Postgres.Members[1].Role = entity.ManagedRoleReplica
+	vars, err = clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
+	assert.NoError(t, err)
+	assert.Contains(t, envMap(vars)[base.AppSystemEnvVarDatabaseURLRO],
+		"@shop-db:5432,shop-db-r1:5432,shop-db-r2:5432/shop?")
+
+	// A replica's app has none: its primary's has them.
+	managed.MemberOf = &entity.ManagedMemberOf{App: entity.ObjectID{ID: "app-1"}, Role: entity.ManagedRoleReplica}
+	vars, err = clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db-r1"}, "")
+	assert.NoError(t, err)
+	assert.Empty(t, vars)
+}
+
+func envMap(vars []*envvarservice.EnvVar) map[string]string {
+	out := map[string]string{}
+	for _, env := range vars {
+		out[env.Key] = env.Value
+	}
+	return out
 }

@@ -93,3 +93,47 @@ func (h *Handler) RemoveManagedReplica(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// PromoteManagedMember Promotes a replica to a managed database's primary
+// @Summary Promotes a replica to a managed database's primary
+// @Description In order: what writes now is fenced - kept from starting its server, its service stopped, and
+// @Description seen stopped; the replica is promoted; the engine's jobs move to it, and the other replicas are
+// @Description restarted to follow it. Before the replica is promoted, a failure lifts the fence; once whether it
+// @Description was is not known, the fence stays, and promoting it again finishes the promotion.
+// @Tags    Managed apps
+// @Produce json
+// @Id      appManagedPromote
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   body body appmanageddto.PromoteManagedMemberReq true "request data"
+// @Success 200 {object} appmanageddto.PromoteManagedMemberResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 412 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/managed/promote [post]
+func (h *Handler) PromoteManagedMember(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appmanageddto.NewPromoteManagedMemberReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appManagedUC.PromoteManagedMember(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

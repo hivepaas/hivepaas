@@ -35,6 +35,9 @@ type lockedManaged struct {
 	setting *entity.Setting
 	managed *entity.AppManagedSettings
 	engine  managedmodel.Engine
+	// writer is the cluster's primary the engine's commands run on: app, or the
+	// member promoted.
+	writer *entity.App
 }
 
 func (s *service) MarkRestorePoint(ctx context.Context, req *managedservice.MarkPointReq) (
@@ -102,7 +105,7 @@ func (s *service) runMark(ctx context.Context, db database.Tx, locked *lockedMan
 	resp, err := s.schedJobExecService.RunCommand(ctx, db, &schedjobexecservice.RunCommandReq{
 		TaskExecData: &queue.TaskExecData{Task: &entity.Task{ID: gofn.Must(ulid.NewStringULID())},
 			LogStore: tasklog.NewNullStore()},
-		App:          locked.app,
+		App:          locked.writer,
 		Command:      &entity.CommandTemplate{Command: mark.Command},
 		StdoutWriter: stdout,
 	})
@@ -115,7 +118,7 @@ func (s *service) runMark(ctx context.Context, db database.Tx, locked *lockedMan
 	// The mark did not start: the database's service runs no container, as one
 	// scaled to zero.
 	if resp == nil || resp.ExitCode == nil {
-		return "", hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", locked.app.Name)
+		return "", hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", locked.writer.Name)
 	}
 	if *resp.ExitCode != 0 {
 		return "", hperrors.Wrap(hperrors.ErrActionFailed).
@@ -182,7 +185,21 @@ func (s *service) lockManaged(ctx context.Context, db database.IDB, projectID, a
 			WithExtraDetail("engine %s is not one this HivePaaS has", locked.managed.Engine)
 	}
 	locked.engine = engine
+	if locked.writer, err = s.WriterOf(ctx, db, app, locked.managed); err != nil {
+		return nil, err
+	}
 	return locked, nil
+}
+
+// WriterOf is the cluster's primary: the app, or the member promoted over it.
+func (s *service) WriterOf(ctx context.Context, db database.IDB, app *entity.App,
+	managed *entity.AppManagedSettings) (*entity.App, error) {
+	if managed.Postgres == nil || managed.Postgres.Writer.ID == "" {
+		return app, nil
+	}
+	writer, err := s.appService.LoadApp(ctx, db, app.ProjectID, managed.Postgres.Writer.ID, false, false,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...))
+	return writer, hperrors.Wrap(err)
 }
 
 // saveManaged stores the engine's setting as it was changed.

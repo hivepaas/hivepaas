@@ -210,7 +210,17 @@ marks a restore point there before its pre-deploy command runs.
   restores through the snapshots view, all as it does today.
 - **The repository** is the archive's backup repository when the archive is one.
   Otherwise the person chooses one. Dumps are off until then.
-- **The schedule** defaults to 03:00, after the nightly base backup.
+- **The schedule is the person's.** It is a cron expression read in the installation's
+  timezone, as the base backup's is.
+  - It can be any frequency, not only nightly: every 6 hours is `0 */6 * * *`.
+  - It is set in the create form, and changed later in the Database tab's Settings or
+    with `PUT /managed` (`dumpSchedule`).
+  - Clearing the repository turns dumps off.
+  - The default, `0 3 * * *`, runs after the base backup's `0 2 * * *`.
+  - A schedule that fires within the same minute as the base backup's is accepted, with
+    a note that both read the whole database at once.
+  - The job is managed, so the generic jobs screen shows it read-only, as it shows the
+    others. "Run now" stays.
 - **The dump runs in the database's container,** or in the verifier when the restore
   test runs there, to spare the database. The verifier holds a copy only during a
   test, so this would mean dumping from the archive.

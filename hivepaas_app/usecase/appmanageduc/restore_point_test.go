@@ -18,7 +18,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/postgres"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc/appmanageddto"
 )
 
@@ -28,26 +27,6 @@ type postgresManaged struct {
 
 func (f *postgresManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
 	return postgres.New(), name == templatemodel.ManagedEnginePostgres
-}
-
-// markExec answers a mark with its exit code and what it printed.
-type markExec struct {
-	schedjobexecservice.Service
-	exit     int
-	stdout   string
-	commands []string
-}
-
-func (f *markExec) RunCommand(_ context.Context, _ database.Tx, req *schedjobexecservice.RunCommandReq) (
-	*schedjobexecservice.RunCommandResp, error) {
-	f.commands = append(f.commands, req.Command.Command)
-	_, _ = req.StdoutWriter.Write([]byte(f.stdout))
-	exit := f.exit
-	resp := &schedjobexecservice.RunCommandResp{ExitCode: &exit}
-	if exit != 0 {
-		return resp, hperrors.Wrap(hperrors.ErrActionFailed)
-	}
-	return resp, nil
 }
 
 type savedSettings struct {
@@ -67,10 +46,9 @@ func pointsApp(points ...*entity.ManagedRestorePoint) *entity.App {
 	return &entity.App{ID: "app-1", Settings: []*entity.Setting{managed}}
 }
 
-func pointsUC(app *entity.App, exec *markExec) (*UC, *savedSettings) {
+func pointsUC(app *entity.App) (*UC, *savedSettings) {
 	settings := &savedSettings{}
-	return &UC{appService: &fakeApps{app: app}, managedService: &postgresManaged{}, schedJobExecService: exec,
-		settingRepo: settings}, settings
+	return &UC{appService: &fakeApps{app: app}, managedService: &postgresManaged{}, settingRepo: settings}, settings
 }
 
 func savedPoints(t *testing.T, settings *savedSettings) []*entity.ManagedRestorePoint {
@@ -81,59 +59,29 @@ func savedPoints(t *testing.T, settings *savedSettings) []*entity.ManagedRestore
 	return settings.saved[0].MustAsAppManagedSettings().Postgres.RestorePoints
 }
 
-// A point is recorded once the WAL it is in is archived, with the LSN the mark
-// printed. No license is asked (this UC has none to ask).
-func TestARestorePointIsRecordedWithItsLSN(t *testing.T) {
-	exec := &markExec{stdout: "LSN=0/3000060\n"}
-	uc, settings := pointsUC(pointsApp(), exec)
-	keep := time.Now().UTC().Add(30 * 24 * time.Hour)
-	before := time.Now().UTC()
+// A person's request reaches the engine's service as asked, with who asked:
+// the service makes and records the point (its tests are its own).
+func TestAPersonsPointRequest(t *testing.T) {
+	keep := time.Date(2026, 11, 1, 12, 0, 0, 0, time.FixedZone("ICT", 7*3600))
 
-	_, point, err := uc.createRestorePoint(context.Background(), database.Tx{},
-		&basedto.Auth{User: &basedto.User{User: &entity.User{ID: "u1"}}},
-		&appmanageddto.CreateRestorePointReq{Name: "before-v42", Note: "migration 42", KeepUntil: &keep})
+	req := markPointReq(&basedto.Auth{User: &basedto.User{User: &entity.User{ID: "u1"}}},
+		&appmanageddto.CreateRestorePointReq{ProjectID: "p1", AppID: "app-1", Name: "before-v42",
+			Note: "migration 42", KeepUntil: &keep}, nil)
 
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"/opt/hivepaas/bin/walg-mark before-v42 120"}, exec.commands)
-	if points := savedPoints(t, settings); assert.Len(t, points, 1) {
-		assert.Equal(t, point, points[0])
-		assert.Equal(t, "0/3000060", point.LSN)
-		assert.Equal(t, "u1", point.By)
-		assert.Equal(t, "migration 42", point.Note)
-		assert.Equal(t, keep, point.KeepUntil)
-		assert.False(t, point.At.Before(before))
-	}
-}
-
-func TestARestorePointIsRefusedWhenItCannotBeListed(t *testing.T) {
-	existing := &entity.ManagedRestorePoint{Name: "before-v42", LSN: "0/1"}
-	for name, tc := range map[string]struct {
-		app      *entity.App
-		pointArg string
-		exec     *markExec
-		want     error
-		marked   bool
-	}{
-		"a name taken":          {pointsApp(existing), "before-v42", &markExec{}, hperrors.ErrAlreadyExist, false},
-		"a name HivePaaS keeps": {pointsApp(), "hp-test-1", &markExec{}, hperrors.ErrArgumentInvalid, false},
-		"its WAL not archived in time": {pointsApp(), "late", &markExec{exit: managedmodel.MarkExitNotArchived},
-			hperrors.ErrAppManagedRestorePointNotArchived, true},
-		"no LSN printed": {pointsApp(), "quiet", &markExec{stdout: "done\n"}, hperrors.ErrInternal, true},
-	} {
-		uc, settings := pointsUC(tc.app, tc.exec)
-
-		_, _, err := uc.createRestorePoint(context.Background(), database.Tx{}, nil,
-			&appmanageddto.CreateRestorePointReq{Name: tc.pointArg})
-
-		assert.ErrorIs(t, err, tc.want, name)
-		assert.Empty(t, settings.saved, "%s: nothing is recorded", name)
-		assert.Equal(t, tc.marked, len(tc.exec.commands) > 0, name)
-	}
+	assert.Equal(t, "p1", req.ProjectID)
+	assert.Equal(t, "app-1", req.AppID)
+	assert.Equal(t, "before-v42", req.Name)
+	assert.Equal(t, "migration 42", req.Note)
+	assert.Equal(t, "u1", req.By)
+	assert.Equal(t, keep.UTC(), req.KeepUntil)
+	assert.Empty(t, req.Origin, "a person's")
+	assert.False(t, req.ExistingOK, "a name taken is refused")
+	assert.Empty(t, markPointReq(nil, &appmanageddto.CreateRestorePointReq{Name: "x"}, nil).By)
 }
 
 func TestARestorePointsKeepAndNoteChange(t *testing.T) {
 	point := &entity.ManagedRestorePoint{Name: "p", LSN: "0/1", KeepUntil: time.Now().Add(time.Hour)}
-	uc, settings := pointsUC(pointsApp(point), &markExec{})
+	uc, settings := pointsUC(pointsApp(point))
 
 	_, _, err := uc.updateRestorePoint(context.Background(), database.Tx{},
 		&appmanageddto.UpdateRestorePointReq{Name: "p", Note: "kept no longer"})
@@ -145,12 +93,11 @@ func TestARestorePointsKeepAndNoteChange(t *testing.T) {
 	}
 }
 
-// Deleting a point removes its record, and runs nothing in the database: the
-// archive is left as it is.
+// Deleting a point removes its record. The archive is left as it is: the use
+// case has nothing that runs in the database.
 func TestDeletingARestorePointLeavesTheArchiveAlone(t *testing.T) {
-	exec := &markExec{}
 	uc, settings := pointsUC(pointsApp(&entity.ManagedRestorePoint{Name: "a", LSN: "0/1"},
-		&entity.ManagedRestorePoint{Name: "b", LSN: "0/2"}), exec)
+		&entity.ManagedRestorePoint{Name: "b", LSN: "0/2"}))
 
 	_, _, err := uc.deleteRestorePoint(context.Background(), database.Tx{},
 		&appmanageddto.DeleteRestorePointReq{Name: "a"})
@@ -159,7 +106,6 @@ func TestDeletingARestorePointLeavesTheArchiveAlone(t *testing.T) {
 	if points := savedPoints(t, settings); assert.Len(t, points, 1) {
 		assert.Equal(t, "b", points[0].Name)
 	}
-	assert.Empty(t, exec.commands)
 
 	_, _, err = uc.deleteRestorePoint(context.Background(), database.Tx{},
 		&appmanageddto.DeleteRestorePointReq{Name: "never-made"})

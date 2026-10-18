@@ -170,3 +170,25 @@ func TestMarkingARestorePoint(t *testing.T) {
 	_, err = New().MarkResult("LSN=not-an-lsn\n")
 	assert.Error(t, err)
 }
+
+// A deployment's point is stale once no base backup kept starts before it; a
+// person's never is, and nothing is stale when the run listed no backups.
+func TestStaleDeployPoints(t *testing.T) {
+	deploy := func(name string, daysAgo int) *entity.ManagedRestorePoint {
+		p := point(name, daysAgo, 0)
+		p.Origin = entity.ManagedPointOriginDeploy
+		return p
+	}
+	managed := &entity.AppManagedSettings{Postgres: &entity.ManagedPostgres{RetainFull: 3,
+		RestorePoints: []*entity.ManagedRestorePoint{
+			deploy("deploy-old", 5), deploy("deploy-new", 1), point("person-old", 5, 0)}}}
+	listed := ""
+	for _, b := range nightlies(7)[4:] { // what retention kept: the three newest
+		listed += b.Name + "@" + b.At.Format(time.RFC3339) + "@100 "
+	}
+
+	assert.Equal(t, []string{"deploy-old"},
+		New().StaleDeployPoints(managed, map[string]string{outBackups: listed}))
+	assert.Nil(t, New().StaleDeployPoints(managed, map[string]string{}), "no list, nothing stale")
+	assert.Nil(t, New().StaleDeployPoints(&entity.AppManagedSettings{}, map[string]string{outBackups: listed}))
+}

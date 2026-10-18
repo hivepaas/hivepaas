@@ -80,6 +80,11 @@ func (s *service) deployFromFunction(
 		return nil
 	}
 
+	// A restore point on the database the app names, when it asks for one.
+	if err = s.deployStepRestorePoint(ctx, data.appDeploymentData); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// 3. Pre-deployment command execution, and the jobs waited for
 	if err = s.deployStepExecCmd(ctx, data.appDeploymentData, true); err != nil {
 		return hperrors.Wrap(err)

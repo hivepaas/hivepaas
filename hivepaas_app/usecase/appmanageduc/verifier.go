@@ -86,6 +86,7 @@ func adaptForVerifier(setting *entity.Setting, ids, secretValues map[string]stri
 		// Nothing runs around a deployment: at none, there is no task to run in.
 		deployment.Command = spec.Command
 		deployment.PreDeploymentCommand, deployment.PostDeploymentCommand = "", ""
+		deployment.RestorePointBeforeDeploy = entity.ObjectID{}
 		return hperrors.Wrap(setting.SetData(deployment))
 	case base.SettingTypeSecret:
 		value, found := secretValues[setting.Name]

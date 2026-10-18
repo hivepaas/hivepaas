@@ -51,3 +51,25 @@ func TestACloneWithoutDeploymentSettingsStartsOnThePlaceholder(t *testing.T) {
 	assert.Empty(t, container.Args)
 	assert.Empty(t, container.Dir)
 }
+
+// A clone marks no restore point before its deploys until it is asked to, even
+// when it takes the deployment settings: the database is its source's, and may
+// be of an environment the clone is not in.
+func TestACloneMarksNoRestorePointUntilAsked(t *testing.T) {
+	onProd(t)
+	for name, data := range map[string]*appCloneData{
+		"without the deployment settings": withoutDeploymentSettings(),
+		"with them": {AppCloneReq: &appcloneservice.AppCloneReq{
+			CloneSettings: &entity.AppCloneSettings{CloneDeploymentSettings: true}}},
+	} {
+		setting := &entity.Setting{Type: base.SettingTypeAppDeployment}
+		assert.NoError(t, setting.SetData(&entity.AppDeploymentSettings{
+			ActiveMethod: base.DeploymentMethodImage, ImageSource: &entity.DeploymentImageSource{Image: "nginx:1"},
+			RestorePointBeforeDeploy: entity.ObjectID{ID: "db-1"}}))
+
+		cloned, err := (&service{}).onCloneDeploymentSettingDefault(setting, data)
+
+		assert.NoError(t, err, name)
+		assert.Empty(t, cloned.MustAsAppDeploymentSettings().RestorePointBeforeDeploy.ID, name)
+	}
+}

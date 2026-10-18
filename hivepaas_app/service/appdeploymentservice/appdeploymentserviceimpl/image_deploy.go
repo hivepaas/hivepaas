@@ -53,6 +53,11 @@ func (s *service) deployFromImage(
 		return nil
 	}
 
+	// A restore point on the database the app names, when it asks for one.
+	if err = s.deployStepRestorePoint(ctx, data.appDeploymentData); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// 2. Pre-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, true)
 	if err != nil {

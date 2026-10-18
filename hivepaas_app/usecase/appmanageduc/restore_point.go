@@ -1,12 +1,9 @@
 package appmanageduc
 
 import (
-	"bytes"
 	"context"
 	"slices"
 	"time"
-
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -15,113 +12,60 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc/appmanageddto"
 )
-
-// markSlack is what a mark is given beyond its own wait: the exec's own start
-// and end.
-const markSlack = 30 * time.Second
 
 // CreateRestorePoint names a moment of a managed database (design §4, "Restore
 // points"): the engine makes the point and waits until the WAL it is in is
 // archived, so the point is restorable as soon as it is listed. No license is
-// asked: points are part of restoring, which is never gated.
+// asked: points are part of restoring, which is never gated. It answers the
+// point as Status lists it, with until when it can be restored.
 func (uc *UC) CreateRestorePoint(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appmanageddto.CreateRestorePointReq,
 ) (*appmanageddto.CreateRestorePointResp, error) {
-	resp := &appmanageddto.CreateRestorePointResp{}
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		loaded, point, err := uc.createRestorePoint(ctx, db, auth, req)
-		if err != nil {
-			return err
-		}
-		resp.Data = appmanageddto.TransformRestorePoint(point)
-		return uc.recordPoint(ctx, db, auth, loaded, "managed-restore-point-create", auditdetail.New().
-			Set("name", point.Name).Set("lsn", point.LSN).Set("kept", !point.KeepUntil.IsZero()))
-	})
+	marked, err := uc.managedService.MarkRestorePoint(ctx, markPointReq(auth, req,
+		func(ctx context.Context, db database.IDB, app *entity.App, point *entity.ManagedRestorePoint) error {
+			return uc.recordPoint(ctx, db, auth, app, "managed-restore-point-create", auditdetail.New().
+				Set("name", point.Name).Set("lsn", point.LSN).Set("kept", !point.KeepUntil.IsZero()))
+		}))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	resp := &appmanageddto.CreateRestorePointResp{Data: appmanageddto.TransformRestorePoint(marked.Point)}
+	// Until when it can be restored is read as Status reads it. The point is made
+	// whether or not that can be read.
+	if loaded, loadErr := uc.loadManaged(ctx, uc.db, req.ProjectID, req.AppID); loadErr == nil {
+		if status, statusErr := uc.statusOf(ctx, loaded); statusErr == nil {
+			for _, point := range status.RestorePoints {
+				if point.Point.Name == marked.Point.Name {
+					resp.Data = appmanageddto.TransformRestorePointStatus(point)
+				}
+			}
+		}
 	}
 	return resp, nil
 }
 
-func (uc *UC) createRestorePoint(
-	ctx context.Context,
-	db database.Tx,
-	auth *basedto.Auth,
-	req *appmanageddto.CreateRestorePointReq,
-) (*loadedManaged, *entity.ManagedRestorePoint, error) {
-	loaded, err := uc.loadManaged(ctx, db, req.ProjectID, req.AppID, bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
-		bunex.SelectRelation("ProjectEnv"),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	pg := loaded.managed.Postgres
-	if pg == nil {
-		return nil, nil, hperrors.NewNotFound("Managed archive")
-	}
-	if pg.RestorePoint(req.Name) != nil {
-		return nil, nil, hperrors.NewAlreadyExist("Restore point").WithExtraDetail("%s", req.Name)
-	}
-	mark, err := loaded.engine.MarkRestorePoint(loaded.managed, req.Name)
-	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
-	}
-	// When it was asked for: the point is after it, and the base backup a restore
-	// to it fetches is the latest that starts before.
-	at := timeutil.NowUTC()
-	lsn, err := uc.runMark(ctx, db, loaded, mark)
-	if err != nil {
-		return nil, nil, err
-	}
-	point := &entity.ManagedRestorePoint{Name: req.Name, LSN: lsn, At: at, Note: req.Note}
+// markPointReq is a person's request for a point, as the engine's service takes
+// it.
+func markPointReq(auth *basedto.Auth, req *appmanageddto.CreateRestorePointReq,
+	record func(context.Context, database.IDB, *entity.App, *entity.ManagedRestorePoint) error,
+) *managedservice.MarkPointReq {
+	out := &managedservice.MarkPointReq{ProjectID: req.ProjectID, AppID: req.AppID, Name: req.Name, Note: req.Note,
+		Record: record}
 	if auth != nil && auth.User != nil {
-		point.By = auth.User.ID
+		out.By = auth.User.ID
 	}
 	if req.KeepUntil != nil {
-		point.KeepUntil = req.KeepUntil.UTC()
+		out.KeepUntil = req.KeepUntil.UTC()
 	}
-	pg.RestorePoints = append(pg.RestorePoints, point)
-	return loaded, point, uc.saveManaged(ctx, db, loaded)
-}
-
-// runMark runs the engine's mark in the database's task, and reads the point's
-// LSN from what it printed.
-func (uc *UC) runMark(ctx context.Context, db database.Tx, loaded *loadedManaged,
-	mark managedmodel.MarkCommand) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, mark.Timeout+markSlack)
-	defer cancel()
-	stdout := &bytes.Buffer{}
-	resp, err := uc.schedJobExecService.RunCommand(ctx, db, &schedjobexecservice.RunCommandReq{
-		TaskExecData: &queue.TaskExecData{Task: &entity.Task{ID: gofn.Must(ulid.NewStringULID())},
-			LogStore: tasklog.NewNullStore()},
-		App:          loaded.app,
-		Command:      &entity.CommandTemplate{Command: mark.Command},
-		StdoutWriter: stdout,
-	})
-	if resp != nil && resp.ExitCode != nil && *resp.ExitCode == managedmodel.MarkExitNotArchived {
-		return "", hperrors.Wrap(hperrors.ErrAppManagedRestorePointNotArchived)
-	}
-	if err != nil {
-		return "", hperrors.Wrap(err)
-	}
-	if resp == nil || resp.ExitCode == nil || *resp.ExitCode != 0 {
-		return "", hperrors.Wrap(hperrors.ErrActionFailed).WithExtraDetail("the restore point could not be made")
-	}
-	lsn, err := loaded.engine.MarkResult(stdout.String())
-	return lsn, hperrors.Wrap(err)
+	return out
 }
 
 // UpdateRestorePoint changes how long a point is kept, and its note.
@@ -135,7 +79,7 @@ func (uc *UC) UpdateRestorePoint(
 		if err != nil {
 			return err
 		}
-		return uc.recordPoint(ctx, db, auth, loaded, "managed-restore-point-update", auditdetail.New().
+		return uc.recordPoint(ctx, db, auth, loaded.app, "managed-restore-point-update", auditdetail.New().
 			Set("name", point.Name).Set("kept", !point.KeepUntil.IsZero()))
 	})
 	if err != nil {
@@ -171,7 +115,7 @@ func (uc *UC) DeleteRestorePoint(
 		if err != nil {
 			return err
 		}
-		return uc.recordPoint(ctx, db, auth, loaded, "managed-restore-point-delete", auditdetail.New().
+		return uc.recordPoint(ctx, db, auth, loaded.app, "managed-restore-point-delete", auditdetail.New().
 			Set("name", point.Name).Set("lsn", point.LSN))
 	})
 	if err != nil {
@@ -220,18 +164,18 @@ func (uc *UC) saveManaged(ctx context.Context, db database.IDB, loaded *loadedMa
 		bunex.UpdateColumns("data", "update_ver", "updated_at")))
 }
 
-func (uc *UC) recordPoint(ctx context.Context, db database.IDB, auth *basedto.Auth, loaded *loadedManaged,
+func (uc *UC) recordPoint(ctx context.Context, db database.IDB, auth *basedto.Auth, app *entity.App,
 	section string, detail *auditdetail.Builder) error {
 	return hperrors.Wrap(auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
 		Type:     base.AuditLogTypeAppUpdate,
 		Scope:    base.ObjectScopeApp,
-		ObjectID: loaded.app.ID,
+		ObjectID: app.ID,
 		Source:   base.AuditLogSourceAPIAction,
 		Section:  section,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
-		ResID:    loaded.app.ID,
-		ResName:  loaded.app.Name,
+		ResID:    app.ID,
+		ResName:  app.Name,
 		Detail:   detail.String(),
 	}))
 }

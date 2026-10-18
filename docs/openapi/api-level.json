@@ -364,7 +364,7 @@
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}": "d7a18f78ae206f867427f51b7af7feec2e44dcd9e00a98fb7a541d6b20ef61a8",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/status": "1eaa37dffdbcea89803c027407ddbaf676e03ca6188c5c8bb5001ee2b7ce86be",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/container-settings": "e7fe794455c8a0f18468158bf1b81185cd8c06c492a956dcd17983b2e04e4de7",
-    "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings": "774715b5b81f9f61c946e4e29a074d4480491ea7fefa19ad0e9a6a57bf430a7e",
+    "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings": "7118efe6de7d1121f5488a88632bdffa84ef99873b03d9e62e1d4910d3e25a83",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/docker-api-settings": "7673d6ba722ea16f8a2838bc253f500155a80a1f49ba637b813539884219e05b",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars": "25c1dac8aae3bf3827e7e955aacb490488107c02da4101bac2b91f41cb6e2b4f",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings": "1b7b385297854ee51862d53df4a92429985c9db96dc1e1f3801dba6cf39f00eb",

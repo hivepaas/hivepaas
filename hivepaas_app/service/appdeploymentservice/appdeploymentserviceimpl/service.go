@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
@@ -41,8 +42,11 @@ type service struct {
 	containerExecService containerexecservice.Service
 	dockerAPIService     dockerapiservice.Service
 	imageBuildService    imagebuildservice.Service
-	notificationService  notificationservice.Service
-	placementService     placementservice.Service
+	// managedService marks a restore point on a managed database before a
+	// deploy, when the app asks for one.
+	managedService      managedservice.Service
+	notificationService notificationservice.Service
+	placementService    placementservice.Service
 	// registryAuthService answers a registry credential as Docker takes it - an
 	// ECR one with a token fresh enough to hand to Swarm.
 	registryAuthService registryauthservice.Service
@@ -71,6 +75,7 @@ func New(
 	containerExecService containerexecservice.Service,
 	dockerAPIService dockerapiservice.Service,
 	imageBuildService imagebuildservice.Service,
+	managedService managedservice.Service,
 	notificationService notificationservice.Service,
 	placementService placementservice.Service,
 	registryAuthService registryauthservice.Service,
@@ -97,6 +102,7 @@ func New(
 		containerExecService:   containerExecService,
 		dockerAPIService:       dockerAPIService,
 		imageBuildService:      imageBuildService,
+		managedService:         managedService,
 		notificationService:    notificationService,
 		placementService:       placementService,
 		registryAuthService:    registryAuthService,

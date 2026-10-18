@@ -131,9 +131,7 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 	}
 	resp.RestorePoints = make([]*ManagedRestorePointResp, 0, len(status.RestorePoints))
 	for _, point := range status.RestorePoints {
-		one := TransformRestorePoint(point.Point)
-		one.Kept, one.RestorableUntil = point.Kept, point.RestorableUntil
-		resp.RestorePoints = append(resp.RestorePoints, one)
+		resp.RestorePoints = append(resp.RestorePoints, TransformRestorePointStatus(point))
 	}
 	if held := status.HeldBack; held != nil {
 		resp.HeldBack = &ManagedHeldBackResp{Backups: held.Backups, Bytes: held.Bytes}

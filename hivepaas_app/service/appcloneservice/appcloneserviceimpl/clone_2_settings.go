@@ -169,6 +169,9 @@ func (s *service) onCloneDeploymentSettingDefault(
 		deploymentSettings.PreDeploymentCommand = ""
 		deploymentSettings.PostDeploymentCommand = ""
 	}
+	// The database a deployment marks a point on is its source's, and of its
+	// source's environment, which a clone may not be in: it marks none until asked.
+	deploymentSettings.RestorePointBeforeDeploy = entity.ObjectID{}
 
 	setting.MustSetData(deploymentSettings)
 	return setting, nil

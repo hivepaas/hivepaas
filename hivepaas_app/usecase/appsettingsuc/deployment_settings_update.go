@@ -133,6 +133,10 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 			return hperrors.Wrap(err)
 		}
 	}
+	err = uc.checkRestorePointDatabase(ctx, db, app, newDeploymentSettings.RestorePointBeforeDeploy.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	// Make sure all reference settings used in this settings exist actively
 	refObjects := entity.NewRefObjects()

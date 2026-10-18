@@ -56495,13 +56495,17 @@
           "note" : {
             "type" : "string"
           },
+          "origin" : {
+            "description" : "Origin is what made it: person, or deploy for a deployment of an app that\nasks for a point before each of its deploys, which the engine removes once\nit cannot be restored.",
+            "type" : "string"
+          },
           "restorableUntil" : {
             "description" : "RestorableUntil is until when it can be restored, as retention's next runs\ngo; null when no base backup kept reaches it, or the schedule says nothing.",
             "nullable" : true,
             "type" : "string"
           }
         },
-        "required" : [ "at", "by", "keepUntil", "kept", "lsn", "name", "note", "restorableUntil" ],
+        "required" : [ "at", "by", "keepUntil", "kept", "lsn", "name", "note", "origin", "restorableUntil" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreResp" : {
@@ -59273,6 +59277,14 @@
           "repoSource" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentRepoSourceResp"
           },
+          "restorePointBeforeDeploy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "RestorePointBeforeDeploy is the managed database each deployment marks a\nrestore point on first, null for none.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           },
@@ -59280,7 +59292,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "image", "updateVer" ],
+        "required" : [ "activeMethod", "image", "restorePointBeforeDeploy", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.DockerfileTemplateResp" : {
@@ -61710,6 +61722,14 @@
             } ],
             "nullable" : true
           },
+          "restorePointBeforeDeploy" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "RestorePointBeforeDeploy is a managed database of the app's environment\nthat each deployment marks a restore point on before its pre-deploy\ncommand. Left out, or null, marks none.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           },
@@ -61717,7 +61737,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "entrypoint", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "entrypoint", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "restorePointBeforeDeploy", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDeploymentSettingsResp" : {
@@ -67786,11 +67806,15 @@
             } ],
             "nullable" : true
           },
+          "restorePointBeforeDeploy" : {
+            "description" : "RestorePointBeforeDeploy is a managed database of the app's environment\nthat each deployment marks a restore point on before its pre-deploy\ncommand, so that a migration that breaks data has its way back already\nmarked. Empty marks none.",
+            "type" : "string"
+          },
           "workingDir" : {
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "imageSource", "repoSource" ],
+        "required" : [ "activeMethod", "imageSource", "repoSource", "restorePointBeforeDeploy" ],
         "type" : "object"
       },
       "entity.BaseEventNotification" : {

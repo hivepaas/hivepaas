@@ -154,7 +154,7 @@ func newManagedTest(t *testing.T) (*UC, *managedFakes) {
 		artifacts: &fakeArtifacts{mounts: []mount.Mount{
 			artifactservice.Mount("/var/lib/hivepaas/cache/artifacts/sha256/aa", "/opt/hivepaas/bin/wal-g")}}}
 	uc.settingRepo = settings
-	uc.managedService = &fakeManaged{Service: managedserviceimpl.New(settings), engine: fakes.engine}
+	uc.managedService = &fakeManaged{Service: managedserviceimpl.New(nil, settings, nil, nil), engine: fakes.engine}
 	uc.artifactService = fakes.artifacts
 	return uc, fakes
 }

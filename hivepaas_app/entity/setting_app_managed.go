@@ -105,7 +105,15 @@ type ManagedRestorePoint struct {
 	// KeepUntil holds retention back for the point until then; zero, it is kept
 	// as long as retention keeps what it needs.
 	KeepUntil time.Time `json:"keepUntil,omitzero"`
+	// Origin is what made it: empty for a person, ManagedPointOriginDeploy for
+	// a deployment of an app that asks for a point before each of its deploys.
+	Origin string `json:"origin,omitempty"`
 }
+
+// ManagedPointOriginDeploy is a point a deployment made. The engine removes it
+// once no base backup kept reaches it; a person's points are never removed for
+// them.
+const ManagedPointOriginDeploy = "deploy"
 
 // RestorePoint is the app's point of that name, nil for none.
 func (s *ManagedPostgres) RestorePoint(name string) *ManagedRestorePoint {

@@ -73,6 +73,10 @@ var (
 	// not archived in time: it could not be restored to yet, so it is not
 	// recorded. Archiving may be failing.
 	ErrAppManagedRestorePointNotArchived = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED")
+	// ErrAppDeployRestorePointFailed is a deployment that asks for a restore
+	// point on a managed database first and could not have it made: it stops
+	// before anything changes.
+	ErrAppDeployRestorePointFailed = NewErr(ErrActionFailed, "ERR_APP_DEPLOY_RESTORE_POINT_FAILED")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

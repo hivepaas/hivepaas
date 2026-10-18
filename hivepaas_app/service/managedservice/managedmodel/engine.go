@@ -59,4 +59,8 @@ type Engine interface {
 	MarkRestorePoint(managed *entity.AppManagedSettings, name string) (MarkCommand, error)
 	// MarkResult is the LSN the mark command printed.
 	MarkResult(stdout string) (string, error)
+	// StaleDeployPoints are the names of the points deployments made that none
+	// of the base backups a nightly run's outputs list reaches: none starts
+	// before the point. Without the list, none is stale.
+	StaleDeployPoints(managed *entity.AppManagedSettings, outputs map[string]string) []string
 }

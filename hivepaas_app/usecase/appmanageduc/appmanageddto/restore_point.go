@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 )
 
 const (
@@ -136,13 +137,35 @@ type ManagedRestorePointResp struct {
 	// RestorableUntil is until when it can be restored, as retention's next runs
 	// go; null when no base backup kept reaches it, or the schedule says nothing.
 	RestorableUntil *time.Time `json:"restorableUntil"`
+	// Origin is what made it: person, or deploy for a deployment of an app that
+	// asks for a point before each of its deploys, which the engine removes once
+	// it cannot be restored.
+	Origin string `json:"origin"`
 }
 
 func TransformRestorePoint(point *entity.ManagedRestorePoint) *ManagedRestorePointResp {
 	resp := &ManagedRestorePointResp{Name: point.Name, LSN: point.LSN, At: point.At, Note: point.Note,
-		KeepUntil: timeOrNil(point.KeepUntil)}
+		KeepUntil: timeOrNil(point.KeepUntil), Origin: pointOrigin(point.Origin)}
 	if point.By != "" {
 		resp.By = &basedto.ObjectIDResp{ID: point.By}
 	}
 	return resp
 }
+
+// TransformRestorePointStatus is a point as Status lists it: with whether it is
+// kept now, and until when it can be restored.
+func TransformRestorePointStatus(status *managedmodel.RestorePointStatus) *ManagedRestorePointResp {
+	resp := TransformRestorePoint(status.Point)
+	resp.Kept, resp.RestorableUntil = status.Kept, status.RestorableUntil
+	return resp
+}
+
+// pointOrigin is a point's origin on the wire: person when none is recorded.
+func pointOrigin(origin string) string {
+	if origin == "" {
+		return pointOriginPerson
+	}
+	return origin
+}
+
+const pointOriginPerson = "person"

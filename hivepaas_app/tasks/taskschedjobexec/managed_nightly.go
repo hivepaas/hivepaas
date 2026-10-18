@@ -3,6 +3,7 @@ package taskschedjobexec
 import (
 	"context"
 	"maps"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -53,7 +54,26 @@ func (e *Executor) runNightly(
 	if err != nil {
 		return result, hperrors.Wrap(err)
 	}
+	e.pruneDeployPoints(ctx, db, run, app, result.outputs)
 	return result, nil
+}
+
+// pruneDeployPoints removes the points deployments made that retention left no
+// base backup for, from what the retention step listed. It never fails the
+// run: its backups are made and kept either way.
+func (e *Executor) pruneDeployPoints(ctx context.Context, db database.Tx, run *jobRun, app *entity.App,
+	outputs map[string]string) {
+	pruned, err := e.managedService.PruneDeployPoints(ctx, db, app.ProjectID, app.ID, outputs)
+	switch {
+	case err != nil:
+		_ = run.execData.LogStore.Add(ctx, tasklog.NewErrFrame(
+			"The deployments' restore points were not checked: "+hperrors.GetErrorDetail(err, "")+"\n",
+			tasklog.TsNow))
+	case len(pruned) > 0:
+		_ = run.execData.LogStore.Add(ctx, tasklog.NewOutFrame(
+			"No base backup kept reaches these deployments' restore points any more; they are removed: "+
+				strings.Join(pruned, ", ")+"\n", tasklog.TsNow))
+	}
 }
 
 func (e *Executor) execNightlyStep(ctx context.Context, db database.Tx, run *jobRun, app *entity.App,

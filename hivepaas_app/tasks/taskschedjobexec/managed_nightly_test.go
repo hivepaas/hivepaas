@@ -24,6 +24,14 @@ import (
 
 type fakeManaged struct {
 	managedservice.Service
+	// pruned are the outputs each prune was given.
+	pruned []map[string]string
+}
+
+func (f *fakeManaged) PruneDeployPoints(_ context.Context, _ database.IDB, _, _ string,
+	outputs map[string]string) ([]string, error) {
+	f.pruned = append(f.pruned, outputs)
+	return nil, nil
 }
 
 func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
@@ -86,11 +94,15 @@ func TestANightlyRunBacksUpThenKeepsWhatTheEngineSays(t *testing.T) {
 	}}
 	kept := &entity.ManagedRestorePoint{Name: "p", LSN: "0/1", At: time.Now().UTC().AddDate(0, 0, -8),
 		KeepUntil: time.Now().UTC().AddDate(0, 0, 30)}
-	e := &Executor{schedJobExecService: exec, managedService: &fakeManaged{}}
+	managed := &fakeManaged{}
+	e := &Executor{schedJobExecService: exec, managedService: managed}
 
 	result, err := e.runJob(context.Background(), database.Tx{}, nightlyRun(kept))
 
 	assert.NoError(t, err)
+	if assert.Len(t, managed.pruned, 1, "the deployments' points are pruned after retention") {
+		assert.Equal(t, "after-retention", managed.pruned[0]["BACKUPS"], "from what retention left")
+	}
 	assert.Equal(t, []string{"/opt/hivepaas/bin/walg-nightly backup",
 		"/opt/hivepaas/bin/walg-nightly retain base_000000000000000000000002"}, exec.commands)
 	assert.Equal(t, "base_00000000000000000000000A", result.outputs["BACKUP_NAME"], "the backup's outputs")
@@ -100,11 +112,13 @@ func TestANightlyRunBacksUpThenKeepsWhatTheEngineSays(t *testing.T) {
 
 func TestAFailedBackupIsNotFollowedByRetention(t *testing.T) {
 	exec := &nightlyExec{failing: "backup"}
-	e := &Executor{schedJobExecService: exec, managedService: &fakeManaged{}}
+	managed := &fakeManaged{}
+	e := &Executor{schedJobExecService: exec, managedService: managed}
 
 	result, err := e.runJob(context.Background(), database.Tx{}, nightlyRun())
 
 	assert.Error(t, err)
+	assert.Empty(t, managed.pruned, "nor by pruning")
 	assert.Equal(t, []string{"/opt/hivepaas/bin/walg-nightly backup"}, exec.commands)
 	if assert.NotNil(t, result) && assert.NotNil(t, result.exitCode) {
 		assert.Equal(t, 1, *result.exitCode)

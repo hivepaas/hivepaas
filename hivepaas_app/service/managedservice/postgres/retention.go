@@ -156,3 +156,22 @@ func heldBack(backups []managedmodel.BackupRef, retainFull int, points []*entity
 	}
 	return held
 }
+
+func (e *Engine) StaleDeployPoints(managed *entity.AppManagedSettings, outputs map[string]string) []string {
+	if managed == nil || managed.Postgres == nil {
+		return nil
+	}
+	// Without the list there is no telling: an empty one would make every point
+	// stale.
+	fulls := fullBackups(backupsOf(outputs[outBackups]))
+	if len(fulls) == 0 {
+		return nil
+	}
+	var stale []string
+	for _, point := range managed.Postgres.RestorePoints {
+		if point.Origin == entity.ManagedPointOriginDeploy && baseBefore(fulls, point.At) == nil {
+			stale = append(stale, point.Name)
+		}
+	}
+	return stale
+}

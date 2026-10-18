@@ -40,6 +40,10 @@ type DeploymentSettingsReq struct {
 	WorkingDir            string `json:"workingDir"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand"`
 	PostDeploymentCommand string `json:"postDeploymentCommand"`
+	// RestorePointBeforeDeploy is a managed database of the app's environment
+	// that each deployment marks a restore point on before its pre-deploy
+	// command. Left out, or null, marks none.
+	RestorePointBeforeDeploy *basedto.ObjectIDReq `json:"restorePointBeforeDeploy"`
 
 	Notification *basedto.BaseEventNotificationReq `json:"notification"`
 
@@ -68,6 +72,8 @@ func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, err
 		WorkingDir:            req.WorkingDir,
 		PreDeploymentCommand:  req.PreDeploymentCommand,
 		PostDeploymentCommand: req.PostDeploymentCommand,
+
+		RestorePointBeforeDeploy: entity.ObjectID{ID: req.RestorePointBeforeDeploy.ToIDString()},
 
 		Notification: req.Notification.ToEntity(),
 	}, nil
@@ -262,6 +268,8 @@ func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors 
 	validators = append(validators, basedto.ValidateCommandLine(&req.Entrypoint, "entrypoint")...)
 	validators = append(validators, basedto.ValidateCommandLine(&req.Command, "command")...)
 	validators = append(validators, req.Notification.Validate("notification")...)
+	validators = append(validators, basedto.ValidateObjectIDReq(req.RestorePointBeforeDeploy, false,
+		"restorePointBeforeDeploy")...)
 	// TODO: add validation for deployment settings input
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

@@ -34,16 +34,14 @@ func (s *service) deployStepExecCmd(
 	preDeployment bool,
 ) (err error) {
 	deployment := data.Deployment
-	if preDeployment && deployment.Settings.PreDeploymentCommand == "" {
-		return nil
-	} else {
-		data.Step = stepPreDeployCmd
+	cmdStr, step := deployment.Settings.PostDeploymentCommand, stepPostDeployCmd
+	if preDeployment {
+		cmdStr, step = deployment.Settings.PreDeploymentCommand, stepPreDeployCmd
 	}
-	if !preDeployment && deployment.Settings.PostDeploymentCommand == "" {
+	if cmdStr == "" {
 		return nil
-	} else {
-		data.Step = stepPostDeployCmd
 	}
+	data.Step = step
 
 	s.addStepStartLog(ctx, data, fmt.Sprintf("Start executing %s-deployment command...",
 		gofn.If(preDeployment, "pre", "post")))
@@ -60,13 +58,6 @@ func (s *service) deployStepExecCmd(
 		taskFindRetryMax = postDeploymentTaskFindRetryMax
 		taskFindRetryDelay = postDeploymentTaskFindRetryDelay
 		taskMinRunningDuration = postDeploymentTaskMinRunningDuration
-	}
-
-	var cmdStr string
-	if preDeployment {
-		cmdStr = deployment.Settings.PreDeploymentCommand
-	} else {
-		cmdStr = deployment.Settings.PostDeploymentCommand
 	}
 
 	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{

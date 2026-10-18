@@ -34,6 +34,11 @@ type AppDeploymentSettings struct {
 	WorkingDir            string `json:"workingDir,omitempty"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand,omitempty"`
 	PostDeploymentCommand string `json:"postDeploymentCommand,omitempty"`
+	// RestorePointBeforeDeploy is a managed database of the app's environment
+	// that each deployment marks a restore point on before its pre-deploy
+	// command, so that a migration that breaks data has its way back already
+	// marked. Empty marks none.
+	RestorePointBeforeDeploy ObjectID `json:"restorePointBeforeDeploy,omitzero"`
 
 	Notification *BaseEventNotification `json:"notification,omitempty"`
 }

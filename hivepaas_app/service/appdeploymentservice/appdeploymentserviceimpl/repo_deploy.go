@@ -99,6 +99,11 @@ func (s *service) deployFromRepo(
 		return nil
 	}
 
+	// A restore point on the database the app names, when it asks for one.
+	if err = s.deployStepRestorePoint(ctx, data.appDeploymentData); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// 3. Pre-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, true)
 	if err != nil {

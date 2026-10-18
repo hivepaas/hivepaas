@@ -47,6 +47,9 @@ type DeploymentSettingsResp struct {
 	WorkingDir            string `json:"workingDir,omitempty"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand,omitempty"`
 	PostDeploymentCommand string `json:"postDeploymentCommand,omitempty"`
+	// RestorePointBeforeDeploy is the managed database each deployment marks a
+	// restore point on first, null for none.
+	RestorePointBeforeDeploy *basedto.ObjectIDResp `json:"restorePointBeforeDeploy"`
 
 	Notification *basedto.BaseEventNotificationResp `json:"notification,omitempty"`
 
@@ -170,6 +173,11 @@ func TransformDeploymentSettings(
 	}
 
 	transformFunctionSource(resp.FunctionSource, refObjects)
+
+	resp.RestorePointBeforeDeploy = nil
+	if appDeploymentSettings != nil && appDeploymentSettings.RestorePointBeforeDeploy.ID != "" {
+		resp.RestorePointBeforeDeploy = &basedto.ObjectIDResp{ID: appDeploymentSettings.RestorePointBeforeDeploy.ID}
+	}
 
 	if appDeploymentSettings != nil {
 		resp.Notification = basedto.TransformBaseEventNotification(appDeploymentSettings.Notification, refObjects)

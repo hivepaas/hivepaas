@@ -543,6 +543,11 @@ The user chooses one of two places, at creation and later:
   scales it down again. This **also proves that the database can be rebuilt after its
   node is lost**, and it keeps the test's load off production.
 
+  The verifier runs no server of its own, so step 1 reaches the live database over
+  the project's network, at the host in `HIVEPAAS_RESTORE_SOURCE_HOST`. Steps 2 to 6
+  run in `HIVEPAAS_RESTORE_SCRATCH_DIR`, on the verifier's volume. A verifier needs
+  an archive in object storage: it cannot reach one on a volume.
+
   The verifier is a logical child of the database app. It is deleted with it and not
   counted as an app.
 

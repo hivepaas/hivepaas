@@ -48,6 +48,14 @@ var (
 	// ErrAppManagedArchiveUnreachable refuses a volume backup repository the
 	// database's node cannot mount: one pinned to another node.
 	ErrAppManagedArchiveUnreachable = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_ARCHIVE_UNREACHABLE")
+	// ErrAppManagedVerifierNeedsObjectStorage refuses a verifier app for a
+	// database archiving to a volume: a verifier reads the archive from where any
+	// node can, which a volume is not.
+	ErrAppManagedVerifierNeedsObjectStorage = NewErr(ErrPreconditionFailed,
+		"ERR_APP_MANAGED_VERIFIER_NEEDS_OBJECT_STORAGE")
+	// ErrAppManagedVerifierExists refuses a second verifier app: the restore test
+	// moves back into the database's container first, which deletes the one there is.
+	ErrAppManagedVerifierExists = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VERIFIER_EXISTS")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

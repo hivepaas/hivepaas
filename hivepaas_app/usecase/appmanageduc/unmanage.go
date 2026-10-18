@@ -22,7 +22,8 @@ import (
 // its artifacts, secrets, scripts and arguments stay, so it goes on archiving
 // where it did, and the archive stays where it is for the person to keep or
 // delete. Base backups, retention, the health check and the restore test stop:
-// they are the person's from now on.
+// they are the person's from now on. A verifier app the restore test ran in goes
+// with it: it has nothing left to verify.
 func (uc *UC) UnmanageApp(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -54,6 +55,10 @@ func (uc *UC) UnmanageApp(
 					return hperrors.Wrap(err)
 				}
 			}
+		}
+		// Last: a deletion reaches past the database.
+		if err = uc.deleteVerifier(ctx, db, app, verifierOf(deleting[0])); err != nil {
+			return err
 		}
 		return hperrors.Wrap(auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
 			Type:     base.AuditLogTypeAppUpdate,
@@ -105,4 +110,14 @@ func unmanagedSettings(app *entity.App, now time.Time) ([]*entity.Setting, error
 		setting.UpdateVer++
 	}
 	return deleting, nil
+}
+
+// verifierOf is the verifier app an app-managed setting has its restore test run
+// in, empty for none.
+func verifierOf(managed *entity.Setting) string {
+	settings, err := managed.AsAppManagedSettings()
+	if err != nil || settings.Postgres == nil {
+		return ""
+	}
+	return settings.Postgres.RestoreTest.VerifierApp.ID
 }

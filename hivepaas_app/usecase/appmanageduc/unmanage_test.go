@@ -53,3 +53,12 @@ func TestUnmanagingAnOrdinaryAppIsRefused(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrNotFound)
 }
+
+func TestUnmanagingFindsTheVerifierToDelete(t *testing.T) {
+	managed := setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{Engine: "postgres",
+		Postgres: &entity.ManagedPostgres{RestoreTest: entity.ManagedRestoreTest{
+			Mode: entity.ManagedRestoreTestVerifier, VerifierApp: entity.ObjectID{ID: "ver-1"}}}})
+
+	assert.Equal(t, "ver-1", verifierOf(managed))
+	assert.Empty(t, verifierOf(managedApp().Settings[0]), "a test in the container has none")
+}

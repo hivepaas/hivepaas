@@ -44,6 +44,8 @@ ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED = "Only an app created as a function is
 ERR_APP_MANAGED_FIELD_LOCKED = "The app's managed engine owns {{.Field}}: change it in the app's database settings, or unmanage the app first"
 ERR_APP_MANAGED_VOLUME_NOT_PINNED = "The volume mounted at {{.Target}} is not pinned to a node: a managed database needs one that is"
 ERR_APP_MANAGED_ARCHIVE_UNREACHABLE = "The backup repository's volume is on another node than the database's, which cannot mount it"
+ERR_APP_MANAGED_VERIFIER_NEEDS_OBJECT_STORAGE = "A verifier app reads the database's archive from object storage, and this database archives to a volume"
+ERR_APP_MANAGED_VERIFIER_EXISTS = "The restore test already runs in a verifier app: move it back into the database's container first"
 ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
 ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"
 

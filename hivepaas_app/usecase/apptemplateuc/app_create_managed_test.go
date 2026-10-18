@@ -77,6 +77,8 @@ func (e *fakeEngine) Reconfigure(*managedmodel.ReconfigureReq) (*managedmodel.Re
 
 func (e *fakeEngine) ArchiveSecrets(*managedmodel.Archive) map[string]string { return nil }
 
+func (e *fakeEngine) Verifier() managedmodel.VerifierSpec { return managedmodel.VerifierSpec{} }
+
 // fakeManaged has the fake engine, and resolves archives as the service does,
 // from the test's settings.
 type fakeManaged struct {

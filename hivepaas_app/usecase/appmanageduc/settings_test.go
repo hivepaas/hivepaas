@@ -58,7 +58,7 @@ func TestReconfiguringRewritesTheSettingAndItsJobs(t *testing.T) {
 	loaded := loadedPostgres(t)
 
 	changed, rescheduled, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{
-		UpdateVer: 3, RetainFull: new(14), BaseBackupSchedule: new("30 1 * * *")})
+		UpdateVer: 3, RetainFull: new(14), BaseBackupSchedule: new("30 1 * * *")}, nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, loaded.setting.UpdateVer)
@@ -70,7 +70,7 @@ func TestReconfiguringRewritesTheSettingAndItsJobs(t *testing.T) {
 
 func TestReconfiguringAnOlderVersionIsRefused(t *testing.T) {
 	_, _, err := reconfigureManaged(loadedPostgres(t), &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 2,
-		RetainFull: new(14)})
+		RetainFull: new(14)}, nil)
 
 	assert.ErrorIs(t, err, hperrors.ErrUpdateVerMismatched)
 }

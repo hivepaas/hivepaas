@@ -6,10 +6,14 @@ package appmanageduc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
@@ -25,6 +29,12 @@ type UC struct {
 	managedService managedservice.Service
 	// settingMountService mounts again the secrets a refresh changed.
 	settingMountService settingmountservice.Service
+	// appProvisionService, artifactService, licenseService and volumeService make
+	// a verifier app.
+	appProvisionService appprovisionservice.Service
+	artifactService     artifactservice.Service
+	licenseService      licenseservice.Service
+	volumeService       volumeservice.Service
 }
 
 func New(
@@ -38,6 +48,10 @@ func New(
 	auditService auditservice.Service,
 	managedService managedservice.Service,
 	settingMountService settingmountservice.Service,
+	appProvisionService appprovisionservice.Service,
+	artifactService artifactservice.Service,
+	licenseService licenseservice.Service,
+	volumeService volumeservice.Service,
 ) *UC {
 	return &UC{
 		db:        db,
@@ -51,5 +65,9 @@ func New(
 		managedService: managedService,
 
 		settingMountService: settingMountService,
+		appProvisionService: appProvisionService,
+		artifactService:     artifactService,
+		licenseService:      licenseService,
+		volumeService:       volumeService,
 	}
 }

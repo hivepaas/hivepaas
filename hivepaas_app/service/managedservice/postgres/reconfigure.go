@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"slices"
 	"strconv"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -56,6 +57,17 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 		}
 		if rescheduled {
 			resp.Rescheduled = append(resp.Rescheduled, setting)
+		}
+	}
+
+	if change.RestoreTest != nil {
+		setting := req.Jobs[pg.Jobs.RestoreTest.ID]
+		moved, err := moveRestoreTest(req.App, pg, setting, change.RestoreTest)
+		if err != nil {
+			return nil, err
+		}
+		if moved && !slices.Contains(resp.Changed, setting) {
+			resp.Changed = append(resp.Changed, setting)
 		}
 	}
 	return resp, nil

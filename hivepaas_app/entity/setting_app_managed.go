@@ -15,6 +15,12 @@ const (
 	// container; ManagedRestoreTestVerifier in a verifier app, scaled up for it.
 	ManagedRestoreTestContainer = "container"
 	ManagedRestoreTestVerifier  = "verifier"
+
+	// Where an archive is from the database it keeps: in object storage, on a
+	// volume any node mounts, or on a volume of the database's own node.
+	ManagedPlacementOffSite  = "off-site"
+	ManagedPlacementShared   = "shared"
+	ManagedPlacementSameNode = "same-node"
 )
 
 var _ = registerSettingParser(base.SettingTypeAppManaged, &appManagedSettingsParser{})
@@ -89,8 +95,11 @@ type ManagedRestoreTest struct {
 	Mode        string   `json:"mode"`
 	VerifierApp ObjectID `json:"verifierApp,omitzero"`
 	// NodeID is where the verifier app runs, which should be another node.
-	NodeID     string `json:"nodeId,omitempty"`
-	CheckQuery string `json:"checkQuery,omitempty"`
+	NodeID string `json:"nodeId,omitempty"`
+	// KeyAuth is the narrower key the verifier was given, read-only where the
+	// storage has one; empty, it has the database's.
+	KeyAuth    ObjectID `json:"keyAuth,omitzero"`
+	CheckQuery string   `json:"checkQuery,omitempty"`
 }
 
 // ManagedPostgresJobs are the scheduled jobs the engine made, by role. They are

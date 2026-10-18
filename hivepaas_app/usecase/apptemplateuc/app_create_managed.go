@@ -26,9 +26,9 @@ import (
 
 // Where an archive is relative to the database it keeps.
 const (
-	managedPlacementOffSite  = "off-site"
-	managedPlacementShared   = "shared"
-	managedPlacementSameNode = "same-node"
+	managedPlacementOffSite  = entity.ManagedPlacementOffSite
+	managedPlacementShared   = entity.ManagedPlacementShared
+	managedPlacementSameNode = entity.ManagedPlacementSameNode
 
 	// walgDir is the directory every archive goes in, under its storage's own
 	// prefix, so it never mixes with what a repository keeps.

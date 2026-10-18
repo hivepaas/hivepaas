@@ -72,7 +72,9 @@ type ManagedRestoreTestCfgRsp struct {
 	Mode        string                `json:"mode"`
 	VerifierApp *basedto.ObjectIDResp `json:"verifierApp"`
 	NodeID      string                `json:"nodeId"`
-	CheckQuery  string                `json:"checkQuery"`
+	// KeyAuth is the verifier's narrower key, nil when it has the database's.
+	KeyAuth    *basedto.ObjectIDResp `json:"keyAuth"`
+	CheckQuery string                `json:"checkQuery"`
 }
 
 type ManagedLocksResp struct {
@@ -123,7 +125,7 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 	resp.RetainFull = pg.RetainFull
 	resp.RestoreTest = &ManagedRestoreTestCfgRsp{Mode: pg.RestoreTest.Mode,
 		VerifierApp: objectID(pg.RestoreTest.VerifierApp), NodeID: pg.RestoreTest.NodeID,
-		CheckQuery: pg.RestoreTest.CheckQuery}
+		KeyAuth: objectID(pg.RestoreTest.KeyAuth), CheckQuery: pg.RestoreTest.CheckQuery}
 	resp.Jobs = &ManagedJobsResp{Nightly: objectID(pg.Jobs.Nightly), Health: objectID(pg.Jobs.Health),
 		RestoreTest: objectID(pg.Jobs.RestoreTest)}
 	resp.BaseBackupSchedule = cronOf(view.Jobs[pg.Jobs.Nightly.ID])
@@ -164,6 +166,22 @@ type UpdateManagedSettingsReq struct {
 	BaseBackupSchedule  *string `json:"baseBackupSchedule,omitempty"`
 	RestoreTestSchedule *string `json:"restoreTestSchedule,omitempty"`
 	RestoreTestQuery    *string `json:"restoreTestQuery,omitempty"`
+	// RestoreTest moves the restore test: into a verifier app, made for it, or
+	// back into the database's container, which deletes the verifier.
+	RestoreTest *ManagedRestoreTestReq `json:"restoreTest,omitempty"`
+}
+
+// ManagedRestoreTestReq is where the restore test runs. A verifier app needs
+// the managed-databases feature, and an archive in object storage.
+type ManagedRestoreTestReq struct {
+	// Mode is container or verifier.
+	Mode string `json:"mode"`
+	// Volume is the cluster volume the verifier restores into, pinned to the node
+	// it runs on - preferably not the database's. Verifier mode only.
+	Volume *basedto.ObjectIDReq `json:"volume,omitempty"`
+	// KeyAuth is a narrower key for the verifier, read-only where the storage
+	// has one; without, it has the database's. Verifier mode only.
+	KeyAuth *basedto.ObjectIDReq `json:"keyAuth,omitempty"`
 }
 
 func NewUpdateManagedSettingsReq() *UpdateManagedSettingsReq {
@@ -183,6 +201,17 @@ func (req *UpdateManagedSettingsReq) Validate() hperrors.ValidationErrors {
 	if req.RestoreTestQuery != nil {
 		validators = append(validators,
 			basedto.ValidateCond(len(*req.RestoreTestQuery) <= restoreTestQueryMaxLen, "restoreTestQuery")...)
+	}
+	if test := req.RestoreTest; test != nil {
+		verifier := test.Mode == entity.ManagedRestoreTestVerifier
+		validators = append(validators, basedto.ValidateStrIn(&test.Mode, true,
+			[]string{entity.ManagedRestoreTestContainer, entity.ManagedRestoreTestVerifier}, "restoreTest.mode")...)
+		validators = append(validators, basedto.ValidateObjectIDReq(test.Volume, verifier, "restoreTest.volume")...)
+		validators = append(validators, basedto.ValidateObjectIDReq(test.KeyAuth, false, "restoreTest.keyAuth")...)
+		if !verifier {
+			validators = append(validators,
+				basedto.ValidateCond(test.Volume == nil && test.KeyAuth == nil, "restoreTest.mode")...)
+		}
 	}
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

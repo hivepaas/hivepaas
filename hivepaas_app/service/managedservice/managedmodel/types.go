@@ -83,11 +83,25 @@ type SettingsChange struct {
 	BaseBackupSchedule  *string
 	RestoreTestSchedule *string
 	RestoreTestQuery    *string
+	RestoreTest         *RestoreTestChange
 }
 
-// ReconfigureReq is a managed app's setting, the jobs its engine made by id, and
-// the change asked for.
+// RestoreTestChange moves the restore test: into the verifier app given, or,
+// with none, back into the database's container.
+type RestoreTestChange struct {
+	Verifier *entity.App
+	// NodeID is the node the verifier's volume is on, empty for a volume pinned
+	// by label.
+	NodeID string
+	// KeyAuth is the narrower key the verifier reads the archive with, empty for
+	// the database's own.
+	KeyAuth entity.ObjectID
+}
+
+// ReconfigureReq is a managed app with its setting, the jobs its engine made by
+// id, and the change asked for.
 type ReconfigureReq struct {
+	App     *entity.App
 	Managed *entity.AppManagedSettings
 	Jobs    map[string]*entity.Setting
 	Change  *SettingsChange
@@ -99,4 +113,11 @@ type ReconfigureReq struct {
 type ReconfigureResp struct {
 	Changed     []*entity.Setting
 	Rescheduled []*entity.Setting
+}
+
+// VerifierSpec is what an engine's verifier app runs: a command that idles, for
+// the restore test to run in, and where its scratch volume is mounted.
+type VerifierSpec struct {
+	Command    string
+	ScratchDir string
 }

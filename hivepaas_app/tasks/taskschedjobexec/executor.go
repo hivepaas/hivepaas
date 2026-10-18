@@ -32,12 +32,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type Executor struct {
 	logger      logging.Logger
 	db          *database.DB
 	redisClient rediscache.Client
+
+	dockerManager docker.Manager
 
 	settingRepo repository.SettingRepo
 	taskLogRepo repository.TaskLogRepo
@@ -63,6 +66,7 @@ func NewExecutor(
 	db *database.DB,
 	redisClient rediscache.Client,
 	taskQueue queue.TaskQueue,
+	dockerManager docker.Manager,
 
 	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
@@ -86,6 +90,8 @@ func NewExecutor(
 		logger:      logger,
 		db:          db,
 		redisClient: redisClient,
+
+		dockerManager: dockerManager,
 
 		settingRepo: settingRepo,
 		taskLogRepo: taskLogRepo,

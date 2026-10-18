@@ -568,7 +568,60 @@ above:
   when the script fails; the arguments contain `archive_mode=off`; a lapsed license
   still runs an existing verifier's test.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the restore test in a verifier app`.
+**As built:**
+- **The move is a field of `PUT .../managed`:** `restoreTest{mode, volume, keyAuth}`.
+  - To the verifier, it needs the feature, an archive in object storage
+    (`ERR_APP_MANAGED_VERIFIER_NEEDS_OBJECT_STORAGE`), and a pinned volume, and
+    refuses a second verifier (`ERR_APP_MANAGED_VERIFIER_EXISTS`).
+  - The license check, the volume, the narrower key and the artifact download onto
+    the volume's node all happen before the transaction (`planVerifier`).
+  - Moving back asks no license, so a lapsed plan can always leave its verifier. It
+    deletes the verifier last in the transaction, with its volume directory.
+- **The verifier** (`provisionVerifier`) goes through `ProvisionApps`, which keeps
+  its `Cleanup`:
+  - name `<db> verifier`, a logical child of the database;
+  - a copy of the database's env, secrets, config files, setting mounts, deployment
+    and artifacts settings;
+  - its secrets carry the narrower key's values through `Engine.ArchiveSecrets`;
+  - its own directory of the volume at the engine's `ScratchDir`;
+  - replicas 0, and a first deployment.
+- **It runs no server.** Spec §5 step 1 needs the live database, and a verifier has
+  none, so it idles (`Engine.Verifier()`: `sleep infinity`). There is no
+  `archive_mode=off` in its arguments, because nothing in it archives. The server
+  the script starts has archiving off (Task 12).
+  - The job is told where it is: `HIVEPAAS_RESTORE_SOURCE_HOST` is the database's
+    key on the project network, for the restore point, and
+    `HIVEPAAS_RESTORE_SCRATCH_DIR` is where to restore. The script reads both
+    (Task 12).
+  - Pre- and post-deployment commands are cleared, because at 0 replicas there is no
+    task to run them in.
+- **The job** keeps its id and schedule. `Engine.Reconfigure` moves it, through
+  `SettingsChange.RestoreTest`:
+  - its type and kind become `managed-restore-test`, a `var`, so no request can
+    ask for it;
+  - its app becomes the verifier, and its env gets the two variables;
+  - moving back undoes all three.
+- **The executor** (`taskschedjobexec/managed_restore.go`):
+  - It scales the verifier to 1 through a new `docker.Manager` dependency.
+  - It runs the script there, waiting up to 24 × 5 s for a task.
+  - It scales back to 0 in a `defer`, without the run's cancellation. A failure to
+    scale down goes to the task's log.
+  - It checks no license.
+- **Kept with it:**
+  - `ManagedRestoreTest.KeyAuth`. `refresh-credentials` refreshes the verifier's
+    copies too, under that key (`archiveReaders`).
+  - Unmanaging deletes the verifier.
+  - Deleting the database deletes it too (`DeleteApp` cascades to logical
+    children).
+  - `plan_limit.go` needed no change: `CountApps` and `countedApps` already leave
+    logical children out.
+- **API level.** `gen-swag` raised it to 5. It was put back to 4: `PUT .../managed`
+  is new in this branch, and level 3 is the released one.
+- **Live check, deferred to Task 12** (it needs the scripts): on the Linux server,
+  move a test database's restore test to a verifier on another node, run the job, and
+  see it scale up, pass and scale down.
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the restore test in a verifier app`.
 
 ## Task 11: Restore to a point in time into a new app
 

@@ -56050,6 +56050,14 @@
           "checkQuery" : {
             "type" : "string"
           },
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "KeyAuth is the verifier's narrower key, nil when it has the database's.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "mode" : {
             "description" : "Mode is container or verifier.",
             "type" : "string"
@@ -56064,7 +56072,31 @@
             "nullable" : true
           }
         },
-        "required" : [ "checkQuery", "mode", "nodeId", "verifierApp" ],
+        "required" : [ "checkQuery", "keyAuth", "mode", "nodeId", "verifierApp" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestReq" : {
+        "properties" : {
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "KeyAuth is a narrower key for the verifier, read-only where the storage\nhas one; without, it has the database's. Verifier mode only.",
+            "type" : "object"
+          },
+          "mode" : {
+            "description" : "Mode is container or verifier.",
+            "type" : "string"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is the cluster volume the verifier restores into, pinned to the node\nit runs on - preferably not the database's. Verifier mode only.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "mode" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreTestResp" : {
@@ -56278,6 +56310,13 @@
         "properties" : {
           "baseBackupSchedule" : {
             "type" : "string"
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestReq"
+            } ],
+            "description" : "RestoreTest moves the restore test: into a verifier app, made for it, or\nback into the database's container, which deletes the verifier.",
+            "type" : "object"
           },
           "restoreTestQuery" : {
             "type" : "string"

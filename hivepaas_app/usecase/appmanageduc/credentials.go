@@ -12,7 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
@@ -23,8 +22,9 @@ import (
 // RefreshManagedCredentials gives a managed app the credentials its archive's
 // storage has now. They were copied into the app's secrets when it was made, so
 // a key rotated on the storage, or the narrower key, reaches the database only
-// this way. The secrets that changed are mounted again, which restarts the
-// database's task; when none did, nothing happens.
+// this way - and its verifier app's copies, under the verifier's own key. The
+// secrets that changed are mounted again, which restarts the database's task;
+// when none did, nothing happens.
 func (uc *UC) RefreshManagedCredentials(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -40,26 +40,16 @@ func (uc *UC) RefreshManagedCredentials(
 		if loaded.managed.Postgres == nil {
 			return hperrors.NewNotFound("Managed archive")
 		}
-		_, envKey := projecthelper.ParseProjectEnvID(loaded.app.ProjectEnvID)
-		scope := entity.NewObjectScopeProjectEnv(loaded.app.ProjectID, envKey)
-		s3, err := uc.managedService.ResolveS3(ctx, db, scope, loaded.managed.Postgres.Storage)
-		if err != nil {
-			return hperrors.Wrap(err)
+		var changed []*entity.Setting
+		for _, reader := range archiveReaders(loaded.app, loaded.managed.Postgres) {
+			refreshed, refreshErr := uc.refreshArchiveSecrets(ctx, db, loaded, reader)
+			if refreshErr != nil {
+				return refreshErr
+			}
+			changed = append(changed, refreshed...)
 		}
-		values := loaded.engine.ArchiveSecrets(&managedmodel.Archive{S3: s3})
-
-		secrets, _, err := uc.settingRepo.List(ctx, db, nil, nil,
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeSecret),
-			bunex.SelectWhere("setting.object_id = ?", loaded.app.ID),
-			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-			bunex.SelectWhereIn("setting.name IN (?)", slices.Sorted(maps.Keys(values))...),
-		)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		changed, err := refreshedSecrets(secrets, values)
-		if err != nil || len(changed) == 0 {
-			return err
+		if len(changed) == 0 {
+			return nil
 		}
 		now := timeutil.NowUTC()
 		for _, setting := range changed {
@@ -96,6 +86,52 @@ func (uc *UC) RefreshManagedCredentials(
 		}
 	}
 	return resp, nil
+}
+
+// archiveReader is an app holding copies of an archive's credentials, and the
+// storage, with the key, they are copies of.
+type archiveReader struct {
+	appID   string
+	storage entity.ManagedStorage
+}
+
+// archiveReaders are the database, with its storage, and its verifier app when
+// it has one, with the verifier's narrower key when it was given one.
+func archiveReaders(app *entity.App, pg *entity.ManagedPostgres) []archiveReader {
+	readers := []archiveReader{{appID: app.ID, storage: pg.Storage}}
+	if verifier := pg.RestoreTest.VerifierApp.ID; verifier != "" {
+		storage := pg.Storage
+		if pg.RestoreTest.KeyAuth.ID != "" {
+			storage.KeyAuth = pg.RestoreTest.KeyAuth
+		}
+		readers = append(readers, archiveReader{appID: verifier, storage: storage})
+	}
+	return readers
+}
+
+// refreshArchiveSecrets gives an app's copies of the archive's credentials the
+// values the storage has now, and returns those that changed.
+func (uc *UC) refreshArchiveSecrets(
+	ctx context.Context,
+	db database.IDB,
+	loaded *loadedManaged,
+	reader archiveReader,
+) ([]*entity.Setting, error) {
+	s3, err := uc.managedService.ResolveS3(ctx, db, appScope(loaded.app), reader.storage)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	values := loaded.engine.ArchiveSecrets(&managedmodel.Archive{S3: s3})
+	secrets, _, err := uc.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeSecret),
+		bunex.SelectWhere("setting.object_id = ?", reader.appID),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhereIn("setting.name IN (?)", slices.Sorted(maps.Keys(values))...),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return refreshedSecrets(secrets, values)
 }
 
 // refreshedSecrets gives each secret its new value, and returns those whose

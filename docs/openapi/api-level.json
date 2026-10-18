@@ -366,7 +366,7 @@
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars": "25c1dac8aae3bf3827e7e955aacb490488107c02da4101bac2b91f41cb6e2b4f",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings": "1b7b385297854ee51862d53df4a92429985c9db96dc1e1f3801dba6cf39f00eb",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings": "86f4158d92cc2818d97e96931f9ac3076d14644fdff160f0f29a5d377197eedb",
-    "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/managed": "a97b8a74875a174562a7d11bf83f52d868316cb8be235dd74c64dfe6f734a196",
+    "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/managed": "1f5e59c5e135c89451dde2fea043d310a476fb36931722b0f8f5001976e9f36a",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/network-settings": "fc80406e76b8ebb349b2ff2586be19ab3e7a8e8d3d04260aefd3d3bf4ccf89db",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID}": "467d623ec77dccbc54a71d6b8025bac44e01015f1a9bddc9dc0294168410c6d7",
     "PUT /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID}/status": "1eaa37dffdbcea89803c027407ddbaf676e03ca6188c5c8bb5001ee2b7ce86be",

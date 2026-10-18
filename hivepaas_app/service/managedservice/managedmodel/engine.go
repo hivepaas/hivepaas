@@ -36,4 +36,7 @@ type Engine interface {
 	// ArchiveSecrets are the secrets an archive's credentials are kept in, by
 	// name, as PrepareDoc puts them in the app; none for an archive without.
 	ArchiveSecrets(archive *Archive) map[string]string
+
+	// Verifier is what the engine's verifier app runs.
+	Verifier() VerifierSpec
 }

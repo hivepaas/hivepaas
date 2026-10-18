@@ -40,3 +40,25 @@ func TestRefreshRewritesTheSecretsThatChanged(t *testing.T) {
 	assert.Equal(t, "AKIA-NEW", plain)
 	assert.Equal(t, 1, sodium.UpdateVer)
 }
+
+// The verifier's copies are refreshed too, under its own narrower key.
+func TestTheVerifierReadsTheArchiveWithItsOwnKey(t *testing.T) {
+	pg := &entity.ManagedPostgres{Storage: entity.ManagedStorage{CloudStorage: entity.ObjectID{ID: "s3-1"},
+		KeyAuth: entity.ObjectID{ID: "key-rw"}, Prefix: "walg/db"}}
+	app := &entity.App{ID: "db-1"}
+
+	assert.Equal(t, []archiveReader{{appID: "db-1", storage: pg.Storage}}, archiveReaders(app, pg))
+
+	pg.RestoreTest = entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestVerifier,
+		VerifierApp: entity.ObjectID{ID: "ver-1"}, KeyAuth: entity.ObjectID{ID: "key-ro"}}
+	readers := archiveReaders(app, pg)
+	if assert.Len(t, readers, 2) {
+		assert.Equal(t, "ver-1", readers[1].appID)
+		assert.Equal(t, "key-ro", readers[1].storage.KeyAuth.ID)
+		assert.Equal(t, "walg/db", readers[1].storage.Prefix, "the database's archive")
+		assert.Equal(t, "key-rw", readers[0].storage.KeyAuth.ID, "the database keeps its own")
+	}
+
+	pg.RestoreTest.KeyAuth = entity.ObjectID{}
+	assert.Equal(t, "key-rw", archiveReaders(app, pg)[1].storage.KeyAuth.ID, "without one, the database's")
+}

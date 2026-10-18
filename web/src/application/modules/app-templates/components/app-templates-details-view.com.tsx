@@ -46,13 +46,16 @@ import type {
 import { useGetAppTemplate } from "../data";
 import { useDeployTemplateDialogState } from "../dialogs";
 import {
+    canDeployTemplate,
     describeCapabilities,
     describeDockerApi,
     describePort,
     grantedByTemplate,
     grantedDockerApiByTemplate,
+    missingFeaturesOf,
 } from "../utils";
 
+import { ManagedTemplateBadge, MissingFeaturesNotice } from "./managed-template.com";
 import { TemplateRenderError } from "./template-render-error.com";
 
 interface AppTemplatesDetailsViewProps {
@@ -291,7 +294,7 @@ export function AppTemplatesDetailsView({
     const { open: openDeployDialog } = useDeployTemplateDialogState();
 
     const handleDeployClick = () => {
-        if (!template || !template.compatible || !projectId) return;
+        if (!template || !canDeployTemplate(template) || !projectId) return;
         openDeployDialog(projectId, {
             templateName: template.name,
             initialVersion: selectedVersionName,
@@ -453,6 +456,7 @@ export function AppTemplatesDetailsView({
                                         Requires Newer HivePaaS
                                     </Badge>
                                 )}
+                                {template.managed && <ManagedTemplateBadge engine={template.managed} />}
                             </div>
 
                             <p className="mt-1 text-[15px] font-medium text-muted-foreground leading-relaxed">
@@ -493,7 +497,7 @@ export function AppTemplatesDetailsView({
                         <Button
                             type="button"
                             size="default"
-                            disabled={!template.compatible}
+                            disabled={!canDeployTemplate(template)}
                             onClick={handleDeployClick}
                             className="h-9 px-4 text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -503,6 +507,9 @@ export function AppTemplatesDetailsView({
                     </div>
                 </div>
             </div>
+
+            {/* A feature the plan does not include: what it is, and the plans that grant it. */}
+            <MissingFeaturesNotice features={missingFeaturesOf(template)} />
 
             {/* SECTION 4 (BOTTOM): License & Legal Responsibility Disclaimer */}
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/10 p-4 shadow-xs">

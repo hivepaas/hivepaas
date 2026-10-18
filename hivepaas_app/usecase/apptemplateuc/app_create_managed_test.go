@@ -20,7 +20,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
@@ -73,7 +75,14 @@ func (e *fakeEngine) Reconfigure(*managedmodel.ReconfigureReq) (*managedmodel.Re
 	return &managedmodel.ReconfigureResp{}, nil
 }
 
-type fakeManaged struct{ engine *fakeEngine }
+func (e *fakeEngine) ArchiveSecrets(*managedmodel.Archive) map[string]string { return nil }
+
+// fakeManaged has the fake engine, and resolves archives as the service does,
+// from the test's settings.
+type fakeManaged struct {
+	managedservice.Service
+	engine *fakeEngine
+}
 
 func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
 	if name != templatemodel.ManagedEnginePostgres {
@@ -141,7 +150,7 @@ func newManagedTest(t *testing.T) (*UC, *managedFakes) {
 		artifacts: &fakeArtifacts{mounts: []mount.Mount{
 			artifactservice.Mount("/var/lib/hivepaas/cache/artifacts/sha256/aa", "/opt/hivepaas/bin/wal-g")}}}
 	uc.settingRepo = settings
-	uc.managedService = &fakeManaged{engine: fakes.engine}
+	uc.managedService = &fakeManaged{Service: managedserviceimpl.New(settings), engine: fakes.engine}
 	uc.artifactService = fakes.artifacts
 	return uc, fakes
 }

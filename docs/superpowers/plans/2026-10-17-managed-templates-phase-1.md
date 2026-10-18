@@ -522,7 +522,28 @@ above:
 - Test: status from fixture outputs (none yet, healthy, failing, stale), each
   suggestion, an update of each field, and the redeploy mark.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): status, and managed settings`.
+**As built** (commits 596a78fc, 36775f06, c42b6ce2 and the credentials commit):
+- **Outputs.** A managed job gets an output file of its run, `HIVEPAAS_OUTPUT`, as a
+  sequence's step does. What it writes as KEY=value is kept as the task's output
+  (`entity.TaskSchedJobOutputs`), whether the run failed or not.
+- **`GET .../managed/status`.** It reads the last ended run of each of the engine's
+  jobs; `postgres.Engine.Status` turns their outputs into the state. The outputs
+  each script writes are named in the engine (`LAST_ARCHIVED_AT`, `FAILED_COUNT`,
+  `PG_WAL_BYTES`, `DB_BYTES`, `FREE_BYTES`; `BACKUP_*`, `OLDEST_BACKUP_AT`;
+  `RESTORED_TO`, `DURATION_SECONDS`). The placement is kept in
+  `ManagedStorage.Placement`.
+- **`GET` and `PUT .../managed`** cover retention, the two schedules and the check
+  query, through `Engine.Reconfigure`. The scripts read their options from their
+  job's env (`WALG_RETAIN_FULL`, `HIVEPAAS_RESTORE_CHECK_QUERY`). `archiveTimeout`
+  is not changeable in phase 1: it is a locked server argument.
+- **`POST .../managed/refresh-credentials`.** The credentials were copied into secrets
+  when the app was made, so there is no mark on a key auth's update. Instead this
+  re-resolves them through the new `managedservice.ResolveS3`, which the create flow
+  now uses too. It rewrites only the secrets that changed (`Engine.ArchiveSecrets`)
+  and mounts them again through `settingMountService.RecordRefresh`, which restarts
+  the task.
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): status, and managed settings`.
 
 ## Task 10: The restore test in a verifier app
 

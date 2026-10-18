@@ -32,4 +32,8 @@ type Engine interface {
 	// Reconfigure applies a change of the app's settings to its setting, in
 	// place, and to the jobs it made, which it returns as it rewrote them.
 	Reconfigure(req *ReconfigureReq) (*ReconfigureResp, error)
+
+	// ArchiveSecrets are the secrets an archive's credentials are kept in, by
+	// name, as PrepareDoc puts them in the app; none for an archive without.
+	ArchiveSecrets(archive *Archive) map[string]string
 }

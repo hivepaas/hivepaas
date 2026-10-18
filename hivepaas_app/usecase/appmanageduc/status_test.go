@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc/appmanageddto"
 )
@@ -63,7 +64,10 @@ func (e *fakeEngine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, 
 	}, nil
 }
 
-type fakeManaged struct{ engine *fakeEngine }
+type fakeManaged struct {
+	managedservice.Service
+	engine *fakeEngine
+}
 
 func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
 	return f.engine, name == templatemodel.ManagedEnginePostgres
@@ -75,7 +79,7 @@ func TestStatusIsTheEnginesReadingOfItsJobsLastRuns(t *testing.T) {
 	health.MustSetOutput(&entity.TaskSchedJobOutputs{Outputs: map[string]string{"FAILED_COUNT": "0"}})
 	tasks := &fakeTasks{lastByJob: map[string]*entity.Task{"job-1": health}}
 	engine := &fakeEngine{}
-	uc := &UC{appService: &fakeApps{app: managedApp()}, taskRepo: tasks, managedService: &fakeManaged{engine}}
+	uc := &UC{appService: &fakeApps{app: managedApp()}, taskRepo: tasks, managedService: &fakeManaged{engine: engine}}
 
 	resp, err := uc.GetManagedStatus(context.Background(), nil, &appmanageddto.GetManagedStatusReq{
 		ProjectID: "p1", ProjectEnvID: "p1:prod", AppID: "app-1"})
@@ -98,7 +102,7 @@ func TestStatusIsTheEnginesReadingOfItsJobsLastRuns(t *testing.T) {
 
 func TestStatusOfAnOrdinaryAppIsNotFound(t *testing.T) {
 	uc := &UC{appService: &fakeApps{app: &entity.App{ID: "app-1"}}, taskRepo: &fakeTasks{},
-		managedService: &fakeManaged{&fakeEngine{}}}
+		managedService: &fakeManaged{engine: &fakeEngine{}}}
 
 	_, err := uc.GetManagedStatus(context.Background(), nil, &appmanageddto.GetManagedStatusReq{
 		ProjectID: "p1", ProjectEnvID: "p1:prod", AppID: "app-1"})

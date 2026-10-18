@@ -19,7 +19,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
@@ -199,7 +198,7 @@ func (uc *UC) resolveArchive(
 	appKey string,
 	planned *managedPlan,
 ) (*managedmodel.Archive, error) {
-	storageID, prefix := "", path.Join(walgDir, appKey)
+	prefix := path.Join(walgDir, appKey)
 	if req.BackupRepo != nil && req.BackupRepo.ID != "" {
 		setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeBackupRepo, req.BackupRepo.ID, true)
 		if err != nil {
@@ -214,30 +213,18 @@ func (uc *UC) resolveArchive(
 		if repo.Volume.ID != "" {
 			return uc.volumeArchive(ctx, scope, repo.Volume.ID, prefix, dataPin, planned)
 		}
-		storageID = repo.CloudStorage.ID
 	} else if req.CloudStorage != nil {
-		storageID = req.CloudStorage.ID
-		planned.storage.CloudStorage = entity.ObjectID{ID: storageID}
+		planned.storage.CloudStorage = entity.ObjectID{ID: req.CloudStorage.ID}
 	}
 	planned.storage.Prefix = prefix
 	planned.placement = managedPlacementOffSite
 	planned.storage.Placement = planned.placement
-
-	s3, err := uc.s3Archive(ctx, scope, storageID, prefix)
-	if err != nil {
-		return nil, err
-	}
 	if req.KeyAuth != nil && req.KeyAuth.ID != "" {
-		keyAuth, keyErr := uc.keyAuth(ctx, scope, req.KeyAuth.ID)
-		if keyErr != nil {
-			return nil, keyErr
-		}
-		secret, keyErr := keyAuth.SecretKey.GetPlain()
-		if keyErr != nil {
-			return nil, hperrors.Wrap(keyErr)
-		}
-		s3.AccessKey, s3.SecretKey = keyAuth.KeyID, secret
 		planned.storage.KeyAuth = entity.ObjectID{ID: req.KeyAuth.ID}
+	}
+	s3, err := uc.managedService.ResolveS3(ctx, uc.db, scope, planned.storage)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 	return &managedmodel.Archive{S3: s3}, nil
 }
@@ -267,50 +254,6 @@ func (uc *UC) volumeArchive(
 	planned.storage.Prefix = prefix
 	planned.storage.Placement = planned.placement
 	return &managedmodel.Archive{Volume: &managedmodel.VolumeArchive{VolumeID: volumeID, Subpath: prefix}}, nil
-}
-
-func (uc *UC) s3Archive(
-	ctx context.Context,
-	scope *entity.ObjectScope,
-	storageID, prefix string,
-) (*managedmodel.S3Archive, error) {
-	storageSetting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeCloudStorage, storageID, true)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	storage, err := storageSetting.AsCloudStorage()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	refs := entity.NewRefObjects()
-	if storage.S3 != nil && storage.S3.KeyAuth.ID != "" {
-		keySetting, keyErr := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeKeyAuth,
-			storage.S3.KeyAuth.ID, true)
-		if keyErr != nil {
-			return nil, hperrors.Wrap(keyErr)
-		}
-		refs.RefSettings[keySetting.ID] = keySetting
-	}
-	cfg, err := cloudstorageservice.S3Config(ctx, uc.db, storageSetting, refs)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &managedmodel.S3Archive{
-		Endpoint: cfg.Endpoint, Region: cfg.Region, Bucket: cfg.Bucket, Prefix: prefix,
-		AccessKey: cfg.AccessKeyID, SecretKey: cfg.SecretAccessKey,
-		// An endpoint of its own is an S3-compatible store, most of which address
-		// buckets by path; AWS's own is reached by its region alone.
-		ForcePathStyle: cfg.Endpoint != "",
-	}, nil
-}
-
-func (uc *UC) keyAuth(ctx context.Context, scope *entity.ObjectScope, id string) (*entity.KeyAuth, error) {
-	setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeKeyAuth, id, true)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	keyAuth, err := setting.AsKeyAuth()
-	return keyAuth, hperrors.Wrap(err)
 }
 
 // managedOptions are the request's options over the template's defaults; what

@@ -409,3 +409,10 @@ func TestReconfigureRefusesABadSchedule(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
 }
+
+func TestArchiveSecretsAreTheS3Keys(t *testing.T) {
+	assert.Equal(t, map[string]string{secretAccessKey: "AKIAEXAMPLE", secretSecretKey: "s3-secret-value"},
+		New().ArchiveSecrets(s3Archive()))
+	assert.Empty(t, New().ArchiveSecrets(&managedmodel.Archive{Volume: &managedmodel.VolumeArchive{}}),
+		"a volume archive has none")
+}

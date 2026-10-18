@@ -54,7 +54,8 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 		{"WALG_LIBSODIUM_KEY_TRANSFORM", "hex"},
 		{"HIVEPAAS_WALG_SECRETS_DIR", secretsDir},
 	}
-	secrets := map[string]string{secretSodiumKey: req.EncryptionKey}
+	secrets := e.ArchiveSecrets(archive)
+	secrets[secretSodiumKey] = req.EncryptionKey
 	switch {
 	case archive.S3 != nil:
 		s3 := archive.S3
@@ -64,8 +65,6 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 			[2]string{"AWS_REGION", s3.Region},
 			[2]string{"AWS_S3_FORCE_PATH_STYLE", strconv.FormatBool(s3.ForcePathStyle)},
 		)
-		secrets[secretAccessKey] = s3.AccessKey
-		secrets[secretSecretKey] = s3.SecretKey
 	case archive.Volume != nil:
 		env = append(env, [2]string{"WALG_FILE_PREFIX", volumeArchiveDir})
 		mountArchiveVolume(doc, archive.Volume)
@@ -79,6 +78,15 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	// The image sets it, and the scripts read it: it is the engine's as well.
 	req.OwnedEnv = append(req.OwnedEnv, "PGDATA")
 	return nil
+}
+
+func (e *Engine) ArchiveSecrets(archive *managedmodel.Archive) map[string]string {
+	secrets := map[string]string{}
+	if archive != nil && archive.S3 != nil {
+		secrets[secretAccessKey] = archive.S3.AccessKey
+		secrets[secretSecretKey] = archive.S3.SecretKey
+	}
+	return secrets
 }
 
 // checkScripts refuses a document without every script the engine API runs.

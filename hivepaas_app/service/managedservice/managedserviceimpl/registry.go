@@ -2,7 +2,6 @@ package managedserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/postgres"
 )
@@ -17,10 +16,6 @@ func newRegistry() *registry {
 	return &registry{engines: []managedmodel.Engine{
 		postgres.New(),
 	}}
-}
-
-func New() managedservice.Service {
-	return newRegistry()
 }
 
 func (r *registry) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {

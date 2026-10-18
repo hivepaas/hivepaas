@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
+    AppManaged_AddReplica_Res,
     AppManaged_CreateRestorePoint_Res,
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Res,
@@ -97,6 +98,23 @@ const SettingsSchema = z.object({
         .transform(value => value ?? undefined),
     switchedTo: z
         .object({ app: ObjectRefSchema, at: z.coerce.date() })
+        .nullish()
+        .transform(value => value ?? undefined),
+    members: z
+        .array(
+            z.object({
+                app: ObjectRefSchema,
+                key: z.string(),
+                role: z.string().optional().default("replica"),
+                volume: ObjectRefSchema,
+                node: z.string().optional().default(""),
+                at: z.coerce.date(),
+            }),
+        )
+        .nullish()
+        .transform(value => value ?? []),
+    memberOf: z
+        .object({ app: ObjectRefSchema, role: z.string().optional().default("replica") })
         .nullish()
         .transform(value => value ?? undefined),
 });
@@ -201,6 +219,24 @@ const StatusSchema = z.object({
         .object({ backups: z.number(), bytes: z.number() })
         .nullish()
         .transform(value => value ?? undefined),
+    members: z
+        .array(
+            z.object({
+                app: ObjectRefSchema,
+                key: z.string(),
+                role: z.string().optional().default("replica"),
+                node: z.string().optional().default(""),
+                state: z.string().optional().default("unknown"),
+                lagBytes: z.number().optional().default(0),
+                lagSeconds: z
+                    .number()
+                    .nullish()
+                    .transform(value => value ?? undefined),
+                checkedAt: OptionalDateSchema,
+            }),
+        )
+        .nullish()
+        .transform(value => value ?? []),
 });
 
 const withMeta = <T extends z.ZodTypeAny>(data: T) => z.object({ data, meta: BaseMetaApiSchema.nullish() });
@@ -222,6 +258,15 @@ export class AppManagedApiValidator {
         return parseApiResponse({
             response,
             schema: withMeta(z.object({ app: z.object({ id: z.string() }), task: z.object({ id: z.string() }) })),
+        });
+    };
+
+    addReplica = (response: ApiHttpResponse): AppManaged_AddReplica_Res => {
+        return parseApiResponse({
+            response,
+            schema: withMeta(
+                z.object({ app: IdSchema, task: IdSchema.nullish().transform(value => value ?? undefined) }),
+            ),
         });
     };
 

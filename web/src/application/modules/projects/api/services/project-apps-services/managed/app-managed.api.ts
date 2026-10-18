@@ -5,6 +5,8 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    AppManaged_AddReplica_Req,
+    AppManaged_AddReplica_Res,
     AppManaged_CreateRestorePoint_Req,
     AppManaged_CreateRestorePoint_Res,
     AppManaged_DeleteRestorePoint_Req,
@@ -17,6 +19,8 @@ import type {
     AppManaged_FindSwitch_Res,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RefreshCredentials_Res,
+    AppManaged_RemoveReplica_Req,
+    AppManaged_RemoveReplica_Res,
     AppManaged_Restore_Req,
     AppManaged_Restore_Res,
     AppManaged_Switch_Req,
@@ -88,6 +92,18 @@ export class AppManagedApi extends BaseApi {
             this.client.v1.post(`${this.base(req.data)}/restore`, req.data.payload),
             this.validator.restore,
         );
+    }
+
+    async addReplica(req: AppManaged_AddReplica_Req): Promise<Result<AppManaged_AddReplica_Res, Error>> {
+        return this.run(
+            this.client.v1.post(`${this.base(req.data)}/replicas`, req.data.payload),
+            this.validator.addReplica,
+        );
+    }
+
+    async removeReplica(req: AppManaged_RemoveReplica_Req): Promise<Result<AppManaged_RemoveReplica_Res, Error>> {
+        const path = `${this.base(req.data)}/replicas/${encodeURIComponent(req.data.memberID)}`;
+        return this.run(this.client.v1.delete(path), () => SUCCESS);
     }
 
     async findSwitch(

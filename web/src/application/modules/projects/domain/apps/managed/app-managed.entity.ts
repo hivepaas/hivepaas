@@ -99,6 +99,31 @@ export interface AppManagedDump {
     schedule: string;
 }
 
+/** A replica of a primary: a logical child on a volume of its own. */
+export interface AppManagedMember {
+    app?: ManagedObjectRef;
+    key: string;
+    role: string;
+    volume?: ManagedObjectRef;
+    /** The node its volume is pinned to: an id, or a label. */
+    node: string;
+    at: Date;
+}
+
+/** A replica as the primary's last health check saw it. */
+export interface AppManagedMemberStatus {
+    app?: ManagedObjectRef;
+    key: string;
+    role: string;
+    node: string;
+    /** pg_stat_replication's state, "disconnected", or "unknown" before a check has looked. */
+    state: string;
+    lagBytes: number;
+    /** Seconds behind; none while nothing is written. */
+    lagSeconds?: number;
+    checkedAt?: Date;
+}
+
 export interface AppManagedSettings {
     updateVer: number;
     engine: string;
@@ -120,6 +145,9 @@ export interface AppManagedSettings {
     restore?: AppManagedRestoreOrigin;
     /** The database restored from this one that its consumers were switched to: this one's jobs are paused since. */
     switchedTo?: { app?: ManagedObjectRef; at: Date };
+    members: AppManagedMember[];
+    /** The primary this database is a replica of. */
+    memberOf?: { app?: ManagedObjectRef; role: string };
 }
 
 export const MANAGED_ARCHIVING_STATE = {
@@ -172,4 +200,5 @@ export interface AppManagedStatus {
     restorePoints: AppManagedRestorePoint[];
     /** What the kept points make retention keep beyond its own. */
     heldBack?: { backups: number; bytes: number };
+    members: AppManagedMemberStatus[];
 }

@@ -223,11 +223,24 @@ async function answerManaged(
     page: Page,
     app: { projectId: string; env: string; id: string },
     settings: Record<string, unknown> = {},
-): Promise<{ restores: Request[]; updates: Request[]; switches: Request[] }> {
+    status: Record<string, unknown> = {},
+): Promise<{ restores: Request[]; updates: Request[]; switches: Request[]; replicas: Request[] }> {
     const appPath = `/api/projects/${app.projectId}/${app.env}/apps/${app.id}`;
     const restores: Request[] = [];
     const updates: Request[] = [];
     const switches: Request[] = [];
+    const replicas: Request[] = [];
+    await page.route(
+        url => url.pathname.startsWith(`${appPath}/managed/replicas`),
+        route => {
+            replicas.push(route.request());
+            if (route.request().method() === "DELETE") return route.fulfill({ json: { meta: {} } });
+            return route.fulfill({
+                status: 201,
+                json: { meta: {}, data: { app: { id: "e2ereplicaapp02" }, task: { id: "e2ereplicatask2" } } },
+            });
+        },
+    );
     await page.route(
         url => url.pathname === `${appPath}/managed/switch`,
         route => {
@@ -285,7 +298,7 @@ async function answerManaged(
     );
     await page.route(
         url => url.pathname === `${appPath}/managed/status`,
-        route => route.fulfill({ json: { meta: {}, data: managedStatus() } }),
+        route => route.fulfill({ json: { meta: {}, data: { ...managedStatus(), ...status } } }),
     );
     await page.route(
         url => url.pathname === `${appPath}/managed/restore`,
@@ -306,7 +319,7 @@ async function answerManaged(
                 ]),
             }),
     );
-    return { restores, updates, switches };
+    return { restores, updates, switches, replicas };
 }
 
 // A managed template is deployed with the archive it is given: the store marks
@@ -506,4 +519,66 @@ test("a switched database says its jobs are paused", async ({ page, api }) => {
         /\/apps\/e2erestoredapp01\/database\/?$/,
     );
     await expect(page.getByRole("region", { name: "Switch consumers" })).toHaveCount(0);
+});
+
+// A database's replicas say how far behind they are; one is added on a pinned
+// volume, and one removed once confirmed.
+test("a managed database's replicas are listed, added and removed", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { replicas } = await answerManaged(
+        page,
+        app,
+        {},
+        {
+            members: [
+                {
+                    app: { id: "e2ereplicaapp01" },
+                    key: "e2e-db-r1",
+                    role: "replica",
+                    node: "e2enode02",
+                    state: "streaming",
+                    lagBytes: 8192,
+                    lagSeconds: 0.4,
+                    checkedAt: at(-60_000),
+                },
+            ],
+        },
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Replicas" });
+    const row = section.getByRole("row", { name: "e2e-db-r1" });
+    await expect(row).toContainText("streaming");
+    await expect(row).toContainText("On node e2enode02");
+    await expect(row).toContainText("8KB behind, 0.4s");
+
+    await section.getByRole("combobox", { name: "Replica volume" }).click();
+    await page.getByRole("option", { name: VOLUME.name }).click();
+    await section.getByRole("button", { name: "Add replica" }).click();
+    await expect.poll(() => replicas.length, { message: "the replica was asked for" }).toBe(1);
+    expect(replicas[0]?.method()).toBe("POST");
+    expect(replicas[0]?.postDataJSON()).toEqual({ dataVolume: { id: VOLUME.id } });
+
+    await row.getByRole("button", { name: "Remove e2e-db-r1" }).click();
+    await page.getByRole("button", { name: "Remove", exact: true }).last().click();
+    await expect.poll(() => replicas.length, { message: "the removal was asked for" }).toBe(2);
+    expect(replicas[1]?.method()).toBe("DELETE");
+    expect(new URL(replicas[1]?.url() ?? "").pathname).toMatch(/\/managed\/replicas\/e2ereplicaapp01$/);
+});
+
+// A replica's tab names its primary, and offers nothing that is the primary's.
+test("a replica's Database tab names its primary", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    await answerManaged(page, app, { memberOf: { app: { id: "e2eprimaryapp01" }, role: "replica" } });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const banner = page.getByRole("status").filter({ hasText: "A read replica of" });
+    await expect(banner.getByRole("link", { name: "its primary" })).toHaveAttribute(
+        "href",
+        /\/apps\/e2eprimaryapp01\/database\/?$/,
+    );
+    await expect(page.getByRole("button", { name: "Restore" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Settings" })).toHaveCount(0);
 });

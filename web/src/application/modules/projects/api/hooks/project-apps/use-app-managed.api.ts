@@ -5,9 +5,11 @@ import { type Result, match } from "oxide.ts";
 import { useApiErrorNotifications } from "@infrastructure/api";
 
 import type {
+    AppManaged_AddReplica_Req,
     AppManaged_CreateRestorePoint_Req,
     AppManaged_DeleteRestorePoint_Req,
     AppManaged_RefreshCredentials_Req,
+    AppManaged_RemoveReplica_Req,
     AppManaged_Restore_Req,
     AppManaged_Switch_Req,
     AppManaged_Unmanage_Req,
@@ -64,6 +66,10 @@ function createHook() {
                     write("Failed to unmanage the database")(await managed.unmanage({ data: request })),
                 restore: async (request: AppManaged_Restore_Req["data"]) =>
                     write("Failed to restore the database")(await managed.restore({ data: request })),
+                addReplica: async (request: AppManaged_AddReplica_Req["data"]) =>
+                    write("Failed to add the replica")(await managed.addReplica({ data: request })),
+                removeReplica: async (request: AppManaged_RemoveReplica_Req["data"]) =>
+                    write("Failed to remove the replica")(await managed.removeReplica({ data: request })),
                 switchConsumers: async (request: AppManaged_Switch_Req["data"]) =>
                     write("Failed to switch the consumers")(await managed.switchConsumers({ data: request })),
                 createRestorePoint: async (request: AppManaged_CreateRestorePoint_Req["data"]) =>

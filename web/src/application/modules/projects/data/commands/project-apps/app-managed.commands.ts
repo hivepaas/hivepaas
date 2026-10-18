@@ -2,12 +2,16 @@ import { type QueryClient, type UseMutationOptions, useMutation, useQueryClient 
 
 import { useAppManagedApi } from "../../../api/hooks/project-apps";
 import type {
+    AppManaged_AddReplica_Req,
+    AppManaged_AddReplica_Res,
     AppManaged_CreateRestorePoint_Req,
     AppManaged_CreateRestorePoint_Res,
     AppManaged_DeleteRestorePoint_Req,
     AppManaged_DeleteRestorePoint_Res,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RefreshCredentials_Res,
+    AppManaged_RemoveReplica_Req,
+    AppManaged_RemoveReplica_Res,
     AppManaged_Restore_Req,
     AppManaged_Restore_Res,
     AppManaged_Switch_Req,
@@ -104,6 +108,40 @@ function useRestore({ onSuccess, ...options }: Options<AppManaged_Restore_Res, A
     });
 }
 
+function useAddReplica({
+    onSuccess,
+    ...options
+}: Options<AppManaged_AddReplica_Res, AppManaged_AddReplica_Req["data"]> = {}) {
+    const { mutations } = useAppManagedApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.addReplica,
+        onSuccess: (response, request, ...rest) => {
+            invalidateManaged(queryClient, request);
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
+function useRemoveReplica({
+    onSuccess,
+    ...options
+}: Options<AppManaged_RemoveReplica_Res, AppManaged_RemoveReplica_Req["data"]> = {}) {
+    const { mutations } = useAppManagedApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.removeReplica,
+        onSuccess: (response, request, ...rest) => {
+            invalidateManaged(queryClient, request);
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
 function useSwitch({ onSuccess, ...options }: Options<AppManaged_Switch_Res, AppManaged_Switch_Req["data"]> = {}) {
     const { mutations } = useAppManagedApi();
     const queryClient = useQueryClient();
@@ -177,6 +215,8 @@ function useDeleteRestorePoint({
 }
 
 export const AppManagedCommands = Object.freeze({
+    useAddReplica,
+    useRemoveReplica,
     useSwitch,
     useUpdateSettings,
     useRefreshCredentials,

@@ -17,6 +17,8 @@ import { useConditionalModule } from "@application/shared/permissions";
 import { Button } from "@/components/ui/button";
 
 import {
+    ManagedMemberBanner,
+    ManagedReplicas,
     ManagedRestorePoints,
     ManagedSettingsForm,
     ManagedStatusCards,
@@ -96,6 +98,23 @@ export function AppDatabaseRoute() {
 
     const restoring = isRestoring(settings);
 
+    // A replica's engine state is its primary's: it says whose it is.
+    if (settings.memberOf) {
+        return (
+            <div className={cn(listBox, "@container flex flex-col gap-6")}>
+                <div className="flex flex-col">
+                    <h1 className="text-base font-semibold">Managed database</h1>
+                    <p className="text-xs text-muted-foreground">{engineName(settings.engine)} read replica.</p>
+                </div>
+                <ManagedMemberBanner
+                    projectId={projectID}
+                    env={env}
+                    primaryId={settings.memberOf.app?.id}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className={cn(listBox, "@container flex flex-col gap-6")}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -161,6 +180,14 @@ export function AppDatabaseRoute() {
                             env,
                             appID,
                         )}
+                    />
+                    <ManagedReplicas
+                        projectId={projectID}
+                        env={env}
+                        appId={appID}
+                        members={status.members}
+                        placement={status.placement}
+                        canWrite={canWrite && !restoring}
                     />
                     <ManagedRestorePoints
                         projectId={projectID}

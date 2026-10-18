@@ -64,7 +64,7 @@ type ManagedLocks struct {
 	ImageLine string `json:"imageLine"`
 	// Command is the engine's command line: the app's starts with it, and what a
 	// person adds comes after. The entrypoint stays as the app was made: the
-	// image's, or the engine's for a restored database.
+	// engine's, walg-entrypoint (the image's, for a database made before it).
 	Command string `json:"command,omitempty"`
 	// Mounts are the targets of the mounts the engine relies on, the data's
 	// among them: each keeps its source.

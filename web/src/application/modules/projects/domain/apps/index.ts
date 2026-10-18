@@ -19,3 +19,4 @@ export * from "./docker-api-settings";
 export * from "./storage-settings";
 export * from "./routing-settings";
 export * from "./kind-settings";
+export * from "./managed";

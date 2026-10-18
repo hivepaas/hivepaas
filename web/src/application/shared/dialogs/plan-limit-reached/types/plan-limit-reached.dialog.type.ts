@@ -1,5 +1,6 @@
 /**
- * A creation the plan in force refused: what an ERR_PLAN_LIMIT_REACHED says.
+ * A creation the plan in force refused: what an ERR_PLAN_LIMIT_REACHED, or an
+ * ERR_PLAN_FEATURE_REQUIRED, says.
  *
  * limit, max and plan are the error's params, as the server names them. When
  * they are missing or not as expected, limit and plan are empty and max is null,
@@ -14,6 +15,12 @@ export interface PlanLimitRefusal {
     plan: string;
     /** The server's own sentence, in the person's language. */
     message: string;
+    /**
+     * The feature the plan does not include, for an ERR_PLAN_FEATURE_REQUIRED -
+     * a creation refused for what it is rather than for how many there are.
+     * Empty for a limit.
+     */
+    feature?: string;
 }
 
 export interface PlanLimitReachedDialogProps {

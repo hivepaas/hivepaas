@@ -178,3 +178,28 @@ export function formatLicenseDate(date: Date): string {
 export function formatLicenseDateTime(date: Date): string {
     return date.toLocaleString();
 }
+
+/** How the dashboard speaks of a feature a license grants: what it is, and the plans that grant it. */
+export interface LicenseFeatureCopy {
+    /** Its name in a sentence: "managed databases". */
+    name: string;
+    /** The plans that grant it, as a person reads them. */
+    plans: string;
+}
+
+/**
+ * The features a key can grant, as HivePaaS names them (base.AllLicenseFeatures).
+ * Every plan the portal sells grants every one of them; Bee, which has no key,
+ * grants none.
+ */
+export const LICENSE_FEATURE_COPY: Readonly<Record<string, LicenseFeatureCopy>> = {
+    "managed-databases": {
+        name: "managed databases",
+        plans: "every paid plan - Comb, Hive, Colony and Apiary - and the trial",
+    },
+};
+
+/** The copy of a feature; one this dashboard does not know, from a newer HivePaaS, is named as written. */
+export function licenseFeatureCopy(feature: string): LicenseFeatureCopy {
+    return LICENSE_FEATURE_COPY[feature] ?? { name: feature, plans: "a paid plan" };
+}

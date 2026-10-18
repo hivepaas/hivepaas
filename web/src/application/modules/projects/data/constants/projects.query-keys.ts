@@ -88,6 +88,8 @@ export const QK = {
      * Project App Feature Settings
      */
     "projects.apps.feature-settings.$.find-one": "projects.apps.feature-settings.$.find-one",
+    "projects.apps.managed.$.find-settings": "projects.apps.managed.$.find-settings",
+    "projects.apps.managed.$.find-status": "projects.apps.managed.$.find-status",
     /*
      * Project App Service Settings
      */

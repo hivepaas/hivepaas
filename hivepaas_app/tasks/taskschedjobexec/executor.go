@@ -148,6 +148,7 @@ func (e *Executor) execute(
 		jobSetting: data.SchedJob,
 		refObjects: data.RefObjects,
 	})
+	keepManagedOutputs(data.Task, data.SchedJob.MustAsSchedJob(), result)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

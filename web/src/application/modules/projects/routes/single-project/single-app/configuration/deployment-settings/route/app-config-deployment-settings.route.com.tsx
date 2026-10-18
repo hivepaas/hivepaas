@@ -6,8 +6,10 @@ import invariant from "tiny-invariant";
 import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
 import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
-import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
+import { imageRepositoryOf } from "~/projects/module-shared/utils";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -102,6 +104,8 @@ export function AppConfigDeploymentSettingsRoute() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+
     const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
         {
             projectID: projectId,
@@ -167,6 +171,33 @@ export function AppConfigDeploymentSettingsRoute() {
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                managedLock={
+                    managed
+                        ? {
+                              image: (
+                                  <ManagedLockNotice
+                                      projectId={projectId}
+                                      env={env}
+                                      appId={appId}
+                                  >
+                                      The app deploys an image, from {imageRepositoryOf(managed.locks.image)}: its tag
+                                      may move only within the {managed.locks.imageLine} line.
+                                  </ManagedLockNotice>
+                              ),
+                              run: (
+                                  <ManagedLockNotice
+                                      projectId={projectId}
+                                      env={env}
+                                      appId={appId}
+                                  >
+                                      The entrypoint stays as it is, and the command starts with{" "}
+                                      <code className="font-mono">{managed.locks.command}</code>: arguments after it are
+                                      yours.
+                                  </ManagedLockNotice>
+                              ),
+                          }
+                        : undefined
+                }
             >
                 <FormActionBar>
                     <ProjectPermissionSubmitButton

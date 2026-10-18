@@ -6,6 +6,8 @@ import invariant from "tiny-invariant";
 import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import type { AppStorageMount } from "~/projects/domain";
+import { ManagedLockNotice } from "~/projects/module-shared/components";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -31,6 +33,7 @@ function AppConfigStorageContent() {
     const resolvedProjectId = projectId;
     const resolvedEnv = env;
     const resolvedAppId = appId;
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
 
     const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne(
         {
@@ -115,12 +118,22 @@ function AppConfigStorageContent() {
 
     return (
         <div className="flex flex-col gap-4">
+            {managed && managed.locks.mounts.length > 0 && (
+                <ManagedLockNotice
+                    projectId={resolvedProjectId}
+                    env={resolvedEnv}
+                    appId={resolvedAppId}
+                >
+                    The mounts marked Managed, the database&apos;s data among them, keep their source and options.
+                </ManagedLockNotice>
+            )}
             <StorageTable
                 onAddMount={handleAddMount}
                 onEditMount={handleEditMount}
                 onDeleteMount={handleDeleteMount}
                 onResetPermissions={handleResetPermissions}
                 canWrite={canWrite}
+                lockedTargets={managed?.locks.mounts}
             />
 
             <BorrowedByPanel borrowers={appData?.data.borrowedBy ?? []} />

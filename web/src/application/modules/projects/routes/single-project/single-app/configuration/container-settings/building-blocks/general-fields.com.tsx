@@ -1,3 +1,5 @@
+import type React from "react";
+
 import {
     Checkbox,
     FieldError,
@@ -36,7 +38,12 @@ function TooltipText({ text }: { text: string }) {
     return <span className="block max-w-[360px] whitespace-normal">{text}</span>;
 }
 
-export function GeneralFields() {
+interface Props {
+    /** Why a managed database's entrypoint and user are its engine's. */
+    managedLock?: React.ReactNode;
+}
+
+export function GeneralFields({ managedLock }: Props) {
     const { control } = useFormContext<
         AppConfigContainerSettingsFormSchemaInput,
         unknown,
@@ -104,6 +111,7 @@ export function GeneralFields() {
 
     return (
         <div className="flex flex-col gap-6">
+            {managedLock}
             <InfoBlock
                 titleWidth={220}
                 title="Image"
@@ -131,6 +139,7 @@ export function GeneralFields() {
                     value={entrypoint.value}
                     onChange={entrypoint.onChange}
                     placeholder="/docker-entrypoint.sh"
+                    disabled={Boolean(managedLock)}
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[entrypointError]} />
@@ -187,6 +196,7 @@ export function GeneralFields() {
                     value={user.value}
                     onChange={user.onChange}
                     placeholder="user"
+                    disabled={Boolean(managedLock)}
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[userError]} />

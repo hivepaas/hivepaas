@@ -14,7 +14,16 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
     "basic-auth": "Basic auth",
 };
 
-function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppSettingMount>[] {
+/**
+ * lockedIds are the rows a managed database's engine made and relies on: they
+ * are shown, not changed.
+ */
+function createColumns(
+    projectId: string,
+    env: string,
+    appId: string,
+    lockedIds: string[] = [],
+): ColumnDef<AppSettingMount>[] {
     return [
         {
             id: "view",
@@ -23,20 +32,33 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             enableHiding: false,
             minSize: 56,
             size: 56,
-            cell: ({ row: { original } }) => (
-                <EditCell
-                    projectId={projectId}
-                    env={env}
-                    appId={appId}
-                    settingMount={original}
-                />
-            ),
+            cell: ({ row: { original } }) =>
+                lockedIds.includes(original.id) ? null : (
+                    <EditCell
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                        settingMount={original}
+                    />
+                ),
             meta: { align: "center", titleAlign: "center" },
         },
         {
             accessorKey: "name",
             header: "Name",
-            cell: ({ row: { original } }) => <div className="break-all">{original.name}</div>,
+            cell: ({ row: { original } }) => (
+                <div className="flex flex-wrap items-center gap-1.5 break-all">
+                    {original.name}
+                    {lockedIds.includes(original.id) && (
+                        <Badge
+                            tone="violet"
+                            title="The managed database's engine made it, and relies on it"
+                        >
+                            Managed
+                        </Badge>
+                    )}
+                </div>
+            ),
         },
         {
             header: "Source",
@@ -84,14 +106,15 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             id: "actions",
             header: "",
             enableSorting: false,
-            cell: ({ row: { original } }) => (
-                <MenuCell
-                    projectId={projectId}
-                    env={env}
-                    appId={appId}
-                    settingMount={original}
-                />
-            ),
+            cell: ({ row: { original } }) =>
+                lockedIds.includes(original.id) ? null : (
+                    <MenuCell
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                        settingMount={original}
+                    />
+                ),
             meta: { align: "right" },
         },
     ];

@@ -5,7 +5,9 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { AppConfigFilesQueries } from "~/projects/data/queries";
+import { ManagedLockNotice } from "~/projects/module-shared/components";
 import { AppConfigFilesTableDefs } from "~/projects/module-shared/definitions/tables/app-config-files";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -38,10 +40,24 @@ export function AppConfigFilesRoute() {
             APP_CONFIGURATION_QUERY_OPTIONS,
         );
 
-    const columns = useMemo(() => AppConfigFilesTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const lockedIds = managed?.locks.settings;
+    const columns = useMemo(
+        () => AppConfigFilesTableDefs.columns(projectId, env, appId, lockedIds),
+        [projectId, env, appId, lockedIds],
+    );
 
     return (
         <div className="flex flex-col gap-6">
+            {lockedIds && lockedIds.length > 0 && (
+                <ManagedLockNotice
+                    projectId={projectId}
+                    env={env}
+                    appId={appId}
+                >
+                    The config files marked Managed hold the engine&apos;s credentials and scripts.
+                </ManagedLockNotice>
+            )}
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={

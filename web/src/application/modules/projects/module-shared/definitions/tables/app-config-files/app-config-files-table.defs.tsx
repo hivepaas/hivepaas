@@ -6,7 +6,16 @@ import { InheritableCell, ProjectSecretStatusBadge } from "~/projects/module-sha
 
 import { EditCell, MenuCell } from "./building-blocks";
 
-function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppConfigFile>[] {
+/**
+ * lockedIds are the rows a managed database's engine made and relies on: they
+ * are shown, not changed.
+ */
+function createColumns(
+    projectId: string,
+    env: string,
+    appId: string,
+    lockedIds: string[] = [],
+): ColumnDef<AppConfigFile>[] {
     return [
         {
             id: "view",
@@ -17,7 +26,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             minSize: 56,
             size: 56,
             cell: ({ row: { original } }) => {
-                if (original.inherited) {
+                if (original.inherited || lockedIds.includes(original.id)) {
                     return null;
                 }
 
@@ -38,7 +47,19 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
         {
             accessorKey: "name",
             header: "Name",
-            cell: ({ row: { original } }) => <div className="break-all">{original.name}</div>,
+            cell: ({ row: { original } }) => (
+                <div className="flex flex-wrap items-center gap-1.5 break-all">
+                    {original.name}
+                    {lockedIds.includes(original.id) && (
+                        <Badge
+                            tone="violet"
+                            title="The managed database's engine made it, and relies on it"
+                        >
+                            Managed
+                        </Badge>
+                    )}
+                </div>
+            ),
         },
         {
             header: "Status",
@@ -96,7 +117,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             header: "",
             enableSorting: false,
             cell: ({ row: { original } }) => {
-                if (original.inherited) {
+                if (original.inherited || lockedIds.includes(original.id)) {
                     return null;
                 }
 

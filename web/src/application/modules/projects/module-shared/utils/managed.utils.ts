@@ -40,3 +40,12 @@ export const MAX_POINT_KEEP_DAYS = 90;
 /** A restore point's name, as the engine takes it: Postgres's 63 bytes, and not one of HivePaaS's own. */
 export const POINT_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/;
 export const RESERVED_POINT_PREFIX = "hp-";
+
+/** An image reference without its tag or digest: "postgres" of "postgres:18.6". */
+export function imageRepositoryOf(image: string): string {
+    const withoutDigest = image.split("@")[0] ?? image;
+    const lastSlash = withoutDigest.lastIndexOf("/");
+    const lastColon = withoutDigest.lastIndexOf(":");
+
+    return lastColon > lastSlash ? withoutDigest.slice(0, lastColon) : withoutDigest;
+}

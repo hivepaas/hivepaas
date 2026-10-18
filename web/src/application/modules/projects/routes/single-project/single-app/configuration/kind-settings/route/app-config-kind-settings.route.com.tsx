@@ -8,7 +8,8 @@ import invariant from "tiny-invariant";
 import { AppKindSettingsCommands, AppKindSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { type AppKindSettingsUpdatePayload } from "~/projects/domain";
-import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
@@ -135,6 +136,8 @@ export function AppConfigKindSettingsRoute() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+
     const { data, isLoading, isFetching } = AppKindSettingsQueries.useFindOne(
         {
             projectID: projectId,
@@ -187,6 +190,17 @@ export function AppConfigKindSettingsRoute() {
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
                 isRevealed={isRevealed}
+                kindLock={
+                    managed && (
+                        <ManagedLockNotice
+                            projectId={projectId}
+                            env={env}
+                            appId={appId}
+                        >
+                            The kind and the engine stay as they are.
+                        </ManagedLockNotice>
+                    )
+                }
             >
                 <FormActionBar>
                     <KindSettingsRevealSecretsButton

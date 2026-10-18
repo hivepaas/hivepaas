@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -6,7 +6,9 @@ import invariant from "tiny-invariant";
 import { ProjectAppEnvVarsCommands } from "~/projects/data/commands";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppEnvVarsQueries } from "~/projects/data/queries";
-import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import type { ProjectRuntimeEnvVar } from "~/projects/domain";
+import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -39,6 +41,23 @@ export function AppConfigEnvVariablesRoute() {
         { projectID: projectId, env, appID: appId },
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
+
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const lockedKeys = managed?.locks.envKeys;
+    const defaultValues = useMemo(() => {
+        if (!envVarsData) {
+            return undefined;
+        }
+        // A key the managed database's engine owns is shown, and kept, as it is.
+        const lock = (vars: ProjectRuntimeEnvVar[]) =>
+            vars.map(item => (lockedKeys?.includes(item.key) ? { ...item, isReadOnly: true } : item));
+
+        return {
+            buildtime: envVarsData.data.buildtime,
+            runtime: lock(envVarsData.data.runtime),
+            shared: envVarsData.data.shared,
+        };
+    }, [envVarsData, lockedKeys]);
 
     const { mutate: update, isPending } = ProjectAppEnvVarsCommands.useUpdateOne({
         onSuccess: () => {
@@ -84,17 +103,14 @@ export function AppConfigEnvVariablesRoute() {
     }
 
     invariant(envVarsData, "envVarsData must be defined");
+    invariant(defaultValues, "defaultValues must be defined");
 
     const { data: envVars } = envVarsData;
 
     return (
         <AppConfigEnvVarsForm
             ref={formRef}
-            defaultValues={{
-                buildtime: envVars.buildtime,
-                runtime: envVars.runtime,
-                shared: envVars.shared,
-            }}
+            defaultValues={defaultValues}
             inheritedValues={{
                 buildtime: envVars.inheritedBuildtimeEnvVars,
                 runtime: envVars.inheritedRuntimeEnvVars,
@@ -102,6 +118,15 @@ export function AppConfigEnvVariablesRoute() {
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
+            {managed && managed.locks.envKeys.length > 0 && (
+                <ManagedLockNotice
+                    projectId={projectId}
+                    env={env}
+                    appId={appId}
+                >
+                    {managed.locks.envKeys.join(", ")} keep their values.
+                </ManagedLockNotice>
+            )}
             <FormActionBar contentClassName="gap-2">
                 <ProjectPermissionSubmitButton isPending={isPending} />
             </FormActionBar>

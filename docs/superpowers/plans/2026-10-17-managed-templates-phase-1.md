@@ -1050,3 +1050,34 @@ above:
    while the apps are within Bee's count (a restore makes an app). Creating a managed
    app is refused.
 8. On an arm64 node, if one is available: the aarch64 artifact is chosen and runs.
+
+**As run** (2026-10-18, on the dashboard's e2e dind stack on a developer machine, not
+the Linux server: backend and agent from main, S3 from SeaweedFS 4.47 inside dind,
+the catalog from app-templates main):
+
+| # | Result |
+|---|---|
+| 1 | Pass. PG18 archived a write in 42 s and PG17 in 58 s. Right after a start, PostgreSQL forces no segment switch until its first checkpoint, plain images included, so the first minutes can lose up to checkpoint_timeout + archive_timeout. |
+| 2 | Pass. A delete undone by restoring to a time before it, into a new app; the source unchanged. The restored app archives under its own prefix, made its first base backup on timeline 2, and its jobs were enabled. |
+| 3 | Pass. Restored to a point: exactly the rows at the mark. With retainFull 1 and a point kept for 10 days, two nightly runs kept the base backup before it (2 held back), and restoring to it still gave the rows at its mark. |
+| 4 | Pass. The restore test passed in the container (2 s) and in a verifier app (3 s); Status showed both. |
+| 5 | Pass. With the key revoked, the scheduled health check failed and Status said failing 204 s later; with the key back, archiving caught up within a minute. Notification delivery was not checked: the stack has no channels. |
+| 6 | Pass. With a segment after the latest base backup removed, the restore test failed on it ("Archive ... does not exist"). |
+| 7 | Pass, with the license row removed (no endpoint removes one): on Bee, 10 of 20 apps, creating a managed app was refused with ERR_PLAN_FEATURE_REQUIRED, archiving went on, the restore test passed, and a restore to latest gave the source's rows. With HP_DEV_MODE_LICENSE_FEATURES=managed-databases the store showed nothing missing and a managed app was created. |
+| 8 | Not run: no arm64 node. |
+
+The dashboard's mocked-API spec, `e2e/tests/level-0/managed-database.spec.ts`, passed
+on the same stack (4 of 4) once its submit button was named as the dialog names it.
+
+They found, and these fixed:
+- c3ca40dc: a managed deployment failed with "duplicate mount point": the dev, local
+  and e2e stacks gave HP_STORAGE_HOST_DIR to the app only, and the agent answered a
+  relative path for the artifact.
+- 00f0af31: every managed endpoint refused an active project as inactive: loadManaged
+  and UnmanageApp did not load the Project and ProjectEnv relations LoadApp checks.
+- 35309b3a: the restore window could end before it began, right after a base backup.
+- 86140074: two restores of one database within a minute took the same default name.
+- Dashboard ac440518: the deploy dialog offered the project's archives, not the
+  environment's, and the creation then refused one the environment could not use.
+- f57a83cd (asked for): HP_DEV_MODE_LICENSE_FEATURES, which the dev stack sets to
+  managed-databases.

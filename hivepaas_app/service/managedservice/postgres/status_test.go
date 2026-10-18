@@ -65,6 +65,27 @@ func TestStatusOfAHealthyDatabase(t *testing.T) {
 	assert.Empty(t, status.Suggestions)
 }
 
+// A base backup taken since the health check last read the archiver is still
+// restorable: the window never ends before it, nor before it starts.
+func TestTheRestoreWindowReachesTheNewestBackup(t *testing.T) {
+	runs := healthyRuns()
+	runs["health"].Outputs[outLastArchivedAt] = "2026-10-18T01:59:00Z"
+
+	status, _ := New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
+		Runs: runs, Now: statusNow})
+	if assert.NotNil(t, status.RestoreWindow) {
+		assert.Equal(t, time.Date(2026, 10, 18, 2, 0, 5, 0, time.UTC), status.RestoreWindow.To)
+	}
+
+	runs["nightly"].Outputs[outOldestBackupAt] = runs["nightly"].Outputs[outBackupAt]
+	delete(runs["nightly"].Outputs, outBackupAt)
+	status, _ = New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
+		Runs: runs, Now: statusNow})
+	if assert.NotNil(t, status.RestoreWindow) {
+		assert.Equal(t, status.RestoreWindow.From, status.RestoreWindow.To, "never inverted")
+	}
+}
+
 func TestStatusOfAFailingArchive(t *testing.T) {
 	runs := healthyRuns()
 	runs["health"].Status = base.TaskStatusFailed

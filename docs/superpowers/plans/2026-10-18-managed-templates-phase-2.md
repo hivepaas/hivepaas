@@ -502,7 +502,75 @@ The confirmation names the source, which keeps running.
 - Live: an app reading the source switches to the restored database and reads its rows
   after the redeploy.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend 4af73af4, merged as 51392d5f; dashboard 0af7e4b4, merged as
+d9b41b09; CLI 6e9bd1f, merged as 3661a52):
+- **Endpoints.**
+  - `GET /managed/switch` answers `{source {id, name, key}, consumers [{app, envVars,
+    previewClone, deployRestorePoint}], switchedAt}`.
+  - `POST /managed/switch` takes `{consumers: [{id}], redeploy}` and answers the apps
+    switched and the deployments queued. Problems applying the variables come back as
+    `meta.warning`.
+  - Both refuse a database that was not restored (`ERR_APP_MANAGED_SWITCH_NOT_RESTORED`),
+    or not ready (`…_NOT_READY`), with 412.
+  - Both refuse a source that is no longer an app of the environment
+    (`…_SOURCE_GONE`): the key its consumers name cannot be known.
+  - A consumer not found is refused with 400.
+- **Consumers** are the apps of the environment that name the source in any of three ways:
+  - a variable, not literal, with `${<source key>.`;
+  - its id among their previews' `AppsToClone`;
+  - their deployments' `restorePointBeforeDeploy` (Task 2's setting). The plan did not
+    list this one.
+
+  Not consumers: the source, the restored database, and previews (`ParentID`). Previews
+  keep the variables they were made with until they are made again. Only app-scope
+  variables are read; a project's or environment's variables that name an app's key are
+  not.
+- **The rewrite** is `envvarhelper.RefReplacer` / `RewriteRefs` / `RefersTo`, matching
+  `${<key>.` whole. The preview's database clone now uses it too, in place of its own
+  replacer.
+- **Variables are always applied; redeploy adds a deployment.** The live check found
+  that a deployment does not apply runtime variables, because saving them does.
+  - So the switch builds the consumers' variables in the transaction. This checks that
+    the references resolve.
+  - After commit, it applies them to the running services, as the variables screen does.
+  - With `redeploy`, each consumer whose variables changed is also deployed. This is for
+    what reads the database during the build or in the pre-deploy command. The
+    variables are applied before the deployments are queued.
+- **The source** keeps running, and its archiving goes on: `archive_command` is the
+  server's, not a job.
+  - Its active managed jobs are disabled, and their coming runs dropped.
+  - Its setting records `switchedTo {app, at}`. The restored database records
+  `restore.switchedAt`.
+  - Its Database tab shows a banner saying the jobs are paused. Archiving there reads
+    "Behind" once the paused health check goes stale.
+  - Nothing resumes the jobs: the way on is to stop, unmanage or delete the source.
+- **Switching again** is allowed. The list shows whatever still names the source.
+- **Audited** on the restored app (section `managed`: switchedFrom, consumers, redeploy).
+- **Dashboard.** A ready restored database has a "Switch consumers" section:
+  - every consumer is checked, with what it uses;
+  - there is a "Redeploy them" option;
+  - the PopConfirm names the source and says it keeps running, its jobs paused.
+- **Tests:**
+  - envvarhelper: matching the key whole, rewriting only the key given, literals left
+    alone;
+  - usecase: finding consumers by each of the three ways and leaving out the
+    source, target, previews and literals; repointing each setting; refusing a database
+    that was not restored, or not ready; pausing only the engine's active jobs;
+  - e2e level-0: the switch section, its payload, and the source's banner. All 8 pass.
+- **Live check, on the e2e stack (`lc/check10.sh`, `check10b.sh`):**
+  - two readers used `PGURL` naming pg18 (144 rows), and lc-web marked deploy points on
+    pg18;
+  - the switch on pg18 itself was refused (412), and so was a non-consumer (400);
+  - the restored database listed all three;
+  - switching lc-reader without redeploy rewrote `PGURL` to the restored key, and it read
+    the restored 110 rows, while lc-reader-2 still read pg18;
+  - pg18's nightly, health, restoreTest and dump jobs were disabled, and both databases
+    recorded the switch;
+  - switching lc-reader-2 and lc-web with redeploy deployed lc-reader-2 only, since
+    lc-web's variables did not change. lc-reader-2 then read 110 rows, lc-web's deploy
+    points moved to the restored database, and no consumer was left.
 
 ## Task 5: asynchronous read replicas
 

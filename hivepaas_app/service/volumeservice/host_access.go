@@ -50,6 +50,12 @@ func DriverOptsReachDockerSocket(driverOpts map[string]string) bool {
 	return ReachesDockerSocket(driverOpts[DriverOptDevice])
 }
 
+// DriverOptsInMemory reports whether driver options describe a tmpfs mount,
+// whose data is gone when the last container using it stops.
+func DriverOptsInMemory(driverOpts map[string]string) bool {
+	return driverOpts[driverOptType] == "tmpfs"
+}
+
 // DriverOptsNameHostPath reports whether driver options describe a mount of the
 // node's filesystem. HivePaaS writes these itself for a volume whose directory
 // it chose, so the answer is about the description, not about who wrote it: the

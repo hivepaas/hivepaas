@@ -13,6 +13,7 @@ type service struct {
 	dockerManager docker.Manager
 	agentService  agentservice.Service
 	settingRepo   repository.SettingRepo
+	appRepo       repository.AppRepo
 	newClient     func(agentAddr string) (agentartifactclient.ArtifactServiceClient, error)
 	// mirror is the base URL of a mirror holding artifacts by their hash, read
 	// when it is needed so a changed config applies without a restart.
@@ -23,11 +24,13 @@ func New(
 	dockerManager docker.Manager,
 	agentService agentservice.Service,
 	settingRepo repository.SettingRepo,
+	appRepo repository.AppRepo,
 ) artifactservice.Service {
 	return &service{
 		dockerManager: dockerManager,
 		agentService:  agentService,
 		settingRepo:   settingRepo,
+		appRepo:       appRepo,
 		newClient:     agentartifactclient.NewArtifactServiceClient,
 		mirror:        func() string { return config.Current().Artifacts.Mirror },
 	}

@@ -42,9 +42,17 @@ var (
 	// owns, naming the field. It is changed through the engine's settings, or the
 	// app unmanaged first.
 	ErrAppManagedFieldLocked = NewErr(ErrNonEditable, "ERR_APP_MANAGED_FIELD_LOCKED")
-	// ErrAppManagedVolumeNotPinned refuses a managed app whose data volume is not
-	// pinned to a node: its archive and its artifacts are decided by that node.
+	// ErrAppManagedVolumeNotPinned refuses a managed app that mounts no volume for
+	// its data, or volumes pinned to different nodes.
 	ErrAppManagedVolumeNotPinned = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VOLUME_NOT_PINNED")
+	// ErrAppManagedSharedVolumeNeedsObjectStorage refuses a database on a volume
+	// every node reaches whose archive is on a volume: it may start on any node,
+	// and only object storage is reached from each.
+	ErrAppManagedSharedVolumeNeedsObjectStorage = NewErr(ErrPreconditionFailed,
+		"ERR_APP_MANAGED_SHARED_VOLUME_NEEDS_OBJECT_STORAGE")
+	// ErrAppManagedVolumeInMemory refuses a database's data on a tmpfs volume,
+	// which is gone at each restart.
+	ErrAppManagedVolumeInMemory = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VOLUME_IN_MEMORY")
 	// ErrAppManagedArchiveUnreachable refuses a volume backup repository the
 	// database's node cannot mount: one pinned to another node.
 	ErrAppManagedArchiveUnreachable = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_ARCHIVE_UNREACHABLE")

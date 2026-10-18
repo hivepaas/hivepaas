@@ -189,17 +189,50 @@ func TestAManagedTemplateNeedsAnArchive(t *testing.T) {
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
 }
 
-// Its artifacts and its archive are decided by the node its data is on, and a
-// volume any node may mount gives no node to decide by.
-func TestAManagedAppsDataMustBePinned(t *testing.T) {
+// A data volume on every node - shared storage - is allowed with an archive in
+// object storage: the database may start on any node, which the artifacts are
+// then ensured on, its placement unconstrained.
+func TestAManagedAppsDataMayBeShared(t *testing.T) {
 	uc, fakes := newManagedTest(t)
-	fakes.settings.add("vol-1", base.SettingTypeClusterVolume, "", &entity.ClusterVolume{})
+	fakes.settings.add("vol-1", base.SettingTypeClusterVolume, "", &entity.ClusterVolume{Driver: "local",
+		DriverOpts: map[string]string{"type": "nfs", "device": ":/exports/db"}})
 
-	_, err := plan(t, uc, fakes, managedReq(apptemplatedto.ManagedStorageReq{
+	planned, err := plan(t, uc, fakes, managedReq(apptemplatedto.ManagedStorageReq{
 		BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}}))
 
-	assert.ErrorIs(t, err, hperrors.ErrAppManagedVolumeNotPinned)
-	assert.Nil(t, fakes.engine.prepared, "nothing is prepared")
+	assert.NoError(t, err)
+	assert.Equal(t, managedPlacementOffSite, planned.placement)
+	if assert.Len(t, fakes.artifacts.specs, 1) {
+		assert.Nil(t, fakes.artifacts.specs[0].TaskTemplate.Placement, "every eligible node")
+	}
+}
+
+func TestASharedDataVolumeIsRefused(t *testing.T) {
+	for name, tc := range map[string]struct {
+		volume  *entity.ClusterVolume
+		storage apptemplatedto.ManagedStorageReq
+		want    error
+	}{
+		"with an archive on a volume": {&entity.ClusterVolume{},
+			apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-vol-shared"}},
+			hperrors.ErrAppManagedSharedVolumeNeedsObjectStorage},
+		"kept in memory, unpinned": {&entity.ClusterVolume{Driver: "local",
+			DriverOpts: map[string]string{"type": "tmpfs"}},
+			apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}},
+			hperrors.ErrAppManagedVolumeInMemory},
+		"kept in memory, pinned": {&entity.ClusterVolume{NodeID: "n1", Driver: "local",
+			DriverOpts: map[string]string{"type": "tmpfs"}},
+			apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}},
+			hperrors.ErrAppManagedVolumeInMemory},
+	} {
+		uc, fakes := newManagedTest(t)
+		fakes.settings.add("vol-1", base.SettingTypeClusterVolume, "", tc.volume)
+
+		_, err := plan(t, uc, fakes, managedReq(tc.storage))
+
+		assert.ErrorIs(t, err, tc.want, name)
+		assert.Nil(t, fakes.engine.prepared, "%s: nothing is prepared", name)
+	}
 }
 
 func TestAManagedAppArchivesToAnS3Repository(t *testing.T) {

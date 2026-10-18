@@ -75,3 +75,10 @@ func TestVolumePinConstraintConflictAcrossIDAndLabel(t *testing.T) {
 
 	assert.NotNil(t, conflict)
 }
+
+func TestAPinnedSpecIsPlacedByItsPin(t *testing.T) {
+	spec := PinnedSpec(VolumePin{VolumeName: "d", NodeID: "node-1"})
+	assert.Equal(t, []string{"node.id==node-1"}, spec.TaskTemplate.Placement.Constraints)
+
+	assert.Nil(t, PinnedSpec(VolumePin{VolumeName: "d"}).TaskTemplate.Placement, "a shared volume's, anywhere")
+}

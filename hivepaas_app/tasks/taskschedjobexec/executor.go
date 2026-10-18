@@ -19,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
@@ -48,6 +49,7 @@ type Executor struct {
 	taskRepo    repository.TaskRepo
 
 	appService               appservice.Service
+	artifactService          artifactservice.Service
 	backupRepoCleanupService backuprepocleanupservice.Service
 	dataBackupService        databackupservice.Service
 	imageScanService         imagescanservice.Service
@@ -75,6 +77,7 @@ func NewExecutor(
 	taskRepo repository.TaskRepo,
 
 	appService appservice.Service,
+	artifactService artifactservice.Service,
 	backupRepoCleanupService backuprepocleanupservice.Service,
 	dataBackupService databackupservice.Service,
 	imageScanService imagescanservice.Service,
@@ -101,6 +104,7 @@ func NewExecutor(
 		taskRepo:    taskRepo,
 
 		appService:               appService,
+		artifactService:          artifactService,
 		backupRepoCleanupService: backupRepoCleanupService,
 		dataBackupService:        dataBackupService,
 		imageScanService:         imageScanService,

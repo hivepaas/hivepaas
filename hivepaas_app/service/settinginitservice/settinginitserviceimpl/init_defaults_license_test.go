@@ -155,3 +155,24 @@ func TestLicenseRefreshIsADailyJob(t *testing.T) {
 	assert.Equal(t, "the-key", settings.Key, "the key is written back as it was")
 	assert.Equal(t, time.Date(2026, 9, 30, 7, 30, 0, 0, time.UTC), settings.Refresh.Schedule.InitialTime)
 }
+
+// Every installation gets the managed artifacts' job once: every 10 minutes from
+// now, global, with no target, no retry and no notification.
+func TestInitDefaultManagedArtifactsMakesTheJobOnce(t *testing.T) {
+	repo := &licenseSettings{}
+	s := &service{settingRepo: repo}
+
+	assert.NoError(t, s.initDefaultManagedArtifacts(context.Background(), database.Tx{}, licenseInitNow))
+	assert.NoError(t, s.initDefaultManagedArtifacts(context.Background(), database.Tx{}, licenseInitNow))
+
+	if !assert.Len(t, repo.inserted, 1, "made once") {
+		return
+	}
+	job := repo.inserted[0]
+	assert.Equal(t, base.ObjectScopeGlobal, job.Scope)
+	assert.Equal(t, string(base.SchedJobTypeManagedArtifacts), job.Kind)
+	assert.Equal(t, base.SettingStatusActive, job.Status)
+	assert.Equal(t, &entity.SchedJob{JobType: base.SchedJobTypeManagedArtifacts,
+		Schedule: &entity.SchedJobSchedule{Interval: timeutil.Duration(10 * time.Minute),
+			InitialTime: licenseInitNow}}, job.MustAsSchedJob())
+}

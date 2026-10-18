@@ -32,6 +32,24 @@ type Service interface {
 	// No artifacts asks nothing and returns none.
 	MountsFor(ctx context.Context, artifacts *entity.AppArtifactsSettings, spec *swarm.ServiceSpec) (
 		[]mount.Mount, error)
+
+	// ReconcileAll has every app's artifacts on the nodes its tasks may start on
+	// as its service stands: a node that joined after it was deployed, or one
+	// whose cache lost them. It changes no service. Each app is had on its own:
+	// one that fails is in the response, and the others go on.
+	ReconcileAll(ctx context.Context, db database.IDB) (*ReconcileAllResp, error)
+}
+
+type ReconcileAllResp struct {
+	// Apps is how many apps had their artifacts where their tasks may start.
+	Apps int
+	// Failed are the apps that did not, each with why.
+	Failed []*ReconcileFailure
+}
+
+type ReconcileFailure struct {
+	App *entity.App
+	Err error
 }
 
 type EnsureOnNodeReq struct {

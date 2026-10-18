@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
@@ -115,10 +116,7 @@ func (uc *UC) planManaged(
 	}
 
 	planned.artifacts = artifactservice.FromTemplate(tmpl.Artifacts)
-	constraint, _ := placementservice.VolumePinConstraint([]placementservice.VolumePin{pin})
-	planned.artifactMounts, err = uc.artifactService.MountsFor(ctx, planned.artifacts, &swarm.ServiceSpec{
-		TaskTemplate: swarm.TaskSpec{Placement: &swarm.Placement{Constraints: []string{constraint}}},
-	})
+	planned.artifactMounts, err = uc.artifactService.MountsFor(ctx, planned.artifacts, placementservice.PinnedSpec(pin))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -147,9 +145,9 @@ func (uc *UC) envScope(req *apptemplatedto.CreateAppFromTemplateReq) *entity.Obj
 	return entity.NewObjectScopeProjectEnv(req.ProjectID, envKey)
 }
 
-// dataVolumePin is the node the app's data is on. Every volume it mounts must be
-// pinned, to the same node: an unpinned volume gives nothing to put the
-// artifacts on, and an archive nothing to be beside.
+// dataVolumePin is the node the app's data is on: the pin its volumes share,
+// none when every node reaches them - shared storage, by the volume's own claim.
+// A database keeps its data on a volume, never in memory.
 func (uc *UC) dataVolumePin(
 	ctx context.Context,
 	scope *entity.ObjectScope,
@@ -165,8 +163,8 @@ func (uc *UC) dataVolumePin(
 			if err != nil {
 				return placementservice.VolumePin{}, err
 			}
-			if volume.NodeID == "" && volume.NodeLabel == "" {
-				return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeNotPinned).
+			if volumeservice.DriverOptsInMemory(volume.DriverOpts) {
+				return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeInMemory).
 					WithParam("Target", target).ExposeParams("Target")
 			}
 			pins = append(pins, placementservice.VolumePin{VolumeName: m.Source,
@@ -175,14 +173,18 @@ func (uc *UC) dataVolumePin(
 	}
 	if len(pins) == 0 {
 		return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeNotPinned).
-			WithParam("Target", "its data").ExposeParams("Target")
+			WithExtraDetail("it mounts no volume")
 	}
 	if _, conflict := placementservice.VolumePinConstraint(pins); conflict != nil {
 		return placementservice.VolumePin{}, hperrors.Wrap(hperrors.ErrAppManagedVolumeNotPinned).
-			WithParam("Target", "its data").ExposeParams("Target").
 			WithExtraDetail("its volumes are pinned to different nodes")
 	}
-	return pins[0], nil
+	for _, pin := range pins {
+		if pin.NodeID != "" || pin.NodeLabel != "" {
+			return pin, nil
+		}
+	}
+	return placementservice.VolumePin{}, nil
 }
 
 func (uc *UC) clusterVolume(ctx context.Context, scope *entity.ObjectScope, id string) (*entity.ClusterVolume, error) {
@@ -237,7 +239,8 @@ func (uc *UC) resolveArchive(
 }
 
 // volumeArchive archives into a volume repository's directory, which the
-// database's node has to be able to mount: the same node, or shared storage.
+// database's node has to be able to mount: the same node, or shared storage. A
+// database on shared storage has no node of its own, and archives off-site.
 func (uc *UC) volumeArchive(
 	ctx context.Context,
 	scope *entity.ObjectScope,
@@ -245,6 +248,9 @@ func (uc *UC) volumeArchive(
 	dataPin placementservice.VolumePin,
 	planned *managedPlan,
 ) (*managedmodel.Archive, error) {
+	if dataPin.NodeID == "" && dataPin.NodeLabel == "" {
+		return nil, hperrors.Wrap(hperrors.ErrAppManagedSharedVolumeNeedsObjectStorage)
+	}
 	volume, err := uc.clusterVolume(ctx, scope, volumeID)
 	if err != nil {
 		return nil, err

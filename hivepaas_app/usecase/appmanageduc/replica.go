@@ -120,7 +120,7 @@ func (uc *UC) planReplica(ctx context.Context, req *appmanageddto.AddManagedRepl
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	pin, err := uc.verifierVolumePin(ctx, appScope(loaded.app), req.DataVolume.ID, spec.DataTarget)
+	pin, err := uc.memberVolumePin(ctx, appScope(loaded.app), req.DataVolume.ID, spec.DataTarget, true)
 	if err != nil {
 		return nil, err
 	}
@@ -129,10 +129,7 @@ func (uc *UC) planReplica(ctx context.Context, req *appmanageddto.AddManagedRepl
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	constraint, _ := placementservice.VolumePinConstraint([]placementservice.VolumePin{pin})
-	plan.artifactMounts, err = uc.artifactService.MountsFor(ctx, artifacts, &swarm.ServiceSpec{
-		TaskTemplate: swarm.TaskSpec{Placement: &swarm.Placement{Constraints: []string{constraint}}},
-	})
+	plan.artifactMounts, err = uc.artifactService.MountsFor(ctx, artifacts, placementservice.PinnedSpec(pin))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

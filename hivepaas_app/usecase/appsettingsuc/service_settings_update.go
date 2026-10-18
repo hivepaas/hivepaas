@@ -94,6 +94,13 @@ func (uc *UC) loadAppServiceSettingsForUpdate(
 	if data.Service == nil || appsettingsdto.ServiceSettingsVersion(data.Service) != req.UpdateVer {
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	locks, err := uc.loadManagedLocks(ctx, db, app.ID)
+	if err != nil {
+		return err
+	}
+	if err = checkManagedMode(locks, req.ModeSpec); err != nil {
+		return err
+	}
 
 	autoscale, err := uc.appAutoscaleSetting(ctx, db, app.ID)
 	if err != nil {

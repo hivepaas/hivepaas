@@ -46,6 +46,11 @@ var SchedJobTypeManagedRestoreTest SchedJobType = "managed-restore-test"
 // the others are.
 var SchedJobTypeManagedNightly SchedJobType = "managed-nightly"
 
+// SchedJobTypeManagedArtifacts has every app's artifacts on each node its tasks
+// may start on, every few minutes: a node that joined since an app was deployed
+// has none. HivePaaS makes its job; a variable, as the others are.
+var SchedJobTypeManagedArtifacts SchedJobType = "managed-artifacts"
+
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,

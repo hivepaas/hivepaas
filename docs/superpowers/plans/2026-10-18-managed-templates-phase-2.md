@@ -375,7 +375,87 @@ merged as a1053a34; CLI 711f734, merged as 8cacdad):
 - Live: the job makes a snapshot on the e2e stack's volume repository, and restoring it
   into a fresh `postgres` app gives the rows.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend c9af051d, merged as e9ed32c7; dashboard f9ea8ae9, merged as
+00d56438; CLI 94a3e06, merged as c1a8cec):
+- **The job** is "Database dump", a `data-backup` job with source `command`, made by
+  `postgres/dump.go`'s `newDumpJob`. Configure and Reconfigure share `newJob`.
+- **The commands run through `sh -c`.** A job's plain command is split into words, not
+  given to a shell, so the image's variables need one:
+  - dump: `pg_dump --format=custom --username="${POSTGRES_USER:-postgres}"
+    --dbname="${POSTGRES_DB:-…}"`;
+  - restore: `pg_restore --clean --if-exists --no-owner --single-transaction`, same
+    user and database.
+
+  `--single-transaction` is added to the plan's flags: a restore that fails leaves the
+  database as it was. Neither command needs a template change, so databases made
+  before this have dumps too.
+- **The file name is `<app key>.dump`, not `<db name>.dump`.** The database's name is in
+  the kind setting, which the engine does not read when Reconfigure turns dumps on later.
+  The restore command reads `$POSTGRES_DB` anyway.
+- **The repository.** The create request's `managed.dump` is `{repo: {id} | null,
+  schedule}`.
+  - Left out, a database archiving into a backup repository is dumped into it, and one
+    archiving into cloud storage is not dumped.
+  - `repo: null` turns dumps off.
+  - A repository is checked to be one the environment sees, and active.
+  - The dashboard always sends `dump` and works out the default itself.
+- **`PUT /managed`** takes `dumpRepo`, where `{"id": ""}` turns dumps off, and
+  `dumpSchedule`. The schedule is kept in `ManagedPostgres.Dump` while dumps are off, and
+  the settings show it. A database made before has no schedule kept, so the engine's
+  `0 3 * * *` applies.
+- **Reconfigure can now make and remove jobs.**
+  - `ReconfigureReq` carries `ManagedID` and `Now`; `ReconfigureResp` adds `Created` and
+    `Deleted`.
+  - `appmanageduc.storeReconfigured` inserts and schedules what was made.
+  - It marks removed jobs deleted and reschedules them, which drops their coming runs.
+  - Changing only the repository changes the job without moving its schedule.
+- **A restore copies the dump settings.** A dump job made while the database is being
+  restored waits, disabled, like the other jobs. The finish step turns on every job the
+  engine made. Unmanage removes the dump job with the others.
+- **Status** has `lastDump` (succeeded, ended, snapshot id, bytes), read from the run's
+  `SNAPSHOT_ID` and `SNAPSHOT_SIZE_BYTES`.
+- **A schedule in the same minute as the base backup's is not refused.**
+  - The status suggests `dump-apart` when the two schedules fire in the same minute in
+    the coming week.
+  - The settings form also notes when the two expressions are the same.
+- **Also fixed:** for a managed job, `keepManagedOutputs` replaced the run's output with
+  its outputs, which would have dropped the snapshot the run's page links. A managed data
+  backup's run now keeps both: `{snapshotId, sizeBytes, outputs}`.
+- **API level** stays 4. After resetting `api-level.json`, run `make gen-swag` again so
+  that `swagger.json`'s `x-api-level` is 4 too. The CLI reads its level from there, and
+  the first regeneration came out as 5 before this was fixed.
+- **Dashboard.**
+  - The create form has "Dump into" (the archive's repository, no dumps, or another
+    repository) and "Dump schedule".
+  - The Database tab's settings have the same two fields.
+  - The tab has a "Last dump" row under the status cards, with a link to the app's
+    Backup Snapshots, and the wording of `dump-apart`.
+- **Not done:** dumping from the verifier (as decided above), and a template default for
+  the dump schedule. The engine's default is used.
+- **Tests:**
+  - engine: the job, its commands and file, turning dumps on, moving them and turning
+    them off, the kept schedule, a bad schedule, a restoring database, the last dump,
+    and `dump-apart`;
+  - usecase: turning dumps on and off through `reconfigureManaged` and the settings
+    view, where the create request dumps, refused repositories, and the restore copying
+    the settings;
+  - the managed output;
+  - e2e level-0: the create request's default dump, the "Last dump" row and its link,
+    and saving a moved or stopped dump. All 6 pass.
+- **Live check, on the e2e stack (`lc/check9.sh`):**
+  - an unknown repository is refused (404);
+  - dumps turned on make the job, managed, with file `pg18.dump`;
+  - a run took snapshot `3ea53dbd…` (2300 bytes), which the status, the run's page and
+    the app's snapshots list all name;
+  - restoring it into a fresh `postgres` app (18, debian) gave the 139 rows dumped and
+    not the 5 written after;
+  - a schedule of `0 2 * * *` brought `dump-apart`, and `30 3 * * *` cleared it;
+  - dumps turned off removed the job (404) and kept the schedule.
+
+  A volume repository needs a volume with `bindOptions.directory`, as the e2e helpers
+  make; a plain local volume is refused with `ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED`.
 
 ## Task 4: switch consumers to a restored database
 

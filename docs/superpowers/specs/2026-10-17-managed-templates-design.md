@@ -477,7 +477,10 @@ required. Retention then keeps it restorable:
   moves the boundary forward.
 
 For months or years, a `pg_dump` of the moment into a Kopia repository (phase 2) is far
-smaller than holding back the archive.
+smaller than holding back the archive. The dump is a data-backup job the engine owns, on
+the person's schedule. It runs in the database's container, not in the verifier: the
+verifier holds a copy only while a test runs, so dumping there would mean restoring the
+archive first.
 
 **Before every deploy** (phase 2): an option on an app that links to a managed
 database makes a point named `deploy-<app>-<deployment number>` before its pre-deploy

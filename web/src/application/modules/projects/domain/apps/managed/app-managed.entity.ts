@@ -148,6 +148,10 @@ export interface AppManagedSettings {
     members: AppManagedMember[];
     /** The replica the base backups are taken on; none for this database itself. */
     backupFrom?: ManagedObjectRef;
+    /** The member promoted to the cluster's primary; none while this database is. */
+    writer?: ManagedObjectRef;
+    /** When this database was fenced for a promotion: stopped, and kept from starting its server. */
+    fencedAt?: Date;
     /** The primary this database is a replica of. */
     memberOf?: { app?: ManagedObjectRef; role: string };
 }

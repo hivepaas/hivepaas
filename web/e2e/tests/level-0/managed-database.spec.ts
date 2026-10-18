@@ -231,6 +231,18 @@ async function answerManaged(
     const switches: Request[] = [];
     const replicas: Request[] = [];
     await page.route(
+        url => url.pathname === `${appPath}/managed/promote`,
+        route => {
+            replicas.push(route.request());
+            return route.fulfill({
+                json: {
+                    meta: {},
+                    data: { writer: { id: "e2ereplicaapp01" }, fenced: { id: app.id }, restarted: [] },
+                },
+            });
+        },
+    );
+    await page.route(
         url => url.pathname.startsWith(`${appPath}/managed/replicas`),
         route => {
             replicas.push(route.request());
@@ -609,4 +621,61 @@ test("a managed database's base backups are taken on its replica", async ({ page
     await settings.getByRole("button", { name: "Save" }).click();
     await expect.poll(() => updates.length, { message: "the settings were saved" }).toBe(1);
     expect(updates[0]?.postDataJSON()).toEqual({ updateVer: 3, backupFrom: { id: "" } });
+});
+
+const REPLICA_STATUS = {
+    app: { id: "e2ereplicaapp01" },
+    key: "e2e-db-r1",
+    role: "replica",
+    node: "e2enode02",
+    state: "streaming",
+    lagBytes: 0,
+    lagSeconds: null,
+    checkedAt: at(-60_000),
+};
+
+// A replica is promoted once confirmed, the confirmation saying what stops; the
+// section says where apps reach the primary.
+test("a managed database's replica is promoted", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { replicas } = await answerManaged(page, app, {}, { members: [REPLICA_STATUS] });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Replicas" });
+    await expect(section).toContainText(".HIVEPAAS_DATABASE_URL_RW}");
+    await section.getByRole("button", { name: "Promote e2e-db-r1" }).click();
+    await expect(page.getByText("is stopped, and kept from starting its server")).toBeVisible();
+    await page.getByRole("button", { name: "Promote", exact: true }).last().click();
+
+    await expect.poll(() => replicas.length, { message: "the promotion was asked for" }).toBe(1);
+    expect(new URL(replicas[0]?.url() ?? "").pathname).toMatch(/\/managed\/promote$/);
+    expect(replicas[0]?.postDataJSON()).toEqual({ member: { id: "e2ereplicaapp01" } });
+});
+
+// A database a replica was promoted over says it is fenced and who writes; the
+// primary member is neither promoted nor removed.
+test("a fenced managed database says which member is the primary", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const primary = { ...REPLICA_STATUS, role: "primary", state: "primary" };
+    await answerManaged(
+        page,
+        app,
+        {
+            writer: { id: "e2ereplicaapp01" },
+            fencedAt: at(-HOUR),
+            members: [{ ...REPLICA_STATUS, role: "primary", volume: { id: VOLUME.id }, at: at(-DAY) }],
+        },
+        { members: [primary] },
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    await expect(page.getByRole("status").filter({ hasText: "Fenced since" })).toContainText(
+        "e2e-db-r1 is the cluster's primary",
+    );
+    const row = page.getByRole("region", { name: "Replicas" }).getByRole("row", { name: "e2e-db-r1" });
+    await expect(row).toContainText("primary");
+    await expect(row.getByRole("button", { name: "Promote e2e-db-r1" })).toHaveCount(0);
+    await expect(row.getByRole("button", { name: "Remove e2e-db-r1" })).toBeDisabled();
 });

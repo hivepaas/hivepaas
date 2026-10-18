@@ -8,6 +8,8 @@ import type {
     AppManaged_CreateRestorePoint_Res,
     AppManaged_DeleteRestorePoint_Req,
     AppManaged_DeleteRestorePoint_Res,
+    AppManaged_Promote_Req,
+    AppManaged_Promote_Res,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RefreshCredentials_Res,
     AppManaged_RemoveReplica_Req,
@@ -125,6 +127,22 @@ function useAddReplica({
     });
 }
 
+function usePromote({ onSuccess, ...options }: Options<AppManaged_Promote_Res, AppManaged_Promote_Req["data"]> = {}) {
+    const { mutations } = useAppManagedApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.promote,
+        onSuccess: (response, request, ...rest) => {
+            // The writer, the jobs and the members' states move; the app is stopped.
+            invalidateManagedJobs(queryClient, request);
+            invalidateSingleAppConfigurationQueries(queryClient, request);
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
 function useRemoveReplica({
     onSuccess,
     ...options
@@ -215,6 +233,7 @@ function useDeleteRestorePoint({
 }
 
 export const AppManagedCommands = Object.freeze({
+    usePromote,
     useAddReplica,
     useRemoveReplica,
     useSwitch,

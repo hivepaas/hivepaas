@@ -8,6 +8,7 @@ import type {
     AppManaged_AddReplica_Req,
     AppManaged_CreateRestorePoint_Req,
     AppManaged_DeleteRestorePoint_Req,
+    AppManaged_Promote_Req,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RemoveReplica_Req,
     AppManaged_Restore_Req,
@@ -68,6 +69,8 @@ function createHook() {
                     write("Failed to restore the database")(await managed.restore({ data: request })),
                 addReplica: async (request: AppManaged_AddReplica_Req["data"]) =>
                     write("Failed to add the replica")(await managed.addReplica({ data: request })),
+                promote: async (request: AppManaged_Promote_Req["data"]) =>
+                    write("Failed to promote the replica")(await managed.promote({ data: request })),
                 removeReplica: async (request: AppManaged_RemoveReplica_Req["data"]) =>
                     write("Failed to remove the replica")(await managed.removeReplica({ data: request })),
                 switchConsumers: async (request: AppManaged_Switch_Req["data"]) =>

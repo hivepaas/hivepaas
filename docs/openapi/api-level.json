@@ -168,6 +168,7 @@
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/refresh-credentials": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore": "0ed733830f69b0d5904e54641ab3b6f10b5be9bfcf6f5584b61ca4e14100a9dc",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points": "ab11377f4c3998250de0afe38764f1b5f13980f6f3d3fccdf09caadcd603c65b",
+    "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/switch": "8cc42ccc3e23f32f3ca3a9519717a5c07ce9efdf07318b9e6dfeabc8cb7eef21",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/unmanage": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs": "b13aae370a4e9653a88ace03526d6318f3f21d732b39a470359701dfca303875",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/photo-detect": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",

@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envvarhelper"
 )
 
 func (s *service) onCloneApp(
@@ -121,19 +122,9 @@ func (s *service) onCloneEnvVars(
 		return nil, nil
 	}
 	envVars := setting.MustAsEnvVars()
-	changedEnvVars := make([]*entity.EnvVar, 0)
-	for _, env := range envVars.Data {
-		if env.IsLiteral {
-			continue
-		}
-		// E.g. In `backend` app there is env `CONNECT_STR=scheme://${db.HOST}:${db.PORT}`,
-		// it will be converted to `CONNECT_STR=scheme://${cloned_db.HOST}:${cloned_db.PORT}`.
-		newValue := data.CloneDBAppsEnvRefReplacer.Replace(env.Value)
-		if newValue != env.Value {
-			env.Value = newValue
-			changedEnvVars = append(changedEnvVars, env)
-		}
-	}
+	// E.g. In `backend` app there is env `CONNECT_STR=scheme://${db.HOST}:${db.PORT}`,
+	// it will be converted to `CONNECT_STR=scheme://${cloned_db.HOST}:${cloned_db.PORT}`.
+	changedEnvVars := envvarhelper.RewriteRefs(envVars.Data, data.CloneDBAppsEnvRefReplacer)
 	if len(changedEnvVars) == 0 {
 		return nil, nil
 	}

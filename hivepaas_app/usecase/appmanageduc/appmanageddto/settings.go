@@ -65,12 +65,22 @@ type ManagedSettingsResp struct {
 	// Restore is where the database was restored from, null for one that was
 	// not; it is restoring until readyAt is set.
 	Restore *ManagedRestoreResp `json:"restore"`
+	// SwitchedTo is the database restored from this one that its consumers were
+	// switched to, null for none: this one's jobs are paused since.
+	SwitchedTo *ManagedSwitchedToResp `json:"switchedTo"`
+}
+
+type ManagedSwitchedToResp struct {
+	App *basedto.ObjectIDResp `json:"app"`
+	At  time.Time             `json:"at"`
 }
 
 type ManagedRestoreResp struct {
 	SourceApp *basedto.ObjectIDResp     `json:"sourceApp"`
 	Target    *ManagedRestoreTargetResp `json:"target"`
 	ReadyAt   *time.Time                `json:"readyAt"`
+	// SwitchedAt is when the source's consumers were last switched to this one.
+	SwitchedAt *time.Time `json:"switchedAt"`
 }
 
 type ManagedRestoreTargetResp struct {
@@ -141,6 +151,9 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		Locks: &ManagedLocksResp{Image: locks.Image, ImageLine: locks.ImageLine, Command: locks.Command,
 			Mounts: nonNil(locks.Mounts), EnvKeys: nonNil(locks.EnvKeys), Settings: nonNil(locks.Settings)},
 	}
+	if switched := managed.SwitchedTo; switched != nil {
+		resp.SwitchedTo = &ManagedSwitchedToResp{App: objectID(switched.App), At: switched.At}
+	}
 	pg := managed.Postgres
 	if pg == nil {
 		return resp
@@ -166,7 +179,7 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		resp.Restore = &ManagedRestoreResp{SourceApp: objectID(restore.SourceApp),
 			Target: &ManagedRestoreTargetResp{Kind: target.Kind, Time: timeOrNil(target.Time), Point: target.Point,
 				LSN: target.LSN, Backup: target.Backup},
-			ReadyAt: timeOrNil(restore.ReadyAt)}
+			ReadyAt: timeOrNil(restore.ReadyAt), SwitchedAt: timeOrNil(restore.SwitchedAt)}
 	}
 	resp.BaseBackupSchedule = cronOf(view.Jobs[pg.Jobs.Nightly.ID])
 	resp.RestoreTestSchedule = cronOf(view.Jobs[pg.Jobs.RestoreTest.ID])

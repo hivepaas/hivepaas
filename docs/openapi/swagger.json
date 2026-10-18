@@ -22191,6 +22191,186 @@
         "tags" : [ "Managed apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/switch" : {
+      "get" : {
+        "description" : "The database this one was restored from, and the apps of the environment that use it: by a\nvariable naming its key, by its id among their previews' databases, or as their deployments'\nrestore point. Only for a restored database, once it is ready.",
+        "operationId" : "appManagedSwitchGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedSwitchResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what switching to a restored database would repoint",
+        "tags" : [ "Managed apps" ]
+      },
+      "post" : {
+        "description" : "The consumers chosen name this database instead of the one it was restored from: their\nvariables, their previews' databases and their deployments' restore point. Their variables are\napplied to their running services; with redeploy, each whose variables changed is deployed too.\nThe source keeps running, its jobs paused.",
+        "operationId" : "appManagedSwitch",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.SwitchManagedReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.SwitchManagedResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Switches consumers to a restored database",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/unmanage" : {
       "post" : {
         "description" : "Removes the engine's state and the jobs it made, and with them the locks. The database keeps\narchiving where it did; base backups, retention, the health check and the restore test stop.",
@@ -56331,6 +56511,24 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "appmanageddto.GetManagedSwitchResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedArchivingResp" : {
         "properties" : {
           "checkedAt" : {
@@ -56561,6 +56759,11 @@
             } ],
             "nullable" : true
           },
+          "switchedAt" : {
+            "description" : "SwitchedAt is when the source's consumers were last switched to this one.",
+            "nullable" : true,
+            "type" : "string"
+          },
           "target" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTargetResp"
@@ -56568,7 +56771,7 @@
             "nullable" : true
           }
         },
-        "required" : [ "readyAt", "sourceApp", "target" ],
+        "required" : [ "readyAt", "sourceApp", "switchedAt", "target" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreTargetReq" : {
@@ -56741,11 +56944,19 @@
             } ],
             "nullable" : true
           },
+          "switchedTo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchedToResp"
+            } ],
+            "description" : "SwitchedTo is the database restored from this one that its consumers were\nswitched to, null for none: this one's jobs are paused since.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -56860,6 +57071,113 @@
         "required" : [ "backupRepo", "cloudStorage", "keyAuth", "placement", "prefix" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedSwitchAppResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "key", "name" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSwitchConsumerResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchAppResp"
+            } ],
+            "nullable" : true
+          },
+          "deployRestorePoint" : {
+            "description" : "DeployRestorePoint says the app's deployments mark a restore point on the\nsource.",
+            "type" : "boolean"
+          },
+          "envVars" : {
+            "description" : "EnvVars are the app's variables that name the source's.",
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "previewClone" : {
+            "description" : "PreviewClone says the app's previews clone the source.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "app", "deployRestorePoint", "envVars", "previewClone" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSwitchDataResp" : {
+        "properties" : {
+          "consumers" : {
+            "description" : "Consumers are the apps that name the source: by a variable's reference to\nits key, by its id among their previews' databases to clone, or as the\ndatabase their deployments mark a restore point on.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchConsumerResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "source" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchAppResp"
+            } ],
+            "nullable" : true
+          },
+          "switchedAt" : {
+            "description" : "SwitchedAt is when consumers were last switched to this database, null\nbefore the first time.",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "consumers", "source", "switchedAt" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSwitchDeploymentResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "deployment" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "deployment", "task" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSwitchedToResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "at" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "at" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedTimeWindowResp" : {
         "properties" : {
           "from" : {
@@ -56951,6 +57269,62 @@
           "data" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.RestoreManagedDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.SwitchManagedDataResp" : {
+        "properties" : {
+          "deployments" : {
+            "description" : "Deployments are the consumers' deployments queued, with redeploy.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSwitchDeploymentResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "switched" : {
+            "description" : "Switched are the consumers switched.",
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          }
+        },
+        "required" : [ "deployments", "switched" ],
+        "type" : "object"
+      },
+      "appmanageddto.SwitchManagedReq" : {
+        "properties" : {
+          "consumers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "redeploy" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "consumers", "redeploy" ],
+        "type" : "object"
+      },
+      "appmanageddto.SwitchManagedResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.SwitchManagedDataResp"
             } ],
             "nullable" : true
           },

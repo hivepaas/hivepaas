@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envvarhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 )
@@ -51,7 +52,7 @@ func (s *service) cloneDBApps(
 		}
 	}()
 
-	refReplacerParams := make([]string, 0)
+	refKeys := make(map[string]string, len(data.CloneDBApps))
 
 	// Calculate new names/keys for the clone DB apps
 	for _, srcDBApp := range data.CloneDBApps {
@@ -66,10 +67,9 @@ func (s *service) cloneDBApps(
 		appData.NewAppName = newAppName
 		appData.NewAppKey = newAppKey
 
-		refReplacerParams = append(refReplacerParams, fmt.Sprintf("${%v.", srcDBApp.Key),
-			fmt.Sprintf("${%v.", newAppKey))
+		refKeys[srcDBApp.Key] = newAppKey
 	}
-	data.CloneDBAppsEnvRefReplacer = strings.NewReplacer(refReplacerParams...)
+	data.CloneDBAppsEnvRefReplacer = envvarhelper.RefReplacer(refKeys)
 
 	orderedDBApps, err := s.calcCloneOrderOfDBApps(ctx, db, data)
 	if err != nil {

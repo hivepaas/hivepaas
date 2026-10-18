@@ -42,8 +42,11 @@ type ManagedStatusResp struct {
 	Archiving *ManagedArchivingResp `json:"archiving"`
 	// RestoreWindow is what a restore may target; null before the first base
 	// backup.
-	RestoreWindow   *ManagedTimeWindowResp  `json:"restoreWindow"`
-	LastBackup      *ManagedBackupResp      `json:"lastBackup"`
+	RestoreWindow *ManagedTimeWindowResp `json:"restoreWindow"`
+	LastBackup    *ManagedBackupResp     `json:"lastBackup"`
+	// Backups are the base backups kept, oldest first: what a restore to a backup
+	// may name.
+	Backups         []*ManagedBackupRefResp `json:"backups"`
 	LastRestoreTest *ManagedRestoreTestResp `json:"lastRestoreTest"`
 	// Placement is where the archive is from the database: off-site, shared or
 	// same-node, which the dashboard warns about.
@@ -77,6 +80,11 @@ type ManagedBackupResp struct {
 	Bytes     int64      `json:"bytes"`
 }
 
+type ManagedBackupRefResp struct {
+	Name string    `json:"name"`
+	At   time.Time `json:"at"`
+}
+
 type ManagedRestoreTestResp struct {
 	Passed          bool      `json:"passed"`
 	EndedAt         time.Time `json:"endedAt"`
@@ -98,6 +106,7 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 		},
 		Placement:   status.Placement,
 		Suggestions: append([]string{}, status.Suggestions...),
+		Backups:     make([]*ManagedBackupRefResp, 0, len(status.Backups)),
 	}
 	if window := status.RestoreWindow; window != nil {
 		resp.RestoreWindow = &ManagedTimeWindowResp{From: window.From, To: window.To}
@@ -108,6 +117,9 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 		if !backup.At.IsZero() {
 			resp.LastBackup.At = &backup.At
 		}
+	}
+	for _, backup := range status.Backups {
+		resp.Backups = append(resp.Backups, &ManagedBackupRefResp{Name: backup.Name, At: backup.At})
 	}
 	if test := status.LastRestoreTest; test != nil {
 		resp.LastRestoreTest = &ManagedRestoreTestResp{Passed: test.Passed, EndedAt: test.EndedAt,

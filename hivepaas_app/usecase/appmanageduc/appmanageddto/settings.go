@@ -1,6 +1,8 @@
 package appmanageddto
 
 import (
+	"time"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -57,6 +59,23 @@ type ManagedSettingsResp struct {
 	RestoreTest         *ManagedRestoreTestCfgRsp `json:"restoreTest"`
 	Locks               *ManagedLocksResp         `json:"locks"`
 	Jobs                *ManagedJobsResp          `json:"jobs"`
+	// Restore is where the database was restored from, null for one that was
+	// not; it is restoring until readyAt is set.
+	Restore *ManagedRestoreResp `json:"restore"`
+}
+
+type ManagedRestoreResp struct {
+	SourceApp *basedto.ObjectIDResp     `json:"sourceApp"`
+	Target    *ManagedRestoreTargetResp `json:"target"`
+	ReadyAt   *time.Time                `json:"readyAt"`
+}
+
+type ManagedRestoreTargetResp struct {
+	Kind   string     `json:"kind"`
+	Time   *time.Time `json:"time"`
+	Point  string     `json:"point"`
+	LSN    string     `json:"lsn"`
+	Backup string     `json:"backup"`
 }
 
 type ManagedStorageResp struct {
@@ -128,6 +147,13 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		KeyAuth: objectID(pg.RestoreTest.KeyAuth), CheckQuery: pg.RestoreTest.CheckQuery}
 	resp.Jobs = &ManagedJobsResp{Nightly: objectID(pg.Jobs.Nightly), Health: objectID(pg.Jobs.Health),
 		RestoreTest: objectID(pg.Jobs.RestoreTest)}
+	if restore := pg.Restore; restore != nil {
+		target := restore.Target
+		resp.Restore = &ManagedRestoreResp{SourceApp: objectID(restore.SourceApp),
+			Target: &ManagedRestoreTargetResp{Kind: target.Kind, Time: timeOrNil(target.Time), Point: target.Point,
+				LSN: target.LSN, Backup: target.Backup},
+			ReadyAt: timeOrNil(restore.ReadyAt)}
+	}
 	resp.BaseBackupSchedule = cronOf(view.Jobs[pg.Jobs.Nightly.ID])
 	resp.RestoreTestSchedule = cronOf(view.Jobs[pg.Jobs.RestoreTest.ID])
 	return resp
@@ -138,6 +164,13 @@ func objectID(id entity.ObjectID) *basedto.ObjectIDResp {
 		return nil
 	}
 	return &basedto.ObjectIDResp{ID: id.ID}
+}
+
+func timeOrNil(at time.Time) *time.Time {
+	if at.IsZero() {
+		return nil
+	}
+	return &at
 }
 
 func cronOf(job *entity.SchedJob) string {

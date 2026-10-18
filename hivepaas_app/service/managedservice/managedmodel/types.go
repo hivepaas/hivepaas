@@ -52,6 +52,9 @@ type PrepareReq struct {
 	// the caller.
 	EncryptionKey string
 	Options       *Options
+	// Restore makes the app a restore of another managed database, nil for a new
+	// one.
+	Restore *RestoreSource
 
 	// OwnedEnv is set by PrepareDoc: the variables it added, which the app may
 	// not change afterwards.
@@ -121,3 +124,46 @@ type VerifierSpec struct {
 	Command    string
 	ScratchDir string
 }
+
+// RestoreSource is what a database restored into a new app recovers from: the
+// source's archive, which it only reads, the key the archive is encrypted with,
+// and the target, a point resolved to its LSN.
+type RestoreSource struct {
+	SourceAppID   string
+	Archive       *Archive
+	EncryptionKey string
+	Target        entity.ManagedRestoreTarget
+	// PointAt is when the target point was made, for a restore to a point: the
+	// base backup fetched is the latest that starts before it.
+	PointAt time.Time
+}
+
+// FinishRestoreReq is a restored app's setting, and its variables, secrets and
+// setting mounts, once it has recovered and its first base backup is taken.
+type FinishRestoreReq struct {
+	Managed  *entity.AppManagedSettings
+	Settings []*entity.Setting
+	Now      time.Time
+}
+
+// FinishRestoreResp is what the app keeps no more of what it was restored with:
+// its settings changed and deleted, and the targets of the service's mounts to
+// remove. The engine's setting is changed in place, and marked ready.
+type FinishRestoreResp struct {
+	Changed      []*entity.Setting
+	Deleted      []*entity.Setting
+	MountTargets []string
+	// EnvKeys are the variables to take off the service.
+	EnvKeys []string
+}
+
+// RecoveryCheck is how a restore asks a restored app whether its recovery has
+// ended: Command, run in its task, exits 0 once the server is up and promoted,
+// RecoveryExitRecovering while it is starting or recovering, and anything else
+// when the recovery failed, having printed why.
+type RecoveryCheck struct {
+	Command string
+}
+
+// RecoveryExitRecovering is EX_TEMPFAIL: ask again later.
+const RecoveryExitRecovering = 75

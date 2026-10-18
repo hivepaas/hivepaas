@@ -44,7 +44,7 @@ const (
 
 func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
 	options := withDefaults(req.Prepared.Options)
-	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options)
+	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options, req.Prepared.Restore != nil)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,11 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 			ManagedBy:    entity.ObjectID{ID: managedID},
 		})
 		setting.Kind = string(base.SchedJobTypeContainerCommand)
+		// A restored database's jobs wait for it to recover: until then there is
+		// no server to check, back up or test, and each run would fail.
+		if req.Prepared.Restore != nil {
+			setting.Status = base.SettingStatusDisabled
+		}
 		return setting
 	}
 	nightly := job("Nightly base backup", "walg-nightly",
@@ -108,6 +113,12 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 		},
 	})
 	managed.ID = managedID
+	if restore := req.Prepared.Restore; restore != nil {
+		data := managed.MustAsAppManagedSettings()
+		data.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: restore.SourceAppID},
+			Target: restore.Target}
+		managed.MustSetData(data)
+	}
 
 	return &managedmodel.ConfigureResp{Settings: []*entity.Setting{managed, nightly, health, restoreTest}}, nil
 }
@@ -127,11 +138,13 @@ func withDefaults(options *managedmodel.Options) managedmodel.Options {
 // setServerArguments gives the server what archiving needs, on the
 // app-deployment setting the document was built into: a template may not set a
 // command, and these are the engine's, re-applied by every deploy as the setting
-// is. Locked fields keep a person from changing them.
+// is. Locked fields keep a person from changing them. A restored database
+// starts through walg-entrypoint, which recovers it first.
 func setServerArguments(
 	settings []*entity.Setting,
 	doc *specmodel.AppDoc,
 	options managedmodel.Options,
+	restored bool,
 ) (*entity.AppDeploymentSettings, error) {
 	var deployment *entity.Setting
 	for _, setting := range settings {
@@ -157,6 +170,9 @@ func setServerArguments(
 		args = append(args, fmt.Sprintf("-c shared_buffers=%dMB", buffers/unit.MB))
 	}
 	source.Command = strings.Join(args, " ")
+	if restored {
+		source.Entrypoint = scriptDir + "/walg-entrypoint"
+	}
 	return source, hperrors.Wrap(deployment.SetData(source))
 }
 

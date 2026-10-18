@@ -31,6 +31,17 @@ func (uc *UC) CreateAppFromTemplate(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
+) (*apptemplatedto.CreateAppFromTemplateResp, error) {
+	return uc.createFromTemplate(ctx, auth, req, nil)
+}
+
+// createFromTemplate creates the apps a template renders to; restore, when it
+// is not nil, makes the creation a managed database's restore.
+func (uc *UC) createFromTemplate(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	restore *managedRestore,
 ) (resp *apptemplatedto.CreateAppFromTemplateResp, err error) {
 	// Before the transaction: rendering may reach GitHub, and nothing is locked
 	// while it does. Every app of the request is rendered here, before any exists.
@@ -53,13 +64,13 @@ func (uc *UC) CreateAppFromTemplate(
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
 	}
-	if err = uc.checkRequest(ctx, auth, req, rendered, apps); err != nil {
+	if err = uc.checkRequest(ctx, auth, req, rendered, apps, restore); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	// A managed template's archive is resolved and its artifacts downloaded
 	// here, before the transaction: a download is not something to hold one open
 	// for.
-	managed, err := uc.planManaged(ctx, req, apps)
+	managed, err := uc.planManaged(ctx, req, apps, restore)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -95,7 +106,7 @@ func (uc *UC) CreateAppFromTemplate(
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var txErr error
-		provisioned, txErr = uc.provisionAll(ctx, db, auth, req, apps)
+		provisioned, txErr = uc.provisionAll(ctx, db, auth, req, apps, restore)
 		return txErr
 	})
 	if err != nil {
@@ -113,6 +124,11 @@ func (uc *UC) CreateAppFromTemplate(
 			return nil, hperrors.Wrap(err)
 		}
 	}
+	if restore != nil {
+		if err = uc.taskQueue.ScheduleTask(ctx, restore.task); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 	resp = transformCreated(apps, provisioned.Apps)
 	if managed != nil {
 		resp.Data.Managed = &apptemplatedto.CreatedManagedResp{Placement: managed.placement}
@@ -122,16 +138,20 @@ func (uc *UC) CreateAppFromTemplate(
 
 // checkRequest runs every check that can refuse a request before anything is
 // created for it, in the order a person would want to hear about them: what the
-// license grants first, then what the request asks of the cluster.
+// license grants first, then what the request asks of the cluster. A restore
+// asks the license nothing: restoring is never gated.
 func (uc *UC) checkRequest(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	rendered *apptemplateservice.RenderResp,
 	apps []*appToProvision,
+	restore *managedRestore,
 ) error {
-	if err := uc.checkFeatures(ctx, apps); err != nil {
-		return err
+	if restore == nil {
+		if err := uc.checkFeatures(ctx, apps); err != nil {
+			return err
+		}
 	}
 	if err := uc.checkAppRefs(ctx, req, rendered); err != nil {
 		return err
@@ -199,6 +219,7 @@ func (uc *UC) provisionAll(
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	apps []*appToProvision,
+	restore *managedRestore,
 ) (*appprovisionservice.ProvisionAppsResp, error) {
 	if err := uc.checkPlanLimit(ctx, db, apps); err != nil {
 		return nil, err
@@ -208,7 +229,10 @@ func (uc *UC) provisionAll(
 	if err != nil {
 		return provisioned, hperrors.Wrap(err)
 	}
-	return provisioned, uc.recordCreated(ctx, db, auth, apps, provisioned.Apps)
+	if err = uc.recordCreated(ctx, db, auth, apps, provisioned.Apps); err != nil {
+		return provisioned, err
+	}
+	return provisioned, uc.insertRestoreTask(ctx, db, req, apps, provisioned.Apps, restore)
 }
 
 // provisionRequests turns the plan into what provisioning is asked for. The apps

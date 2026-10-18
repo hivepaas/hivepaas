@@ -123,3 +123,18 @@ func TestStatusSuggestsTheVerifier(t *testing.T) {
 		assert.Empty(t, status.Suggestions, "%s: it already has one", name)
 	}
 }
+
+func TestStatusListsTheBaseBackupsKept(t *testing.T) {
+	runs := healthyRuns()
+	runs["nightly"].Outputs[outBackups] = "base_000000010000000000000040@2026-10-16T02:00:03Z " +
+		"garbage base_000000010000000000000042@2026-10-18T02:00:05Z"
+
+	status, err := New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
+		Runs: runs, Now: statusNow})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []managedmodel.BackupRef{
+		{Name: "base_000000010000000000000040", At: time.Date(2026, 10, 16, 2, 0, 3, 0, time.UTC)},
+		{Name: "base_000000010000000000000042", At: time.Date(2026, 10, 18, 2, 0, 5, 0, time.UTC)},
+	}, status.Backups, "what does not read is left out")
+}

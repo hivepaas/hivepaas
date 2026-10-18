@@ -43,7 +43,7 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 		return err
 	}
 	archive := req.Archive
-	if archive == nil || (archive.S3 == nil) == (archive.Volume == nil) {
+	if !oneArchive(archive) || (req.Restore != nil && !oneArchive(req.Restore.Archive)) {
 		return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("postgres: exactly one archive is required")
 	}
 
@@ -54,23 +54,21 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 		{"WALG_LIBSODIUM_KEY_TRANSFORM", "hex"},
 		{"HIVEPAAS_WALG_SECRETS_DIR", secretsDir},
 	}
+	env = append(env, archiveEnv(archive, volumeArchiveDir)...)
+	if archive.Volume != nil {
+		mountArchiveVolume(doc, volumeArchiveDir, archive.Volume, false)
+	}
 	secrets := e.ArchiveSecrets(archive)
 	secrets[secretSodiumKey] = req.EncryptionKey
-	switch {
-	case archive.S3 != nil:
-		s3 := archive.S3
-		env = append(env,
-			[2]string{"WALG_S3_PREFIX", "s3://" + s3.Bucket + "/" + s3.Prefix},
-			[2]string{"AWS_ENDPOINT", s3.Endpoint},
-			[2]string{"AWS_REGION", s3.Region},
-			[2]string{"AWS_S3_FORCE_PATH_STYLE", strconv.FormatBool(s3.ForcePathStyle)},
-		)
-	case archive.Volume != nil:
-		env = append(env, [2]string{"WALG_FILE_PREFIX", volumeArchiveDir})
-		mountArchiveVolume(doc, archive.Volume)
+	addSecretFiles(doc, secretsDir, "", secrets)
+	if req.Restore != nil {
+		restoreEnv, err := e.prepareRestore(doc, req.Restore)
+		if err != nil {
+			return err
+		}
+		env = append(env, restoreEnv...)
 	}
 	addEnv(doc, env)
-	addSecretFiles(doc, secrets)
 	req.OwnedEnv = make([]string, 0, len(env)+1)
 	for _, pair := range env {
 		req.OwnedEnv = append(req.OwnedEnv, pair[0])
@@ -78,6 +76,24 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	// The image sets it, and the scripts read it: it is the engine's as well.
 	req.OwnedEnv = append(req.OwnedEnv, "PGDATA")
 	return nil
+}
+
+func oneArchive(archive *managedmodel.Archive) bool {
+	return archive != nil && (archive.S3 == nil) != (archive.Volume == nil)
+}
+
+// archiveEnv is where WAL-G finds an archive: an S3 prefix with its endpoint, or
+// the directory a volume's is mounted at.
+func archiveEnv(archive *managedmodel.Archive, volumeDir string) [][2]string {
+	if s3 := archive.S3; s3 != nil {
+		return [][2]string{
+			{"WALG_S3_PREFIX", "s3://" + s3.Bucket + "/" + s3.Prefix},
+			{"AWS_ENDPOINT", s3.Endpoint},
+			{"AWS_REGION", s3.Region},
+			{"AWS_S3_FORCE_PATH_STYLE", strconv.FormatBool(s3.ForcePathStyle)},
+		}
+	}
+	return [][2]string{{"WALG_FILE_PREFIX", volumeDir}}
 }
 
 func (e *Engine) ArchiveSecrets(archive *managedmodel.Archive) map[string]string {
@@ -126,27 +142,30 @@ func addEnv(doc *specmodel.AppDoc, env [][2]string) {
 	block["data"] = data
 }
 
-// addSecretFiles puts each secret in a file of secretsDir, readable by the
-// postgres user alone. Nothing refers to them from the environment, so they are
-// never in it.
-func addSecretFiles(doc *specmodel.AppDoc, secrets map[string]string) {
+// addSecretFiles puts each secret in a file of dir, readable by the postgres
+// user alone, named prefix and the secret's name. Nothing refers to them from
+// the environment, so they are never in it.
+func addSecretFiles(doc *specmodel.AppDoc, dir, prefix string, secrets map[string]string) {
+	if doc.Settings == nil {
+		doc.Settings = map[string]any{}
+	}
 	block, _ := doc.Settings["secrets"].(map[string]any)
 	if block == nil {
 		block = map[string]any{}
 		doc.Settings["secrets"] = block
 	}
 	for _, name := range slices.Sorted(maps.Keys(secrets)) {
-		block[name] = map[string]any{
+		block[prefix+name] = map[string]any{
 			"value": secrets[name],
 			"swarmRef": map[string]any{"file": map[string]any{
-				"name": fmt.Sprintf("%s/%s", secretsDir, name),
+				"name": fmt.Sprintf("%s/%s", dir, name),
 				"uid":  postgresUID, "gid": postgresUID, "mode": "400",
 			}},
 		}
 	}
 }
 
-func mountArchiveVolume(doc *specmodel.AppDoc, volume *managedmodel.VolumeArchive) {
+func mountArchiveVolume(doc *specmodel.AppDoc, target string, volume *managedmodel.VolumeArchive, readOnly bool) {
 	if doc.Deployment == nil {
 		doc.Deployment = &specmodel.Deployment{}
 	}
@@ -156,8 +175,8 @@ func mountArchiveVolume(doc *specmodel.AppDoc, volume *managedmodel.VolumeArchiv
 	if doc.Deployment.Storage.Mounts == nil {
 		doc.Deployment.Storage.Mounts = map[string]specmodel.Mount{}
 	}
-	doc.Deployment.Storage.Mounts[volumeArchiveDir] = specmodel.Mount{
-		Type: mount.TypeVolume, Source: volume.VolumeID,
+	doc.Deployment.Storage.Mounts[target] = specmodel.Mount{
+		Type: mount.TypeVolume, Source: volume.VolumeID, ReadOnly: readOnly,
 		VolumeOptions: &specmodel.VolumeOptions{Subpath: volume.Subpath},
 	}
 }

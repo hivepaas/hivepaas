@@ -54,7 +54,7 @@ func TestATemplateCountsTheAppItIsAskedFor(t *testing.T) {
 	req.Name = "shop"
 	apps := planApps(req, renderedWithComponents(t, fakes))
 
-	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
+	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps, nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, fakes.provision.names, 3, "a database, a component and the app")
@@ -70,7 +70,7 @@ func TestATemplatePastThePlanProvisionsNothing(t *testing.T) {
 	req := testCreateReq()
 
 	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, fakes.templates.resp))
+		planApps(req, fakes.templates.resp), nil)
 
 	assert.ErrorIs(t, err, hperrors.ErrPlanLimitReached)
 	assert.False(t, fakes.provision.called)

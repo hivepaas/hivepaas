@@ -39,8 +39,11 @@ type Status struct {
 	Archiving ArchivingStatus
 	// RestoreWindow is what a restore may target: from the oldest base backup
 	// kept to the last archived WAL. Nil before the first base backup.
-	RestoreWindow   *TimeWindow
-	LastBackup      *BackupStatus
+	RestoreWindow *TimeWindow
+	LastBackup    *BackupStatus
+	// Backups are the base backups kept, oldest first, as the last nightly run
+	// left them: what a restore to a backup may name.
+	Backups         []BackupRef
 	LastRestoreTest *RestoreTestStatus
 	// Placement is where the archive is from the database: off-site, shared,
 	// same-node.
@@ -70,6 +73,12 @@ type BackupStatus struct {
 	Name      string
 	At        time.Time
 	Bytes     int64
+}
+
+// BackupRef is a base backup by name, and when it was taken.
+type BackupRef struct {
+	Name string
+	At   time.Time
 }
 
 type RestoreTestStatus struct {

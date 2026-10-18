@@ -505,6 +505,16 @@ command. A migration that breaks data then has its way back already marked.
 The task's steps keep their state in the task (`Continue()`, as the job sequence
 does). Each step can be run again safely.
 
+As built:
+- The source's archive reaches the new app as its own variables would, prefixed
+  with `HIVEPAAS_RESTORE_`.
+- Its keys, including its encryption key, are files of `/run/secrets/walg/restore`.
+- The target is given as the backup to fetch and the recovery settings to write.
+- The new app's engine jobs stay disabled until it has recovered.
+- The first base backup is a run of its nightly job.
+- Once it is taken, all of the restore's variables, keys and mounts are removed from
+  the app.
+
 ## 5. The restore test
 
 A backup nobody has restored is a hope. The weekly job proves the whole chain, up to

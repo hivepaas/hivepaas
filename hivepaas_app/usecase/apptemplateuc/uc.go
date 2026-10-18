@@ -25,6 +25,7 @@ type UC struct {
 	appRepo     repository.AppRepo
 	projectRepo repository.ProjectRepo
 	settingRepo repository.SettingRepo
+	taskRepo    repository.TaskRepo
 
 	permissionManager permission.Manager
 
@@ -48,6 +49,7 @@ func New(
 	appRepo repository.AppRepo,
 	projectRepo repository.ProjectRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 
 	permissionManager permission.Manager,
 
@@ -70,6 +72,7 @@ func New(
 		appRepo:     appRepo,
 		projectRepo: projectRepo,
 		settingRepo: settingRepo,
+		taskRepo:    taskRepo,
 
 		permissionManager: permissionManager,
 

@@ -24,6 +24,17 @@ func (uc *UC) GetManagedStatus(
 	if err != nil {
 		return nil, err
 	}
+	status, err := uc.statusOf(ctx, loaded)
+	if err != nil {
+		return nil, err
+	}
+	return &appmanageddto.GetManagedStatusResp{
+		Data: appmanageddto.TransformManagedStatus(loaded.managed.Engine, loaded.managed.EngineAPI, status),
+	}, nil
+}
+
+// statusOf is the engine's reading of the last ended run of each of its jobs.
+func (uc *UC) statusOf(ctx context.Context, loaded *loadedManaged) (*managedmodel.Status, error) {
 	runs := make(map[string]*managedmodel.JobRun, len(loaded.jobs))
 	for _, job := range loaded.jobs {
 		tasks, _, err := uc.taskRepo.ListByTarget(ctx, uc.db, job.ID, nil,
@@ -48,10 +59,5 @@ func (uc *UC) GetManagedStatus(
 		Runs:    runs,
 		Now:     timeutil.NowUTC(),
 	})
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &appmanageddto.GetManagedStatusResp{
-		Data: appmanageddto.TransformManagedStatus(loaded.managed.Engine, loaded.managed.EngineAPI, status),
-	}, nil
+	return status, hperrors.Wrap(err)
 }

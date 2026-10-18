@@ -47,7 +47,9 @@ func (f *fakeSettings) add(id string, typ base.SettingType, kind string, data en
 	f.byID[id] = setting
 }
 
+// fakeEngine embeds the interface for what creating never asks.
 type fakeEngine struct {
+	managedmodel.Engine
 	prepared   *managedmodel.PrepareReq
 	configured *managedmodel.ConfigureReq
 	err        error
@@ -166,14 +168,14 @@ func managedReq(storage apptemplatedto.ManagedStorageReq) *apptemplatedto.Create
 func plan(t *testing.T, uc *UC, fakes *managedFakes, req *apptemplatedto.CreateAppFromTemplateReq) (
 	*managedPlan, error) {
 	t.Helper()
-	return uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp))
+	return uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp), nil)
 }
 
 func TestAnOrdinaryTemplateHasNoManagedPlan(t *testing.T) {
 	uc, fakes := newCreateTest(t)
 	req := testCreateReq()
 
-	planned, err := uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp))
+	planned, err := uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp), nil)
 
 	assert.NoError(t, err)
 	assert.Nil(t, planned)
@@ -285,11 +287,11 @@ func TestConfigureAddsTheEnginesSettingsAndTheArtifacts(t *testing.T) {
 	uc, fakes := newManagedTest(t)
 	req := managedReq(apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}})
 	apps := planApps(req, fakes.templates.resp)
-	planned, err := uc.planManaged(context.Background(), req, apps)
+	planned, err := uc.planManaged(context.Background(), req, apps, nil)
 	assert.NoError(t, err)
 	planned.attach(apps)
 
-	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
+	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps, nil)
 
 	assert.NoError(t, err)
 	app := provisioned.Apps[0].App
@@ -322,7 +324,7 @@ func TestAManagedRequestForAnOrdinaryTemplateIsRefused(t *testing.T) {
 	uc, fakes := newCreateTest(t)
 	req := managedReq(apptemplatedto.ManagedStorageReq{BackupRepo: &basedto.ObjectIDReq{ID: "repo-s3"}})
 
-	_, err := uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp))
+	_, err := uc.planManaged(context.Background(), req, planApps(req, fakes.templates.resp), nil)
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
 }

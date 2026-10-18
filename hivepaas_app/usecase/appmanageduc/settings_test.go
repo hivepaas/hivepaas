@@ -82,3 +82,20 @@ func settingIDs(settings []*entity.Setting) []string {
 	}
 	return out
 }
+
+func TestTheSettingsSayWhereARestoredDatabaseCameFrom(t *testing.T) {
+	loaded := loadedPostgres(t)
+	assert.Nil(t, appmanageddto.TransformManagedSettings(loaded.view()).Restore, "a database not restored")
+
+	at := time.Date(2026, 10, 18, 14, 32, 0, 0, time.UTC)
+	loaded.managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"},
+		Target: entity.ManagedRestoreTarget{Kind: entity.ManagedRestoreToTime, Time: at}}
+	restore := appmanageddto.TransformManagedSettings(loaded.view()).Restore
+
+	if assert.NotNil(t, restore) {
+		assert.Equal(t, "app-src", restore.SourceApp.ID)
+		assert.Equal(t, "time", restore.Target.Kind)
+		assert.Equal(t, &at, restore.Target.Time)
+		assert.Nil(t, restore.ReadyAt, "still restoring")
+	}
+}

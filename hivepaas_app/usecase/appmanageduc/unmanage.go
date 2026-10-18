@@ -35,7 +35,8 @@ func (uc *UC) UnmanageApp(
 			bunex.SelectFor("UPDATE OF app"),
 			bunex.SelectRelation("Settings",
 				bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppManaged, base.SettingTypeSchedJob),
-				bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+				// A restored database's jobs are disabled until it has recovered.
+				bunex.SelectWhereIn("setting.status IN (?)", base.SettingStatusActive, base.SettingStatusDisabled),
 			),
 		)
 		if err != nil {

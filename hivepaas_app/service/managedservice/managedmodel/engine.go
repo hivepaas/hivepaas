@@ -3,6 +3,7 @@
 package managedmodel
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
@@ -39,4 +40,13 @@ type Engine interface {
 
 	// Verifier is what the engine's verifier app runs.
 	Verifier() VerifierSpec
+
+	// RecoveryCheck is how a restored app is asked whether its recovery ended.
+	RecoveryCheck() RecoveryCheck
+	// FirstBackupJob is the job of a restored app whose run is its first base
+	// backup, by id.
+	FirstBackupJob(managed *entity.AppManagedSettings) string
+	// FinishRestore takes off a restored app what it was restored with, once its
+	// first base backup is taken.
+	FinishRestore(req *FinishRestoreReq) (*FinishRestoreResp, error)
 }

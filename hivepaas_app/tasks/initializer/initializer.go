@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdatafileload"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskimagescan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskmanagedrestore"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingmountrefresh"
@@ -36,6 +37,7 @@ func NewWorkerInitializer(
 	_ *taskbackuprestore.Executor,
 	_ *taskdatafileload.Executor,
 	_ *taskimagescan.Executor,
+	_ *taskmanagedrestore.Executor,
 ) *WorkerInitializer {
 	return nil
 }

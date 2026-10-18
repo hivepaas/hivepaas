@@ -56,6 +56,7 @@ func (uc *UC) planManaged(
 	ctx context.Context,
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	apps []*appToProvision,
+	restore *managedRestore,
 ) (*managedPlan, error) {
 	main := mainApp(apps)
 	for _, target := range apps {
@@ -65,7 +66,7 @@ func (uc *UC) planManaged(
 		}
 	}
 	if main == nil || !main.rendered.Template.IsManaged() {
-		if req.Managed != nil {
+		if req.Managed != nil || restore != nil {
 			return nil, hperrors.Wrap(hperrors.ErrAppTemplateParamInvalid).
 				WithExtraDetail("managed: the template is not managed")
 		}
@@ -102,6 +103,9 @@ func (uc *UC) planManaged(
 		Archive:       archive,
 		EncryptionKey: newEncryptionKey(),
 		Options:       options,
+	}
+	if restore != nil {
+		planned.prepared.Restore = restore.source
 	}
 	if err = engine.PrepareDoc(planned.prepared); err != nil {
 		return nil, hperrors.Wrap(err)

@@ -75,7 +75,7 @@ func TestProvisionAllCreatesComponentsInTheOrderTheyRendered(t *testing.T) {
 	req.Name = "shop"
 
 	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, renderedWithComponents(t, fakes)))
+		planApps(req, renderedWithComponents(t, fakes)), nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"shop-db", "shop-auth", "shop"}, fakes.provision.names)
@@ -91,7 +91,7 @@ func TestProvisionAllCreatesAPrimaryTheOthersNeedFirst(t *testing.T) {
 	rendered.Components[0], rendered.Components[1] = rendered.Components[1], rendered.Components[0]
 
 	apps := planApps(req, rendered)
-	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps)
+	_, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req, apps, nil)
 
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"shop-db", "shop", "shop-auth"}, fakes.provision.names)
@@ -109,7 +109,7 @@ func TestProvisionAllRecordsABindingOnEveryComponent(t *testing.T) {
 	req.Name = "shop"
 
 	provisioned, err := uc.provisionAll(context.Background(), database.Tx{}, testAuth(), req,
-		planApps(req, renderedWithComponents(t, fakes)))
+		planApps(req, renderedWithComponents(t, fakes)), nil)
 
 	assert.NoError(t, err)
 	auth, gateway := provisioned.Apps[1].App, provisioned.Apps[2].App

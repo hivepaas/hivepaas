@@ -21766,6 +21766,93 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore" : {
+      "post" : {
+        "description" : "To the latest, a time, a restore point or a base backup, inside its restore window. The new app is\nmade from the same template, version and parameters, on the data volume given, and archives to its\nown prefix; the source is only read. The task returned sees the restore through.",
+        "operationId" : "appManagedRestore",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.RestoreManagedReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.RestoreManagedResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a managed database into a new app",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
       "get" : {
         "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
@@ -55963,6 +56050,18 @@
         "required" : [ "checkedAt", "failedCount", "lastArchivedAt", "pgWalBytes", "stale", "state" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedBackupRefResp" : {
+        "properties" : {
+          "at" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "name" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedBackupResp" : {
         "properties" : {
           "at" : {
@@ -56043,6 +56142,68 @@
           }
         },
         "required" : [ "command", "envKeys", "image", "imageLine", "mounts", "settings" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreResp" : {
+        "properties" : {
+          "readyAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "sourceApp" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "target" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTargetResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "readyAt", "sourceApp", "target" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTargetReq" : {
+        "properties" : {
+          "backup" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "point" : {
+            "type" : "string"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTargetResp" : {
+        "properties" : {
+          "backup" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "lsn" : {
+            "type" : "string"
+          },
+          "point" : {
+            "type" : "string"
+          },
+          "time" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "backup", "kind", "lsn", "point", "time" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreTestCfgRsp" : {
@@ -56143,6 +56304,14 @@
             } ],
             "nullable" : true
           },
+          "restore" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreResp"
+            } ],
+            "description" : "Restore is where the database was restored from, null for one that was\nnot; it is restoring until readyAt is set.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "restoreTest" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestCfgRsp"
@@ -56165,7 +56334,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "archiveTimeout", "baseBackupSchedule", "engine", "engineApi", "jobs", "locks", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -56175,6 +56344,14 @@
               "$ref" : "#/components/schemas/appmanageddto.ManagedArchivingResp"
             } ],
             "nullable" : true
+          },
+          "backups" : {
+            "description" : "Backups are the base backups kept, oldest first: what a restore to a backup\nmay name.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedBackupRefResp"
+            },
+            "nullable" : true,
+            "type" : "array"
           },
           "engine" : {
             "type" : "string"
@@ -56215,7 +56392,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "archiving", "engine", "engineApi", "lastBackup", "lastRestoreTest", "placement", "restoreWindow", "suggestions" ],
+        "required" : [ "archiving", "backups", "engine", "engineApi", "lastBackup", "lastRestoreTest", "placement", "restoreWindow", "suggestions" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStorageResp" : {
@@ -56278,6 +56455,67 @@
           "data" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.RefreshManagedCredentialsDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedDataResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "App is the new app, restoring until the task says it is ready.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Task sees the restore through: the recovery, the first base backup, and\nwhat the app was restored with dropped.",
+            "nullable" : true,
+            "type" : "object"
+          }
+        },
+        "required" : [ "app", "task" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedReq" : {
+        "properties" : {
+          "dataVolume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "DataVolume is the cluster volume the new app keeps its data on, pinned to\na node the archive can be reached from.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "name" : {
+            "description" : "Name is the new app's: <app>-restored-<yyyymmdd-hhmm> when empty.",
+            "type" : "string"
+          },
+          "target" : {
+            "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTargetReq"
+          }
+        },
+        "required" : [ "dataVolume", "target" ],
+        "type" : "object"
+      },
+      "appmanageddto.RestoreManagedResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.RestoreManagedDataResp"
             } ],
             "nullable" : true
           },
@@ -64301,9 +64539,9 @@
         "x-enum-varnames" : [ "TaskTargetTypeSchedJob", "TaskTargetTypePeriodicJob" ]
       },
       "base.TaskType" : {
-        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load", "task:image-scan" ],
+        "enum" : [ "task:dummy", "task:app-deploy", "task:app-clone", "task:app-preview", "task:sched-job-exec", "task:periodic-exec", "task:system-update", "task:workflow", "task:settings-revert", "task:app-labels-sweep", "task:ssl-obtain", "task:setting-mount-refresh", "task:backup-restore", "task:data-file-load", "task:image-scan", "task:managed-restore" ],
         "type" : "string",
-        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad", "TaskTypeImageScan" ]
+        "x-enum-varnames" : [ "TaskTypeDummy", "TaskTypeAppDeploy", "TaskTypeAppClone", "TaskTypeAppPreview", "TaskTypeSchedJobExec", "TaskTypePeriodicExec", "TaskTypeSystemUpdate", "TaskTypeWorkflow", "TaskTypeSettingsRevert", "TaskTypeAppLabelsSweep", "TaskTypeSSLObtain", "TaskTypeSettingMountRefresh", "TaskTypeBackupRestore", "TaskTypeDataFileLoad", "TaskTypeImageScan", "TaskTypeManagedRestore" ]
       },
       "base.TemplatesRef" : {
         "properties" : {

@@ -56,6 +56,19 @@ var (
 	// ErrAppManagedVerifierExists refuses a second verifier app: the restore test
 	// moves back into the database's container first, which deletes the one there is.
 	ErrAppManagedVerifierExists = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VERIFIER_EXISTS")
+	// ErrAppManagedRestoreTargetInvalid refuses a restore target that does not
+	// say what to recover to.
+	ErrAppManagedRestoreTargetInvalid = NewErr(ErrArgumentInvalid, "ERR_APP_MANAGED_RESTORE_TARGET_INVALID")
+	// ErrAppManagedRestoreOutsideWindow refuses a restore target the archive does
+	// not reach: before its oldest base backup, after its last archived WAL, or
+	// with no base backup yet.
+	ErrAppManagedRestoreOutsideWindow = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_RESTORE_OUTSIDE_WINDOW")
+	// ErrAppManagedRestoreNoBackup refuses a restore of a database whose first
+	// base backup is not taken yet.
+	ErrAppManagedRestoreNoBackup = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_RESTORE_NO_BACKUP")
+	// ErrAppManagedRestoreFailed ends a restore that cannot go on: the recovery
+	// failed, or the first base backup did. What went wrong is in the task's log.
+	ErrAppManagedRestoreFailed = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_FAILED")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

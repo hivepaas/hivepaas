@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -21,6 +23,13 @@ const (
 	ManagedPlacementOffSite  = "off-site"
 	ManagedPlacementShared   = "shared"
 	ManagedPlacementSameNode = "same-node"
+
+	// What a restore recovers to: everything archived, a time, a restore point,
+	// or a base backup as it was taken.
+	ManagedRestoreToLatest = "latest"
+	ManagedRestoreToTime   = "time"
+	ManagedRestoreToPoint  = "point"
+	ManagedRestoreToBackup = "backup"
 )
 
 var _ = registerSettingParser(base.SettingTypeAppManaged, &appManagedSettingsParser{})
@@ -54,7 +63,8 @@ type ManagedLocks struct {
 	Image     string `json:"image"`
 	ImageLine string `json:"imageLine"`
 	// Command is the engine's command line: the app's starts with it, and what a
-	// person adds comes after. The entrypoint is the image's, and stays.
+	// person adds comes after. The entrypoint stays as the app was made: the
+	// image's, or the engine's for a restored database.
 	Command string `json:"command,omitempty"`
 	// Mounts are the targets of the mounts the engine relies on, the data's
 	// among them: each keeps its source.
@@ -77,6 +87,53 @@ type ManagedPostgres struct {
 	RetainFull     int                 `json:"retainFull"`
 	RestoreTest    ManagedRestoreTest  `json:"restoreTest"`
 	Jobs           ManagedPostgresJobs `json:"jobs"`
+	// RestorePoints are the moments a person named, to restore to exactly.
+	RestorePoints []*ManagedRestorePoint `json:"restorePoints,omitempty"`
+	// Restore is where this database was restored from, when it was.
+	Restore *ManagedRestore `json:"restore,omitempty"`
+}
+
+// ManagedRestorePoint is a moment a person named. A restore targets its LSN:
+// the name is a label, which Postgres does not keep unique (design §4).
+type ManagedRestorePoint struct {
+	Name string    `json:"name"`
+	LSN  string    `json:"lsn"`
+	At   time.Time `json:"at"`
+	// By is the user who made it.
+	By   string `json:"by,omitempty"`
+	Note string `json:"note,omitempty"`
+	// KeepUntil holds retention back for the point until then; zero, it is kept
+	// as long as retention keeps what it needs.
+	KeepUntil time.Time `json:"keepUntil,omitzero"`
+}
+
+// RestorePoint is the app's point of that name, nil for none.
+func (s *ManagedPostgres) RestorePoint(name string) *ManagedRestorePoint {
+	for _, point := range s.RestorePoints {
+		if point.Name == name {
+			return point
+		}
+	}
+	return nil
+}
+
+// ManagedRestoreTarget is what a restore recovers to: a kind, and what it needs.
+type ManagedRestoreTarget struct {
+	Kind string    `json:"kind"`
+	Time time.Time `json:"time,omitzero"`
+	// Point and LSN are a restore point's name and where it is.
+	Point  string `json:"point,omitempty"`
+	LSN    string `json:"lsn,omitempty"`
+	Backup string `json:"backup,omitempty"`
+}
+
+// ManagedRestore is where a database restored into a new app came from, and
+// when it was ready: recovered, its first base backup taken, and what it was
+// restored with gone from it.
+type ManagedRestore struct {
+	SourceApp ObjectID             `json:"sourceApp"`
+	Target    ManagedRestoreTarget `json:"target"`
+	ReadyAt   time.Time            `json:"readyAt,omitzero"`
 }
 
 // ManagedStorage is one of: a backup repository reused, S3 or volume, or any

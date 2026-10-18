@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -23,6 +24,9 @@ const (
 	outBackupAt       = "BACKUP_AT"
 	outBackupBytes    = "BACKUP_BYTES"
 	outOldestBackupAt = "OLDEST_BACKUP_AT"
+	// outBackups is every base backup kept once retention ran, oldest first:
+	// space-separated name@time pairs, the time RFC 3339.
+	outBackups = "BACKUPS"
 	// walg-restore-test
 	outRestoredTo      = "RESTORED_TO"
 	outDurationSeconds = "DURATION_SECONDS"
@@ -79,6 +83,7 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 			status.LastBackup.At = *at
 		}
 		status.RestoreWindow = restoreWindow(nightly, status.Archiving.LastArchivedAt)
+		status.Backups = backupsOf(nightly.Outputs[outBackups])
 	}
 	if test != nil {
 		status.LastRestoreTest = &managedmodel.RestoreTestStatus{
@@ -109,6 +114,20 @@ func restoreWindow(nightly *managedmodel.JobRun, lastArchivedAt *time.Time) *man
 		to = from
 	}
 	return &managedmodel.TimeWindow{From: *from, To: *to}
+}
+
+// backupsOf reads outBackups, leaving out what does not read.
+func backupsOf(value string) []managedmodel.BackupRef {
+	var out []managedmodel.BackupRef
+	for _, field := range strings.Fields(value) {
+		name, at, found := strings.Cut(field, "@")
+		taken, err := time.Parse(time.RFC3339, at)
+		if !found || name == "" || err != nil {
+			continue
+		}
+		out = append(out, managedmodel.BackupRef{Name: name, At: taken.UTC()})
+	}
+	return out
 }
 
 func needsVerifier(health *managedmodel.JobRun, test *managedmodel.RestoreTestStatus) bool {

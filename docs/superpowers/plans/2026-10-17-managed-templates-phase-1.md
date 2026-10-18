@@ -662,7 +662,85 @@ above:
   - each step resumes after a crash;
   - the source app is not changed.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore into a new app - latest, a time, a point or a backup`.
+**As built:**
+- **`POST .../managed/restore{target{kind, time?, point?, backup?}, name?, dataVolume}`.**
+  - It checks write access on the source app and in its env, since it makes an app.
+  - It checks the target against Status:
+    - the window must exist (`ERR_APP_MANAGED_RESTORE_NO_BACKUP` before the first
+      base backup);
+    - a time must lie inside the window (`ERR_APP_MANAGED_RESTORE_OUTSIDE_WINDOW`,
+      naming the window);
+    - a point must be recorded and made after the window's start;
+    - a backup must be one the last nightly run listed.
+  - Status now lists the kept base backups, from a new nightly output, `BACKUPS`:
+    `name@RFC3339` pairs, oldest first.
+  - `ManagedPostgres.RestorePoints` exists now, so a point resolves to its LSN; Task
+    11b records the points.
+- **The new app** goes through `apptemplateuc.RestoreManagedApp`, which is Task 7's
+  path with a `managedRestore`:
+  - no feature check;
+  - the engine is given the source (`PrepareReq.Restore`);
+  - the `managed-restore` task is inserted in the same transaction and scheduled
+    after the commit.
+  - It is made from the source's binding:
+    - its template, version and variant;
+    - the tag of its image override;
+    - its parameters, secrets decrypted, and the one volume parameter set to
+      `dataVolume`. A template with more than one volume parameter is refused;
+    - the same storage and key;
+    - its options and schedules.
+  - Its name defaults to `<app>-restored-<yyyymmdd-hhmm>`, and its prefix is its
+    own, as any creation's is. It is not the source's child.
+  - **The plan's app count still applies to a restore.** Only the feature check is
+    skipped.
+- **The contract with the scripts.** It is engine API 1, and Task 12 implements it.
+  - The source's archive is passed as the app's own variables, prefixed with
+    `HIVEPAAS_RESTORE_` (`HIVEPAAS_RESTORE_WALG_S3_PREFIX`, `..._AWS_ENDPOINT`, or
+    `..._WALG_FILE_PREFIX`).
+  - The source's keys are files of `/run/secrets/walg/restore`
+    (`HIVEPAAS_RESTORE_SECRETS_DIR`), and that includes the source's libsodium key.
+  - A volume source is mounted read-only at `/var/lib/hivepaas-walg-source`.
+  - `HIVEPAAS_RESTORE_TARGET_BACKUP` is the backup to fetch: a name, or `LATEST`.
+    Without it, `HIVEPAAS_RESTORE_TARGET_BEFORE` gives a time, and the script fetches
+    the latest backup that starts before it.
+  - `HIVEPAAS_RESTORE_RECOVERY` holds the recovery settings as space-separated
+    `k=v` pairs:
+    - time: `recovery_target_time=<RFC3339>`;
+    - point: `recovery_target_lsn=<lsn> recovery_target_inclusive=on`;
+    - backup: `recovery_target=immediate`;
+    - latest: none.
+  - The engine validates LSNs and backup names before they reach a configuration
+    file.
+  - The app's entrypoint is `walg-entrypoint`, permanently. It passes through once
+    `PGDATA` has data.
+  - `walg-entrypoint status` exits 0 once the server is up and promoted, 75 while it
+    is starting or recovering, and anything else on failure, after printing why. It
+    prints nothing otherwise.
+- **The jobs.** A restored app's engine jobs are created `disabled`, so health
+  checks do not fail and notify during a recovery that takes hours. The managed
+  loaders read `disabled` jobs too.
+- **`tasks/taskmanagedrestore`.** Each run does one step, or waits on it for up to
+  3 minutes, polling every 10 s, then `Continue()`s. The step is in the task's
+  output.
+  1. `recover` polls `walg-entrypoint status`. If the exec cannot start yet, it
+     waits. It fails, non-retryable, on a failure exit or after 48 h.
+  2. `backup` enables the engine's jobs and schedules them. It then inserts a run of
+     the nightly job, scheduled after the commit, which Status reads as any other
+     run.
+  3. `wait-backup` waits for that run: done, or failed for good.
+  4. `finish` calls `Engine.FinishRestore`:
+     - it drops the `HIVEPAAS_RESTORE_*` variables, the `RESTORE_*` secrets with
+       their mounts, the source mount, and their locks;
+     - it sets `Restore.ReadyAt`;
+     - then it applies the variables through `envvarservice`, removes the mount on
+       the service, and records a setting-mount refresh.
+  - The task has its own 15-minute timeout per run, and 5 retries a minute apart.
+- **Status and settings.** `GET .../managed` shows `restore{sourceApp, target,
+  readyAt}`. `GET .../managed/status` shows `backups`.
+- **API level** stays 4: the restore is a new operation.
+- **Live check, deferred to Task 12** (it needs the scripts).
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore into a new app - latest, a time, a point or a backup`.
 
 ## Task 11b: Restore points, and the retention that keeps them
 
@@ -720,6 +798,21 @@ above:
   - the new blocks and their version code;
   - fix the type count (9) and the dependency limit (5).
 
+- **Contracts from Tasks 10 and 11, which the scripts must honor** (the engine's
+  side is built):
+  - `walg-nightly` prints `BACKUPS=<name@RFC3339 ...>`, oldest first, after
+    retention.
+  - `walg-restore-test` in a verifier:
+    - takes its restore point on `HIVEPAAS_RESTORE_SOURCE_HOST`;
+    - restores into `HIVEPAAS_RESTORE_SCRATCH_DIR`.
+  - `walg-entrypoint` and `walg-fetch` take the restore's variables as Task 11's
+    as-built notes say.
+  - `walg-entrypoint status` exits 0, 75 or another code.
+  - After a failed recovery, the entrypoint idles, so that `status` can report the
+    failure, instead of the container restarting into another failure.
+  - The engine runs `walg-nightly`, not `walg-backup`, `walg-retain` and
+    `walg-verify` separately: either rename the scripts below, or change the
+    engine's `apiScripts` to match.
 - [ ] **Step 1:** Write the script tests:
   - `walg-fetch` maps 1 to 255 and passes 0 and 74;
   - `walg-health` prints valid JSON, and fails on a grown `failed_count`;

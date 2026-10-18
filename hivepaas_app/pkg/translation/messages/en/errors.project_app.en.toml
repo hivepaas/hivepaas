@@ -46,6 +46,10 @@ ERR_APP_MANAGED_VOLUME_NOT_PINNED = "The volume mounted at {{.Target}} is not pi
 ERR_APP_MANAGED_ARCHIVE_UNREACHABLE = "The backup repository's volume is on another node than the database's, which cannot mount it"
 ERR_APP_MANAGED_VERIFIER_NEEDS_OBJECT_STORAGE = "A verifier app reads the database's archive from object storage, and this database archives to a volume"
 ERR_APP_MANAGED_VERIFIER_EXISTS = "The restore test already runs in a verifier app: move it back into the database's container first"
+ERR_APP_MANAGED_RESTORE_TARGET_INVALID = "The restore target is not one the database can be restored to"
+ERR_APP_MANAGED_RESTORE_OUTSIDE_WINDOW = "The archive does not reach that far: a restore can target {{.From}} to {{.To}}"
+ERR_APP_MANAGED_RESTORE_NO_BACKUP = "The database has no base backup yet: there is nothing to restore before its first one"
+ERR_APP_MANAGED_RESTORE_FAILED = "The restore cannot go on: {{.Reason}}"
 ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
 ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"
 

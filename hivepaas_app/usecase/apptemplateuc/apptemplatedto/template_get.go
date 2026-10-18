@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
@@ -50,12 +51,15 @@ type AppTemplateResp struct {
 	License     string                `json:"license"`
 	Compatible  bool                  `json:"compatible"`
 	// Managed, RequiresFeatures and MissingFeatures are the listing's.
-	Managed          string                    `json:"managed"`
-	RequiresFeatures []string                  `json:"requiresFeatures"`
-	MissingFeatures  []string                  `json:"missingFeatures"`
-	Variants         []*AppTemplateVariantResp `json:"variants"`
-	Versions         []*AppTemplateVersionResp `json:"versions"`
-	Parameters       []*AppTemplateParamResp   `json:"parameters"`
+	Managed          string   `json:"managed"`
+	RequiresFeatures []string `json:"requiresFeatures"`
+	MissingFeatures  []string `json:"missingFeatures"`
+	// ManagedDefaults are what a managed template's create form starts from; null
+	// for any other template. A zero field is the engine's own default.
+	ManagedDefaults *AppTemplateManagedDefaultsResp `json:"managedDefaults"`
+	Variants        []*AppTemplateVariantResp       `json:"variants"`
+	Versions        []*AppTemplateVersionResp       `json:"versions"`
+	Parameters      []*AppTemplateParamResp         `json:"parameters"`
 	// Dependencies are the apps creating this template also creates, each with the
 	// parameters a person has to fill in for it.
 	Dependencies []*AppTemplateDependencyResp `json:"dependencies"`
@@ -270,6 +274,14 @@ func TransformAppTemplate(
 		Variants:         make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
 		Parameters:       make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
 	}
+	if managed := tmpl.Template.Managed; managed != nil && managed.Postgres != nil {
+		resp.ManagedDefaults = &AppTemplateManagedDefaultsResp{
+			ArchiveTimeout:      timeutil.Duration(managed.Postgres.ArchiveTimeout.Duration),
+			BaseBackupSchedule:  managed.Postgres.BaseBackupSchedule,
+			RetainFull:          managed.Postgres.RetainFull,
+			RestoreTestSchedule: managed.Postgres.RestoreTestSchedule,
+		}
+	}
 	if links := metadata.Links; links != nil {
 		resp.Links = &AppTemplateLinksResp{
 			Website: links.Website, Documentation: links.Documentation, Source: links.Source,
@@ -408,4 +420,13 @@ func transformParam(param *templatemodel.Parameter) *AppTemplateParamResp {
 		resp.Options = append(resp.Options, &AppTemplateParamOptionResp{Value: option.Value, Title: option.Title})
 	}
 	return resp
+}
+
+// AppTemplateManagedDefaultsResp are a managed template's defaults for the engine
+// that looks after its app.
+type AppTemplateManagedDefaultsResp struct {
+	ArchiveTimeout      timeutil.Duration `json:"archiveTimeout"`
+	BaseBackupSchedule  string            `json:"baseBackupSchedule"`
+	RetainFull          int               `json:"retainFull"`
+	RestoreTestSchedule string            `json:"restoreTestSchedule"`
 }

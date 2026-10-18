@@ -73,7 +73,7 @@ func TestGetAppTemplateShowsANewerTemplateFromTheIndex(t *testing.T) {
 	assert.NoError(t, err)
 	var decoded any
 	assert.NoError(t, json.Unmarshal(data, &decoded))
-	assert.Empty(t, nullsBesides(decoded, "", "links", "capabilities", "dockerApi"))
+	assert.Empty(t, nullsBesides(decoded, "", "links", "capabilities", "dockerApi", "managedDefaults"))
 	assert.Contains(t, string(data), `"parameters":[]`)
 	assert.Contains(t, string(data), `"tags":[]`)
 }

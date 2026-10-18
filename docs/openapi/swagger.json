@@ -62569,6 +62569,24 @@
         },
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateManagedDefaultsResp" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "restoreTestSchedule", "retainFull" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateParamOptionResp" : {
         "properties" : {
           "title" : {
@@ -62717,6 +62735,14 @@
             "description" : "Managed, RequiresFeatures and MissingFeatures are the listing's.",
             "type" : "string"
           },
+          "managedDefaults" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateManagedDefaultsResp"
+            } ],
+            "description" : "ManagedDefaults are what a managed template's create form starts from; null\nfor any other template. A zero field is the engine's own default.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "missingFeatures" : {
             "items" : {
               "type" : "string"
@@ -62783,7 +62809,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "managed", "missingFeatures", "name", "parameters", "publishedPorts", "requiresFeatures", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "managed", "managedDefaults", "missingFeatures", "name", "parameters", "publishedPorts", "requiresFeatures", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {

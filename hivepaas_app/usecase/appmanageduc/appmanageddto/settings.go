@@ -70,6 +70,9 @@ type ManagedSettingsResp struct {
 	SwitchedTo *ManagedSwitchedToResp `json:"switchedTo"`
 	// Members are the database's replicas.
 	Members []*ManagedMemberResp `json:"members"`
+	// BackupFrom is the replica the base backups are taken on, null for the
+	// database itself.
+	BackupFrom *basedto.ObjectIDResp `json:"backupFrom"`
 	// MemberOf is the primary this database is a replica of, null for a
 	// database of its own.
 	MemberOf *ManagedMemberOfResp `json:"memberOf"`
@@ -178,6 +181,7 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 	}
 	resp.Members = []*ManagedMemberResp{}
 	if managed.Postgres != nil {
+		resp.BackupFrom = objectID(managed.Postgres.BackupFrom)
 		for _, member := range managed.Postgres.Members {
 			resp.Members = append(resp.Members, &ManagedMemberResp{App: objectID(member.App), Key: member.Key,
 				Role: member.Role, Volume: objectID(member.Volume), Node: member.Node, At: member.At})
@@ -261,6 +265,10 @@ type UpdateManagedSettingsReq struct {
 	// DumpSchedule is when the dump runs, a cron expression read in the
 	// installation's timezone; kept while dumps are off.
 	DumpSchedule *string `json:"dumpSchedule,omitempty"`
+	// BackupFrom is the replica the base backups are taken on, sparing the
+	// database: {"id": ""} takes them on the database again. Retention runs on the
+	// database either way.
+	BackupFrom *basedto.ObjectIDReq `json:"backupFrom,omitempty"`
 	// RestoreTest moves the restore test: into a verifier app, made for it, or
 	// back into the database's container, which deletes the verifier.
 	RestoreTest *ManagedRestoreTestReq `json:"restoreTest,omitempty"`
@@ -299,6 +307,9 @@ func (req *UpdateManagedSettingsReq) Validate() hperrors.ValidationErrors {
 	}
 	if req.DumpRepo != nil && req.DumpRepo.ID != "" {
 		validators = append(validators, basedto.ValidateObjectIDReq(req.DumpRepo, true, "dumpRepo")...)
+	}
+	if req.BackupFrom != nil && req.BackupFrom.ID != "" {
+		validators = append(validators, basedto.ValidateObjectIDReq(req.BackupFrom, true, "backupFrom")...)
 	}
 	if req.DumpSchedule != nil {
 		validators = append(validators, basedto.ValidateStr(req.DumpSchedule, true, 1, cronMaxLen, "dumpSchedule")...)

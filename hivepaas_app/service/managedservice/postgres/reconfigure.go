@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
@@ -73,7 +75,55 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 	if err := reconfigureDump(req, resp); err != nil {
 		return nil, err
 	}
+	if err := moveBaseBackups(req, resp); err != nil {
+		return nil, err
+	}
 	return resp, nil
+}
+
+// moveBaseBackups points the nightly job at the member the base backups are
+// taken on, or back at the database. Its retention runs on the database either
+// way: the run takes its backup where the job points, and retains on the job's
+// own app.
+func moveBaseBackups(req *managedmodel.ReconfigureReq, resp *managedmodel.ReconfigureResp) error {
+	pg, change := req.Managed.Postgres, req.Change
+	if change.BackupFrom == nil {
+		return nil
+	}
+	target := req.App
+	if *change.BackupFrom != "" {
+		if pg.Member(*change.BackupFrom) == nil {
+			return hperrors.NewArgumentInvalid("backupFrom").
+				WithExtraDetail("%s is not a replica of this database", *change.BackupFrom)
+		}
+		pg.BackupFrom = entity.ObjectID{ID: *change.BackupFrom}
+	} else {
+		pg.BackupFrom = entity.ObjectID{}
+	}
+	if target == nil {
+		return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("moving the base backups needs the app")
+	}
+	where := gofn.Coalesce(pg.BackupFrom.ID, target.ID)
+	setting := req.Jobs[pg.Jobs.Nightly.ID]
+	if setting == nil {
+		return nil
+	}
+	job, err := setting.AsSchedJob()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if job.App.ID == where {
+		return nil
+	}
+	job.App = entity.ObjectID{ID: where}
+	if err = setting.SetData(job); err != nil {
+		return hperrors.Wrap(err)
+	}
+	setting.UpdateVer++
+	if !slices.Contains(resp.Changed, setting) {
+		resp.Changed = append(resp.Changed, setting)
+	}
+	return nil
 }
 
 // rewriteJob gives a job a schedule and variables of its command, and says

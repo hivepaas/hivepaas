@@ -24,13 +24,15 @@ import (
 
 type fakeManaged struct {
 	managedservice.Service
-	// pruned are the outputs each prune was given.
-	pruned []map[string]string
+	// pruned are the outputs each prune was given, and prunedApps its apps.
+	pruned     []map[string]string
+	prunedApps []string
 }
 
-func (f *fakeManaged) PruneDeployPoints(_ context.Context, _ database.IDB, _, _ string,
+func (f *fakeManaged) PruneDeployPoints(_ context.Context, _ database.IDB, _, appID string,
 	outputs map[string]string) ([]string, error) {
 	f.pruned = append(f.pruned, outputs)
+	f.prunedApps = append(f.prunedApps, appID)
 	return nil, nil
 }
 
@@ -42,13 +44,16 @@ func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Eng
 type nightlyExec struct {
 	schedjobexecservice.Service
 	commands []string
-	outputs  map[string]map[string]string
-	failing  string
+	// apps are the apps each step ran in.
+	apps    []string
+	outputs map[string]map[string]string
+	failing string
 }
 
 func (f *nightlyExec) SchedJobExec(_ context.Context, _ database.Tx,
 	req *schedjobexecservice.SchedJobExecReq) (*schedjobexecservice.SchedJobExecResp, error) {
 	f.commands = append(f.commands, req.Command.Command)
+	f.apps = append(f.apps, req.DestApp.ID)
 	step := strings.Fields(req.Command.Command)[1]
 	exitCode := 0
 	resp := &schedjobexecservice.SchedJobExecResp{ExitCode: &exitCode, Outputs: f.outputs[step]}
@@ -73,7 +78,7 @@ func nightlyRun(points ...*entity.ManagedRestorePoint) *jobRun {
 	job := &entity.SchedJob{JobType: base.SchedJobTypeManagedNightly, App: entity.ObjectID{ID: "db-1"},
 		Command:   &entity.CommandTemplate{Command: "/opt/hivepaas/bin/walg-nightly"},
 		ManagedBy: entity.ObjectID{ID: "m1"}}
-	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob}
+	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob, Scope: base.ObjectScopeApp, ObjectID: "db-1"}
 	setting.MustSetData(job)
 	managed := &entity.Setting{ID: "m1", Type: base.SettingTypeAppManaged}
 	managed.MustSetData(&entity.AppManagedSettings{Engine: "postgres",
@@ -133,4 +138,32 @@ func TestANightlyRunWithoutItsEngineFailsSayingSo(t *testing.T) {
 		runJob(context.Background(), database.Tx{}, run)
 
 	assert.ErrorIs(t, err, hperrors.ErrNotFound)
+}
+
+// A nightly run whose backups are taken on a replica runs its backup there, and
+// its retention and pruning on the database the job is the engine's of.
+func TestANightlyRunBacksUpOnTheReplicaItNames(t *testing.T) {
+	exec := &nightlyExec{outputs: map[string]map[string]string{
+		"backup": {"BACKUP_NAME": "base_000000000000000000000002", "BACKUPS": keptBackups(2)},
+	}}
+	managed := &fakeManaged{}
+	e := &Executor{schedJobExecService: exec, managedService: managed}
+	run := nightlyRun()
+	job := run.jobSetting.MustAsSchedJob()
+	job.App = entity.ObjectID{ID: "db-1-r1"}
+	run.jobSetting.MustSetData(job)
+	run.refObjects.RefApps["db-1-r1"] = &entity.App{ID: "db-1-r1", LogicalParentID: "db-1"}
+
+	_, err := e.runJob(context.Background(), database.Tx{}, run)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"db-1-r1", "db-1"}, exec.apps, "the backup on the replica, retention on the primary")
+	assert.Equal(t, []string{"db-1"}, managed.prunedApps)
+
+	// A replica that is gone: the backup is taken on the primary.
+	exec.apps = nil
+	delete(run.refObjects.RefApps, "db-1-r1")
+	_, err = e.runJob(context.Background(), database.Tx{}, run)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"db-1", "db-1"}, exec.apps)
 }

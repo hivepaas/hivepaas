@@ -1,0 +1,479 @@
+# Managed Templates Phase 2 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Take managed PostgreSQL from "safe" to "safe to run a team on":
+- the archive holds from a database's first minute;
+- every deploy can leave a way back;
+- dumps are kept for months;
+- a restore can be switched in;
+- a database can have read replicas, back up from one, and be promoted onto one;
+- volumes that every node reaches can be used;
+- the WAL-G binary is scanned like an image.
+
+**Architecture:**
+- **Scripts in the repo (Task 0).** The WAL-G scripts' sources and their generator move
+  into `app-templates`. Today only the generated template is committed.
+- **Small fixes first (Tasks 1-2).**
+  - The entrypoint checkpoints once the server is up, so `archive_timeout` holds from
+    the start.
+  - A deploy can mark a restore point on a managed database first.
+- **Kept longer (Task 3).** The engine owns a `data-backup` job that streams
+  `pg_dump -Fc` into a Kopia repository. This is the existing job type, with no
+  new mechanism.
+- **Switch (Task 4).** A restored app takes its source's consumers. Their
+  `${<key>.VAR}` references are rewritten and the consumers are redeployed. Names stay
+  as they are: a key never changes.
+- **Members (Tasks 5-7).**
+  - Replicas are logical children the engine creates, as it already creates the
+    verifier. Each member is pinned by its own volume.
+  - The nightly backup can run on a replica.
+  - Promotion is manual and fenced, and its stable address is a multi-host connection
+    string.
+- **Later in the phase (Tasks 8-9).** Unpinned volumes, and scanning the artifact.
+
+**Spec:** `docs/superpowers/specs/2026-10-17-managed-templates-design.md`. The phase-2 row
+of §10 is this plan's scope. §9 Clusters gives the shape of Tasks 5-7. Where this plan
+decides something §9 leaves open, the task says so. The spec is updated in the task's
+commit.
+
+## How this plan works
+
+As in phase 1:
+- **No patches were written in advance.** Each task is written test-first when it is
+  executed, and is done when its checks pass.
+- **File references come from reading the code at this plan's commit** (2026-10-18,
+  after phase 1 and its live checks). Where the code has moved since, follow the code.
+
+**Repositories:**
+- this one (the backend);
+- `../app-templates`, Tasks 0, 1, 5;
+- `../hivepaas-dashboard`, one task per screen, done with the backend task it belongs to;
+- `../hivepaas-cli`, whenever the API level moves.
+
+Work on a branch per repository, in a worktree.
+
+**Global constraints, from phase 1:**
+- **Secrets:** "S3 keys and the libsodium key reach the container as Swarm secrets,
+  never as env and never on argv. Logs name the step, not the value." A replication
+  password is held to the same rule.
+- **Git:**
+  - Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+  - Merge locally, never push.
+  - Never `git stash`.
+  - Never touch the user's uncommitted work.
+- **Live checks** run on the dashboard's e2e dind stack (`e2e/env/up.sh`, with
+  `HP_TEMPLATES_SRC` pointing at an app-templates checkout on the branch under test).
+  It is isolated from the machine's own swarm. Nothing is deployed to the user's swarm.
+- **The API level** moves when a request body gains a field (`make gen-swag`). The CLI is
+  regenerated in the same piece of work.
+
+**Order:** 0, then 1 and 2, then 3, then 4. 5-7 come in that order. 8 and 9 come last
+and can be dropped from the phase without touching the others.
+
+## Task 0 (`app-templates`): the WAL-G scripts' sources in the repository
+
+Phase 1 built `templates/postgres-managed.yaml` from script sources and a generator
+that were never committed. Only the generated file is in the repository. Every later
+task edits a script, so the sources come first.
+
+**Files:**
+- Create `scripts/walg/`:
+  - `template-head.yaml`, the template without its config files;
+  - one file per script: `walg-lib`, `walg-run`, `walg-fetch`, `walg-nightly`,
+    `walg-health`, `walg-mark`, `walg-restore-test`, `walg-entrypoint`.
+  These are taken from the committed template, so the generator reproduces it byte for
+  byte.
+- Create `scripts/walg/generate.sh`. It writes `templates/postgres-managed.yaml`, and
+  `-check` exits 1 when the committed file differs.
+- Modify the CI workflow that runs `lint` and `index -check` to run
+  `scripts/walg/generate.sh -check` too.
+- Modify the README's managed section to say where the scripts live and how the
+  template is made from them.
+
+**Tests:**
+- `generate.sh` against the committed template gives no diff.
+- `scripts/test/walg/run.sh` passes on 17 and 18, unchanged.
+
+- [ ] Commit: `walg: the scripts' sources, and the template generated from them`.
+
+## Task 1 (`app-templates`): archive_timeout holds from the start
+
+The live checks showed that PostgreSQL forces no segment switch after a start until its
+first checkpoint, and that plain images behave the same. A write in the first minutes
+can therefore wait up to checkpoint_timeout + archive_timeout, about 6 minutes, to be
+archived.
+
+**Files:**
+- `scripts/walg/walg-entrypoint`, on the normal start path, before
+  `exec docker-entrypoint.sh`: a background subshell waits for `pg_isready`, runs
+  `CHECKPOINT` once as the superuser over the socket, and exits. Its failure is logged
+  and never stops the server.
+- `scripts/test/walg/run.sh`: a check that a write in the first minute after a start
+  is archived within archive_timeout + 30 s, on 17 and 18.
+- `README.md`: the managed section's RPO sentence.
+
+**Tests:**
+- The new harness check fails before the change and passes after it.
+- The rest of the harness passes.
+- On the e2e stack, the same check runs against a freshly created managed app.
+
+**Notes:**
+- `engineApi` stays 1: no contract changes.
+- A restored app is not affected. Its promotion ends recovery with a checkpoint.
+
+- [ ] Commit: `walg-entrypoint: a checkpoint once the server is up`.
+
+## Task 2: a restore point before every deploy
+
+An app chooses a managed database in its environment, and each of its deployments
+marks a restore point there before its pre-deploy command runs.
+
+**Decided here (the spec says only "an app that links to a managed database"):**
+- **The database is chosen, not inferred.** Links are not stored: the link dialog only
+  writes `${<key>.VAR}` text. The setting names the database by id, and the dashboard
+  offers the managed databases of the environment.
+- **The point's name** is `deploy-<app key>-<yyyymmddhhmmss>`, with the key shortened
+  so that the name fits 63 bytes.
+  - Deployments have no number, only a ULID.
+  - A name that already exists counts as done, not as a failure.
+- **A failed mark fails the deployment**, before anything changes: the point is what the
+  option asks for. The error says the database and the reason, so the person can turn
+  the option off and deploy.
+- **Points made by deploys are removed by the engine** once no base backup reaches
+  them. A point a person made is never removed for them.
+  - Each point gets `Origin` (`person` or `deploy`).
+  - The nightly run prunes `deploy` points whose `restorableUntil` has passed.
+  - Without this, one point per deploy would grow the list forever.
+
+**Files (backend):**
+- **Move the mark into a service.**
+  - `createRestorePoint`, `runMark` and the managed load move from
+    `usecase/appmanageduc/restore_point.go` into `managedservice` as
+    `MarkRestorePoint(ctx, req)`. That method runs its own transaction, so the
+    database's row is never locked inside a deploy's long transaction.
+  - ARCHITECTURE.md §1: a service cannot import a usecase.
+  - `appmanageduc` calls the service.
+- **The setting.**
+  - `entity/app_deployment_settings.go`: `RestorePointBeforeDeploy *ObjectID`, the
+    database. It is copied into the deployment's snapshot as the whole settings are.
+  - Request and response DTOs in `usecase/appsettingsuc/appsettingsdto/deployment_settings_*.go`.
+    A field left out of the request is erased, since `ToEntity` builds a new entity.
+  - Validation: the database is in the same environment, is managed, and its engine is
+    postgres.
+- **The deploy step.**
+  - `service/appdeploymentservice/appdeploymentserviceimpl`: a
+    `deployStepRestorePoint` after `lockDockerServiceForDeployment` and before
+    `deployStepExecCmd(..., true)`, in the repo, image and function flows.
+  - `appdeploymentserviceimpl/service.go` gains a `managedService` dependency.
+  - While in that code, fix the step label: `deployment_cmd_exec.go:37-46` labels a
+    pre-deploy command `stepPostDeployCmd`.
+- **Clearing.** Clone (`appcloneserviceimpl/clone_2_settings.go`) and the verifier copy
+  (`appmanageduc/verifier.go`) clear the field, as they clear the pre-deploy command.
+- **Origin and pruning.**
+  - `entity.ManagedRestorePoint.Origin`.
+  - Pruning runs in `tasks/taskschedjobexec/managed_nightly.go` after retention: it
+    deletes `deploy` points whose `restorableUntil` has passed, and audits it.
+- **Response fix.** The create-point response computes `restorableUntil`, as Status
+  does. It was `null`.
+- `make gen-swag`: the API level moves to 5.
+
+**Files (dashboard):**
+- **Deployment settings, run configuration:** a select, "Mark a restore point before
+  each deploy on", listing the environment's managed databases. It sits beside the
+  pre-deploy command.
+- **Restore points list:** the origin, with deploy points tagged.
+
+**CLI:** regenerate.
+
+**Tests:**
+- The step runs only when set, and before the pre-deploy command.
+- A failed mark fails the deployment and leaves the service untouched.
+- An existing name counts as done.
+- The name is shortened to 63 bytes.
+- Pruning removes only `deploy` points, and only past `restorableUntil`.
+- Settings round-trip, and clone clears the field.
+- Live: an app linked to a managed database deploys, the point is listed, and
+  restoring to it gives the rows from before the deploy.
+
+- [ ] Commit per repository.
+
+## Task 3: a nightly `pg_dump` into a Kopia repository
+
+**Decided here:**
+- **The engine owns a `data-backup` job.** It does not use a new mechanism:
+  - source `command`, `pg_dump -Fc`;
+  - file `<db name>.dump`;
+  - restore command `pg_restore --clean --if-exists --no-owner -d <db>`;
+  - the repository chosen.
+  It streams to Kopia, keeps per-job retention through the repository's policy, and
+  restores through the snapshots view, all as it does today.
+- **The repository** is the archive's backup repository when the archive is one.
+  Otherwise the person chooses one. Dumps are off until then.
+- **The schedule is the person's.** It is a cron expression read in the installation's
+  timezone, as the base backup's is.
+  - It can be any frequency, not only nightly: every 6 hours is `0 */6 * * *`.
+  - It is set in the create form, and changed later in the Database tab's Settings or
+    with `PUT /managed` (`dumpSchedule`).
+  - Clearing the repository turns dumps off.
+  - The default, `0 3 * * *`, runs after the base backup's `0 2 * * *`.
+  - A schedule that fires within the same minute as the base backup's is accepted, with
+    a note that both read the whole database at once.
+  - The job is managed, so the generic jobs screen shows it read-only, as it shows the
+    others. "Run now" stays.
+- **The dump runs in the database's container,** or in the verifier when the restore
+  test runs there, to spare the database. The verifier holds a copy only during a
+  test, so this would mean dumping from the archive.
+  - That last is left out of this task: the job runs in the database's container, and
+    this is noted in the spec.
+
+**Files (backend):**
+- **Entity.** `ManagedPostgres.Dump {Repo ObjectID, Schedule string}` and
+  `ManagedPostgresJobs.Dump`. `GetRefObjectIDs` covers the repository.
+- **Engine.**
+  - `postgres/configure.go` creates the job with `ManagedBy`, `DataBackup` set and
+    `Command` nil. The `job()` helper always sets `Command`, so it is extended.
+  - `postgres/reconfigure.go` adds, changes or removes the job.
+  - `postgres/status.go`: the last dump's time and size come from the job's
+    `SNAPSHOT_ID` and `SNAPSHOT_SIZE_BYTES` outputs.
+- **Where job roles are listed:**
+  - `appmanageddto/settings.go` (`jobs.dump`, `dump`);
+  - `appmanageduc/restore.go` copies the schedule into a restored app;
+  - `appmanageduc/unmanage.go` removes the job;
+  - `usecase/apptemplateuc` create request: `managed.dump`.
+- **Status DTO:** `lastDump`.
+- `make gen-swag`.
+
+**Files (dashboard):**
+- **Create form:** "Daily dump" with a repository select.
+- **Database tab:**
+  - the last dump in the status cards;
+  - Settings: the repository and the schedule;
+  - a link to the app's backup snapshots.
+
+**Tests:**
+- Configure and reconfigure create, change and remove the job.
+- The job's command, file name and restore command.
+- Status reads the outputs.
+- Live: the job makes a snapshot on the e2e stack's volume repository, and restoring it
+  into a fresh `postgres` app gives the rows.
+
+- [ ] Commit per repository.
+
+## Task 4: switch consumers to a restored database
+
+§4 step 6 left switching to the person ("Swapping names is Later"). This task does the
+part that can be done without renaming.
+
+**Decided here:**
+- **A key never changes,** so a swap of names is not attempted. A Swarm service cannot
+  be renamed, and the key is the DNS alias and every `${<key>.VAR}`.
+- **Switching repoints the consumers.**
+  - In every app of the environment whose app-scope env vars reference
+    `${<source key>.`, it rewrites those references to the restored app's key. This is
+    the replacer the preview database clone already uses
+    (`apppreviewserviceimpl/clone_db_apps.go`).
+  - It redeploys the consumers it changed, if the person asks.
+  - Preview `AppsToClone` entries that name the source by id are repointed too.
+- **The source is left running.** Its jobs are paused with a note on the Database tab,
+  so two databases do not both back up as "the" database. The person stops or deletes
+  it once the switch is checked.
+- **Only a restored app can switch,** and only from its own source (`Restore.SourceApp`),
+  once it is ready.
+
+**Files (backend):**
+- `usecase/appmanageduc/switch.go`, at `POST /managed/switch` with body
+  `{redeploy bool, consumers []id}`:
+  - it lists consumers (`GET /managed/switch` answers the candidates);
+  - it rewrites the env settings in one transaction;
+  - it queues redeploys;
+  - it pauses the source's managed jobs;
+  - it is audited.
+- A service helper for the reference rewrite, shared with the preview clone.
+- `make gen-swag`.
+
+**Files (dashboard):** on a ready restored app's Database tab, "Switch consumers to this
+database". It lists the consumers found, with a checkbox for each and "redeploy them".
+The confirmation names the source, which keeps running.
+
+**Tests:**
+- Consumers are found by key reference, and only in the same environment.
+- The rewrite replaces only `${<source key>.` prefixes.
+- Redeploys are queued.
+- The source's jobs are paused.
+- A database that was not restored, or not ready, is refused.
+- Live: an app reading the source switches to the restored database and reads its rows
+  after the redeploy.
+
+- [ ] Commit per repository.
+
+## Task 5: asynchronous read replicas
+
+**Decided here (§9 gives the shape):**
+- **A replica is a member the engine creates,** a logical child of the primary, as the
+  verifier is (`appmanageduc/verifier_provision.go`):
+  - it copies settings with new ids;
+  - it has its own pinned volume, so it lands on its own node;
+  - artifacts are ensured on that node;
+  - its key is `<primary key>-r<n>`.
+- **It is seeded from the archive, not from the primary.**
+  - `walg-entrypoint` gains a `standby` mode: `backup-fetch` from the primary's prefix,
+    `standby.signal`, `primary_conninfo` and `restore_command` reading the archive as a
+    fallback.
+  - This keeps the load off the primary, as §9 prefers.
+- **Replication user.**
+  - The engine creates a `replication` role with a generated password, held as a
+    Swarm secret file. It is never in env and never in `primary_conninfo` on disk: the
+    replica writes a `passfile` from the secret.
+  - The primary's entrypoint appends `host replication replication all scram-sha-256`
+    to `pg_hba.conf` once, and reloads.
+- **No slot by default.** The archive is the fallback for recycled WAL. A slot with
+  `max_slot_wal_keep_size` is an option.
+- **Archiving.** Only the primary archives: a standby with `archive_mode=on` does not.
+- **The archive must be off-site or shared.** A same-node volume archive cannot reach
+  other nodes, which the verifier already requires.
+- **Lag in Status,** from the primary's `pg_stat_replication`, read by the health job.
+
+**Files:**
+- **`app-templates`:** `walg-entrypoint` standby mode, the `pg_hba` line and the
+  passfile; harness checks for a standby seeded from the archive that follows the
+  primary.
+- **Backend:**
+  - **Entity:** `ManagedPostgres.Members []{App ObjectID, Role, Node}` and the
+    replication secret.
+  - **Use case:** `appmanageduc/replica.go`, at `POST /managed/replicas` with
+    `{dataVolume}` and `DELETE /managed/replicas/:id`.
+  - **Engine:** `postgres/replica.go` holds the member's doc and env, and the primary's
+    replication settings (`max_wal_senders`, `hot_standby`).
+  - **Status:** members, with lag.
+  - **Locks:** a member's fields are locked as the primary's are.
+  - `make gen-swag`.
+- **Dashboard:** the Database tab lists members, with their node and lag, and has "Add
+  replica" (a volume picker) and "Remove".
+
+**Tests:**
+- The member's doc, its secrets and env, and its pin.
+- The primary's settings.
+- Status with lag.
+- Removal deletes the member.
+- Live: a replica on a second volume reads rows written on the primary, with lag in
+  Status.
+
+- [ ] Commit per repository.
+
+## Task 6: base backups from a replica
+
+**Files:**
+- **Engine:**
+  - `ManagedPostgres.BackupFrom` holds `primary`, or a member's id.
+  - The nightly job's `App` follows it. `backup-push` runs on a standby, which WAL-G
+    supports.
+- **The rest of the nightly sequence still runs on the primary:** retention, and
+  pruning deploy points. Retention needs only the archive, and only the primary's
+  credentials.
+- **Settings:** a select.
+- **Dashboard:** a select in Settings.
+
+**Tests:**
+- Reconfigure moves the job.
+- Live: the nightly run on a replica makes a base backup that a restore uses.
+
+- [ ] Commit per repository.
+
+## Task 7: manual promotion and the stable address
+
+**Decided here (§9):**
+- **Promotion is fenced first.** It is one audited action, in order:
+  1. scale the old primary's service to 0;
+  2. `pg_promote()` on the chosen replica;
+  3. make it the member that archives, and the nightly's target;
+  4. repoint the other replicas' `primary_conninfo`, and restart them;
+  5. swap roles in `Members`.
+  A failure stops at the step it is in, with the database left fenced rather than with
+  two primaries.
+- **The stable address is a multi-host connection string,** shared as new system
+  variables of the cluster's primary app:
+  - `HIVEPAAS_DATABASE_URL_RW` uses `target_session_attrs=read-write`;
+  - `HIVEPAAS_DATABASE_URL_RO` uses `target_session_attrs=prefer-standby`.
+  The link dialog offers it for Postgres clusters. PgBouncer is left out of this task.
+- **The archive.** The promoted member pushes to the cluster's prefix on its new
+  timeline. `wal-verify timeline` in the health job catches two members pushing.
+
+**Files:**
+- **Backend:**
+  - `appmanageduc/promote.go`, at `POST /managed/promote` with `{member}`;
+  - the system vars in `envvarserviceimpl/app_system_env.go`;
+  - the link recipe in `envlink/recipes.go`;
+  - `make gen-swag`.
+- **Dashboard:**
+  - "Promote" on a member, with a confirmation naming what stops;
+  - the URLs shown on the tab.
+
+**Tests:**
+- The step order, and a failure at each step.
+- The system vars for 1 and 3 members.
+- Live: promote a replica. The old primary is stopped, an app using the RW URL writes
+  to the new primary, and the remaining replica follows it.
+
+- [ ] Commit per repository.
+
+## Task 8: unpinned volumes
+
+**Decided here:**
+- **Allowed when:**
+  - the volume is reachable from every node, with `NodeID` and `NodeLabel` empty;
+  - the archive is off-site;
+  - the eligible nodes share one architecture. `sameBuildEverywhere` already refuses
+    mixed architectures.
+- **Artifacts are kept on every eligible node by a reconcile, not only at deploy.**
+  - A cluster job runs every 10 minutes and on node join. For every managed app it calls
+    `MountsFor` against the service's current spec.
+  - `eligibleNodes` already evaluates constraints.
+  - A task placed on a node that lacks the file fails, and Swarm retries elsewhere,
+    until the reconcile has run.
+- **The spec's "Which nodes" section is updated:** the helper it said was missing
+  exists.
+
+**Files:**
+- `usecase/apptemplateuc/app_create_managed.go` (`dataVolumePin`) and
+  `appmanageduc/verifier_provision.go`: accept an unpinned volume under these
+  conditions.
+- The reconcile job in `clustercleanupservice` or a new system job.
+- Error messages.
+
+**Tests:**
+- Acceptance and refusal cases.
+- The reconcile ensures files on nodes that lack them.
+- Live: needs a second node; the dind stack has one. This task is checked on the Linux
+  server or a two-node dind.
+
+- [ ] Commit per repository.
+
+## Task 9: scanning the artifact
+
+**Files:**
+- **`imagescanservice/imagescanrun`:**
+  - a `rootfs` mode, `trivy rootfs --scanners vuln --format json <file>`, with the
+    cached file bind-mounted read-only;
+  - `RunReq` gains the mode and the host path;
+  - the agent's proto and server copy them;
+  - `validate` accepts an artifact's `sha256:<hex>`.
+- **`imagescanserviceimpl`:**
+  - an app's managed artifacts are scanned with its images;
+  - results are keyed by the artifact's sha256 in `image_scans`;
+  - `app_image_scans.image_ids` includes them.
+- **Dashboard:** the Security tab names an artifact as such.
+
+**Tests:**
+- The script for the mode.
+- Report parsing for a Go binary.
+- The app's image list includes the artifact.
+- Live: the WAL-G binary is scanned, and its findings are shown.
+
+- [ ] Commit per repository.
+
+## After the plan
+
+- Release the CLI for the API level this phase ends at, as phase 1 left it: a hivepaas
+  tag, then `make update-spec REF=<tag>`.
+- Live checks for each task are in the task. Task 8 needs two nodes.

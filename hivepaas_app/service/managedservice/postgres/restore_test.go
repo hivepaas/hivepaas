@@ -148,13 +148,16 @@ func TestARestoredAppStartsThroughTheEntrypoint(t *testing.T) {
 	}
 }
 
-func TestANewAppStartsAsTheImageDoes(t *testing.T) {
+// A new app starts through the engine's entrypoint too: it hands over to the
+// image's, with a checkpoint once the server is up, so that archive_timeout holds
+// from the first minute.
+func TestANewAppStartsThroughTheEntrypoint(t *testing.T) {
 	deployment := deploymentSetting()
 
 	resp, err := New().Configure(configureReq(t, deployment))
 
 	assert.NoError(t, err)
-	assert.Empty(t, deployment.MustAsAppDeploymentSettings().Entrypoint)
+	assert.Equal(t, scriptDir+"/walg-entrypoint", deployment.MustAsAppDeploymentSettings().Entrypoint)
 	assert.Nil(t, resp.Settings[0].MustAsAppManagedSettings().Postgres.Restore)
 	for _, job := range resp.Settings[1:] {
 		assert.Equal(t, base.SettingStatusActive, job.Status, job.Name)

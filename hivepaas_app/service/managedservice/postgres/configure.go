@@ -44,7 +44,7 @@ const (
 
 func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
 	options := withDefaults(req.Prepared.Options)
-	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options, req.Prepared.Restore != nil)
+	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +140,14 @@ func withDefaults(options *managedmodel.Options) managedmodel.Options {
 // setServerArguments gives the server what archiving needs, on the
 // app-deployment setting the document was built into: a template may not set a
 // command, and these are the engine's, re-applied by every deploy as the setting
-// is. Locked fields keep a person from changing them. A restored database
-// starts through walg-entrypoint, which recovers it first.
+// is. Locked fields keep a person from changing them. Every database starts
+// through walg-entrypoint: it hands over to the image's, with a checkpoint once
+// the server is up so that archive_timeout holds from the start, and recovers a
+// restored database first.
 func setServerArguments(
 	settings []*entity.Setting,
 	doc *specmodel.AppDoc,
 	options managedmodel.Options,
-	restored bool,
 ) (*entity.AppDeploymentSettings, error) {
 	var deployment *entity.Setting
 	for _, setting := range settings {
@@ -172,9 +173,7 @@ func setServerArguments(
 		args = append(args, fmt.Sprintf("-c shared_buffers=%dMB", buffers/unit.MB))
 	}
 	source.Command = strings.Join(args, " ")
-	if restored {
-		source.Entrypoint = scriptDir + "/walg-entrypoint"
-	}
+	source.Entrypoint = scriptDir + "/walg-entrypoint"
 	return source, hperrors.Wrap(deployment.SetData(source))
 }
 

@@ -349,26 +349,32 @@ setting, which already exists with its key in an encrypted `KeyAuth`.
 
 | Script | Does |
 |---|---|
-| `walg-run` | Exports the secrets, then runs `wal-g` with its arguments |
+| `walg-lib` | What the others share, sourced: outputs, the local server, the backup list |
+| `walg-run` | Exports the secrets, then runs `wal-g` with its arguments, as the postgres user. With `--source`, the archive a restored database reads |
 | `walg-fetch` | `wal-fetch` for `restore_command`. Exit 74 (not found) passes through; any other error becomes 255, so recovery stops instead of ending early at an older point |
-| `walg-backup` | `backup-push $PGDATA`, delta when configured |
-| `walg-retain` | `delete before FIND_FULL <backup> --confirm`, on the boundary the engine computes (§4, "Retention and kept points") |
-| `walg-verify` | `wal-verify integrity timeline`, plus the archiver check below |
-| `walg-health` | Reads `pg_stat_archiver` and the size of `pg_wal`, prints JSON |
+| `walg-nightly` | `backup`: `backup-push $PGDATA`. `retain [<backup>]`: `delete before FIND_FULL <backup> --confirm` on the boundary the engine computes (§4, "Retention and kept points"), then `wal-verify integrity timeline`. Both print the backups kept |
+| `walg-health` | Reads `pg_stat_archiver`, `pg_wal` and the archive's backlog; prints JSON and the outputs Status reads |
+| `walg-mark` | `walg-mark <name> <seconds>`: a restore point, once its WAL is archived (§4, "Restore points") |
 | `walg-restore-test` | §5 |
-| `walg-entrypoint` | For a restore only: fetches and sets up recovery before handing over to `docker-entrypoint.sh` (§4) |
+| `walg-entrypoint` | The entrypoint of a restored database (§4); `status` and `health` beside it |
+
+As built, the health check fails when the last WAL archived failed and none has been
+since, or when a segment has waited three archive timeouts: both are read from the
+server, with no state between runs. The container's health check is `walg-entrypoint
+health`, which is `pg_isready` except while a restore fetches or recovers. Before 18,
+the data is in `/var/lib/postgresql/data/pgdata`, so that a restore test has room on
+the data volume beside `PGDATA`, as it has under 18's `/var/lib/postgresql`.
 
 ### Jobs the engine creates
 
-All of them are `container-command` jobs, so they run in a running task of the app and
-keep their history and outputs. They notify on failure through the scope's default
-notification.
+They run in a running task of the app, keep their history and outputs, and notify on
+failure through the scope's default notification.
 
 | Job | Default schedule | Runs |
 |---|---|---|
-| Nightly sequence | `0 2 * * *` | a `job-sequence`: `walg-backup`, then `walg-retain`, then `walg-verify` |
-| Archiver health | every 5 min | `walg-health`. It fails when `failed_count` has grown, or when `last_archived_time` is older than 3 × `archive_timeout` while WAL is being written |
-| Restore test | `0 4 * * 0` | `walg-restore-test` |
+| Nightly base backup | `0 2 * * *` | a `managed-nightly` job: `walg-nightly backup`, then the engine's retention decision, then `walg-nightly retain` |
+| Archiver health | every 5 min | `walg-health` |
+| Restore test | `0 4 * * 0` | `walg-restore-test`, a `container-command` job, or `managed-restore-test` in a verifier |
 
 **Jobs are owned.** `SchedJob` gains `ManagedBy ObjectID`, pointing at the
 `app-managed` setting. `UpdateSchedJob` and `DeleteSchedJob` refuse such a job; it is

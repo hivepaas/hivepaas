@@ -860,7 +860,7 @@ above:
   - `walg-entrypoint status` exits 0, 75 or another code.
   - After a failed recovery, the entrypoint idles, so that `status` can report the
     failure, instead of the container restarting into another failure.
-- [ ] **Step 1:** Write the script tests:
+- [x] **Step 1:** Write the script tests:
   - `walg-fetch` maps 1 to 255 and passes 0 and 74;
   - `walg-health` prints valid JSON, and fails on a grown `failed_count`;
   - `walg-restore-test` reaches its restore point, fails on a removed WAL segment, and
@@ -869,7 +869,53 @@ above:
     two inserts, a restore point's LSN, and a base backup;
   - `walg-nightly retain <backup>` deletes only what is before that backup, and `walg-mark`
     waits for its segment, refusing on timeout.
-- [ ] **Step 2:** Watch them fail. **Step 3:** Write the template and the scripts. **Step 4:** Run `apptemplate lint`, `index -check`, the compat job's subset for `v000001` (which leaves the template out), and the script tests. **Step 5:** Commit: `feat(templates): postgres-managed`.
+**As built** (`../app-templates`, branch `feat/postgres-managed`, worktree
+`../app-templates-managed`, based on `main`):
+- **WAL-G 3.0.9**, the `pg-20.04` builds, needs only libc, libm, libpthread and
+  libresolv, and at most `GLIBC_2.29`, for amd64 and aarch64 alike; trixie has
+  2.41.
+  - amd64 is 61,379,352 bytes, sha256 `965a7147…c0c4eb`; aarch64 is 57,671,960,
+    sha256 `89f0cea5…505936`. Both match the release's own `.sha256` files and
+    were downloaded to check.
+- **Images:** `postgres:18.6-trixie` and `postgres:17.11-trixie`, as `postgres.yaml`
+  pins them.
+- **Layout:** 17 keeps its data in `/var/lib/postgresql/data/pgdata` (`PGDATA` in
+  the version's env), and 18 in the image's `/var/lib/postgresql/18/docker`. Either
+  way the data volume's mount point has room for a restore test beside `PGDATA`.
+  The scripts find that point with `stat -c %m`.
+- **The health check** is `walg-entrypoint health`: `pg_isready`, except while a
+  restore fetches or recovers. Without that, swarm would kill a restore that takes
+  longer than five retries.
+- **Scripts.** There is also `walg-lib`, which the others source.
+  - `walg-health` fails when the last archive failed and none has succeeded since,
+    or when a `.ready` segment is older than three archive timeouts. It keeps no
+    state between runs, instead of the plan's "grown `failed_count`".
+  - Base backups are read from `backup-list --detail --json` with `sed`, since the
+    images have no `jq`.
+  - Values a script puts into SQL or WAL-G's arguments - point names, backup names
+    - are checked by the script again.
+- **Tests:** `scripts/test/walg/run.sh [17] [18]`.
+  - It extracts the scripts from the template and downloads the artifact as a node
+    does, checking its sha256.
+  - It runs plain containers on a network of their own, with SeaweedFS 4.47 as the
+    S3 (MinIO no longer publishes images), and removes them afterwards.
+  - It covers every check of Step 1, plus: the verifier mode; a target the archive
+    does not reach (Postgres's own message, and the database idling);
+    `walg-entrypoint` passing through for a database not being restored; and a
+    restored app archiving to its own prefix.
+  - Every check passes on 17 and 18.
+- **Found by running them, fixed in the engine:**
+  - `recovery_target_time` refuses RFC 3339's `Z`, so the engine writes `+00:00`.
+  - A verifier needs the database's `app-kind` setting, since `POSTGRES_USER` is
+    `${HIVEPAAS_USER}`. `verifierSourceTypes` now includes it.
+- **Checks:** `apptemplate lint` (392 templates) and `index -check` pass. The
+  compat subset for each supported release, `v1.0.0-beta2` to `beta4` (`v000001`),
+  leaves the template out and lints. The README gained the managed blocks, the
+  type count (9) and the dependency limit (5).
+- **Not done here:** an installation running the template end to end. That is the
+  live checks below.
+
+- [x] **Step 2:** Watch them fail. **Step 3:** Write the template and the scripts. **Step 4:** Run `apptemplate lint`, `index -check`, the compat job's subset for `v000001` (which leaves the template out), and the script tests. **Step 5:** Commit: `feat(templates): postgres-managed`.
 
 ## Task 13 (`hivepaas-portal`): keys carry features
 

@@ -41,6 +41,9 @@ const (
 	restoreSourceDir = "/var/lib/hivepaas-walg-source"
 	// recoveryLatest is backup-fetch's name for the newest base backup.
 	recoveryLatest = "LATEST"
+	// recoveryTimeLayout is a time recovery_target_time takes: ISO 8601 with a
+	// numeric offset. Postgres refuses the RFC 3339 Z, as it does any zone name.
+	recoveryTimeLayout = "2006-01-02T15:04:05-07:00"
 )
 
 var (
@@ -81,8 +84,9 @@ func targetEnv(source *managedmodel.RestoreSource) ([][2]string, error) {
 		if target.Time.IsZero() {
 			return nil, targetInvalid("a time is required")
 		}
-		at := target.Time.UTC().Format(time.RFC3339)
-		return [][2]string{{envRestoreBefore, at}, {envRestoreRecovery, "recovery_target_time=" + at}}, nil
+		at := target.Time.UTC()
+		return [][2]string{{envRestoreBefore, at.Format(time.RFC3339)},
+			{envRestoreRecovery, "recovery_target_time=" + at.Format(recoveryTimeLayout)}}, nil
 	case entity.ManagedRestoreToPoint:
 		if !lsnPattern.MatchString(target.LSN) || source.PointAt.IsZero() {
 			return nil, targetInvalid("the point has no LSN to recover to")

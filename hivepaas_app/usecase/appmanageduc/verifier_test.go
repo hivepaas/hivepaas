@@ -34,8 +34,10 @@ func sourceSettings(t *testing.T) []*entity.Setting {
 		Source: entity.ObjectID{ID: "project-cfg"}, Files: []*entity.AppSettingMountFile{{Path: "/etc/shared"}}})
 	artifacts := setting("art-1", base.SettingTypeAppArtifacts, &entity.AppArtifactsSettings{})
 	routing := setting("rt-1", base.SettingTypeAppRouting, &entity.AppRoutingSettings{})
+	kind := setting("kind-1", base.SettingTypeAppKind, &entity.AppKindSettings{Category: base.AppCategoryDatabase,
+		Engine: "postgres"})
 	all := []*entity.Setting{env, access, sodium, script, scriptMount, secretMount, projectMount, deployment,
-		artifacts, routing}
+		artifacts, routing, kind}
 	for _, s := range all {
 		s.Scope, s.ObjectID = base.ObjectScopeApp, "db-1"
 	}
@@ -58,14 +60,15 @@ func TestTheVerifierIsTheDatabaseIdling(t *testing.T) {
 		assert.Equal(t, "ver-1", s.ObjectID, s.Type)
 		assert.Equal(t, base.ObjectScopeApp, s.Scope)
 		assert.NotContains(t, []string{"env-1", "sec-1", "sec-2", "cfg-1", "mnt-1", "mnt-2", "mnt-3", "dep-1",
-			"art-1"}, s.ID,
+			"art-1", "kind-1"}, s.ID,
 			"a setting of its own")
 		byID[s.ID] = s
 		types[s.Type]++
 	}
 	assert.Equal(t, map[base.SettingType]int{base.SettingTypeEnvVar: 1, base.SettingTypeSecret: 2,
 		base.SettingTypeConfigFile: 1, base.SettingTypeAppSettingMount: 3, base.SettingTypeAppDeployment: 1,
-		base.SettingTypeAppArtifacts: 1}, types, "not its routing: it serves nothing")
+		base.SettingTypeAppArtifacts: 1, base.SettingTypeAppKind: 1}, types,
+		"its kind, whose credentials its variables name; not its routing: it serves nothing")
 
 	for _, s := range settings {
 		switch s.Type { //nolint:exhaustive // the types the verifier is given

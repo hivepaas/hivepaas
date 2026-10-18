@@ -39,7 +39,8 @@ func restoreReq(t *testing.T, target entity.ManagedRestoreTarget) *managedmodel.
 func TestEachTargetIsItsRecoverySettings(t *testing.T) {
 	for kind, want := range map[string][3]string{
 		entity.ManagedRestoreToLatest: {"LATEST", "", ""},
-		entity.ManagedRestoreToTime:   {"", "2026-10-18T14:32:00Z", "recovery_target_time=2026-10-18T14:32:00Z"},
+		entity.ManagedRestoreToTime: {"", "2026-10-18T14:32:00Z",
+			"recovery_target_time=2026-10-18T14:32:00+00:00"},
 		entity.ManagedRestoreToPoint: {"", "2026-10-18T14:31:00Z",
 			"recovery_target_lsn=0/3000060 recovery_target_inclusive=on"},
 		entity.ManagedRestoreToBackup: {"base_000000010000000000000004", "", "recovery_target=immediate"},

@@ -14,10 +14,13 @@ import (
 
 // verifierSourceTypes are the database's settings a verifier is given: what it
 // needs to restore the archive the database writes - its image, artifacts,
-// scripts, variables and credentials. Not its routing: it serves nothing.
+// scripts, variables and credentials, and its kind, whose database user and
+// password the variables refer to (POSTGRES_USER is ${HIVEPAAS_USER}). Not its
+// routing: it serves nothing.
 var verifierSourceTypes = []base.SettingType{
 	base.SettingTypeEnvVar, base.SettingTypeSecret, base.SettingTypeConfigFile,
 	base.SettingTypeAppSettingMount, base.SettingTypeAppDeployment, base.SettingTypeAppArtifacts,
+	base.SettingTypeAppKind,
 }
 
 // verifierSettings are the database's settings, the verifier's own: new ids,

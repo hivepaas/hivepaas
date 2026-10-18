@@ -73,18 +73,21 @@ export function DeployTemplateDialog() {
         })) ?? [];
 
     // 4. Where a managed template's engine can archive, and the keys it can archive with.
+    // The environment's: an app uses what its environment sees - its own, and
+    // the project's and the installation's that are inheritable.
     const isManaged = Boolean(template?.managed);
-    const listsEnabled = Boolean(projectId) && isManaged;
+    const [archiveEnv, setArchiveEnv] = useState("");
+    const listsEnabled = Boolean(projectId) && isManaged && archiveEnv !== "";
     const { data: backupReposData } = ProjectBackupRepoQueries.useFindManyPaginated(
-        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
         { enabled: listsEnabled },
     );
     const { data: cloudStoragesData } = ProjectCloudStorageQueries.useFindManyPaginated(
-        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
         { enabled: listsEnabled },
     );
     const { data: keyAuthsData } = ProjectKeyAuthQueries.useFindManyPaginated(
-        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
         { enabled: listsEnabled },
     );
     const managedArchives: ManagedArchiveOption[] = [
@@ -293,6 +296,7 @@ export function DeployTemplateDialog() {
                             onSubmit={handleSubmit}
                             onCancel={handleClose}
                             onHasChanges={setHasChanges}
+                            onEnvChange={setArchiveEnv}
                         />
                     </ErrorBoundary>
                 )}

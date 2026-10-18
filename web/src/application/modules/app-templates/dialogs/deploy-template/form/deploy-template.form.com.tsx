@@ -68,7 +68,7 @@ import {
 
 import type { DeployTemplateFormState } from "./deploy-template.form.types";
 import { ManagedFields } from "./managed-fields.com";
-import { EMPTY_MANAGED_FORM, type ManagedArchiveOption, managedCreateRequest } from "./managed-fields.state";
+import { EMPTY_MANAGED_FORM, type ManagedArchiveOption, NO_KEY, managedCreateRequest } from "./managed-fields.state";
 
 export interface DeployTemplateFormProps {
     template: AppTemplateDetail;
@@ -84,6 +84,8 @@ export interface DeployTemplateFormProps {
     isPending: boolean;
     readOnly?: boolean;
     onHasChanges?: (dirty: boolean) => void;
+    /** The environment chosen: a managed template's archives and keys are the ones it can use. */
+    onEnvChange?: (env: string) => void;
     onSubmit: (values: CreateAppFromTemplateReq) => void;
     onCancel: () => void;
 }
@@ -110,6 +112,7 @@ export function DeployTemplateForm({
     isPending,
     readOnly = false,
     onHasChanges,
+    onEnvChange,
     onSubmit,
     onCancel,
 }: DeployTemplateFormProps) {
@@ -226,6 +229,23 @@ export function DeployTemplateForm({
     const paramValues = watch("params");
 
     const selectedEnv = watch("env");
+    useEffect(() => {
+        onEnvChange?.(selectedEnv);
+    }, [onEnvChange, selectedEnv]);
+    // An archive or a key the environment cannot use is not kept: another
+    // environment's lists replace the last one's.
+    const chosenArchive = watch("managed.archive");
+    const chosenKey = watch("managed.keyAuth");
+    const archiveIds = managedArchives.map(option => `${option.kind}:${option.id}`).join(",");
+    const keyIds = keyAuths.map(key => key.id).join(",");
+    useEffect(() => {
+        if (chosenArchive !== "" && !archiveIds.split(",").includes(chosenArchive)) {
+            setValue("managed.archive", "");
+        }
+        if (chosenKey !== "" && chosenKey !== NO_KEY && !keyIds.split(",").includes(chosenKey)) {
+            setValue("managed.keyAuth", "");
+        }
+    }, [archiveIds, keyIds, chosenArchive, chosenKey, setValue]);
     const selectedVersion = watch("version");
     const selectedVariant = watch("variant");
     const imageTag = watch("imageTag");

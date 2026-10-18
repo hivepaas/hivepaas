@@ -240,7 +240,10 @@ if [ -d "$TEMPLATES_SRC/templates" ]; then
 	tar -C "$TEMPLATES_SRC" --exclude=.git -cf - . | docker exec -i "$DIND" tar -C /hp/app-templates -xf -
 	templates_env="HP_TEMPLATES_DIR=/hp/app-templates"
 fi
-docker exec -d -w /hp "$DIND" sh -c 'HP_CONFIG_FILE=config.toml ./hivepaas-agent >agent.log 2>&1'
+# The agent names the host's path to what it keeps - an artifact's bind
+# mount - by HP_STORAGE_HOST_DIR, as the backend does.
+docker exec -d -w /hp "$DIND" sh -c 'HP_CONFIG_FILE=config.toml HP_STORAGE_HOST_DIR=/hp/appdata ./hivepaas-agent \
+	>agent.log 2>&1'
 docker exec -d -w /hp "$DIND" sh -c "HP_CONFIG_FILE=config.toml HP_APP_PATH=/hp/appdata $templates_env \
 	HP_STORAGE_HOST_DIR=/hp/appdata HP_DEV_MODE_FORCE_AGENT_LOCAL=true ./hivepaas-app >app.log 2>&1"
 

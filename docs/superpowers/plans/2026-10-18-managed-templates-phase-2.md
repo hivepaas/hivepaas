@@ -624,7 +624,116 @@ d9b41b09; CLI 6e9bd1f, merged as 3661a52):
 - Live: a replica on a second volume reads rows written on the primary, with lag in
   Status.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (app-templates b3f1647, merged as 2d5b489; backend 70e963fe, merged as
+69e6fb5f; dashboard 6ed84be6, merged as 6c524f22; CLI cc0f625, merged as b9d6a45):
+- **Template.**
+  - **`walg-entrypoint` has a standby mode**, entered when `HIVEPAAS_STANDBY_HOST` is
+    set:
+    - an empty (or half-fetched) data directory is seeded with `backup-fetch … LATEST`
+      from the archive in the variables, which is the primary's; it never runs
+      `initdb`, and a replica it cannot seed idles;
+    - the passfile is written to `/dev/shm` at each start, from the file
+      `HIVEPAAS_STANDBY_PASSWORD_FILE` names;
+    - `primary_conninfo` (user `hivepaas_replica`, `application_name` =
+      `HIVEPAAS_STANDBY_NAME`), `restore_command` (`walg-fetch`),
+      `recovery_target_timeline = 'latest'` and `standby.signal` are written again at
+      each start. Task 7 can therefore repoint a replica by changing its variable.
+    - The container health check passes while it is seeding.
+  - **`walg-replication` replaces the plan's "the primary's entrypoint appends the
+    line".** It runs on the primary, through `RunCommand`, with the password on stdin.
+    It makes or updates the role, adds the `pg_hba` line once (`show hba_file`), and
+    reloads. The role and the line live in the data directory, so a restore of the
+    primary carries them. Nothing on the primary holds the password as a file.
+  - **`walg-health`** prints `REPLICAS=name@state@bytes@seconds …` from
+    `pg_stat_replication`.
+  - `replication_user` is in `walg-lib`.
+  - **Harness** `test_standby`, on 17 and 18:
+    - `walg-replication` refuses a bad password, is idempotent, adds its line once,
+      and leaves the password out of every `/proc/*/cmdline`;
+    - the standby is seeded, is in recovery, streams, follows a write within 30s,
+      archives nothing, and keeps no password on the data volume;
+    - after a restart it is still a standby and follows again;
+    - a replica with nothing to seed from idles without an `initdb`.
+
+    150 checks pass on 17 and 18. `archiving catches up` (stopping S3) failed twice
+    on 18 when that major ran alone, and passed when the full run was repeated, and
+    passes on main: it is timing.
+- **Backend.**
+  - `ManagedPostgres.Members []{App, Key, Role, Volume, Node, At}` and
+    `ReplicationPassword` (encrypted, made with the first replica).
+  - `AppManagedSettings.MemberOf {App, Role}`.
+  - **A replica has an app-managed setting of its own**, with `MemberOf` and its own
+    `Locks`: the primary's image, command and env keys, its data mount, and the ids
+    of its copies of the primary's secrets, scripts and mounts, plus the password
+    secret and its mount. The existing lock rules therefore apply to it unchanged.
+    Its `Postgres` is nil: its state is its primary's.
+  - **`engine.Replica(req)`** returns the standby's env, the secret's name and file,
+    the data mount target (from `Locks.Mounts`, the archive's volume excluded) and
+    the allow command. It refuses:
+    - a member (`ERR_APP_MANAGED_IS_MEMBER`);
+    - a primary whose setting mounts include no `walg-replication`, meaning its
+      scripts predate replicas (`ERR_APP_MANAGED_REPLICA_UNSUPPORTED`): its entrypoint
+      would `initdb` a replica and archive it into the primary's prefix;
+    - one still restoring;
+    - an archive not off-site (`…_REPLICA_NEEDS_OBJECT_STORAGE`). **Shared volume
+      archives are left out**, as the verifier's are: the replica would need the
+      archive's volume mounted, which the copied settings do not hold.
+  - **`managedService.AllowReplicas`** runs the allow command in the primary's task,
+    with the password on stdin.
+  - **`appmanageduc/replica.go`:**
+    - `POST /managed/replicas {dataVolume}` checks the feature, plans the volume pin
+      and the artifacts before the transaction, then locks the primary and checks
+      again;
+    - it makes or reads the password, lets replicas into the primary first, and
+      provisions a logical child (key `<key>-r<n>`, the first free; the volume
+      mounted with its own directory; the copies as the verifier's, keeping the
+      server command, since a standby does not archive);
+    - it records the member and audits;
+    - `DELETE /managed/replicas/:memberID` removes the member and deletes the app last.
+  - **Unmanage refuses** a member (`ERR_APP_MANAGED_IS_MEMBER`) and a primary with
+    members (`ERR_APP_MANAGED_HAS_MEMBERS`). Deleting the primary deletes its
+    replicas, which are logical children.
+  - **Status `members`:** state is `pg_stat_replication`'s, `disconnected` when the
+    list omits a member, and `unknown` without a health run or with an older
+    `walg-health` that prints no list. Lag is given in bytes and in seconds; the
+    seconds are null while nothing is written.
+  - The primary's `max_wal_senders` and `hot_standby` are left at Postgres's defaults
+    (10, on): nothing to set.
+- **Dashboard.**
+  - The Database tab's "Replicas" section shows each member with a link, its node,
+    state, and lag ("caught up" at 0), and a Remove button behind a PopConfirm.
+  - "Add replica" offers a select of pinned volumes, shown only for an off-site
+    archive.
+  - A replica's tab shows only a banner naming its primary.
+- **Not done:**
+  - no replication slot;
+  - no shared-volume archive;
+  - refreshing the primary's credentials does not refresh its replicas' copies,
+    whose archive fallback keeps the old key;
+  - a restored primary's replicas are not restored (as §9 says), and the restored
+    data keeps the role with its old password until a replica is added.
+- **Tests:**
+  - engine: the spec, its four refusals, and the members' status;
+  - service: the password on stdin, a failed allow;
+  - usecase: the replica's settings (copies, variables, password secret and its mount
+    at mode 0400, the member setting and its locks, no routing), its key, the
+    password's shape, and the unmanage refusals;
+  - e2e level-0: the replicas section, its add and remove requests, and the member's
+    tab. All 10 pass.
+- **Live check, on the e2e stack (`lc/check11.sh`), with the new template copied into
+  dind:**
+  - pg18, made before, is refused (412 `…_REPLICA_UNSUPPORTED`);
+  - pg18b, made from the new template, had a base backup taken, then `pg18b-r1` added
+    on a second volume;
+  - the replica was seeded from the archive, is a standby, read 60 rows after 10 were
+    written on the primary, streams, and archives nothing;
+  - after a health run, Status showed it `streaming`, 0 bytes behind, and it named
+    its primary;
+  - changing its command was refused (`…_FIELD_LOCKED`), and neither database could be
+    unmanaged;
+  - removing it emptied the members, and its app is gone (404).
 
 ## Task 6: base backups from a replica
 

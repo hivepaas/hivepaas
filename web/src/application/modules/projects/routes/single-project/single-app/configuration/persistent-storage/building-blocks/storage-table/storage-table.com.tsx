@@ -20,15 +20,24 @@ interface StorageTableProps {
     onDeleteMount: (mount: StorageMountWithId) => Promise<void> | void;
     onResetPermissions: (mount: StorageMountWithId) => void;
     canWrite: boolean;
+    /** The targets a managed database's engine relies on. */
+    lockedTargets?: string[];
 }
 
-function View({ onAddMount, onEditMount, onDeleteMount, onResetPermissions, canWrite }: StorageTableProps) {
+function View({
+    onAddMount,
+    onEditMount,
+    onDeleteMount,
+    onResetPermissions,
+    canWrite,
+    lockedTargets,
+}: StorageTableProps) {
     const { mounts } = useStorageMounts();
     const [internalSearch, setInternalSearch] = useState("");
 
     const columns = useMemo(
-        () => createStorageTableColumns(onEditMount, onDeleteMount, onResetPermissions, canWrite),
-        [canWrite, onDeleteMount, onEditMount, onResetPermissions],
+        () => createStorageTableColumns(onEditMount, onDeleteMount, onResetPermissions, canWrite, lockedTargets),
+        [canWrite, onDeleteMount, onEditMount, onResetPermissions, lockedTargets],
     );
 
     const filteredMounts = useMemo(() => {

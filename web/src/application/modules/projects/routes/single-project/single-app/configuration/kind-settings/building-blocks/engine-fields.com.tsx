@@ -12,9 +12,11 @@ import { type AppConfigKindSettingsFormSchemaInput, type AppConfigKindSettingsFo
 
 interface Props {
     readOnly?: boolean;
+    /** A managed database's engine is its engine's: only its version and port may change. */
+    engineLocked?: boolean;
 }
 
-export function EngineFields({ readOnly = false }: Props) {
+export function EngineFields({ readOnly = false, engineLocked = false }: Props) {
     const { control } = useFormContext<
         AppConfigKindSettingsFormSchemaInput,
         unknown,
@@ -75,7 +77,7 @@ export function EngineFields({ readOnly = false }: Props) {
                             onChange={engine.onChange}
                             placeholder={enginePlaceholder}
                             aria-invalid={isEngineInvalid}
-                            disabled={readOnly}
+                            disabled={readOnly || engineLocked}
                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         />
                         <FieldError errors={[engineError]} />

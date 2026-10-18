@@ -7,7 +7,9 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectAppSecretsQueries } from "~/projects/data/queries";
+import { ManagedLockNotice } from "~/projects/module-shared/components";
 import { AppSecretsTableDefs } from "~/projects/module-shared/definitions/tables/app-secrets";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -40,7 +42,12 @@ export function AppConfigSecretsRoute() {
             APP_CONFIGURATION_QUERY_OPTIONS,
         );
 
-    const columns = useMemo(() => AppSecretsTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const lockedIds = managed?.locks.settings;
+    const columns = useMemo(
+        () => AppSecretsTableDefs.columns(projectId, env, appId, lockedIds),
+        [projectId, env, appId, lockedIds],
+    );
 
     return (
         <div className="flex flex-col gap-6">
@@ -49,6 +56,16 @@ export function AppConfigSecretsRoute() {
                 referenced from an environment variable using the syntax{" "}
                 <span className="text-orange-500">MY_ENV={"${secrets.MY_SECRET}"}</span>.
             </div>
+
+            {lockedIds && lockedIds.length > 0 && (
+                <ManagedLockNotice
+                    projectId={projectId}
+                    env={env}
+                    appId={appId}
+                >
+                    The secrets marked Managed hold the engine&apos;s credentials and scripts.
+                </ManagedLockNotice>
+            )}
 
             <TableActions
                 search={{ value: search, onChange: setSearch }}

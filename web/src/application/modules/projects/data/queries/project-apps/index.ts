@@ -9,6 +9,7 @@ export * from "./app-data-files.queries";
 export * from "./app-container-settings.queries";
 export * from "./app-deployment-settings.queries";
 export * from "./app-feature-settings.queries";
+export * from "./app-managed.queries";
 export * from "./app-clone-settings.queries";
 export * from "./app-network-settings.queries";
 export * from "./app-service-settings.queries";

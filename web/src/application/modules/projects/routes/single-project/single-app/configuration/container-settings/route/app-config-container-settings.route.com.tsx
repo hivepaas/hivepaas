@@ -13,8 +13,9 @@ import {
     type Privileges,
     type RestartPolicy,
 } from "~/projects/domain";
-import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
@@ -199,6 +200,7 @@ export function AppConfigContainerSettingsRoute() {
     invariant(projectId, "projectId must be defined");
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
 
     const { data, isLoading, isFetching, isError, error, isPlaceholderData } = AppContainerSettingsQueries.useFindOne(
         {
@@ -275,6 +277,18 @@ export function AppConfigContainerSettingsRoute() {
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                managedLock={
+                    managed && (
+                        <ManagedLockNotice
+                            projectId={projectId}
+                            env={env}
+                            appId={appId}
+                        >
+                            The entrypoint and the user stay as they are, and the command starts with{" "}
+                            <code className="font-mono">{managed.locks.command}</code>: arguments after it are yours.
+                        </ManagedLockNotice>
+                    )
+                }
                 labelsToolbar={
                     canRevealSystemLabels ? (
                         <SystemLabelsRevealButton

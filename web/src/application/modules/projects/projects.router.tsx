@@ -1736,6 +1736,19 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
+                 * Single App – Database (a managed database's engine)
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.database.$pattern,
+                    lazy: async () => {
+                        const { AppDatabaseRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppDatabaseRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Security (what its images carry)
                  */
                 {

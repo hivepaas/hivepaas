@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import type { AppTemplateSummary, AppTemplateVersionSummary } from "../api";
 import { useDeployTemplateDialogState } from "../dialogs";
-import { formatStars, isNewTemplate } from "../utils";
+import { canDeployTemplate, formatStars, isNewTemplate, missingFeaturesOf } from "../utils";
+
+import { ManagedTemplateBadge, MissingFeaturesLine } from "./managed-template.com";
 
 interface AppTemplateCardProps {
     template: AppTemplateSummary;
@@ -36,7 +38,7 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
 
     const handleDeployClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!template.compatible || !projectId) return;
+        if (!canDeployTemplate(template) || !projectId) return;
         openDeployDialog(projectId, {
             templateName: template.name,
             initialVersion: selectedVersionName,
@@ -95,6 +97,7 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                                     New
                                 </Badge>
                             )}
+                            {template.managed && <ManagedTemplateBadge engine={template.managed} />}
                             <span className="flex-1" />
                             {primaryCategory && (
                                 <Badge
@@ -130,6 +133,9 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                         <span className="truncate">Starts containers</span>
                     </div>
                 )}
+
+                {/* A feature the plan does not include: the template is there, and its form is not. */}
+                <MissingFeaturesLine features={missingFeaturesOf(template)} />
 
                 {/* Compatibility Warning if not compatible */}
                 {!template.compatible && (
@@ -269,7 +275,7 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                     <Button
                         type="button"
                         size="sm"
-                        disabled={!template.compatible}
+                        disabled={!canDeployTemplate(template)}
                         onClick={handleDeployClick}
                         className="flex-1 h-8.5 text-[14px] font-medium bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >

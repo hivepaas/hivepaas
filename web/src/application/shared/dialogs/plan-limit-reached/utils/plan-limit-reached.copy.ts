@@ -1,6 +1,6 @@
 import type { License } from "@application/shared/entities";
 import { ELicenseLimit } from "@application/shared/enums";
-import { licenseLimitCopy, licenseLimitNoun, licensePlanName } from "@application/shared/utils";
+import { licenseFeatureCopy, licenseLimitCopy, licenseLimitNoun, licensePlanName } from "@application/shared/utils";
 
 import type { PlanLimitRefusal } from "../types";
 
@@ -19,7 +19,15 @@ export interface PlanLimitReachedCopy {
  * message names the kind, in the person's language.
  */
 export function planLimitReachedCopy(refusal: PlanLimitRefusal): PlanLimitReachedCopy {
-    const { limit, max, plan } = refusal;
+    const { limit, max, plan, feature } = refusal;
+
+    if (feature) {
+        const copy = licenseFeatureCopy(feature);
+        return {
+            title: `${capitalize(copy.name)} need a paid plan`,
+            body: `The ${licensePlanName(plan)} plan does not include ${copy.name}. They come with ${copy.plans}.`,
+        };
+    }
 
     if (max === null) {
         return serverCopy(refusal);
@@ -82,6 +90,10 @@ function countedCopy(limit: string, max: number, planName: string): PlanLimitRea
         default:
             return null;
     }
+}
+
+function capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function serverCopy({ message }: PlanLimitRefusal): PlanLimitReachedCopy {

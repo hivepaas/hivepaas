@@ -59,6 +59,13 @@ export interface AppTemplateSummary {
     stars?: number;
     /** Stars it gained in the last 28 days. */
     starsGained?: number;
+    /** The engine that goes on looking after what the template creates - "postgres" - and empty for an ordinary
+     *  template. */
+    managed?: string;
+    /** The license features creating it needs, and those of them the license in force does not grant: a template
+     *  missing one is shown with the plans that grant it, instead of a form that would be refused. */
+    requiresFeatures?: string[];
+    missingFeatures?: string[];
 }
 
 /** The orders the store lists templates in. A minus is the largest or newest
@@ -242,6 +249,12 @@ export interface AppTemplateDetail {
     links?: AppTemplateLinks;
     license: string;
     compatible: boolean;
+    managed?: string;
+    requiresFeatures?: string[];
+    missingFeatures?: string[];
+    /** What a managed template's create form starts from; null for any other. A zero field is the engine's own
+     *  default. */
+    managedDefaults?: AppTemplateManagedDefaults | null;
     variants: AppTemplateVariant[];
     versions: AppTemplateVersionSummary[];
     parameters: AppTemplateParam[];
@@ -278,6 +291,25 @@ export interface GetAppTemplateImageTagsParams {
     variant?: string;
 }
 
+export interface AppTemplateManagedDefaults {
+    archiveTimeout: string;
+    baseBackupSchedule: string;
+    retainFull: number;
+    restoreTestSchedule: string;
+}
+
+/** How the engine of a managed template looks after the app: where it archives, and what its defaults become. */
+export interface ManagedCreateReq {
+    /** Exactly one of a backup repository - S3 or volume - and a cloud storage. keyAuth is a narrower key than the
+     *  storage's own, for an S3 archive. */
+    storage: { backupRepo?: { id: string }; cloudStorage?: { id: string }; keyAuth?: { id: string } };
+    archiveTimeout?: string;
+    retainFull?: number;
+    baseBackupSchedule?: string;
+    restoreTestSchedule?: string;
+    restoreTestQuery?: string;
+}
+
 export interface CreateAppFromTemplateReq {
     projectID: string;
     projectEnv: string;
@@ -295,6 +327,8 @@ export interface CreateAppFromTemplateReq {
      * answered, and it is off unless asked for.
      */
     resetStorage?: boolean;
+    /** Required for a managed template, and refused for any other. */
+    managed?: ManagedCreateReq;
 }
 
 /** One app of a request whose directory in a volume already holds something. */
@@ -352,6 +386,8 @@ export interface CreateAppFromTemplateResp {
             app: { id: string };
             deployment: { id: string };
         }[];
+        /** What the engine of a managed template set up; null for any other. */
+        managed?: { placement: string } | null;
     };
 }
 

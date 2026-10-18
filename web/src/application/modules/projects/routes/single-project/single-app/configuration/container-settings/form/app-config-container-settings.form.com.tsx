@@ -59,13 +59,16 @@ function LogDriverSectionTitle() {
     );
 }
 
-function containerSettingsSections(labelsToolbar: React.ReactNode): {
+function containerSettingsSections(
+    labelsToolbar: React.ReactNode,
+    managedLock: React.ReactNode,
+): {
     value: SectionValue;
     title: React.ReactNode;
     content: React.ReactNode;
 }[] {
     return [
-        { value: "general", title: "General", content: <GeneralFields /> },
+        { value: "general", title: "General", content: <GeneralFields managedLock={managedLock} /> },
         { value: "labels", title: "Labels", content: <LabelsFields toolbar={labelsToolbar} /> },
         { value: "restart-policy", title: "Restart Policy", content: <RestartPolicyFields /> },
         { value: "security", title: "Security", content: <SecurityFields /> },
@@ -86,6 +89,7 @@ export function AppConfigContainerSettingsForm({
     onSubmit,
     readOnly = false,
     labelsToolbar,
+    managedLock,
     children,
 }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -174,7 +178,7 @@ export function AppConfigContainerSettingsForm({
                             }}
                             className="w-full flex flex-col gap-4"
                         >
-                            {containerSettingsSections(labelsToolbar).map(section => (
+                            {containerSettingsSections(labelsToolbar, managedLock).map(section => (
                                 <AccordionItem
                                     key={section.value}
                                     value={section.value}
@@ -205,4 +209,6 @@ type Props = PropsWithChildren<{
     readOnly?: boolean;
     /** Sits at the top of the Labels section. */
     labelsToolbar?: React.ReactNode;
+    /** Why a managed database's entrypoint and user are its engine's. */
+    managedLock?: React.ReactNode;
 }>;

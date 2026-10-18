@@ -11,6 +11,18 @@ import type { PlanLimitRefusal } from "../types";
 export const PLAN_LIMIT_REACHED = "ERR_PLAN_LIMIT_REACHED";
 
 /**
+ * A creation that needs a feature the plan in force does not include: a managed
+ * database's template, on Bee. Its params are Feature and Plan
+ * (licenseserviceimpl/features.go).
+ */
+export const PLAN_FEATURE_REQUIRED = "ERR_PLAN_FEATURE_REQUIRED";
+
+const PlanFeatureParamsSchema = z.object({
+    Feature: z.string().min(1),
+    Plan: z.string().min(1),
+});
+
+/**
  * The params the refusal exposes, as the backend's planLimitReached sets them
  * (licenseserviceimpl/check.go). Max is a JSON integer, and 0 for a kind the plan
  * leaves out, such as Bee's paid sign-in.
@@ -30,7 +42,16 @@ const PlanLimitParamsSchema = z.object({
  * nothing was created, and where to go about it.
  */
 export function planLimitRefusalOf(error: unknown): PlanLimitRefusal | null {
-    if (!(error instanceof HttpException) || error.code !== PLAN_LIMIT_REACHED) {
+    if (!(error instanceof HttpException)) {
+        return null;
+    }
+    if (error.code === PLAN_FEATURE_REQUIRED) {
+        const params = PlanFeatureParamsSchema.safeParse(error.problem.params);
+        return params.success
+            ? { limit: "", max: null, plan: params.data.Plan, feature: params.data.Feature, message: error.message }
+            : { limit: "", max: null, plan: "", message: error.message };
+    }
+    if (error.code !== PLAN_LIMIT_REACHED) {
         return null;
     }
 

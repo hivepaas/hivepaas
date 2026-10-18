@@ -66,11 +66,18 @@ import {
     portsClaimedByTemplate,
 } from "../../../utils";
 
+import type { DeployTemplateFormState } from "./deploy-template.form.types";
+import { ManagedFields } from "./managed-fields.com";
+import { EMPTY_MANAGED_FORM, type ManagedArchiveOption, managedCreateRequest } from "./managed-fields.state";
+
 export interface DeployTemplateFormProps {
     template: AppTemplateDetail;
     projectId: string;
     envs: ProjectEnvEntity[];
     clusterVolumes?: { id: string; name: string }[];
+    /** Where a managed template's engine can archive, and the narrower keys it can archive with. */
+    managedArchives?: ManagedArchiveOption[];
+    keyAuths?: { id: string; name: string }[];
     initialEnv?: string;
     initialVersion?: string;
     initialVariant?: string;
@@ -81,15 +88,7 @@ export interface DeployTemplateFormProps {
     onCancel: () => void;
 }
 
-interface FormState {
-    name: string;
-    env: string;
-    version: string;
-    variant: string;
-    imageTag: string;
-    params: Record<string, unknown>;
-    dependencyParams: Record<string, Record<string, string>>;
-}
+type FormState = DeployTemplateFormState;
 
 function generateRandomPassword(length: number = 24): string {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_!@#$%";
@@ -103,6 +102,8 @@ export function DeployTemplateForm({
     projectId,
     envs,
     clusterVolumes = [],
+    managedArchives = [],
+    keyAuths = [],
     initialEnv,
     initialVersion,
     initialVariant,
@@ -201,6 +202,7 @@ export function DeployTemplateForm({
             imageTag: "",
             params: defaultParams,
             dependencyParams: defaultDependencyParams,
+            managed: EMPTY_MANAGED_FORM,
         },
         mode: "onSubmit",
     });
@@ -342,6 +344,7 @@ export function DeployTemplateForm({
             imageTag: isOfficialTemplateVersion ? undefined : data.imageTag || data.version,
             params: Object.keys(cleanedParams).length > 0 ? cleanedParams : undefined,
             dependencyParams: Object.keys(cleanedDepParams).length > 0 ? cleanedDepParams : undefined,
+            managed: template.managed ? managedCreateRequest(data.managed) : undefined,
         });
     };
 
@@ -705,6 +708,18 @@ export function DeployTemplateForm({
                         ))}
                     </FieldGroup>
                 </div>
+
+                {/* A managed template's engine: where it archives, and how long it keeps what. */}
+                {template.managed && (
+                    <ManagedFields
+                        control={control}
+                        archive={watch("managed.archive")}
+                        archives={managedArchives}
+                        keyAuths={keyAuths}
+                        defaults={template.managedDefaults}
+                        readOnly={readOnly || isPending}
+                    />
+                )}
 
                 {/* ========================================================================= */}
                 {/* SECTION 3: DEPENDENT SERVICES (IF TEMPLATE DECLARES ANY)                  */}

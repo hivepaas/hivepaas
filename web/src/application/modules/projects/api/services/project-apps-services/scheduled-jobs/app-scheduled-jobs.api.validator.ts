@@ -291,6 +291,10 @@ export const AppScheduledJobSchema = z.object({
         .array(z.coerce.date())
         .nullish()
         .transform(value => value ?? []),
+    managedBy: z
+        .object({ id: z.string() })
+        .nullish()
+        .transform(value => (value?.id ? { id: value.id } : undefined)),
 });
 
 const AppScheduledJobTaskPrioritySchema = z

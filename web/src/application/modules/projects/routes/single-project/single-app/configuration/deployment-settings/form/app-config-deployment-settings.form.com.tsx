@@ -94,7 +94,14 @@ function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
     };
 }
 
-export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+export function AppConfigDeploymentSettingsForm({
+    ref,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    managedLock,
+    children,
+}: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapDefaultValues(defaultValues)
@@ -175,7 +182,8 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                     >
                         <ContentBlock label="Deployment Configuration">
                             <div className="flex flex-col gap-6">
-                                <MethodSelector readOnly={readOnly} />
+                                {managedLock?.image}
+                                <MethodSelector readOnly={readOnly || Boolean(managedLock)} />
 
                                 {activeMethod === EAppDeploymentMethod.Image && (
                                     <DockerImageFields readOnly={readOnly} />
@@ -197,7 +205,8 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
 
                         <ContentBlock label="Run Configuration">
                             <div className="flex flex-col gap-6">
-                                <RunConfigurationFields />
+                                {managedLock?.run}
+                                <RunConfigurationFields entrypointLocked={Boolean(managedLock)} />
                             </div>
                         </ContentBlock>
 
@@ -221,4 +230,6 @@ type Props = PropsWithChildren<{
     defaultValues?: RepoMethod | ImageMethod;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
+    /** Why a managed database's method, image and entrypoint are its engine's: a notice for each section. */
+    managedLock?: { image: React.ReactNode; run: React.ReactNode };
 }>;

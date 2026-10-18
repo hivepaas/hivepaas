@@ -18,7 +18,12 @@ function TooltipText({ text }: { text: string }) {
     return <span className="block max-w-[360px] whitespace-normal">{text}</span>;
 }
 
-export function RunConfigurationFields() {
+interface Props {
+    /** A managed database's entrypoint is its engine's. */
+    entrypointLocked?: boolean;
+}
+
+export function RunConfigurationFields({ entrypointLocked = false }: Props) {
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
         unknown,
@@ -66,6 +71,7 @@ export function RunConfigurationFields() {
                     value={entrypoint.value ?? ""}
                     onChange={entrypoint.onChange}
                     placeholder="/docker-entrypoint.sh"
+                    disabled={entrypointLocked}
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
                 <FieldError errors={[entrypointError]} />

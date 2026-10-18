@@ -71,6 +71,8 @@ interface Props extends PropsWithChildren {
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
     isRevealed?: boolean;
+    /** Why the kind and engine cannot change: a managed database's engine owns them. */
+    kindLock?: React.ReactNode;
 }
 
 export function AppConfigKindSettingsForm({
@@ -79,6 +81,7 @@ export function AppConfigKindSettingsForm({
     onSubmit,
     readOnly = false,
     isRevealed = false,
+    kindLock,
     children,
 }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -139,8 +142,12 @@ export function AppConfigKindSettingsForm({
                         >
                             <ContentBlock label="Workload Kind & Engine">
                                 <div className="flex flex-col gap-6">
-                                    <CategorySelector readOnly={readOnly} />
-                                    <EngineFields readOnly={readOnly} />
+                                    {kindLock}
+                                    <CategorySelector readOnly={readOnly || Boolean(kindLock)} />
+                                    <EngineFields
+                                        readOnly={readOnly}
+                                        engineLocked={Boolean(kindLock)}
+                                    />
                                 </div>
                             </ContentBlock>
 

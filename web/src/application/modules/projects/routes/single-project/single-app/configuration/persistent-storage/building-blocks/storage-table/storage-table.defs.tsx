@@ -66,7 +66,11 @@ export function createStorageTableColumns(
     onDelete: (mount: StorageMountWithId) => Promise<void> | void,
     onResetPermissions: (mount: StorageMountWithId) => void,
     canWrite: boolean,
+    /** The targets a managed database's engine relies on: they stay as they are. */
+    lockedTargets: string[] = [],
 ): ColumnDef<StorageMountWithId>[] {
+    const isLocked = (mount: StorageMountWithId) => mount.target !== undefined && lockedTargets.includes(mount.target);
+
     return [
         {
             id: "view",
@@ -135,7 +139,20 @@ export function createStorageTableColumns(
         {
             accessorKey: "target",
             header: "Target",
-            cell: ({ row }) => <div className="text-sm break-all">{row.original.target ?? "-"}</div>,
+            cell: ({ row }) => (
+                <div className="flex flex-wrap items-center gap-1.5 text-sm break-all">
+                    {row.original.target ?? "-"}
+                    {isLocked(row.original) && (
+                        <Badge
+                            tone="violet"
+                            className="text-[10px]"
+                            title="The managed database's engine relies on this mount"
+                        >
+                            Managed
+                        </Badge>
+                    )}
+                </div>
+            ),
             meta: {
                 align: "left",
             },
@@ -193,7 +210,7 @@ export function createStorageTableColumns(
                                     )}
                                 </PermissionTooltipAction>
                             )}
-                            {canWrite ? (
+                            {isLocked(row.original) ? null : canWrite ? (
                                 <PopConfirm
                                     title="Remove Storage Mount"
                                     variant="destructive"

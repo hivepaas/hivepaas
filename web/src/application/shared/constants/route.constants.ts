@@ -991,6 +991,13 @@ export const ROUTE = {
                             `/projects/${id}/${env}/apps/${appId}/metrics/`,
                     },
 
+                    // A managed database's: its engine's state, restores, restore points and settings.
+                    database: {
+                        $pattern: "projects/:id/:env/apps/:appId/database",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/database/`,
+                    },
+
                     security: {
                         $pattern: "projects/:id/:env/apps/:appId/security",
                         $route: (id: string, env: string, appId: string) =>

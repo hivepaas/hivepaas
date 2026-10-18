@@ -26,6 +26,8 @@ import {
     AppLogsApi,
     AppLogsApiValidator,
     AppLogsWsApi,
+    AppManagedApi,
+    AppManagedApiValidator,
     AppPreviewsApi,
     AppPreviewsApiValidator,
     AppScheduledJobTaskLogsWsApi,
@@ -171,6 +173,7 @@ function createApi() {
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appFunctionApiValidator = new AppFunctionApiValidator();
     const appFeatureSettingsApiValidator = new AppFeatureSettingsApiValidator();
+    const appManagedApiValidator = new AppManagedApiValidator();
     const appCloneSettingsApiValidator = new AppCloneSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
     const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
@@ -261,6 +264,9 @@ function createApi() {
                 },
                 featureSettings: {
                     $: new AppFeatureSettingsApi(appFeatureSettingsApiValidator),
+                },
+                managed: {
+                    $: new AppManagedApi(appManagedApiValidator),
                 },
                 cloneSettings: {
                     $: new AppCloneSettingsApi(appCloneSettingsApiValidator),

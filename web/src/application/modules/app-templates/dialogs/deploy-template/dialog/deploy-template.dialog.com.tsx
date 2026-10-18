@@ -5,7 +5,13 @@ import { useConditionalModule } from "@/application/shared/permissions";
 import { Boxes, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { ProjectClusterVolumesQueries, ProjectsQueries } from "~/projects/data/queries";
+import {
+    ProjectBackupRepoQueries,
+    ProjectCloudStorageQueries,
+    ProjectClusterVolumesQueries,
+    ProjectKeyAuthQueries,
+    ProjectsQueries,
+} from "~/projects/data/queries";
 
 import { ErrorBoundary } from "@application/shared/components";
 import { openPlanLimitReachedDialog } from "@application/shared/dialogs";
@@ -22,7 +28,7 @@ import {
 } from "../../../api";
 import { TemplateRenderError } from "../../../components/template-render-error.com";
 import { useCreateAppFromTemplate, useGetAppTemplate, usePreflightAppFromTemplate } from "../../../data";
-import { DeployTemplateForm } from "../form";
+import { DeployTemplateForm, type ManagedArchiveOption } from "../form";
 import { useDeployTemplateDialogState } from "../hooks";
 
 import { StorageInUseDialog } from "./storage-in-use.dialog.com";
@@ -66,10 +72,52 @@ export function DeployTemplateDialog() {
             name: v.name,
         })) ?? [];
 
-    // 4. Create App From Template Mutation
+    // 4. Where a managed template's engine can archive, and the keys it can archive with.
+    const isManaged = Boolean(template?.managed);
+    const listsEnabled = Boolean(projectId) && isManaged;
+    const { data: backupReposData } = ProjectBackupRepoQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const { data: cloudStoragesData } = ProjectCloudStorageQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const { data: keyAuthsData } = ProjectKeyAuthQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const managedArchives: ManagedArchiveOption[] = [
+        ...(backupReposData?.data ?? []).map(repo => ({
+            id: repo.id,
+            name: repo.name,
+            kind: "repo" as const,
+            onVolume: Boolean(repo.volume?.id),
+        })),
+        ...(cloudStoragesData?.data ?? []).map(storage => ({
+            id: storage.id,
+            name: storage.name,
+            kind: "storage" as const,
+            onVolume: false,
+        })),
+    ];
+    const keyAuths = (keyAuthsData?.data ?? []).map(key => ({ id: key.id, name: key.name }));
+
+    // 5. Create App From Template Mutation
     const { mutate: createAppFromTemplate, isPending } = useCreateAppFromTemplate({
         onSuccess: (res: CreateAppFromTemplateResp, variables: CreateAppFromTemplateReq) => {
             toast.success(`Application "${variables.name}" deployed successfully!`);
+            // Where a managed database's archive is from it, said once: the settings show it read-only after.
+            const placement = res.data.managed?.placement;
+            if (placement === "same-node") {
+                toast.warning("The archive is on the database's own node", {
+                    description: "Losing the node loses both. Object storage keeps it off-site.",
+                });
+            } else if (placement === "shared") {
+                toast.info("The archive is on shared storage", {
+                    description: "It is only as safe as that storage is apart from the database's disk.",
+                });
+            }
             setInUse(null);
             actions.close();
             if (projectId && variables.projectEnv && res.data.app.id) {
@@ -235,6 +283,8 @@ export function DeployTemplateDialog() {
                             projectId={projectId}
                             envs={envs}
                             clusterVolumes={clusterVolumes}
+                            managedArchives={managedArchives}
+                            keyAuths={keyAuths}
                             initialEnv={dialogOptions.initialEnv}
                             initialVersion={dialogOptions.initialVersion}
                             initialVariant={dialogOptions.initialVariant}

@@ -10,6 +10,8 @@ import { StorageMountForm } from "~/projects/dialogs/storage-mount/form";
 import { formValuesToMount, mountToFormInput } from "~/projects/dialogs/storage-mount/form/storage-mount.form-mappers";
 import type { StorageMountFormOutput } from "~/projects/dialogs/storage-mount/schemas";
 import type { AppStorageMount } from "~/projects/domain";
+import { ManagedLockNotice } from "~/projects/module-shared/components";
+import { useAppManagedLocks } from "~/projects/module-shared/hooks";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -49,6 +51,8 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
 
     const mountsWithIds = buildMountsWithIds(appData?.data.mounts ?? []);
     const mount = isEditMode ? mountsWithIds.find(item => item._id === mountId) : undefined;
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const isLocked = mount?.target !== undefined && (managed?.locks.mounts.includes(mount.target) ?? false);
 
     function navigateToList() {
         navigate.modules(
@@ -136,9 +140,20 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
                 isEditMode={isEditMode}
                 defaultValues={mount ? mountToFormInput(mount) : undefined}
                 onSubmit={values => void handleSubmit(values)}
-                readOnly={!canWrite}
+                readOnly={!canWrite || isLocked}
                 onClose={navigateToList}
             >
+                {isLocked && (
+                    <div className="mb-4">
+                        <ManagedLockNotice
+                            projectId={projectId}
+                            env={env}
+                            appId={appId}
+                        >
+                            This mount keeps its source and options.
+                        </ManagedLockNotice>
+                    </div>
+                )}
                 <div className={cn(dashedBorderBox, "mb-4")}>
                     <span className="font-semibold text-orange-500">Important:</span> If your cluster consists of more
                     than 1 node, you need to ensure that the directories or volumes are accessible from all nodes.

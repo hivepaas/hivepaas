@@ -142,6 +142,11 @@ export function AppDatabaseRoute() {
                     <ManagedStatusCards
                         settings={settings}
                         status={status}
+                        snapshotsHref={ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
+                            projectID,
+                            env,
+                            appID,
+                        )}
                     />
                     <ManagedRestorePoints
                         projectId={projectID}

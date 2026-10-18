@@ -23,6 +23,7 @@ function at(fromNow: number): string {
 const TEMPLATE = "postgres-managed";
 const REPO = { id: "e2emanagedrepo01", name: "e2e-archive" };
 const VOLUME = { id: "e2emanagedvol001", name: "e2e-restore-data" };
+const OTHER_REPO = { id: "e2edumprepo00001", name: "e2e-dumps" };
 const POINT = "before-migration";
 const DEPLOY_POINT = "deploy-shop-web-20261018093015";
 
@@ -113,6 +114,7 @@ function managedSettings() {
         baseBackupSchedule: "0 2 * * *",
         restoreTestSchedule: "0 4 * * 0",
         restoreTest: { mode: "container", verifierApp: null, nodeId: "", keyAuth: null, checkQuery: "" },
+        dump: { repo: { id: REPO.id }, schedule: "0 3 * * *" },
         locks: {
             image: "postgres:18.6",
             imageLine: "18",
@@ -121,7 +123,12 @@ function managedSettings() {
             envKeys: ["PGDATA"],
             settings: [],
         },
-        jobs: { nightly: { id: "e2ejobnightly01" }, health: { id: "e2ejobhealth001" }, restoreTest: null },
+        jobs: {
+            nightly: { id: "e2ejobnightly01" },
+            health: { id: "e2ejobhealth001" },
+            restoreTest: null,
+            dump: { id: "e2ejobdump00001" },
+        },
         restore: null,
     };
 }
@@ -145,6 +152,7 @@ function managedStatus() {
             { name: "base_000000010000000000000042", at: at(-6 * HOUR) },
         ],
         lastRestoreTest: { passed: true, endedAt: at(-3 * DAY), durationSeconds: 125, restoredTo: at(-3 * DAY) },
+        lastDump: { succeeded: true, endedAt: at(-5 * HOUR), snapshotId: "e2esnapshot0001", bytes: 3 * 2 ** 20 },
         placement: "off-site",
         suggestions: [],
         restorePoints: [
@@ -181,9 +189,10 @@ function managedStatus() {
 async function answerManaged(
     page: Page,
     app: { projectId: string; env: string; id: string },
-): Promise<{ restores: Request[] }> {
+): Promise<{ restores: Request[]; updates: Request[] }> {
     const appPath = `/api/projects/${app.projectId}/${app.env}/apps/${app.id}`;
     const restores: Request[] = [];
+    const updates: Request[] = [];
     await page.route(
         url => url.pathname === appPath,
         async route => {
@@ -196,9 +205,24 @@ async function answerManaged(
     await page.route(
         url => url.pathname === `${appPath}/managed`,
         route => {
+            if (route.request().method() === "PUT") {
+                updates.push(route.request());
+                return route.fulfill({ json: { meta: {} } });
+            }
             if (route.request().method() !== "GET") return route.abort();
             return route.fulfill({ json: { meta: {}, data: managedSettings() } });
         },
+    );
+    // What the environment can dump into.
+    await page.route(
+        url => url.pathname === `/api/projects/${app.projectId}/${app.env}/backup-repos`,
+        route =>
+            route.fulfill({
+                json: paged([
+                    { ...settingRow(REPO.id, REPO.name, "backup-repo"), cloudStorage: { id: "cs1" } },
+                    { ...settingRow(OTHER_REPO.id, OTHER_REPO.name, "backup-repo"), volume: { id: VOLUME.id } },
+                ]),
+            }),
     );
     await page.route(
         url => url.pathname === `${appPath}/managed/status`,
@@ -223,7 +247,7 @@ async function answerManaged(
                 ]),
             }),
     );
-    return { restores };
+    return { restores, updates };
 }
 
 // A managed template is deployed with the archive it is given: the store marks
@@ -269,7 +293,8 @@ test("a managed template is created with the archive chosen", async ({ page, api
     expect(created).toMatchObject({
         name: "e2e-db",
         template: TEMPLATE,
-        managed: { storage: { backupRepo: { id: REPO.id } } },
+        // Dumped into the archive's repository, unless asked otherwise.
+        managed: { storage: { backupRepo: { id: REPO.id } }, dump: { repo: { id: REPO.id } } },
     });
     await expect(page).toHaveURL(/\/apps\/e2emanagedapp001\/deployments\/?$/);
 });
@@ -293,6 +318,14 @@ test("a managed database's Database tab shows its engine's status", async ({ pag
     await expect(page.getByRole("region", { name: "Last base backup" }).getByText("Succeeded")).toBeVisible();
     await expect(page.getByRole("region", { name: "Last restore test" }).getByText("2m 5s")).toBeVisible();
     await expect(page.getByText("Off-site", { exact: true })).toBeVisible();
+
+    const lastDump = page.getByRole("region", { name: "Last dump" });
+    await expect(lastDump.getByText("Succeeded")).toBeVisible();
+    await expect(lastDump.getByText("3MB")).toBeVisible();
+    await expect(lastDump.getByRole("link", { name: "Backup snapshots" })).toHaveAttribute(
+        "href",
+        new RegExp(`/apps/${app.id}/backup-snapshots/?$`),
+    );
 
     const points = page.getByRole("region", { name: "Restore points" });
     await expect(points.getByRole("row", { name: new RegExp(POINT) })).toContainText("Before the orders migration");
@@ -330,4 +363,48 @@ test("a managed database is restored to a restore point into a new app", async (
         dataVolume: { id: VOLUME.id },
     });
     await expect(page).toHaveURL(/\/apps\/e2erestoredapp01\/tasks\/e2erestoretask01\/?$/);
+});
+
+// The dump moves, runs at another time, or stops, from the Database tab's
+// settings; a schedule the base backup's is noted.
+test("a managed database's dump is changed from its settings", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { updates } = await answerManaged(page, app);
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const settings = page.getByRole("region", { name: "Settings" });
+    await expect(settings.getByRole("combobox", { name: "Dump into" })).toHaveText(REPO.name);
+    const schedule = settings.getByRole("textbox", { name: "Dump schedule" });
+    await expect(schedule).toHaveValue("0 3 * * *");
+
+    await schedule.fill("0 2 * * *");
+    await expect(settings.getByText("The same as the base backup's")).toBeVisible();
+    await schedule.fill("0 */6 * * *");
+    await expect(settings.getByText("The same as the base backup's")).toBeHidden();
+    await settings.getByRole("combobox", { name: "Dump into" }).click();
+    await page.getByRole("option", { name: OTHER_REPO.name }).click();
+    await settings.getByRole("button", { name: "Save" }).click();
+
+    await expect.poll(() => updates.length, { message: "the settings were saved" }).toBe(1);
+    expect(updates[0]?.postDataJSON()).toEqual({
+        updateVer: 3,
+        dumpRepo: { id: OTHER_REPO.id },
+        dumpSchedule: "0 */6 * * *",
+    });
+});
+
+test("a managed database's dumps are turned off from its settings", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { updates } = await answerManaged(page, app);
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const settings = page.getByRole("region", { name: "Settings" });
+    await settings.getByRole("combobox", { name: "Dump into" }).click();
+    await page.getByRole("option", { name: "No dumps" }).click();
+    await settings.getByRole("button", { name: "Save" }).click();
+
+    await expect.poll(() => updates.length, { message: "the settings were saved" }).toBe(1);
+    expect(updates[0]?.postDataJSON()).toEqual({ updateVer: 3, dumpRepo: { id: "" } });
 });

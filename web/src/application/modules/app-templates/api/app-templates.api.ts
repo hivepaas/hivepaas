@@ -308,6 +308,11 @@ export interface ManagedCreateReq {
     baseBackupSchedule?: string;
     restoreTestSchedule?: string;
     restoreTestQuery?: string;
+    /**
+     * The pg_dump into a backup repository: a repository of null makes none, an empty schedule is the engine's
+     * default. Left out, a database archiving into a backup repository is dumped into it.
+     */
+    dump?: { repo: { id: string } | null; schedule?: string };
 }
 
 export interface CreateAppFromTemplateReq {

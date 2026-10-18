@@ -21853,6 +21853,269 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points" : {
+      "post" : {
+        "description" : "The point is made, and listed once the WAL it is in is archived; it can then be restored to for\nas long as retention keeps the base backup before it, or until keepUntil, which holds retention\nback. Names are labels: letters, digits, '.', '_' and '-', at most 63, not starting with \"hp-\".",
+        "operationId" : "appManagedRestorePointCreate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.CreateRestorePointReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.CreateRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Names a moment of a managed database, to restore to exactly",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points/{name}" : {
+      "delete" : {
+        "description" : "The archive is not touched, and the mark stays in the WAL, harmlessly: restores target an LSN.",
+        "operationId" : "appManagedRestorePointDelete",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "restore point name",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.DeleteRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Removes a restore point's record",
+        "tags" : [ "Managed apps" ]
+      },
+      "put" : {
+        "description" : "Both as given: a null keepUntil keeps the point no longer, and retention moves on at its next run.",
+        "operationId" : "appManagedRestorePointUpdate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "restore point name",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UpdateRestorePointReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UpdateRestorePointResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Changes how long a restore point is kept, and its note",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
       "get" : {
         "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
@@ -55986,6 +56249,52 @@
         "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
         "type" : "object"
       },
+      "appmanageddto.CreateRestorePointReq" : {
+        "properties" : {
+          "keepUntil" : {
+            "description" : "KeepUntil holds retention back for the point until then, at most 90 days\nahead; without it, the point lasts as long as retention keeps what it needs.",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "appmanageddto.CreateRestorePointResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestorePointResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.DeleteRestorePointResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
       "appmanageddto.GetManagedSettingsResp" : {
         "properties" : {
           "data" : {
@@ -56084,6 +56393,18 @@
         "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedHeldBackResp" : {
+        "properties" : {
+          "backups" : {
+            "type" : "integer"
+          },
+          "bytes" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "backups", "bytes" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedJobsResp" : {
         "properties" : {
           "health" : {
@@ -56142,6 +56463,45 @@
           }
         },
         "required" : [ "command", "envKeys", "image", "imageLine", "mounts", "settings" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestorePointResp" : {
+        "properties" : {
+          "at" : {
+            "type" : "string"
+          },
+          "by" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "By is the user who made it.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "keepUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "kept" : {
+            "description" : "Kept says retention is held back for it now.",
+            "type" : "boolean"
+          },
+          "lsn" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "restorableUntil" : {
+            "description" : "RestorableUntil is until when it can be restored, as retention's next runs\ngo; null when no base backup kept reaches it, or the schedule says nothing.",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "by", "keepUntil", "kept", "lsn", "name", "note", "restorableUntil" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreResp" : {
@@ -56359,6 +56719,14 @@
           "engineApi" : {
             "type" : "integer"
           },
+          "heldBack" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedHeldBackResp"
+            } ],
+            "description" : "HeldBack is what the kept points make retention keep beyond its own: the\nbase backups and their size, the WAL after them not counted. Null when\nthey keep nothing more.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "lastBackup" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedBackupResp"
@@ -56374,6 +56742,14 @@
           "placement" : {
             "description" : "Placement is where the archive is from the database: off-site, shared or\nsame-node, which the dashboard warns about.",
             "type" : "string"
+          },
+          "restorePoints" : {
+            "description" : "RestorePoints are the points recorded, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestorePointResp"
+            },
+            "nullable" : true,
+            "type" : "array"
           },
           "restoreWindow" : {
             "allOf" : [ {
@@ -56392,7 +56768,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "archiving", "backups", "engine", "engineApi", "lastBackup", "lastRestoreTest", "placement", "restoreWindow", "suggestions" ],
+        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastRestoreTest", "placement", "restorePoints", "restoreWindow", "suggestions" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStorageResp" : {
@@ -56573,6 +56949,31 @@
         "type" : "object"
       },
       "appmanageddto.UpdateManagedSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateRestorePointReq" : {
+        "properties" : {
+          "keepUntil" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "keepUntil", "note" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateRestorePointResp" : {
         "properties" : {
           "meta" : {
             "allOf" : [ {

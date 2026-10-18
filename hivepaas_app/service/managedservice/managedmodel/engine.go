@@ -49,4 +49,14 @@ type Engine interface {
 	// FinishRestore takes off a restored app what it was restored with, once its
 	// first base backup is taken.
 	FinishRestore(req *FinishRestoreReq) (*FinishRestoreResp, error)
+
+	// NightlyBackupArgs are the arguments the nightly job's command takes its
+	// base backup with: the run's first step.
+	NightlyBackupArgs() string
+	// Retention decides the nightly run's second step from what the first wrote.
+	Retention(req *RetentionReq) (*Retention, error)
+	// MarkRestorePoint is the command that makes a restore point of that name.
+	MarkRestorePoint(managed *entity.AppManagedSettings, name string) (MarkCommand, error)
+	// MarkResult is the LSN the mark command printed.
+	MarkResult(stdout string) (string, error)
 }

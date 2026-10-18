@@ -66,10 +66,10 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 	}
 
 	managedID := gofn.Must(ulid.NewStringULID())
-	job := func(name, script string, schedule *entity.SchedJobSchedule, timeout time.Duration,
-		env ...*entity.EnvVar) *entity.Setting {
+	job := func(jobType base.SchedJobType, name, script string, schedule *entity.SchedJobSchedule,
+		timeout time.Duration, env ...*entity.EnvVar) *entity.Setting {
 		setting := newSetting(base.SettingTypeSchedJob, name, entity.CurrentSchedJobVersion, &entity.SchedJob{
-			JobType:      base.SchedJobTypeContainerCommand,
+			JobType:      jobType,
 			Schedule:     schedule,
 			App:          entity.ObjectID{ID: req.App.ID},
 			Timeout:      timeutil.Duration(timeout),
@@ -77,7 +77,7 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 			Notification: &entity.BaseEventNotification{FailureUseDefault: true},
 			ManagedBy:    entity.ObjectID{ID: managedID},
 		})
-		setting.Kind = string(base.SchedJobTypeContainerCommand)
+		setting.Kind = string(jobType)
 		// A restored database's jobs wait for it to recover: until then there is
 		// no server to check, back up or test, and each run would fail.
 		if req.Prepared.Restore != nil {
@@ -85,12 +85,14 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 		}
 		return setting
 	}
-	nightly := job("Nightly base backup", "walg-nightly",
+	// The nightly run is two steps, its retention decided by the engine between
+	// them (see Retention).
+	nightly := job(base.SchedJobTypeManagedNightly, "Nightly base backup", "walg-nightly",
 		&entity.SchedJobSchedule{CronExpr: options.BaseBackupSchedule, InitialTime: req.Now}, nightlyTimeout,
 		&entity.EnvVar{Key: envRetainFull, Value: strconv.Itoa(options.RetainFull)})
-	health := job("Archive health", "walg-health",
+	health := job(base.SchedJobTypeContainerCommand, "Archive health", "walg-health",
 		&entity.SchedJobSchedule{Interval: timeutil.Duration(healthInterval), InitialTime: req.Now}, healthTimeout)
-	restoreTest := job("Restore test", "walg-restore-test",
+	restoreTest := job(base.SchedJobTypeContainerCommand, "Restore test", "walg-restore-test",
 		&entity.SchedJobSchedule{CronExpr: options.RestoreTestSchedule, InitialTime: req.Now}, restoreTestTimeout,
 		&entity.EnvVar{Key: envRestoreCheckQuery, Value: options.RestoreTestQuery})
 

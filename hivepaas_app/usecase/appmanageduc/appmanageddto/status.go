@@ -54,6 +54,17 @@ type ManagedStatusResp struct {
 	// Suggestions are changes worth making: verifier, to run the restore test
 	// in a verifier app.
 	Suggestions []string `json:"suggestions"`
+	// RestorePoints are the points recorded, oldest first.
+	RestorePoints []*ManagedRestorePointResp `json:"restorePoints"`
+	// HeldBack is what the kept points make retention keep beyond its own: the
+	// base backups and their size, the WAL after them not counted. Null when
+	// they keep nothing more.
+	HeldBack *ManagedHeldBackResp `json:"heldBack"`
+}
+
+type ManagedHeldBackResp struct {
+	Backups int   `json:"backups"`
+	Bytes   int64 `json:"bytes"`
 }
 
 type ManagedArchivingResp struct {
@@ -117,6 +128,15 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 		if !backup.At.IsZero() {
 			resp.LastBackup.At = &backup.At
 		}
+	}
+	resp.RestorePoints = make([]*ManagedRestorePointResp, 0, len(status.RestorePoints))
+	for _, point := range status.RestorePoints {
+		one := TransformRestorePoint(point.Point)
+		one.Kept, one.RestorableUntil = point.Kept, point.RestorableUntil
+		resp.RestorePoints = append(resp.RestorePoints, one)
+	}
+	if held := status.HeldBack; held != nil {
+		resp.HeldBack = &ManagedHeldBackResp{Backups: held.Backups, Bytes: held.Bytes}
 	}
 	for _, backup := range status.Backups {
 		resp.Backups = append(resp.Backups, &ManagedBackupRefResp{Name: backup.Name, At: backup.At})

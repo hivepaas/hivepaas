@@ -24,8 +24,9 @@ const (
 	outBackupAt       = "BACKUP_AT"
 	outBackupBytes    = "BACKUP_BYTES"
 	outOldestBackupAt = "OLDEST_BACKUP_AT"
-	// outBackups is every base backup kept once retention ran, oldest first:
-	// space-separated name@time pairs, the time RFC 3339.
+	// outBackups is every base backup kept, oldest first: space-separated
+	// name@time@bytes, the time RFC 3339. Both of walg-nightly's steps print it,
+	// the retention's after it deleted.
 	outBackups = "BACKUPS"
 	// walg-restore-test
 	outRestoredTo      = "RESTORED_TO"
@@ -84,6 +85,7 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 		}
 		status.RestoreWindow = restoreWindow(nightly, status.Archiving.LastArchivedAt)
 		status.Backups = backupsOf(nightly.Outputs[outBackups])
+		status.HeldBack = heldBack(status.Backups, pg.RetainFull, pg.RestorePoints, req.Now)
 	}
 	if test != nil {
 		status.LastRestoreTest = &managedmodel.RestoreTestStatus{
@@ -93,6 +95,8 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 			RestoredTo: test.Outputs[outRestoredTo],
 		}
 	}
+	status.RestorePoints = pointsStatus(pg.RestorePoints, status.Backups, pg.RetainFull,
+		req.Schedules[pg.Jobs.Nightly.ID], req.Now)
 	if pg.RestoreTest.Mode != entity.ManagedRestoreTestVerifier && needsVerifier(health, status.LastRestoreTest) {
 		status.Suggestions = append(status.Suggestions, managedmodel.SuggestVerifier)
 	}
@@ -116,16 +120,23 @@ func restoreWindow(nightly *managedmodel.JobRun, lastArchivedAt *time.Time) *man
 	return &managedmodel.TimeWindow{From: *from, To: *to}
 }
 
-// backupsOf reads outBackups, leaving out what does not read.
+// backupsOf reads outBackups, leaving out what does not read: a name that is not
+// a backup's could reach retention's arguments.
 func backupsOf(value string) []managedmodel.BackupRef {
 	var out []managedmodel.BackupRef
 	for _, field := range strings.Fields(value) {
-		name, at, found := strings.Cut(field, "@")
-		taken, err := time.Parse(time.RFC3339, at)
-		if !found || name == "" || err != nil {
+		name, rest, found := strings.Cut(field, "@")
+		if !found || !backupPattern.MatchString(name) {
 			continue
 		}
-		out = append(out, managedmodel.BackupRef{Name: name, At: taken.UTC()})
+		at, size, _ := strings.Cut(rest, "@")
+		taken, err := time.Parse(time.RFC3339, at)
+		if err != nil {
+			continue
+		}
+		ref := managedmodel.BackupRef{Name: name, At: taken.UTC()}
+		ref.Bytes, _ = strconv.ParseInt(size, 10, 64)
+		out = append(out, ref)
 	}
 	return out
 }

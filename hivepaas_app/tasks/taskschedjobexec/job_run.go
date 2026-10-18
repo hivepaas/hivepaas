@@ -144,6 +144,9 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 	case base.SchedJobTypeManagedRestoreTest:
 		return e.runRestoreTest(ctx, db, run, schedJob)
 
+	case base.SchedJobTypeManagedNightly:
+		return e.runNightly(ctx, db, run, schedJob)
+
 	case base.SchedJobTypeJobSequence:
 		// Never a step: a sequence does not run another (checked on save).
 		return nil, hperrors.NewUnsupported("A job sequence as a step")

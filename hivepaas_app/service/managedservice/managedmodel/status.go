@@ -20,7 +20,10 @@ type JobRun struct {
 type StatusReq struct {
 	Managed *entity.AppManagedSettings
 	Runs    map[string]*JobRun
-	Now     time.Time
+	// Schedules are the engine's jobs' schedules, by the job's id: when retention
+	// next runs decides until when a point can be restored.
+	Schedules map[string]*entity.SchedJobSchedule
+	Now       time.Time
 }
 
 const (
@@ -49,6 +52,29 @@ type Status struct {
 	// same-node.
 	Placement   string
 	Suggestions []string
+	// RestorePoints are the points recorded, oldest first, each with until when
+	// it can be restored.
+	RestorePoints []*RestorePointStatus
+	// HeldBack is what the kept points make retention keep beyond its own,
+	// nil when they keep nothing more.
+	HeldBack *HeldBack
+}
+
+// RestorePointStatus is a point, and until when it can be restored: as long as
+// the base backup before it is kept. RestorableUntil is nil for a point no
+// backup kept reaches, and an estimate from the nightly job's next runs
+// otherwise.
+type RestorePointStatus struct {
+	Point           *entity.ManagedRestorePoint
+	Kept            bool
+	RestorableUntil *time.Time
+}
+
+// HeldBack is the base backups kept for points beyond the retainFull newest,
+// and their size. The WAL after them is held back too, and not counted.
+type HeldBack struct {
+	Backups int
+	Bytes   int64
 }
 
 type ArchivingStatus struct {
@@ -77,8 +103,9 @@ type BackupStatus struct {
 
 // BackupRef is a base backup by name, and when it was taken.
 type BackupRef struct {
-	Name string
-	At   time.Time
+	Name  string
+	At    time.Time
+	Bytes int64
 }
 
 type RestoreTestStatus struct {

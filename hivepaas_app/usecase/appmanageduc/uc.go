@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -41,6 +42,8 @@ type UC struct {
 	// source was made.
 	appTemplateService apptemplateservice.Service
 	appTemplateUC      *apptemplateuc.UC
+	// schedJobExecService runs the engine's commands in the database: a mark.
+	schedJobExecService schedjobexecservice.Service
 }
 
 func New(
@@ -60,6 +63,7 @@ func New(
 	volumeService volumeservice.Service,
 	appTemplateService apptemplateservice.Service,
 	appTemplateUC *apptemplateuc.UC,
+	schedJobExecService schedjobexecservice.Service,
 ) *UC {
 	return &UC{
 		db:        db,
@@ -79,5 +83,6 @@ func New(
 		volumeService:       volumeService,
 		appTemplateService:  appTemplateService,
 		appTemplateUC:       appTemplateUC,
+		schedJobExecService: schedJobExecService,
 	}
 }

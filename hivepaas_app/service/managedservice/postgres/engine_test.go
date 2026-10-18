@@ -229,8 +229,8 @@ func TestConfigureMakesTheManagedSettingAndItsJobs(t *testing.T) {
 		case base.SettingTypeAppManaged:
 			managed = setting
 		case base.SettingTypeSchedJob:
-			assert.Equal(t, string(base.SchedJobTypeContainerCommand), setting.Kind)
 			jobs[setting.ID] = setting.MustAsSchedJob()
+			assert.Equal(t, string(jobs[setting.ID].JobType), setting.Kind)
 		}
 	}
 	if !assert.NotNil(t, managed) || !assert.Len(t, jobs, 3) {
@@ -259,6 +259,9 @@ func TestConfigureMakesTheManagedSettingAndItsJobs(t *testing.T) {
 		assert.True(t, job.Notification.FailureUseDefault, "%s notifies when it fails", name)
 		assert.False(t, job.Notification.SuccessUseDefault, name)
 	}
+	assert.Equal(t, base.SchedJobTypeManagedNightly, nightly.JobType, "its retention is the engine's")
+	assert.Equal(t, base.SchedJobTypeContainerCommand, health.JobType)
+	assert.Equal(t, base.SchedJobTypeContainerCommand, restoreTest.JobType)
 	assert.Equal(t, "30 1 * * *", nightly.Schedule.CronExpr)
 	assert.Equal(t, scriptDir+"/walg-nightly", nightly.Command.Command)
 	assert.Equal(t, 5*time.Minute, time.Duration(health.Schedule.Interval))

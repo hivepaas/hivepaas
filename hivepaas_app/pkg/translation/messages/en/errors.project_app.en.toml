@@ -50,6 +50,7 @@ ERR_APP_MANAGED_RESTORE_TARGET_INVALID = "The restore target is not one the data
 ERR_APP_MANAGED_RESTORE_OUTSIDE_WINDOW = "The archive does not reach that far: a restore can target {{.From}} to {{.To}}"
 ERR_APP_MANAGED_RESTORE_NO_BACKUP = "The database has no base backup yet: there is nothing to restore before its first one"
 ERR_APP_MANAGED_RESTORE_FAILED = "The restore cannot go on: {{.Reason}}"
+ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED = "The restore point was made, but the WAL it is in was not archived in time, so it is not listed: check that archiving works"
 ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
 ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"
 

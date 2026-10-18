@@ -69,6 +69,10 @@ var (
 	// ErrAppManagedRestoreFailed ends a restore that cannot go on: the recovery
 	// failed, or the first base backup did. What went wrong is in the task's log.
 	ErrAppManagedRestoreFailed = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_FAILED")
+	// ErrAppManagedRestorePointNotArchived refuses a restore point whose WAL was
+	// not archived in time: it could not be restored to yet, so it is not
+	// recorded. Archiving may be failing.
+	ErrAppManagedRestorePointNotArchived = NewErr(ErrActionFailed, "ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

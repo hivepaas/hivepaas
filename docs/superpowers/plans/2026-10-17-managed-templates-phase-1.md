@@ -691,8 +691,8 @@ above:
     - its options and schedules.
   - Its name defaults to `<app>-restored-<yyyymmdd-hhmm>`, and its prefix is its
     own, as any creation's is. It is not the source's child.
-  - **The plan's app count still applies to a restore.** Only the feature check is
-    skipped.
+  - **The plan's app count still applies to a restore**, as the user decided on
+    2026-10-18: a restore makes an app. Only the feature check is skipped.
 - **The contract with the scripts.** It is engine API 1, and Task 12 implements it.
   - The source's archive is passed as the app's own variables, prefixed with
     `HIVEPAAS_RESTORE_` (`HIVEPAAS_RESTORE_WALG_S3_PREFIX`, `..._AWS_ENDPOINT`, or
@@ -777,7 +777,47 @@ above:
   - a lapsed license still allows creating points: they are part of restoring, which
     is never gated.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore points, and retention that keeps them`.
+**As built:**
+- **`POST .../managed/restore-points{name, note?, keepUntil?}`** runs the template's
+  new script, `walg-mark <name> <seconds>`, in the database through `RunCommand`.
+  - `RunCommandReq` gained a `StdoutWriter`, which is how the LSN comes back.
+  - The script waits up to twice the archive timeout for the segment, then prints
+    `LSN=<lsn>`. If the segment is not archived in time, it exits 75 and the point is
+    refused with `ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED`. Nothing is recorded.
+  - Names: letters, digits, `.`, `_` and `-`, at most 63, not `hp-`, unique. The
+    name goes into SQL, so the engine checks it too.
+  - `keepUntil` is at most 90 days ahead, checked by the DTO.
+  - No license is asked. Each change is audited.
+- **`PUT .../restore-points/:name{keepUntil|null, note}`** sets both as given.
+  **`DELETE .../restore-points/:name`** removes the record and runs nothing.
+- **The nightly job is now type `managed-nightly`**, a `var`. The executor runs it
+  in two steps of one run:
+  1. `walg-nightly backup`, which prints `BACKUPS`;
+  2. `Engine.Retention` decides the boundary, and the executor runs
+     `walg-nightly retain [<boundary>]`.
+
+  A failed backup is not followed by retention. The outputs are merged, with the
+  retention's taking precedence.
+  - This replaces the plan's "nightly sequence": the engine sits between the steps
+    without a job sequence.
+- **`RetentionBoundary`** is as planned, and counts only full backups (no `_D_`).
+  The backup names the boundary is taken from are checked against the pattern of a
+  WAL-G base backup, so an output cannot reach the command line.
+- **Status** shows:
+  - each point with `kept`, and `restorableUntil`: the nightly run, from its cron,
+    that drops the backup before the point, while no kept point at or before it
+    holds it;
+  - `heldBack`, the full backups beyond `retainFull` and their bytes, from the
+    `name@time@bytes` entries of `BACKUPS`. WAL is not counted.
+- **The CLI.** `hivepaas db mark NAME [--keep-until] [--note]` uses the CLI's usual
+  app selection (`-a` or the link), not a positional app.
+  - It is in `../hivepaas-cli` on branch `feat/managed-db-mark` (worktree
+    `../hivepaas-cli-managed`), commit caaefb2, based on `release`.
+  - Its client is generated from this branch's spec (`SPEC_REF` is local, API
+    level 4). Pin the release tag before releasing.
+- **API level** stays 4: these are new operations.
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): restore points, and retention that keeps them`.
 
 ## Task 12 (`app-templates`): `postgres-managed`
 
@@ -790,8 +830,8 @@ above:
   - versions 17 and 18 on pinned Debian images. 18 overrides the mount path, as
     `postgres.yaml` does;
   - the scripts as `settings.configFiles` at `/opt/hivepaas/bin/walg-*`, mode 0755:
-    `walg-run`, `walg-fetch`, `walg-backup`, `walg-retain`, `walg-verify`,
-    `walg-health`, `walg-restore-test`, `walg-entrypoint`.
+    the engine's `apiScripts`, `walg-run`, `walg-fetch`, `walg-nightly`,
+    `walg-health`, `walg-restore-test`, `walg-entrypoint` and `walg-mark`.
 - Create `scripts/test/walg/`: shell tests run in `postgres:17` and `postgres:18`
   containers, with MinIO as the S3.
 - Modify: `index.json` (via `apptemplate index`), and the README:
@@ -800,8 +840,18 @@ above:
 
 - **Contracts from Tasks 10 and 11, which the scripts must honor** (the engine's
   side is built):
-  - `walg-nightly` prints `BACKUPS=<name@RFC3339 ...>`, oldest first, after
-    retention.
+  - `walg-nightly backup` takes the base backup, and prints `BACKUP_NAME`,
+    `BACKUP_AT`, `BACKUP_BYTES` and `BACKUPS=<name@RFC3339@bytes ...>` (every
+    backup kept, oldest first).
+  - `walg-nightly retain [<backup>]` runs `delete before FIND_FULL <backup>
+    --confirm` when given one, and nothing otherwise, then verifies the chain. It
+    prints `OLDEST_BACKUP_AT` and `BACKUPS` again. It no longer reads
+    `WALG_RETAIN_FULL` to decide anything.
+  - `walg-mark <name> <seconds>`:
+    - runs `pg_create_restore_point(name)`, then `pg_switch_wal()`;
+    - waits until `pg_stat_archiver` shows the segment, at most `<seconds>`, else
+      exits 75;
+    - prints `LSN=<lsn>`.
   - `walg-restore-test` in a verifier:
     - takes its restore point on `HIVEPAAS_RESTORE_SOURCE_HOST`;
     - restores into `HIVEPAAS_RESTORE_SCRATCH_DIR`.
@@ -810,9 +860,6 @@ above:
   - `walg-entrypoint status` exits 0, 75 or another code.
   - After a failed recovery, the entrypoint idles, so that `status` can report the
     failure, instead of the container restarting into another failure.
-  - The engine runs `walg-nightly`, not `walg-backup`, `walg-retain` and
-    `walg-verify` separately: either rename the scripts below, or change the
-    engine's `apiScripts` to match.
 - [ ] **Step 1:** Write the script tests:
   - `walg-fetch` maps 1 to 255 and passes 0 and 74;
   - `walg-health` prints valid JSON, and fails on a grown `failed_count`;
@@ -820,7 +867,8 @@ above:
     refuses without free space;
   - `walg-entrypoint` recovers to each of the four targets: the latest, a time between
     two inserts, a restore point's LSN, and a base backup;
-  - `walg-retain <backup>` deletes only what is before that backup.
+  - `walg-nightly retain <backup>` deletes only what is before that backup, and `walg-mark`
+    waits for its segment, refusing on timeout.
 - [ ] **Step 2:** Watch them fail. **Step 3:** Write the template and the scripts. **Step 4:** Run `apptemplate lint`, `index -check`, the compat job's subset for `v000001` (which leaves the template out), and the script tests. **Step 5:** Commit: `feat(templates): postgres-managed`.
 
 ## Task 13 (`hivepaas-portal`): keys carry features
@@ -876,6 +924,7 @@ above:
 5. Revoke the key. Archiver health fails within 5 minutes and notifies, and Status
    says `failing`.
 6. Remove one WAL segment from the bucket. The next restore test fails on it.
-7. Remove the license. Archiving and the restore test go on, PITR still works, and
-   creating a managed app is refused.
+7. Remove the license. Archiving and the restore test go on, and PITR still works
+   while the apps are within Bee's count (a restore makes an app). Creating a managed
+   app is refused.
 8. On an arm64 node, if one is available: the aarch64 artifact is chosen and runs.

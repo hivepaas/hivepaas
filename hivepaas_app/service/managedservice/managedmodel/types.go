@@ -167,3 +167,31 @@ type RecoveryCheck struct {
 
 // RecoveryExitRecovering is EX_TEMPFAIL: ask again later.
 const RecoveryExitRecovering = 75
+
+// RetentionReq is a nightly run's first step done: the engine's setting, what
+// the step wrote - the base backups kept, the new one among them - and now.
+type RetentionReq struct {
+	Managed *entity.AppManagedSettings
+	Outputs map[string]string
+	Now     time.Time
+}
+
+// Retention is the nightly run's second step: the arguments the job's command
+// runs with, and the oldest base backup it keeps, empty when it deletes
+// nothing.
+type Retention struct {
+	Args     string
+	Boundary string
+}
+
+// MarkCommand makes a restore point: Command, run in the database's task,
+// prints the point's LSN once the WAL it is in is archived, and gives up after
+// Timeout, exiting MarkExitNotArchived.
+type MarkCommand struct {
+	Command string
+	Timeout time.Duration
+}
+
+// MarkExitNotArchived is EX_TEMPFAIL: the point is made, but the WAL it is in
+// was not archived in time, so it cannot be restored to yet.
+const MarkExitNotArchived = 75

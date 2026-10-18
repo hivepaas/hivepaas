@@ -269,6 +269,9 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		managedGroup.GET("/status", appManagedHandler.GetManagedStatus)
 		managedGroup.POST("/refresh-credentials", appManagedHandler.RefreshManagedCredentials)
 		managedGroup.POST("/restore", appManagedHandler.RestoreManagedApp)
+		managedGroup.POST("/restore-points", appManagedHandler.CreateRestorePoint)
+		managedGroup.PUT("/restore-points/:name", appManagedHandler.UpdateRestorePoint)
+		managedGroup.DELETE("/restore-points/:name", appManagedHandler.DeleteRestorePoint)
 		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
 	}
 

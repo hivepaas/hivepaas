@@ -34,7 +34,7 @@ const (
 // config files in scriptDir. What each takes, prints and exits with is the
 // contract; see the design §3.
 var apiScripts = []string{
-	"walg-run", "walg-fetch", "walg-nightly", "walg-health", "walg-restore-test", "walg-entrypoint",
+	"walg-run", "walg-fetch", "walg-nightly", "walg-health", "walg-restore-test", "walg-entrypoint", "walg-mark",
 }
 
 func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {

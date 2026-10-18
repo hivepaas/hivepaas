@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -36,7 +37,11 @@ func (uc *UC) GetManagedStatus(
 // statusOf is the engine's reading of the last ended run of each of its jobs.
 func (uc *UC) statusOf(ctx context.Context, loaded *loadedManaged) (*managedmodel.Status, error) {
 	runs := make(map[string]*managedmodel.JobRun, len(loaded.jobs))
+	schedules := make(map[string]*entity.SchedJobSchedule, len(loaded.jobs))
 	for _, job := range loaded.jobs {
+		if data, err := job.AsSchedJob(); err == nil {
+			schedules[job.ID] = data.Schedule
+		}
 		tasks, _, err := uc.taskRepo.ListByTarget(ctx, uc.db, job.ID, nil,
 			bunex.SelectWhereIn("task.status IN (?)", base.TaskStatusDone, base.TaskStatusFailed),
 			bunex.SelectOrder("task.ended_at DESC"),
@@ -55,9 +60,10 @@ func (uc *UC) statusOf(ctx context.Context, loaded *loadedManaged) (*managedmode
 		runs[job.ID] = run
 	}
 	status, err := loaded.engine.Status(&managedmodel.StatusReq{
-		Managed: loaded.managed,
-		Runs:    runs,
-		Now:     timeutil.NowUTC(),
+		Managed:   loaded.managed,
+		Runs:      runs,
+		Schedules: schedules,
+		Now:       timeutil.NowUTC(),
 	})
 	return status, hperrors.Wrap(err)
 }

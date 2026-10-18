@@ -273,6 +273,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		managedGroup.PUT("/restore-points/:name", appManagedHandler.UpdateRestorePoint)
 		managedGroup.DELETE("/restore-points/:name", appManagedHandler.DeleteRestorePoint)
 		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
+		managedGroup.GET("/switch", appManagedHandler.GetManagedSwitch)
+		managedGroup.POST("/switch", appManagedHandler.SwitchManaged)
 	}
 
 	{ // App previews

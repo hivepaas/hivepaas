@@ -77,6 +77,16 @@ var (
 	// point on a managed database first and could not have it made: it stops
 	// before anything changes.
 	ErrAppDeployRestorePointFailed = NewErr(ErrActionFailed, "ERR_APP_DEPLOY_RESTORE_POINT_FAILED")
+	// ErrAppManagedSwitchNotRestored refuses switching consumers to a database
+	// that was not restored from another: there is no database they would switch
+	// from.
+	ErrAppManagedSwitchNotRestored = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_SWITCH_NOT_RESTORED")
+	// ErrAppManagedSwitchNotReady refuses switching consumers to a database still
+	// being restored.
+	ErrAppManagedSwitchNotReady = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_SWITCH_NOT_READY")
+	// ErrAppManagedSwitchSourceGone refuses a switch from a source no longer in
+	// the environment: the key its consumers name cannot be read.
+	ErrAppManagedSwitchSourceGone = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_SWITCH_SOURCE_GONE")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

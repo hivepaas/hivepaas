@@ -52,6 +52,17 @@ type AppManagedSettings struct {
 	EngineAPI int              `json:"engineApi"`
 	Locks     ManagedLocks     `json:"locks"`
 	Postgres  *ManagedPostgres `json:"postgres,omitempty"`
+	// SwitchedTo is the database restored from this one that its consumers were
+	// switched to: this one's jobs are paused since, and it is left running for
+	// the person to stop or delete.
+	SwitchedTo *ManagedSwitch `json:"switchedTo,omitempty"`
+}
+
+// ManagedSwitch is a switch of a database's consumers to the database restored
+// from it, and when.
+type ManagedSwitch struct {
+	App ObjectID  `json:"app"`
+	At  time.Time `json:"at"`
 }
 
 // ManagedLocks are what the engine owns of the app, recorded when it was made:
@@ -144,6 +155,8 @@ type ManagedRestore struct {
 	SourceApp ObjectID             `json:"sourceApp"`
 	Target    ManagedRestoreTarget `json:"target"`
 	ReadyAt   time.Time            `json:"readyAt,omitzero"`
+	// SwitchedAt is when the source's consumers were last switched to this one.
+	SwitchedAt time.Time `json:"switchedAt,omitzero"`
 }
 
 // ManagedStorage is one of: a backup repository reused, S3 or volume, or any
@@ -193,6 +206,9 @@ func (s *AppManagedSettings) GetType() base.SettingType {
 
 func (s *AppManagedSettings) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
+	if s.SwitchedTo != nil && s.SwitchedTo.App.ID != "" {
+		refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.SwitchedTo.App.ID)
+	}
 	if s.Postgres == nil {
 		return refIDs
 	}

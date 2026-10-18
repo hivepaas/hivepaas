@@ -32,6 +32,10 @@ func (uc *UC) loadManaged(
 ) (*loadedManaged, error) {
 	opts := append([]bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		// LoadApp checks the project and its environment are active: it reads
+		// them from these relations, and without them refuses any app.
+		bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
+		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppManaged, base.SettingTypeSchedJob),
 			// A restored database's jobs are disabled until it has recovered.

@@ -21,8 +21,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
-// restoredNameTime is the time a restored app's default name carries.
-const restoredNameTime = "20060102-1504"
+// restoredNameTime is the time a restored app's default name carries, to the
+// second: two restores of one app in a minute must not take one name.
+const restoredNameTime = "20060102-150405"
 
 // RestoreManagedApp restores a managed database into a new app, to a target
 // inside its restore window (design §4). The new app is made from the source's

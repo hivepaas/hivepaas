@@ -110,14 +110,17 @@ func restoreWindow(nightly *managedmodel.JobRun, lastArchivedAt *time.Time) *man
 	if from == nil {
 		return nil
 	}
-	to := lastArchivedAt
-	if to == nil {
-		to = outputTime(nightly.Outputs, outBackupAt)
+	// The latest of what was archived and the newest base backup: the health
+	// check that read the archiver may be older than a backup taken since, and
+	// a backup is restorable to where it ended, its last WAL archived before
+	// backup-push returns.
+	to := *from
+	for _, at := range []*time.Time{lastArchivedAt, outputTime(nightly.Outputs, outBackupAt)} {
+		if at != nil && at.After(to) {
+			to = *at
+		}
 	}
-	if to == nil {
-		to = from
-	}
-	return &managedmodel.TimeWindow{From: *from, To: *to}
+	return &managedmodel.TimeWindow{From: *from, To: to}
 }
 
 // backupsOf reads outBackups, leaving out what does not read: a name that is not

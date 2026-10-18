@@ -25,7 +25,7 @@ type RestoreManagedReq struct {
 	AppID        string `json:"-"`
 
 	Target ManagedRestoreTargetReq `json:"target"`
-	// Name is the new app's: <app>-restored-<yyyymmdd-hhmm> when empty.
+	// Name is the new app's: <app>-restored-<yyyymmdd-hhmmss> when empty.
 	Name string `json:"name,omitempty"`
 	// DataVolume is the cluster volume the new app keeps its data on, pinned to
 	// a node the archive can be reached from.

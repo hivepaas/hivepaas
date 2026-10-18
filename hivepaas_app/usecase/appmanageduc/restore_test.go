@@ -123,13 +123,13 @@ func TestTheRestoredAppArchivesWhereTheSourceDoesUnderItsOwnName(t *testing.T) {
 	binding := &entity.AppTemplateSettings{Template: "postgres-managed", Version: "17",
 		ImageOverride: "docker.io/library/postgres:17.5-trixie"}
 	defs := []*templatemodel.Parameter{{Name: "dataVolume", Type: templatemodel.ParamTypeVolume}}
-	now := time.Date(2026, 10, 18, 14, 40, 0, 0, time.UTC)
+	now := time.Date(2026, 10, 18, 14, 40, 7, 0, time.UTC)
 
 	req, err := restoreCreateReq(loaded, binding, defs, &appmanageddto.RestoreManagedReq{
 		DataVolume: &basedto.ObjectIDReq{ID: "vol-new"}}, now)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "shop-db-restored-20261018-1440", req.Name)
+	assert.Equal(t, "shop-db-restored-20261018-144007", req.Name)
 	assert.Equal(t, "p1:prod", req.ProjectEnvID)
 	assert.Equal(t, "postgres-managed", req.Template)
 	assert.Equal(t, "17", req.Version)

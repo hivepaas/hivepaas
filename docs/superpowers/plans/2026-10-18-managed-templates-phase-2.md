@@ -752,7 +752,57 @@ d9b41b09; CLI 6e9bd1f, merged as 3661a52):
 - Reconfigure moves the job.
 - Live: the nightly run on a replica makes a base backup that a restore uses.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend 72525471, merged as 662a50c5; dashboard f5de14e5, merged as
+3b1157a1; CLI f2e289d, merged as d876935; app-templates harness 4704921, merged as
+96657ff):
+- **No script changed.** `walg-nightly backup` (`wal-g backup-push`) takes a base
+  backup of a standby as it does of a primary, into the primary's archive.
+  - The standby still archives nothing.
+  - The backup ends in WAL that only the primary archives. A restore made in the
+    archive_timeout after the backup waits for that WAL, as it does for any backup.
+  - The harness checks this on 17 and 18: the backup is listed among the primary's,
+    and after the primary archives past it, a restore to that backup with
+    `recovery_target=immediate` holds the rows it was taken with. 166 checks pass.
+- **`ManagedPostgres.BackupFrom`** is an `ObjectID`: empty for the primary, or a
+  member's app.
+  - `PUT /managed` takes `backupFrom`; `{"id": ""}` sends the backups home.
+  - Anything that is not one of the database's members is refused with 400.
+  - The settings answer `backupFrom`.
+  - `postgres.moveBaseBackups` points the nightly job's `App` at the member or back
+    at the primary. Its schedule stays, so the job is changed but not rescheduled.
+- **`runNightly`** takes the backup on the app the job names. Retention and the
+  pruning of deploy points run on the app the job belongs to, which is the primary:
+  the job setting's object, from the scope's ref.
+  - If the named replica is gone from the refs, the backup is taken on the primary,
+    with a warning in the run's log.
+- **Removing the member the backups are taken on** has the engine move them home first,
+  through `moveBaseBackupsHome`, in the same transaction.
+- **Dashboard.**
+  - Settings has a "Base backups taken on" select ("This database" or each replica),
+    shown only when the database has replicas.
+  - The last base backup's card shows "Runs on <replica>".
+- **Not done:** no automatic fallback to the primary when the replica is up but
+  unhealthy. A failed backup on it fails the run and notifies, as any failed backup
+  does.
+- **Tests:**
+  - engine: moving the job to a member, nothing to move, moving home, a stranger
+    refused;
+  - executor: the backup on the replica, retention and pruning on the primary, and the
+    primary taking over from a replica that is gone;
+  - usecase: the move through `reconfigureManaged` and the settings view;
+  - e2e level-0: the select's payload and the "Runs on" line. All 11 pass.
+- **Live check, on the e2e stack (`lc/check12.sh`):**
+  - a stranger as backup host is refused (400);
+  - with pg18b's backups moved to `pg18b-r1`, the nightly job's app is the replica,
+    and its run is done;
+  - WAL-G records `base_…0006` as taken on host `pg18b-r1`, and the replica archived
+    nothing;
+  - a restore of pg18b to that backup holds 70 rows, as at the backup, not the 5
+    written after;
+  - removing the replica set `backupFrom` back to null and the nightly job's app back
+    to pg18b.
 
 ## Task 7: manual promotion and the stable address
 

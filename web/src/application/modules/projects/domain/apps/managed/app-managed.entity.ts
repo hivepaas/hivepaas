@@ -66,6 +66,12 @@ export interface AppManagedRestoreOrigin {
     readyAt?: Date;
 }
 
+/** The pg_dump into a backup repository: none while dumps are off; the schedule is kept either way, empty for the engine's default. */
+export interface AppManagedDump {
+    repo?: ManagedObjectRef;
+    schedule: string;
+}
+
 export interface AppManagedSettings {
     updateVer: number;
     engine: string;
@@ -76,8 +82,14 @@ export interface AppManagedSettings {
     baseBackupSchedule: string;
     restoreTestSchedule: string;
     restoreTest?: AppManagedRestoreTestConfig;
+    dump: AppManagedDump;
     locks: AppManagedLocks;
-    jobs?: { nightly?: ManagedObjectRef; health?: ManagedObjectRef; restoreTest?: ManagedObjectRef };
+    jobs?: {
+        nightly?: ManagedObjectRef;
+        health?: ManagedObjectRef;
+        restoreTest?: ManagedObjectRef;
+        dump?: ManagedObjectRef;
+    };
     restore?: AppManagedRestoreOrigin;
 }
 
@@ -120,8 +132,13 @@ export interface AppManagedStatus {
     /** The base backups kept, oldest first. */
     backups: { name: string; at: Date }[];
     lastRestoreTest?: { passed: boolean; endedAt: Date; durationSeconds: number; restoredTo: string };
+    /** The dump's last run, and the snapshot it took; none while dumps are off or before the first. */
+    lastDump?: { succeeded: boolean; endedAt: Date; snapshotId: string; bytes: number };
     placement: ManagedPlacement;
-    /** Changes worth making: "verifier", to run the restore test in a verifier app. */
+    /**
+     * Changes worth making: "verifier", to run the restore test in a verifier app; "dump-apart", to dump at
+     * another time than the base backup, as both read the whole database.
+     */
     suggestions: string[];
     restorePoints: AppManagedRestorePoint[];
     /** What the kept points make retention keep beyond its own. */

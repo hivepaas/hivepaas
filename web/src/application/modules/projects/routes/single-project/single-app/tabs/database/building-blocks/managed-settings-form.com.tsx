@@ -8,7 +8,12 @@ import { useController, useForm, useFormState, useWatch } from "react-hook-form"
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppManagedSettings_UpdatePayload } from "~/projects/api/services";
-import { AppManagedCommands, ProjectClusterVolumesQueries, ProjectKeyAuthQueries } from "~/projects/data";
+import {
+    AppManagedCommands,
+    ProjectBackupRepoQueries,
+    ProjectClusterVolumesQueries,
+    ProjectKeyAuthQueries,
+} from "~/projects/data";
 import { type AppManagedSettings, MANAGED_RESTORE_TEST_MODE } from "~/projects/domain";
 
 import { CronTimezoneNote, InfoBlock } from "@application/shared/components";
@@ -24,6 +29,10 @@ const MAX_RETAIN_FULL = 365;
 const QUERY_MAX_LENGTH = 2000;
 /** The verifier's key: none chosen is the database's own. */
 const DATABASE_KEY = "__database__";
+/** The dump's repository: none, dumps off. */
+const NO_DUMP = "__no-dump__";
+/** The engine's dump schedule, which a database made before dumps were offered has not kept. */
+const DEFAULT_DUMP_SCHEDULE = "0 3 * * *";
 
 const SettingsFormSchema = z
     .object({
@@ -32,6 +41,8 @@ const SettingsFormSchema = z
         restoreTestSchedule: z.string().trim().min(1, "A cron expression"),
         restoreTestQuery: z.string().trim().max(QUERY_MAX_LENGTH, `At most ${QUERY_MAX_LENGTH} characters`),
         restoreTestMode: z.nativeEnum(MANAGED_RESTORE_TEST_MODE),
+        dumpRepo: z.string(),
+        dumpSchedule: z.string().trim().min(1, "A cron expression"),
         // Only for a move into a verifier: the volume it restores into, and its key.
         verifierVolume: z.string(),
         verifierKey: z.string(),
@@ -65,10 +76,16 @@ function initialValuesOf(settings: AppManagedSettings): FormInput {
         restoreTestSchedule: settings.restoreTestSchedule,
         restoreTestQuery: settings.restoreTest?.checkQuery ?? "",
         restoreTestMode: settings.restoreTest?.mode ?? MANAGED_RESTORE_TEST_MODE.container,
+        dumpRepo: settings.dump.repo?.id ?? NO_DUMP,
+        dumpSchedule: dumpScheduleOf(settings),
         verifierVolume: "",
         verifierKey: DATABASE_KEY,
         movingToVerifier: false,
     };
+}
+
+function dumpScheduleOf(settings: AppManagedSettings): string {
+    return settings.dump.schedule === "" ? DEFAULT_DUMP_SCHEDULE : settings.dump.schedule;
 }
 
 interface Props {
@@ -118,12 +135,25 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
     );
     const volumes = (volumesData?.data ?? []).filter(volume => Boolean(volume.nodeId) || Boolean(volume.nodeLabel));
     const keyAuths = keyAuthsData?.data ?? [];
+    // The environment's: a database dumps into what its environment sees.
+    const { data: reposData } = ProjectBackupRepoQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+        pagination: LIST_ALL_PAGE,
+    });
+    const repos = reposData?.data ?? [];
+    const dumpRepoId = settings.dump.repo?.id;
+    const dumpRepoListed = dumpRepoId === undefined || repos.some(repo => repo.id === dumpRepoId);
 
     const { field: retainFull } = useController({ name: "retainFull", control });
     const { field: baseBackupSchedule } = useController({ name: "baseBackupSchedule", control });
     const { field: restoreTestSchedule } = useController({ name: "restoreTestSchedule", control });
     const { field: restoreTestQuery } = useController({ name: "restoreTestQuery", control });
     const { field: restoreTestMode } = useController({ name: "restoreTestMode", control });
+    const { field: dumpRepo } = useController({ name: "dumpRepo", control });
+    const { field: dumpSchedule } = useController({ name: "dumpSchedule", control });
+    const dumpScheduleValue = useWatch({ control, name: "dumpSchedule" });
+    const baseBackupScheduleValue = useWatch({ control, name: "baseBackupSchedule" });
     const { field: verifierVolume } = useController({ name: "verifierVolume", control });
     const { field: verifierKey } = useController({ name: "verifierKey", control });
 
@@ -151,6 +181,12 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
         }
         if (values.restoreTestQuery !== (settings.restoreTest?.checkQuery ?? "")) {
             payload.restoreTestQuery = values.restoreTestQuery;
+        }
+        if (values.dumpRepo !== (settings.dump.repo?.id ?? NO_DUMP)) {
+            payload.dumpRepo = { id: values.dumpRepo === NO_DUMP ? "" : values.dumpRepo };
+        }
+        if (values.dumpSchedule !== dumpScheduleOf(settings)) {
+            payload.dumpSchedule = values.dumpSchedule;
         }
         if (values.restoreTestMode !== currentMode) {
             payload.restoreTest =
@@ -264,6 +300,71 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                     none.
                                 </FieldDescription>
                                 <FieldError errors={[errors.restoreTestQuery]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title="Dump into"
+                                titleWidth={TITLE_WIDTH}
+                            >
+                                <Select
+                                    value={dumpRepo.value}
+                                    onValueChange={dumpRepo.onChange}
+                                >
+                                    <SelectTrigger
+                                        className="w-full max-w-[360px]"
+                                        aria-label="Dump into"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={NO_DUMP}>No dumps</SelectItem>
+                                        {repos.map(repo => (
+                                            <SelectItem
+                                                key={repo.id}
+                                                value={repo.id}
+                                            >
+                                                {repo.name}
+                                            </SelectItem>
+                                        ))}
+                                        {!dumpRepoListed && (
+                                            <SelectItem value={dumpRepoId}>
+                                                A repository this environment no longer sees
+                                            </SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                <FieldDescription>
+                                    A pg_dump into a backup repository, beside the archive: a copy any PostgreSQL can
+                                    load. Its snapshots are the app&apos;s backup snapshots, restored from there.
+                                </FieldDescription>
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title="Dump schedule"
+                                titleWidth={TITLE_WIDTH}
+                            >
+                                <Input
+                                    {...dumpSchedule}
+                                    aria-label="Dump schedule"
+                                    className="max-w-[240px] font-mono"
+                                    aria-invalid={Boolean(errors.dumpSchedule)}
+                                />
+                                <FieldDescription>
+                                    When the dump runs, at any frequency: 0 */6 * * * is every 6 hours. Kept while dumps
+                                    are off.
+                                </FieldDescription>
+                                {dumpScheduleValue.trim() !== "" &&
+                                    dumpScheduleValue.trim() === baseBackupScheduleValue.trim() && (
+                                        <FieldDescription className="text-amber-700 dark:text-amber-300">
+                                            The same as the base backup&apos;s: both read the whole database at once.
+                                        </FieldDescription>
+                                    )}
+                                <CronTimezoneNote />
+                                <FieldError errors={[errors.dumpSchedule]} />
                             </InfoBlock>
                         </Field>
 

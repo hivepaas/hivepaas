@@ -5,6 +5,7 @@ import { Lightbulb } from "lucide-react";
 import { type AppManagedSettings, type AppManagedStatus, MANAGED_ARCHIVING_STATE } from "~/projects/domain";
 import { formatManagedTime } from "~/projects/module-shared/utils";
 
+import { AppLink } from "@application/shared/components";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
@@ -15,15 +16,18 @@ import { PLACEMENT_COPY, SUGGESTION_COPY } from "./managed-format";
 interface Props {
     settings: AppManagedSettings;
     status: AppManagedStatus;
+    /** The app's backup snapshots, where its dumps are listed and restored from. */
+    snapshotsHref: string;
 }
 
 /**
  * What a managed database's engine knows of it: whether its WAL is archived,
- * how far back a restore can go, its last base backup and restore test, and
- * where its archive is from it.
+ * how far back a restore can go, its last base backup, restore test and dump,
+ * and where its archive is from it.
  */
-export function ManagedStatusCards({ settings, status }: Props) {
-    const { archiving, restoreWindow, lastBackup, lastRestoreTest } = status;
+export function ManagedStatusCards({ settings, status, snapshotsHref }: Props) {
+    const { archiving, restoreWindow, lastBackup, lastRestoreTest, lastDump } = status;
+    const dumping = settings.dump.repo !== undefined;
     const placement = status.placement === "" ? undefined : PLACEMENT_COPY[status.placement];
 
     return (
@@ -127,6 +131,39 @@ export function ManagedStatusCards({ settings, status }: Props) {
                     </Line>
                 </StatusCard>
             </div>
+
+            {(dumping || lastDump) && (
+                <section
+                    aria-label="Last dump"
+                    className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-xs"
+                >
+                    <span className="text-muted-foreground">Last dump</span>
+                    {lastDump ? (
+                        <>
+                            {resultBadge(
+                                lastDump.succeeded ? "success" : "failure",
+                                lastDump.succeeded,
+                                lastDump.succeeded ? "Succeeded" : "Failed",
+                            )}
+                            <span title={formatManagedTime(lastDump.endedAt)}>
+                                {timeAgoFormatter.format(lastDump.endedAt)}
+                            </span>
+                            {lastDump.succeeded && (
+                                <span className="text-muted-foreground">{formatDataSizeCompact(lastDump.bytes)}</span>
+                            )}
+                        </>
+                    ) : (
+                        <span className="text-muted-foreground">Not run yet: {settings.dump.schedule}.</span>
+                    )}
+                    {!dumping && <span className="text-muted-foreground">Dumps are off.</span>}
+                    <AppLink.Basic
+                        to={snapshotsHref}
+                        className="ml-auto underline"
+                    >
+                        Backup snapshots
+                    </AppLink.Basic>
+                </section>
+            )}
 
             {placement && (
                 <div className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-xs">

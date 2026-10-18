@@ -22,7 +22,9 @@ export const PLACEMENT_COPY: Record<Exclude<ManagedPlacement, "">, { label: stri
 
 /** What a suggestion the engine makes asks for. */
 export const SUGGESTION_COPY: Record<string, string> = {
-    verifier:
+    "verifier":
         "Run the restore test in a verifier app: in the database's container, it takes the database's disk and " +
         "time, and it shares its node.",
+    "dump-apart":
+        "Dump at another time than the base backup: they run in the same minute, and both read the whole database.",
 };

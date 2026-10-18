@@ -16,7 +16,7 @@ import {
 import type { AppTemplateManagedDefaults } from "../../../api";
 
 import type { DeployTemplateFormState } from "./deploy-template.form.types";
-import { type ManagedArchiveOption, type ManagedFormState, NO_KEY } from "./managed-fields.state";
+import { type ManagedArchiveOption, type ManagedFormState, NO_DUMP, NO_KEY } from "./managed-fields.state";
 
 interface ManagedFieldsProps {
     control: Control<DeployTemplateFormState>;
@@ -217,13 +217,84 @@ export function ManagedFields({ control, archive, archives, keyAuths, defaults, 
                 description="A query the restored copy must answer, besides listing its databases. Optional."
                 readOnly={readOnly}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Controller
+                    name="managed.dumpRepo"
+                    control={control}
+                    render={({ field }) => (
+                        <Field>
+                            <FieldLabel className="text-xs font-medium text-foreground">Dump into</FieldLabel>
+                            <Select
+                                value={field.value === "" ? DUMP_DEFAULT : field.value}
+                                onValueChange={value => {
+                                    field.onChange(value === DUMP_DEFAULT ? "" : value);
+                                }}
+                                disabled={readOnly}
+                            >
+                                <SelectTrigger
+                                    className="h-9 text-xs"
+                                    aria-label="Dump into"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        value={DUMP_DEFAULT}
+                                        className="text-xs"
+                                    >
+                                        {chosen?.kind === "repo"
+                                            ? `The archive's repository (${chosen.name})`
+                                            : "No dumps"}
+                                    </SelectItem>
+                                    {chosen?.kind === "repo" && (
+                                        <SelectItem
+                                            value={NO_DUMP}
+                                            className="text-xs"
+                                        >
+                                            No dumps
+                                        </SelectItem>
+                                    )}
+                                    {repos
+                                        .filter(option => option.id !== chosen?.id)
+                                        .map(option => (
+                                            <SelectItem
+                                                key={option.id}
+                                                value={option.id}
+                                                className="text-xs"
+                                            >
+                                                {option.name}
+                                                {option.onVolume ? " (volume)" : " (S3)"}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                            <FieldDescription className="text-[11px]">
+                                A pg_dump into a backup repository, beside the archive: a copy any PostgreSQL can load,
+                                restored from the app&apos;s backup snapshots.
+                            </FieldDescription>
+                        </Field>
+                    )}
+                />
+                <ManagedTextField
+                    control={control}
+                    name="managed.dumpSchedule"
+                    label="Dump schedule"
+                    placeholder="0 3 * * *"
+                    description="A cron expression: when the dump runs, at any frequency - 0 */6 * * * is every 6 hours."
+                    readOnly={readOnly}
+                />
+            </div>
         </div>
     );
 }
 
+/** The dump select's value for what the request leaves to the server: the archive's repository, if it is one. */
+const DUMP_DEFAULT = "__dump-default__";
+
 interface ManagedTextFieldProps {
     control: Control<DeployTemplateFormState>;
-    name: `managed.${Exclude<keyof ManagedFormState, "archive" | "keyAuth">}`;
+    name: `managed.${Exclude<keyof ManagedFormState, "archive" | "keyAuth" | "dumpRepo">}`;
     label: string;
     placeholder: string;
     description: string;

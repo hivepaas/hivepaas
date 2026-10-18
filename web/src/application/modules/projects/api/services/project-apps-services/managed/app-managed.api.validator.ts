@@ -63,6 +63,10 @@ const SettingsSchema = z.object({
         })
         .nullish()
         .transform(value => value ?? undefined),
+    dump: z
+        .object({ repo: ObjectRefSchema, schedule: z.string().optional().default("") })
+        .nullish()
+        .transform(value => value ?? { repo: undefined, schedule: "" }),
     locks: z.object({
         image: z.string().optional().default(""),
         imageLine: z.string().optional().default(""),
@@ -72,7 +76,12 @@ const SettingsSchema = z.object({
         settings: StringListSchema,
     }),
     jobs: z
-        .object({ nightly: ObjectRefSchema, health: ObjectRefSchema, restoreTest: ObjectRefSchema })
+        .object({
+            nightly: ObjectRefSchema,
+            health: ObjectRefSchema,
+            restoreTest: ObjectRefSchema,
+            dump: ObjectRefSchema,
+        })
         .nullish()
         .transform(value => value ?? undefined),
     restore: z
@@ -132,6 +141,15 @@ const StatusSchema = z.object({
             endedAt: z.coerce.date(),
             durationSeconds: z.number().optional().default(0),
             restoredTo: z.string().optional().default(""),
+        })
+        .nullish()
+        .transform(value => value ?? undefined),
+    lastDump: z
+        .object({
+            succeeded: z.boolean(),
+            endedAt: z.coerce.date(),
+            snapshotId: z.string().optional().default(""),
+            bytes: z.number().optional().default(0),
         })
         .nullish()
         .transform(value => value ?? undefined),

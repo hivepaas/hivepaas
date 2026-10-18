@@ -23,6 +23,9 @@ export type AppManagedSettings_UpdatePayload = {
     baseBackupSchedule?: string;
     restoreTestSchedule?: string;
     restoreTestQuery?: string;
+    /** A repository turns dumps on, an empty id turns them off. */
+    dumpRepo?: { id: string };
+    dumpSchedule?: string;
     restoreTest?: {
         mode: ManagedRestoreTestMode;
         volume?: { id: string };

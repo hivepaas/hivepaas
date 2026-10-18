@@ -75,3 +75,28 @@ type ConfigureReq struct {
 type ConfigureResp struct {
 	Settings []*entity.Setting
 }
+
+// SettingsChange is what a person changes of a managed app's settings: a nil
+// field is left as it is, and an empty query clears it.
+type SettingsChange struct {
+	RetainFull          *int
+	BaseBackupSchedule  *string
+	RestoreTestSchedule *string
+	RestoreTestQuery    *string
+}
+
+// ReconfigureReq is a managed app's setting, the jobs its engine made by id, and
+// the change asked for.
+type ReconfigureReq struct {
+	Managed *entity.AppManagedSettings
+	Jobs    map[string]*entity.Setting
+	Change  *SettingsChange
+}
+
+// ReconfigureResp is the jobs the change rewrote, and of those, the ones whose
+// schedule moved, which are scheduled again. The setting itself is changed in
+// place.
+type ReconfigureResp struct {
+	Changed     []*entity.Setting
+	Rescheduled []*entity.Setting
+}

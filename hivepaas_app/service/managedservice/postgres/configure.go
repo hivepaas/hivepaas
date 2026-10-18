@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +26,11 @@ const (
 	defaultBaseBackupSchedule  = "0 2 * * *"
 	defaultRestoreTestSchedule = "0 4 * * 0"
 	healthInterval             = 5 * time.Minute
+
+	// envRetainFull and envRestoreCheckQuery are what walg-nightly and
+	// walg-restore-test read their options from, in their job's environment.
+	envRetainFull        = "WALG_RETAIN_FULL"
+	envRestoreCheckQuery = "HIVEPAAS_RESTORE_CHECK_QUERY"
 
 	nightlyTimeout     = 6 * time.Hour
 	healthTimeout      = 2 * time.Minute
@@ -60,13 +66,14 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 	}
 
 	managedID := gofn.Must(ulid.NewStringULID())
-	job := func(name, script string, schedule *entity.SchedJobSchedule, timeout time.Duration) *entity.Setting {
+	job := func(name, script string, schedule *entity.SchedJobSchedule, timeout time.Duration,
+		env ...*entity.EnvVar) *entity.Setting {
 		setting := newSetting(base.SettingTypeSchedJob, name, entity.CurrentSchedJobVersion, &entity.SchedJob{
 			JobType:      base.SchedJobTypeContainerCommand,
 			Schedule:     schedule,
 			App:          entity.ObjectID{ID: req.App.ID},
 			Timeout:      timeutil.Duration(timeout),
-			Command:      &entity.CommandTemplate{Command: scriptDir + "/" + script},
+			Command:      &entity.CommandTemplate{Command: scriptDir + "/" + script, EnvVars: env},
 			Notification: &entity.BaseEventNotification{FailureUseDefault: true},
 			ManagedBy:    entity.ObjectID{ID: managedID},
 		})
@@ -74,11 +81,13 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 		return setting
 	}
 	nightly := job("Nightly base backup", "walg-nightly",
-		&entity.SchedJobSchedule{CronExpr: options.BaseBackupSchedule, InitialTime: req.Now}, nightlyTimeout)
+		&entity.SchedJobSchedule{CronExpr: options.BaseBackupSchedule, InitialTime: req.Now}, nightlyTimeout,
+		&entity.EnvVar{Key: envRetainFull, Value: strconv.Itoa(options.RetainFull)})
 	health := job("Archive health", "walg-health",
 		&entity.SchedJobSchedule{Interval: timeutil.Duration(healthInterval), InitialTime: req.Now}, healthTimeout)
 	restoreTest := job("Restore test", "walg-restore-test",
-		&entity.SchedJobSchedule{CronExpr: options.RestoreTestSchedule, InitialTime: req.Now}, restoreTestTimeout)
+		&entity.SchedJobSchedule{CronExpr: options.RestoreTestSchedule, InitialTime: req.Now}, restoreTestTimeout,
+		&entity.EnvVar{Key: envRestoreCheckQuery, Value: options.RestoreTestQuery})
 
 	managed := newSetting(base.SettingTypeAppManaged, "", entity.CurrentAppManagedVersion, &entity.AppManagedSettings{
 		Engine:    string(e.Name()),

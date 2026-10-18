@@ -28,4 +28,8 @@ type Engine interface {
 
 	// Status is a managed app's state, read from its jobs' last runs.
 	Status(req *StatusReq) (*Status, error)
+
+	// Reconfigure applies a change of the app's settings to its setting, in
+	// place, and to the jobs it made, which it returns as it rewrote them.
+	Reconfigure(req *ReconfigureReq) (*ReconfigureResp, error)
 }

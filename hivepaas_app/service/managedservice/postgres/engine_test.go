@@ -297,3 +297,115 @@ func TestConfigureRecordsWhatTheEngineOwns(t *testing.T) {
 	}
 	assert.NotContains(t, locks.EnvKeys, "POSTGRES_DB", "the template's own stay the person's")
 }
+
+func jobEnv(job *entity.SchedJob, key string) string {
+	for _, env := range job.Command.EnvVars {
+		if env.Key == key {
+			return env.Value
+		}
+	}
+	return ""
+}
+
+// What the scripts are told comes in their job's environment, so changing it is
+// changing the job.
+func TestConfigureTellsTheScriptsTheirOptions(t *testing.T) {
+	req := configureReq(t, deploymentSetting())
+	req.Prepared.Options = &managedmodel.Options{RetainFull: 14, RestoreTestQuery: "SELECT count(*) FROM orders"}
+
+	resp, err := New().Configure(req)
+
+	assert.NoError(t, err)
+	data := resp.Settings[0].MustAsAppManagedSettings()
+	jobs := map[string]*entity.SchedJob{}
+	for _, setting := range resp.Settings[1:] {
+		jobs[setting.ID] = setting.MustAsSchedJob()
+	}
+	assert.Equal(t, "14", jobEnv(jobs[data.Postgres.Jobs.Nightly.ID], envRetainFull))
+	assert.Equal(t, "SELECT count(*) FROM orders",
+		jobEnv(jobs[data.Postgres.Jobs.RestoreTest.ID], envRestoreCheckQuery))
+	assert.Equal(t, "SELECT count(*) FROM orders", data.Postgres.RestoreTest.CheckQuery)
+}
+
+func reconfigureSetup(t *testing.T) (*entity.AppManagedSettings, map[string]*entity.Setting) {
+	t.Helper()
+	resp, err := New().Configure(configureReq(t, deploymentSetting()))
+	assert.NoError(t, err)
+	jobs := map[string]*entity.Setting{}
+	for _, setting := range resp.Settings[1:] {
+		jobs[setting.ID] = setting
+	}
+	return resp.Settings[0].MustAsAppManagedSettings(), jobs
+}
+
+func TestReconfigureChangesTheJobsItMade(t *testing.T) {
+	managed, jobs := reconfigureSetup(t)
+
+	resp, err := New().Reconfigure(&managedmodel.ReconfigureReq{Managed: managed, Jobs: jobs,
+		Change: &managedmodel.SettingsChange{RetainFull: new(30), BaseBackupSchedule: new("0 1 * * *"),
+			RestoreTestSchedule: new("0 5 * * 6"), RestoreTestQuery: new("SELECT 1")}})
+
+	assert.NoError(t, err)
+	assert.Equal(t, 30, managed.Postgres.RetainFull)
+	assert.Equal(t, "SELECT 1", managed.Postgres.RestoreTest.CheckQuery)
+	nightly := jobs[managed.Postgres.Jobs.Nightly.ID].MustAsSchedJob()
+	test := jobs[managed.Postgres.Jobs.RestoreTest.ID].MustAsSchedJob()
+	assert.Equal(t, "0 1 * * *", nightly.Schedule.CronExpr)
+	assert.Equal(t, "30", jobEnv(nightly, envRetainFull))
+	assert.Equal(t, "0 5 * * 6", test.Schedule.CronExpr)
+	assert.Equal(t, "SELECT 1", jobEnv(test, envRestoreCheckQuery))
+	assert.ElementsMatch(t, []string{managed.Postgres.Jobs.Nightly.ID, managed.Postgres.Jobs.RestoreTest.ID},
+		ids(resp.Changed), "the health check is left alone")
+	assert.ElementsMatch(t, ids(resp.Changed), ids(resp.Rescheduled), "both schedules moved")
+}
+
+// What a request leaves out stays as it was.
+func TestReconfigureLeavesWhatItIsNotAsked(t *testing.T) {
+	managed, jobs := reconfigureSetup(t)
+
+	resp, err := New().Reconfigure(&managedmodel.ReconfigureReq{Managed: managed, Jobs: jobs,
+		Change: &managedmodel.SettingsChange{RetainFull: new(3)}})
+
+	assert.NoError(t, err)
+	nightly := jobs[managed.Postgres.Jobs.Nightly.ID].MustAsSchedJob()
+	assert.Equal(t, defaultBaseBackupSchedule, nightly.Schedule.CronExpr)
+	assert.Equal(t, "3", jobEnv(nightly, envRetainFull))
+	assert.Len(t, resp.Changed, 1)
+	assert.Empty(t, resp.Rescheduled, "no schedule moved")
+}
+
+func ids(settings []*entity.Setting) []string {
+	out := make([]string, 0, len(settings))
+	for _, s := range settings {
+		out = append(out, s.ID)
+	}
+	return out
+}
+
+func TestReconfigureClearsTheCheckQuery(t *testing.T) {
+	req := configureReq(t, deploymentSetting())
+	req.Prepared.Options = &managedmodel.Options{RestoreTestQuery: "SELECT 1"}
+	configured, err := New().Configure(req)
+	assert.NoError(t, err)
+	managed := configured.Settings[0].MustAsAppManagedSettings()
+	jobs := map[string]*entity.Setting{}
+	for _, setting := range configured.Settings[1:] {
+		jobs[setting.ID] = setting
+	}
+
+	_, err = New().Reconfigure(&managedmodel.ReconfigureReq{Managed: managed, Jobs: jobs,
+		Change: &managedmodel.SettingsChange{RestoreTestQuery: new("")}})
+
+	assert.NoError(t, err)
+	assert.Empty(t, managed.Postgres.RestoreTest.CheckQuery)
+	assert.Empty(t, jobEnv(jobs[managed.Postgres.Jobs.RestoreTest.ID].MustAsSchedJob(), envRestoreCheckQuery))
+}
+
+func TestReconfigureRefusesABadSchedule(t *testing.T) {
+	managed, jobs := reconfigureSetup(t)
+
+	_, err := New().Reconfigure(&managedmodel.ReconfigureReq{Managed: managed, Jobs: jobs,
+		Change: &managedmodel.SettingsChange{BaseBackupSchedule: new("at two")}})
+
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
+}

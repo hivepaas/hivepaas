@@ -69,6 +69,10 @@ func (e *fakeEngine) Status(*managedmodel.StatusReq) (*managedmodel.Status, erro
 	return &managedmodel.Status{}, nil
 }
 
+func (e *fakeEngine) Reconfigure(*managedmodel.ReconfigureReq) (*managedmodel.ReconfigureResp, error) {
+	return &managedmodel.ReconfigureResp{}, nil
+}
+
 type fakeManaged struct{ engine *fakeEngine }
 
 func (f *fakeManaged) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {

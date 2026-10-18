@@ -21519,6 +21519,166 @@
         "tags" : [ "Apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed" : {
+      "get" : {
+        "description" : "Where the engine archives, how long it keeps what, when its jobs run, and what it owns of the app.",
+        "operationId" : "appManagedSettingsGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a managed app's settings",
+        "tags" : [ "Managed apps" ]
+      },
+      "put" : {
+        "description" : "Changes the retention, when the base backup and the restore test run, and the restore test's query.\nA field left out is left as it is.",
+        "operationId" : "appManagedSettingsUpdate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UpdateManagedSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UpdateManagedSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates a managed app's settings",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
       "get" : {
         "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
@@ -55652,6 +55812,24 @@
         "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
         "type" : "object"
       },
+      "appmanageddto.GetManagedSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedSettingsResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appmanageddto.GetManagedStatusResp" : {
         "properties" : {
           "data" : {
@@ -55720,6 +55898,88 @@
         "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedJobsResp" : {
+        "properties" : {
+          "health" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "nightly" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "health", "nightly", "restoreTest" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedLocksResp" : {
+        "properties" : {
+          "command" : {
+            "type" : "string"
+          },
+          "envKeys" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "image" : {
+            "type" : "string"
+          },
+          "imageLine" : {
+            "type" : "string"
+          },
+          "mounts" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "settings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "nullable" : true,
+            "type" : "array"
+          }
+        },
+        "required" : [ "command", "envKeys", "image", "imageLine", "mounts", "settings" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedRestoreTestCfgRsp" : {
+        "properties" : {
+          "checkQuery" : {
+            "type" : "string"
+          },
+          "mode" : {
+            "description" : "Mode is container or verifier.",
+            "type" : "string"
+          },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "verifierApp" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "checkQuery", "mode", "nodeId", "verifierApp" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedRestoreTestResp" : {
         "properties" : {
           "durationSeconds" : {
@@ -55736,6 +55996,57 @@
           }
         },
         "required" : [ "durationSeconds", "endedAt", "passed", "restoredTo" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedSettingsResp" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "engineApi" : {
+            "type" : "integer"
+          },
+          "jobs" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedJobsResp"
+            } ],
+            "nullable" : true
+          },
+          "locks" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedLocksResp"
+            } ],
+            "nullable" : true
+          },
+          "restoreTest" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreTestCfgRsp"
+            } ],
+            "nullable" : true
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "storage" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedStorageResp"
+            } ],
+            "nullable" : true
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "engine", "engineApi", "jobs", "locks", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -55788,6 +56099,36 @@
         "required" : [ "archiving", "engine", "engineApi", "lastBackup", "lastRestoreTest", "placement", "restoreWindow", "suggestions" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedStorageResp" : {
+        "properties" : {
+          "backupRepo" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "cloudStorage" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "placement" : {
+            "type" : "string"
+          },
+          "prefix" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "backupRepo", "cloudStorage", "keyAuth", "placement", "prefix" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedTimeWindowResp" : {
         "properties" : {
           "from" : {
@@ -55804,6 +56145,39 @@
         "type" : "object"
       },
       "appmanageddto.UnmanageAppResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateManagedSettingsReq" : {
+        "properties" : {
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTestQuery" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "updateVer" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpdateManagedSettingsResp" : {
         "properties" : {
           "meta" : {
             "allOf" : [ {

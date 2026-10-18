@@ -146,6 +146,8 @@ export interface AppManagedSettings {
     /** The database restored from this one that its consumers were switched to: this one's jobs are paused since. */
     switchedTo?: { app?: ManagedObjectRef; at: Date };
     members: AppManagedMember[];
+    /** The replica the base backups are taken on; none for this database itself. */
+    backupFrom?: ManagedObjectRef;
     /** The primary this database is a replica of. */
     memberOf?: { app?: ManagedObjectRef; role: string };
 }

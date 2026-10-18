@@ -13,6 +13,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	appSettingsHandler := s.handlerRegistry.appSettingsHandler
 	appDeploymentHandler := s.handlerRegistry.appDeploymentHandler
 	appActionHandler := s.handlerRegistry.appActionHandler
+	appManagedHandler := s.handlerRegistry.appManagedHandler
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
 	appContainerHandler := s.handlerRegistry.appContainerHandler
 	appMetricsHandler := s.handlerRegistry.appMetricsHandler
@@ -259,6 +260,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appActionGroup.POST("/restart", appActionHandler.RestartApp)
 		// Set app running status
 		appActionGroup.POST("/running-status", appActionHandler.SetAppRunning)
+	}
+
+	{ // Managed apps: what their engine looks after
+		managedGroup := appGroup.Group("/:appID/managed")
+		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
 	}
 
 	{ // App previews

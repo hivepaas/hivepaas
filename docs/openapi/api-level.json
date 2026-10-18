@@ -164,6 +164,7 @@
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/compute": "6b8cbb19bbfecac553368b168183a7b788574c837ad1834d5f6868d1cd5c021a",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run": "4743f2f831669e29e4762cc360483cd24757d6129b51c3c99c85eee6a7653240",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/image-scan": "cffe9b28a2cd27cefbdf169aec583831a2b6be20df90a722c88bf7155773af08",
+    "POST /projects/{projectID}/{projectEnv}/apps/{appID}/managed/unmanage": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs": "b13aae370a4e9653a88ace03526d6318f3f21d732b39a470359701dfca303875",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/photo-detect": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/previews": "c85a6efe6e4962c44e0bbd10ad55d51066a26176b85073d6eb5c441a4cee8494",

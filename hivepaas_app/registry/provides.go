@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appimagescanhandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmanagedhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
@@ -141,6 +142,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appimagescanuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmanageduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
@@ -278,6 +280,7 @@ var Provides = []any{
 
 	// Route handler
 	appactionhandler.New,
+	appmanagedhandler.New,
 	appbasehandler.New,
 	appcontainerhandler.New,
 	appdeploymenthandler.New,
@@ -320,6 +323,7 @@ var Provides = []any{
 	acmednsprovideruc.New,
 	apikeyuc.New,
 	appactionuc.New,
+	appmanageduc.New,
 	appcontaineruc.New,
 	appdeploymentuc.New,
 	appfeaturesettingsuc.New,

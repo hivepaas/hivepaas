@@ -482,7 +482,27 @@ above:
 - Test: one refusal per rule, one allowed edit per rule (a minor tag bump, an extra
   argument, another env var), and unmanage.
 
-- [ ] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): refuse edits to what the engine owns; unmanage`.
+**As built** (commit 204a4eab, and the unmanage commit after it):
+- **The locks are data.** The engine records `entity.ManagedLocks{Image, ImageLine,
+  Command, Mounts, EnvKeys, Settings}` in `app-managed` when it makes the app. The
+  rules in `appsettingsuc/managed_rules.go` read them through `loadManagedLocks`
+  and know nothing of Postgres.
+- **Rules, all of which refuse:**
+  - kind (category and engine);
+  - deployment and container: method image; the repository kept; the tag within
+    `ClassifyImageOverride`'s same line and the same `ImageTagFamily`; entrypoint
+    and user unchanged; the engine's command a prefix, compared as argv;
+  - storage: each locked target keeps type, source, subpath and writability;
+  - env vars: each locked key keeps its entries exactly.
+- **The engine's secrets, config files and setting mounts** are refused by
+  update, status and delete in `usecase/settings` itself (`refuseManagedSetting`).
+- **Unmanage** is `POST /apps/:appID/managed/unmanage`, in the new
+  `appmanageduc` with `appmanagedhandler`. It soft-deletes `app-managed` and the
+  jobs it made, cancels their runs, and is audited. Artifacts, secrets, scripts and
+  arguments stay, so archiving goes on: removing them would leave
+  `archive_command` failing and `pg_wal` filling the disk.
+
+- [x] **Step 1:** Write the tests. **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): refuse edits to what the engine owns; unmanage`.
 
 ## Task 9: Status, and changing a managed app's settings
 

@@ -9,6 +9,7 @@ import type {
     AppManaged_DeleteRestorePoint_Req,
     AppManaged_RefreshCredentials_Req,
     AppManaged_Restore_Req,
+    AppManaged_Switch_Req,
     AppManaged_Unmanage_Req,
     AppManaged_UpdateRestorePoint_Req,
     AppManaged_UpdateSettings_Req,
@@ -36,6 +37,8 @@ function createHook() {
                     read(await managed.findSettings({ data: request }, signal)),
                 findStatus: async (request: AppScope, signal?: AbortSignal) =>
                     read(await managed.findStatus({ data: request }, signal)),
+                findSwitch: async (request: AppScope, signal?: AbortSignal) =>
+                    read(await managed.findSwitch({ data: request }, signal)),
             };
         }, [managed]);
 
@@ -61,6 +64,8 @@ function createHook() {
                     write("Failed to unmanage the database")(await managed.unmanage({ data: request })),
                 restore: async (request: AppManaged_Restore_Req["data"]) =>
                     write("Failed to restore the database")(await managed.restore({ data: request })),
+                switchConsumers: async (request: AppManaged_Switch_Req["data"]) =>
+                    write("Failed to switch the consumers")(await managed.switchConsumers({ data: request })),
                 createRestorePoint: async (request: AppManaged_CreateRestorePoint_Req["data"]) =>
                     write("Failed to make the restore point")(await managed.createRestorePoint({ data: request })),
                 updateRestorePoint: async (request: AppManaged_UpdateRestorePoint_Req["data"]) =>

@@ -89,3 +89,10 @@ export type AppManaged_AddReplica_Res = ApiResponseBase<{ app: { id: string }; t
 
 export type AppManaged_RemoveReplica_Req = ApiRequestBase<AppScope & { memberID: string }>;
 export type AppManaged_RemoveReplica_Res = ApiResponseBase<{ type: "success" }>;
+
+export type AppManaged_Promote_Req = ApiRequestBase<AppScope & { payload: { member: { id: string } } }>;
+export type AppManaged_Promote_Res = ApiResponseBase<{
+    writer: { id: string };
+    fenced: { id: string };
+    restarted: { id: string }[];
+}>;

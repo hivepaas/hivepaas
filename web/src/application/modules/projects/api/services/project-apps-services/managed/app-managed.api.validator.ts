@@ -8,6 +8,7 @@ import type {
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Res,
     AppManaged_FindSwitch_Res,
+    AppManaged_Promote_Res,
     AppManaged_RefreshCredentials_Res,
     AppManaged_Restore_Res,
     AppManaged_Switch_Res,
@@ -114,6 +115,8 @@ const SettingsSchema = z.object({
         .nullish()
         .transform(value => value ?? []),
     backupFrom: ObjectRefSchema,
+    writer: ObjectRefSchema,
+    fencedAt: OptionalDateSchema,
     memberOf: z
         .object({ app: ObjectRefSchema, role: z.string().optional().default("replica") })
         .nullish()
@@ -267,6 +270,22 @@ export class AppManagedApiValidator {
             response,
             schema: withMeta(
                 z.object({ app: IdSchema, task: IdSchema.nullish().transform(value => value ?? undefined) }),
+            ),
+        });
+    };
+
+    promote = (response: ApiHttpResponse): AppManaged_Promote_Res => {
+        return parseApiResponse({
+            response,
+            schema: withMeta(
+                z.object({
+                    writer: IdSchema,
+                    fenced: IdSchema,
+                    restarted: z
+                        .array(IdSchema)
+                        .nullish()
+                        .transform(value => value ?? []),
+                }),
             ),
         });
     };

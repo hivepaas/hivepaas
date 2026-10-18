@@ -17,6 +17,7 @@ import { useConditionalModule } from "@application/shared/permissions";
 import { Button } from "@/components/ui/button";
 
 import {
+    ManagedFencedBanner,
     ManagedMemberBanner,
     ManagedReplicas,
     ManagedRestorePoints,
@@ -160,6 +161,13 @@ export function AppDatabaseRoute() {
                 />
             )}
 
+            {settings.fencedAt && (
+                <ManagedFencedBanner
+                    writerKey={writerKeyOf(settings) ?? appName}
+                    fencedAt={settings.fencedAt}
+                />
+            )}
+
             {settings.switchedTo && (
                 <ManagedSwitchedBanner
                     projectId={projectID}
@@ -185,6 +193,8 @@ export function AppDatabaseRoute() {
                         projectId={projectID}
                         env={env}
                         appId={appID}
+                        appKey={app?.data.key ?? ""}
+                        writerName={writerKeyOf(settings) ?? appName}
                         members={status.members}
                         placement={status.placement}
                         canWrite={canWrite && !restoring}
@@ -350,6 +360,12 @@ function targetText(target: AppManagedRestoreTarget): string {
         default:
             return "the latest archived";
     }
+}
+
+/** The member promoted to the cluster's primary, by key; none while this database is. */
+function writerKeyOf(settings: AppManagedSettings): string | undefined {
+    const writerId = settings.writer?.id;
+    return writerId ? settings.members.find(member => member.app?.id === writerId)?.key : undefined;
 }
 
 function engineName(engine: string): string {

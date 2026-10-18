@@ -17,6 +17,8 @@ import type {
     AppManaged_FindStatus_Res,
     AppManaged_FindSwitch_Req,
     AppManaged_FindSwitch_Res,
+    AppManaged_Promote_Req,
+    AppManaged_Promote_Res,
     AppManaged_RefreshCredentials_Req,
     AppManaged_RefreshCredentials_Res,
     AppManaged_RemoveReplica_Req,
@@ -104,6 +106,13 @@ export class AppManagedApi extends BaseApi {
     async removeReplica(req: AppManaged_RemoveReplica_Req): Promise<Result<AppManaged_RemoveReplica_Res, Error>> {
         const path = `${this.base(req.data)}/replicas/${encodeURIComponent(req.data.memberID)}`;
         return this.run(this.client.v1.delete(path), () => SUCCESS);
+    }
+
+    async promote(req: AppManaged_Promote_Req): Promise<Result<AppManaged_Promote_Res, Error>> {
+        return this.run(
+            this.client.v1.post(`${this.base(req.data)}/promote`, req.data.payload),
+            this.validator.promote,
+        );
     }
 
     async findSwitch(

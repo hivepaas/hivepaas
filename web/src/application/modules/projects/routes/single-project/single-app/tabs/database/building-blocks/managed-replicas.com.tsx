@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { CopyPlus, Loader2, Trash2 } from "lucide-react";
+import { ArrowUpCircle, CopyPlus, Loader2, PauseCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppManagedCommands, ProjectClusterVolumesQueries } from "~/projects/data";
 import type { AppManagedMemberStatus, ManagedPlacement } from "~/projects/domain";
@@ -20,6 +20,10 @@ interface Props {
     projectId: string;
     env: string;
     appId: string;
+    /** The cluster's app's key, whose variables are the cluster's addresses. */
+    appKey: string;
+    /** What writes now: this database, or the member promoted. */
+    writerName: string;
     members: AppManagedMemberStatus[];
     placement: ManagedPlacement;
     canWrite: boolean;
@@ -30,7 +34,7 @@ interface Props {
  * is, as the database's last health check saw it; adding one on a pinned
  * volume, and removing one.
  */
-export function ManagedReplicas({ projectId, env, appId, members, placement, canWrite }: Props) {
+export function ManagedReplicas({ projectId, env, appId, appKey, writerName, members, placement, canWrite }: Props) {
     const scope = { projectID: projectId, env, appID: appId };
     const [volume, setVolume] = useState("");
     const offSite = placement === "off-site";
@@ -51,6 +55,17 @@ export function ManagedReplicas({ projectId, env, appId, members, placement, can
             toast.success("Replica removed");
         },
     });
+    const { mutate: promote, isPending: isPromoting } = AppManagedCommands.usePromote({
+        onSuccess: response => {
+            toast.success(
+                `Promoted: it is the primary, and ${response.data.restarted.length} other ` +
+                    `${response.data.restarted.length === 1 ? "replica restarts" : "replicas restart"} to follow it`,
+            );
+            if (response.meta?.warning) {
+                toast.warning(response.meta.warning);
+            }
+        },
+    });
 
     return (
         <section
@@ -60,8 +75,13 @@ export function ManagedReplicas({ projectId, env, appId, members, placement, can
             <div className="flex flex-col">
                 <h2 className="text-sm font-semibold">Replicas</h2>
                 <p className="text-xs text-muted-foreground">
-                    Read-only copies that follow this database, each on a volume of its own: seeded from the archive,
-                    then streaming from it. Only this database writes, and archives.
+                    Read-only copies that follow the primary, each on a volume of its own: seeded from the archive, then
+                    streaming from it. Only the primary writes, and archives; a replica can be promoted to it.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    Apps reach whichever member is the primary, through a promotion, at{" "}
+                    <code className="font-mono">{`\${${appKey}.HIVEPAAS_DATABASE_URL_RW}`}</code>, and a replica for
+                    reads at <code className="font-mono">{`\${${appKey}.HIVEPAAS_DATABASE_URL_RO}`}</code>.
                 </p>
             </div>
             <div className="flex flex-col divide-y rounded-md border">
@@ -94,6 +114,35 @@ export function ManagedReplicas({ projectId, env, appId, members, placement, can
                             <div className="flex items-center gap-3">
                                 <Badge className={statusClassName(stateMeaning(member.state))}>{member.state}</Badge>
                                 <span className="tabular-nums text-muted-foreground">{lagText(member)}</span>
+                                {member.role === "replica" && (
+                                    <PopConfirm
+                                        title={`Promote ${member.key} to the primary?`}
+                                        description={
+                                            `${writerName} is stopped, and kept from starting its server; ${member.key} ` +
+                                            "writes, and the other replicas restart to follow it. Apps reach it through " +
+                                            "HIVEPAAS_DATABASE_URL_RW; those that use the host of " +
+                                            `${writerName} lose the database.`
+                                        }
+                                        confirmText="Promote"
+                                        onConfirm={() => {
+                                            promote({ ...scope, payload: { member: { id: memberId } } });
+                                        }}
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            aria-label={`Promote ${member.key}`}
+                                            disabled={!canWrite || isPromoting || memberId === ""}
+                                        >
+                                            {isPromoting ? (
+                                                <Loader2 className="size-3.5 animate-spin" />
+                                            ) : (
+                                                <ArrowUpCircle className="size-3.5" />
+                                            )}
+                                            Promote
+                                        </Button>
+                                    </PopConfirm>
+                                )}
                                 <PopConfirm
                                     title={`Remove ${member.key}?`}
                                     description="Its app is deleted, with its copy of the data."
@@ -106,7 +155,10 @@ export function ManagedReplicas({ projectId, env, appId, members, placement, can
                                         variant="ghost"
                                         size="icon-sm"
                                         aria-label={`Remove ${member.key}`}
-                                        disabled={!canWrite || isRemoving || memberId === ""}
+                                        disabled={
+                                            !canWrite || isRemoving || memberId === "" || member.role === "primary"
+                                        }
+                                        title={member.role === "primary" ? "The primary is not removed" : undefined}
                                     >
                                         <Trash2 className="size-3.5" />
                                     </Button>
@@ -180,7 +232,9 @@ export function ManagedReplicas({ projectId, env, appId, members, placement, can
 function stateMeaning(state: string): StatusMeaning {
     switch (state) {
         case "streaming":
+        case "primary":
             return "success";
+        case "fenced":
         case "disconnected":
             return "failure";
         case "unknown":
@@ -191,7 +245,7 @@ function stateMeaning(state: string): StatusMeaning {
 }
 
 function lagText(member: AppManagedMemberStatus): string {
-    if (member.state === "unknown" || member.state === "disconnected") {
+    if (member.role !== "replica" || member.state === "unknown" || member.state === "disconnected") {
         return "";
     }
     if (member.lagBytes <= 0) {
@@ -232,6 +286,27 @@ export function ManagedMemberBanner({
                 , which it follows. Its archive, backups, restores and settings are the primary&apos;s, and so is
                 removing it.
             </span>
+        </div>
+    );
+}
+
+/** On the cluster's app, once a replica was promoted over it: it is stopped, and holds the cluster. */
+export function ManagedFencedBanner({ writerKey, fencedAt }: { writerKey: string; fencedAt: Date }) {
+    return (
+        <div
+            role="status"
+            className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-300"
+        >
+            <PauseCircle className="mt-0.5 size-3.5 shrink-0" />
+            <div className="flex flex-col gap-1">
+                <span className="font-medium">
+                    Fenced since {formatManagedTime(fencedAt)}: {writerKey} is the cluster&apos;s primary.
+                </span>
+                <span>
+                    This database is stopped, and kept from starting its server, so that no two primaries write. It
+                    still holds the cluster: its settings, its jobs - which run on {writerKey} - and its members.
+                </span>
+            </div>
         </div>
     );
 }

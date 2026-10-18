@@ -86,6 +86,20 @@ func filesIn(t *testing.T, dir string) []string {
 	return names
 }
 
+// An agent without HP_STORAGE_HOST_DIR does not know the host's path to its
+// cache: it says so rather than answer a relative path, which the backend could
+// not tell for an artifact's and no task could start with.
+func TestEnsureRefusesWithoutTheHostsPath(t *testing.T) {
+	source := serveBody(t, content)
+	uc, cacheDir := newTestUC(t, source)
+	uc.hostCacheDir = "cache/artifacts/sha256"
+
+	_, err := uc.Ensure(context.Background(), ensureReq(source.URL+"/wal-g"))
+
+	assert.ErrorIs(t, err, hperrors.ErrArtifactHostDirUnset)
+	assert.Empty(t, filesIn(t, cacheDir), "nothing is downloaded for a path nothing can bind")
+}
+
 func TestEnsureDownloadsAndKeepsAFileByItsHash(t *testing.T) {
 	source := serveBody(t, content)
 	uc, cacheDir := newTestUC(t, source)

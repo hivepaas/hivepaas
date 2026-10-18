@@ -15,4 +15,8 @@ var (
 	// ErrArtifactArchUnsupported is a node whose architecture the artifact has no
 	// file for.
 	ErrArtifactArchUnsupported = NewErr(ErrPreconditionFailed, "ERR_ARTIFACT_ARCH_UNSUPPORTED")
+	// ErrArtifactHostDirUnset is an agent that does not know the host's path to
+	// its cache: HP_STORAGE_HOST_DIR is not set for it. A bind mount names the
+	// host's path, and a relative one binds nothing.
+	ErrArtifactHostDirUnset = NewErr(ErrPreconditionFailed, "ERR_ARTIFACT_HOST_DIR_UNSET")
 )

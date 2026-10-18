@@ -69,6 +69,24 @@ func TestAttachReplacesTheArtifactMounts(t *testing.T) {
 	assert.Len(t, empty.TaskTemplate.ContainerSpec.Mounts, 1)
 }
 
+// A mount at an artifact's target goes whatever its source: one of the cache's
+// bound from a path this backend does not recognize - an agent whose
+// HP_STORAGE_HOST_DIR was not set - would otherwise be kept beside the new one,
+// and docker refuses a spec that mounts one path twice.
+func TestAttachReplacesAnyMountAtAnArtifactsTarget(t *testing.T) {
+	useHostDir(t)
+	data := mount.Mount{Type: mount.TypeVolume, Source: "pgdata", Target: "/var/lib/postgresql/data"}
+	stale := mount.Mount{Type: mount.TypeBind, Source: "cache/artifacts/sha256/old", Target: "/opt/hivepaas/bin/wal-g"}
+	spec := &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{ContainerSpec: &swarm.ContainerSpec{
+		Mounts: []mount.Mount{data, stale},
+	}}}
+
+	Attach(spec, []mount.Mount{artifactMount("new", "/opt/hivepaas/bin/wal-g")})
+
+	assert.Equal(t, []mount.Mount{data, artifactMount("new", "/opt/hivepaas/bin/wal-g")},
+		spec.TaskTemplate.ContainerSpec.Mounts)
+}
+
 // The storage screen never sends the artifacts back, since it never shows them:
 // a save keeps the service's.
 func TestKeepArtifactMounts(t *testing.T) {

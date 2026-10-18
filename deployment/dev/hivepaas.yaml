@@ -347,6 +347,9 @@ services:
       # config's own are in this public repository.
       HP_USER_ADMIN_PASSWORD: ${HP_DEV_PASSWORD}
       HP_DEV_MODE_USER_PASSWORD: ${HP_DEV_PASSWORD}
+      # Paid features the dev server has whatever its license: it is reseeded on
+      # each deploy, so no key stays to grant them. Only dev mode reads it.
+      HP_DEV_MODE_LICENSE_FEATURES: managed-databases
       HP_SESSION_BASIC_AUTH_PASSWORD: ${HP_DEV_PASSWORD}
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
@@ -427,11 +430,17 @@ services:
       - local_net
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: worker
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
       HP_USER_ADMIN_PASSWORD: ${HP_DEV_PASSWORD}
       HP_DEV_MODE_USER_PASSWORD: ${HP_DEV_PASSWORD}
+      # Paid features the dev server has whatever its license: it is reseeded on
+      # each deploy, so no key stays to grant them. Only dev mode reads it.
+      HP_DEV_MODE_LICENSE_FEATURES: managed-databases
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas
@@ -474,6 +483,9 @@ services:
       - local_net
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: updater
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas
@@ -505,6 +517,9 @@ services:
     stop_grace_period: 10m
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: agent
       HP_AGENT_PORT: "10001"
       HP_AGENT_NODE_ID: "{{.Node.ID}}"

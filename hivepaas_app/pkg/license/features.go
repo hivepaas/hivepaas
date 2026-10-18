@@ -25,6 +25,23 @@ func (s *State) Grants(feature string) bool {
 	return s != nil && slices.Contains(s.Features, base.LicenseFeature(feature))
 }
 
+// WithFeatures puts these features in force besides the state's own: those of
+// them this binary knows, in base.AllLicenseFeatures order. They are a
+// development installation's (HP_DEV_MODE_LICENSE_FEATURES), never a key's.
+func (s *State) WithFeatures(features []string) *State {
+	if s == nil || len(features) == 0 {
+		return s
+	}
+	var inForce []base.LicenseFeature
+	for _, feature := range base.AllLicenseFeatures {
+		if slices.Contains(s.Features, feature) || slices.Contains(features, string(feature)) {
+			inForce = append(inForce, feature)
+		}
+	}
+	s.Features = inForce
+	return s
+}
+
 // featureNameMsgIDs name each feature in ERR_PLAN_FEATURE_REQUIRED. A test holds
 // it to base.AllLicenseFeatures.
 var featureNameMsgIDs = map[base.LicenseFeature]string{

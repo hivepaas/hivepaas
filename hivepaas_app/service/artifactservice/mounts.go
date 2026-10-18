@@ -49,14 +49,24 @@ func isArtifactMount(m mount.Mount) bool {
 }
 
 // Attach gives a service spec exactly these artifact mounts, in place of any it
-// had - an older version's, or another app's that a clone copied.
+// had - an older version's, or another app's that a clone copied. A mount at one
+// of their targets goes too, whatever its source: the target is the artifact's,
+// and docker refuses a spec that mounts one path twice. One of the cache's bound
+// from a path this backend does not recognize - an agent whose
+// HP_STORAGE_HOST_DIR differed - is replaced rather than left to fail the update.
 func Attach(spec *swarm.ServiceSpec, mounts []mount.Mount) {
 	container := spec.TaskTemplate.ContainerSpec
 	if container == nil {
 		container = &swarm.ContainerSpec{}
 		spec.TaskTemplate.ContainerSpec = container
 	}
-	container.Mounts = append(slices.DeleteFunc(container.Mounts, isArtifactMount), mounts...)
+	targets := make(map[string]bool, len(mounts))
+	for _, m := range mounts {
+		targets[m.Target] = true
+	}
+	container.Mounts = append(slices.DeleteFunc(container.Mounts, func(m mount.Mount) bool {
+		return isArtifactMount(m) || targets[m.Target]
+	}), mounts...)
 }
 
 // KeepArtifactMounts is what a screen that rewrites an app's mounts saves: the

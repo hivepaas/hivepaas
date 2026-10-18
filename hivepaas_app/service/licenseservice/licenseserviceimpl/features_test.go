@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/license"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
@@ -53,4 +54,29 @@ func TestNeedingNoFeatureIsNotChecked(t *testing.T) {
 
 	assert.NoError(t, h.CheckFeatures(context.Background(), nil))
 	assert.Zero(t, h.settings.reads)
+}
+
+// A development installation is given the features HP_DEV_MODE_LICENSE_FEATURES
+// names, on Bee or on a key without them, and the template store sees them too.
+func TestDevModeGrantsItsFeatures(t *testing.T) {
+	h := newHarness(t)
+	h.config.Env = config.EnvDev
+	h.config.DevMode = config.DevMode{Enabled: true, LicenseFeatures: "managed-databases"}
+
+	assert.NoError(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}), "on Bee")
+	state, err := h.Current(context.Background())
+	assert.NoError(t, err)
+	assert.True(t, state.Grants("managed-databases"))
+
+	h.storeKey(t, payload(func(p *license.Payload) { p.Features = nil }))
+	assert.NoError(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}), "with a key")
+}
+
+// Where dev mode is off, the setting grants nothing.
+func TestDevFeaturesAreIgnoredOutsideDevMode(t *testing.T) {
+	h := newHarness(t)
+	h.config.DevMode = config.DevMode{LicenseFeatures: "managed-databases"}
+
+	assert.ErrorIs(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}),
+		hperrors.ErrPlanFeatureRequired)
 }

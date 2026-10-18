@@ -33,6 +33,9 @@ func (uc *UC) UnmanageApp(
 		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			bunex.SelectFor("UPDATE OF app"),
+			// What LoadApp checks the project and its environment are active by.
+			bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
+			bunex.SelectRelation("ProjectEnv"),
 			bunex.SelectRelation("Settings",
 				bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppManaged, base.SettingTypeSchedJob),
 				// A restored database's jobs are disabled until it has recovered.

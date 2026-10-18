@@ -245,7 +245,75 @@ marks a restore point there before its pre-deploy command runs.
 - Live: an app linked to a managed database deploys, the point is listed, and
   restoring to it gives the rows from before the deploy.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend fe17440b + 50ff1dd7, merged as 81e1653c; dashboard 4196f0b7,
+merged as a1053a34; CLI 711f734, merged as 8cacdad):
+- **The service.** `managedservice.MarkRestorePoint(ctx, *MarkPointReq)` runs in its own
+  transaction and locks the database's app row `FOR UPDATE`. The request carries
+  `Origin`, `ExistingOK`, and a `Record` callback, which the person's endpoint uses for
+  its audit row. `PruneDeployPoints` sits beside it.
+  `appmanageduc` no longer needs `schedJobExecService`.
+- **The setting** is `RestorePointBeforeDeploy entity.ObjectID` (`omitzero`), not a
+  pointer. Validation (`appsettingsuc/deployment_restore_point.go`) refuses:
+  - the app itself;
+  - an id that is not an app of the project;
+  - an app of another environment;
+  - one with no active managed setting, or whose engine is not postgres.
+
+  Each is `ERR_ARGUMENT_INVALID` on `restorePointBeforeDeploy`, with the reason as
+  extra detail.
+- **The name** comes from the deployment's `CreatedAt` (UTC), not from now. A
+  deployment run again asks for the same name, and `ExistingOK` answers it as made
+  without marking.
+- **The step** is `restore-point`. It logs `Marking restore point <name> on the app's
+  database...` and `Restore point <name> is on <db>, at <LSN>.`. A failure is
+  `ERR_APP_DEPLOY_RESTORE_POINT_FAILED`, which names the database and the reason's
+  words, without its code. A database whose service runs no container gives
+  `ERR_ACTIVE_CONTAINER_NOT_FOUND`, not a generic failure.
+- **Pruning differs from the plan in two ways.**
+  - `Engine.StaleDeployPoints` drops `deploy` points that have no kept base backup
+    before them. It reads the `BACKUPS` the retain step printed, which is what
+    `restorableUntil` comes from. With no listing, it prunes nothing.
+  - The nightly logs the names it removed in its run (`No base backup kept reaches
+    these deployments' restore points any more; they are removed: ...`). It writes no
+    audit rows: deployments' points are not audited when they are made either. A
+    failed prune is logged and never fails the nightly.
+- **API level** stays 4. Level 4 is unreleased, so `gen-swag`'s move to 5 was undone,
+  keeping the new fingerprint.
+- **Dashboard.**
+  - The select is labelled "Restore point before deploy" and sits under the
+    pre-deploy command.
+  - It lists the environment's `database` apps whose managed engine is postgres
+    (`useManagedDatabases`). It asks for each engine with the Database tab's query key.
+  - A saved database the list no longer has stays shown as saved.
+  - The restore points table tags a deployment's point with a "Deploy" badge.
+- **CLI.** `carry.DeploymentSettings` copies the response into the request through
+  JSON, so `hivepaas deploy` keeps the setting as read.
+- **Also fixed:** `deployment_cmd_exec.go` labelled the pre-deploy command step as
+  post-deploy.
+- **Known limits.**
+  - A spec export carries the database's app id as is. After an import into another
+    project, the deploy fails with the error above until the setting is chosen again.
+  - The other steps' `defer s.addStepEndLog(ctx, data, start, err)` evaluates `err`
+    when deferred, so their end logs never carry the error. The new step uses a
+    closure. The rest is left as it was.
+- **Tests:**
+  - unit tests for the step, the name, the mark and its refusals, pruning, the
+    setting's validation and round trip, and clone clearing;
+  - the e2e level-0 spec checks the "Deploy" badge, and all 4 tests pass.
+- **Live check, on the e2e stack (`lc/check8.sh`):**
+  - the setting refuses the app itself and an unknown id, and round-trips pg18;
+  - the deploy marks `deploy-lc-web-20261018155801` at `0/8002388`, listed with
+    origin `deploy` and a `restorableUntil`;
+  - a restore to it gives exactly the 110 rows from before the deploy, not the 10
+    written after;
+  - with pg18 scaled to 0, the deploy fails with `...could not be made: No active
+    container found for app 'pg18'`, and the web service still runs `sleep 1d`;
+  - with both points' `at` moved before every base, the nightly removes the
+    deployment's point and keeps the person's;
+  - the dashboard's select shows pg18 chosen among None, pg18, pg17 and the restored
+    app.
 
 ## Task 3: a nightly `pg_dump` into a Kopia repository
 

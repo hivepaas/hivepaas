@@ -182,6 +182,12 @@ export interface AppScheduledJob {
     functionInvoke: AppScheduledJobFunctionInvoke | null;
     notification: AppScheduledJobNotification | null;
     nextRuns: Date[];
+    /**
+     * The managed database's engine that made the job, by its app-managed
+     * setting: none for a job a person made. A managed job is shown, run and
+     * watched, not edited, paused or deleted.
+     */
+    managedBy?: { id: string };
 }
 
 /** A job in an env's list: the env's own, or one of an app in the env. */

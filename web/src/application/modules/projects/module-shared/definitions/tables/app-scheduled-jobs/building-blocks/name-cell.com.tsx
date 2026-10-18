@@ -8,8 +8,9 @@ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
 import { ESettingStatus } from "@application/shared/enums";
 
 /**
- * A job's name; a sequence is tagged with its step count, a data backup with its
- * repository, a function's call with its request.
+ * A job's name; a managed database's job is tagged as its engine's, a sequence
+ * with its step count, a data backup with its repository, a function's call with
+ * its request.
  */
 function View({ job }: Props) {
     const steps = job.sequence?.steps.length ?? 0;
@@ -17,6 +18,14 @@ function View({ job }: Props) {
     return (
         <div className="flex flex-wrap items-center gap-2">
             <span>{job.name}</span>
+            {job.managedBy && (
+                <Badge
+                    tone="violet"
+                    title="The managed database's engine made it and runs it: it is not edited, paused or deleted"
+                >
+                    Managed
+                </Badge>
+            )}
             {job.jobType === EAppScheduledJobType.JobSequence && (
                 <Badge variant="secondary">
                     Sequence · {steps} {steps === 1 ? "step" : "steps"}

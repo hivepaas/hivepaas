@@ -18,6 +18,8 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
     const updateStatusDialog = useUpdateAppScheduledJobStatusDialog();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialog();
     const { canWrite, canDelete, canExecute } = useConditionalModule({ id: MODULE_IDS.Project });
+    // A managed database's job is its engine's: it can be run, not paused or deleted.
+    const isManaged = Boolean(scheduledJob.managedBy);
 
     const { mutate: runNow, isPending: isRunning } = AppScheduledJobsCommands.useRunNow({
         onSuccess: response => {
@@ -98,7 +100,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
                         </PermissionTooltipAction>
                     )}
 
-                    {canWrite ? (
+                    {isManaged ? null : canWrite ? (
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"
@@ -126,7 +128,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
                         </PermissionTooltipAction>
                     )}
 
-                    {canDelete ? (
+                    {isManaged ? null : canDelete ? (
                         <PopConfirm
                             title="Remove Scheduled Job"
                             variant="destructive"

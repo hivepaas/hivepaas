@@ -8,6 +8,7 @@ import {
     APP_SCHEDULED_JOB_COMMAND_MODE,
     type CreateOrEditAppScheduledJobFormOutput,
 } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
+import { ManagedLockNotice } from "~/projects/module-shared/components";
 import {
     mapJobScheduleFormValuesToPayload,
     mapJobTriggersFormValuesToPayload,
@@ -159,8 +160,12 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
         },
     });
 
+    // A managed database's job is its engine's: shown, not edited.
+    const isManaged = Boolean(scheduledJob?.managedBy);
+    const canEdit = canWrite && !isManaged;
+
     function onSubmit(values: CreateOrEditAppScheduledJobFormOutput) {
-        if (!canWrite) {
+        if (!canEdit) {
             return;
         }
 
@@ -198,7 +203,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
             return;
         }
 
-        if (canWrite && hasChanges) {
+        if (canEdit && hasChanges) {
             const userConfirmed = window.confirm("Are you sure you want to close without saving changes?");
             if (!userConfirmed) {
                 return;
@@ -215,6 +220,18 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
         <div className="flex w-full flex-col">
             <RouteFormHeader title={mode === "create" ? "Create Scheduled Job" : "Edit Scheduled Job"} />
 
+            {isManaged && (
+                <div className="mb-4">
+                    <ManagedLockNotice
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                    >
+                        This job runs as the engine set it up, on its schedule from the Database tab&apos;s settings.
+                    </ManagedLockNotice>
+                </div>
+            )}
+
             {isEditMode && isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
                     <AppLoader />
@@ -230,7 +247,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                     initialValues={isEditMode ? scheduledJob : undefined}
-                    readOnly={!canWrite}
+                    readOnly={!canEdit}
                     stickyActions
                     onClose={handleClose}
                 />

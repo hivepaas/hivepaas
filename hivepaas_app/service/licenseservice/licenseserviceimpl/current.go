@@ -43,7 +43,7 @@ func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings
 	}
 	if settings.Key == "" {
 		// No key is Bee whatever the installation, so docker is not asked.
-		return license.Evaluate(&license.EvalInput{Now: now}), nil
+		return s.withDevFeatures(license.Evaluate(&license.EvalInput{Now: now})), nil
 	}
 
 	installationID, err := s.InstallationID(ctx)
@@ -51,14 +51,25 @@ func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings
 		return nil, err
 	}
 	verified, verifyErr := s.verifyStored(settings.Key)
-	return license.Evaluate(&license.EvalInput{
+	return s.withDevFeatures(license.Evaluate(&license.EvalInput{
 		KeyText:        settings.Key,
 		Verified:       verified,
 		VerifyErr:      verifyErr,
 		InstallationID: installationID,
 		Now:            now,
 		MovedAt:        settings.MovedAt,
-	}), nil
+	})), nil
+}
+
+// withDevFeatures adds the features a development installation is given
+// whatever its license, HP_DEV_MODE_LICENSE_FEATURES. Where dev mode is off, as
+// in production and beta, there are none.
+func (s *service) withDevFeatures(state *license.State) *license.State {
+	cfg := s.cfg()
+	if cfg == nil {
+		return state
+	}
+	return state.WithFeatures(cfg.DevMode.LicenseFeatureList())
 }
 
 // loadSettings is the stored license, empty when there is none.

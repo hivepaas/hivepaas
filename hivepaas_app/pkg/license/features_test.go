@@ -63,3 +63,21 @@ func TestEveryFeatureHasAName(t *testing.T) {
 	}
 	assert.Empty(t, FeatureNameMsgID("unknown"))
 }
+
+// A development installation's features join the key's: those this binary knows,
+// once each, in base.AllLicenseFeatures order.
+func TestWithFeaturesAddsTheKnownOnes(t *testing.T) {
+	bee := &State{Plan: base.LicensePlanBee}
+	assert.Equal(t, []base.LicenseFeature{base.LicenseFeatureManagedDatabases},
+		bee.WithFeatures([]string{"quantum", "managed-databases", "managed-databases"}).Features)
+	assert.True(t, bee.Grants("managed-databases"))
+	assert.False(t, bee.Grants("quantum"))
+
+	keyed := &State{Features: []base.LicenseFeature{base.LicenseFeatureManagedDatabases}}
+	assert.Equal(t, []base.LicenseFeature{base.LicenseFeatureManagedDatabases},
+		keyed.WithFeatures([]string{"managed-databases"}).Features, "a feature the key has is not added twice")
+
+	none := &State{}
+	assert.Nil(t, none.WithFeatures(nil).Features)
+	assert.Nil(t, (*State)(nil).WithFeatures([]string{"managed-databases"}))
+}

@@ -39,7 +39,8 @@ type State struct {
 	// Limits are the limits in force. They are the State's own, never shared.
 	Limits Limits
 	// Features are the features in force: the key's that this binary knows,
-	// while the key holds. Bee grants none.
+	// while the key holds. Bee grants none; a development installation may be
+	// given some whatever its key (State.WithFeatures).
 	Features []base.LicenseFeature
 	// Key is the key's payload whenever its signatures verified, also when it is
 	// not in force, as for another installation or past its grace.

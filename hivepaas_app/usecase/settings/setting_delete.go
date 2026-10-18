@@ -146,6 +146,9 @@ func (uc *BaseUC) loadSettingForDeletion(
 		return hperrors.Wrap(err)
 	}
 	data.Setting = setting
+	if err = uc.refuseManagedSetting(ctx, db, setting); err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	// The setting was imported from another scope
 	if setting.ObjectID != req.Scope.ScopeObjectID() {

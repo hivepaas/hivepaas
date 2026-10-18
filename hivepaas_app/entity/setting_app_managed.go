@@ -35,7 +35,30 @@ func (s *appManagedSettingsParser) New() SettingData {
 type AppManagedSettings struct {
 	Engine    string           `json:"engine"`
 	EngineAPI int              `json:"engineApi"`
+	Locks     ManagedLocks     `json:"locks"`
 	Postgres  *ManagedPostgres `json:"postgres,omitempty"`
+}
+
+// ManagedLocks are what the engine owns of the app, recorded when it was made:
+// the settings screens refuse to change any of it, knowing nothing of the engine.
+type ManagedLocks struct {
+	// Image is the image the app was created with, and ImageLine its template
+	// version: the repository stays, and the tag moves only within the line and
+	// the tag's family.
+	Image     string `json:"image"`
+	ImageLine string `json:"imageLine"`
+	// Command is the engine's command line: the app's starts with it, and what a
+	// person adds comes after. The entrypoint is the image's, and stays.
+	Command string `json:"command,omitempty"`
+	// Mounts are the targets of the mounts the engine relies on, the data's
+	// among them: each keeps its source.
+	Mounts []string `json:"mounts,omitempty"`
+	// EnvKeys are the variables the engine set or relies on, which keep their
+	// values.
+	EnvKeys []string `json:"envKeys,omitempty"`
+	// Settings are the ids of the secrets, config files and setting mounts the app
+	// was built with: the engine's credentials and scripts.
+	Settings []string `json:"settings,omitempty"`
 }
 
 type ManagedPostgres struct {

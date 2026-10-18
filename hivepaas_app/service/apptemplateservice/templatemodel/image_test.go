@@ -176,3 +176,16 @@ func TestClassifyImageOverrideAcceptsTheSameRepositoryWrittenDifferently(t *test
 	_, err = ClassifyImageOverride("18", "postgres:18.6-alpine3.24", "ghcr.io/library/postgres:18.6")
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
 }
+
+func TestImageTagFamily(t *testing.T) {
+	for image, want := range map[string]string{
+		"postgres:17.6-trixie":         "trixie",
+		"postgres:17.7-trixie":         "trixie",
+		"postgres:18.0-alpine3.22":     "alpine",
+		"postgres:18.0":                "",
+		"pgvector/pgvector:0.8.1-pg18": "pg18",
+		"postgres":                     "",
+	} {
+		assert.Equal(t, want, ImageTagFamily(image), image)
+	}
+}

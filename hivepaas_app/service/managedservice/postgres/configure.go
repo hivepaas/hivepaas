@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -36,7 +38,8 @@ const (
 
 func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
 	options := withDefaults(req.Prepared.Options)
-	if err := setServerArguments(req.Settings, req.Prepared.Doc, options); err != nil {
+	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options)
+	if err != nil {
 		return nil, err
 	}
 
@@ -80,6 +83,7 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 	managed := newSetting(base.SettingTypeAppManaged, "", entity.CurrentAppManagedVersion, &entity.AppManagedSettings{
 		Engine:    string(e.Name()),
 		EngineAPI: maxAPI,
+		Locks:     locks(req, source),
 		Postgres: &entity.ManagedPostgres{
 			Storage:        req.Storage,
 			EncryptionKey:  entity.NewEncryptedField(req.Prepared.EncryptionKey),
@@ -115,7 +119,11 @@ func withDefaults(options *managedmodel.Options) managedmodel.Options {
 // app-deployment setting the document was built into: a template may not set a
 // command, and these are the engine's, re-applied by every deploy as the setting
 // is. Locked fields keep a person from changing them.
-func setServerArguments(settings []*entity.Setting, doc *specmodel.AppDoc, options managedmodel.Options) error {
+func setServerArguments(
+	settings []*entity.Setting,
+	doc *specmodel.AppDoc,
+	options managedmodel.Options,
+) (*entity.AppDeploymentSettings, error) {
 	var deployment *entity.Setting
 	for _, setting := range settings {
 		if setting.Type == base.SettingTypeAppDeployment {
@@ -123,11 +131,11 @@ func setServerArguments(settings []*entity.Setting, doc *specmodel.AppDoc, optio
 		}
 	}
 	if deployment == nil {
-		return hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("postgres: the app deploys nothing")
+		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("postgres: the app deploys nothing")
 	}
 	source, err := deployment.AsAppDeploymentSettings()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	args := []string{
 		"postgres",
@@ -140,7 +148,31 @@ func setServerArguments(settings []*entity.Setting, doc *specmodel.AppDoc, optio
 		args = append(args, fmt.Sprintf("-c shared_buffers=%dMB", buffers/unit.MB))
 	}
 	source.Command = strings.Join(args, " ")
-	return hperrors.Wrap(deployment.SetData(source))
+	return source, hperrors.Wrap(deployment.SetData(source))
+}
+
+// locks are what the engine owns of the app: its image's line, its command, the
+// mounts and variables it relies on, and the secrets, config files and setting
+// mounts the app was built with.
+func locks(req *managedmodel.ConfigureReq, source *entity.AppDeploymentSettings) entity.ManagedLocks {
+	out := entity.ManagedLocks{
+		ImageLine: req.Prepared.Version,
+		Command:   source.Command,
+		EnvKeys:   slices.Clone(req.Prepared.OwnedEnv),
+	}
+	if source.ImageSource != nil {
+		out.Image = source.ImageSource.Image
+	}
+	if doc := req.Prepared.Doc; doc.Deployment != nil && doc.Deployment.Storage != nil {
+		out.Mounts = slices.Sorted(maps.Keys(doc.Deployment.Storage.Mounts))
+	}
+	for _, setting := range req.Settings {
+		switch setting.Type { //nolint:exhaustive // three types hold what the engine built the app with
+		case base.SettingTypeSecret, base.SettingTypeConfigFile, base.SettingTypeAppSettingMount:
+			out.Settings = append(out.Settings, setting.ID)
+		}
+	}
+	return out
 }
 
 // sharedBuffers is a quarter of the memory limit, at least minSharedBuffers;

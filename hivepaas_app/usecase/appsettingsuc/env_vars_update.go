@@ -37,6 +37,13 @@ func (uc *UC) UpdateAppEnvVars(
 
 		persistingData := &persistingAppData{}
 		uc.prepareUpdatingAppEnvVars(req, data, persistingData)
+		locks, err := uc.loadManagedLocks(ctx, db, data.App.ID)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = checkManagedEnv(locks, data.CurrVars, data.NewVars); err != nil {
+			return hperrors.Wrap(err)
+		}
 
 		if !data.HasChanges {
 			return nil
@@ -86,6 +93,7 @@ type updateAppEnvVarsData struct {
 	App               *entity.App
 	EnvVarsSetting    *entity.Setting
 	CurrVars          []*entity.EnvVar
+	NewVars           []*entity.EnvVar
 	HasChanges        bool
 	RuntimeVarsChange bool
 	SharedVarsChange  bool
@@ -169,6 +177,7 @@ func (uc *UC) prepareUpdatingAppEnvVars(
 		envVars.Data = append(envVars.Data, env.ToEntity(base.EnvVarKindBuild))
 	}
 	setting.MustSetData(envVars)
+	data.NewVars = envVars.Data
 
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 

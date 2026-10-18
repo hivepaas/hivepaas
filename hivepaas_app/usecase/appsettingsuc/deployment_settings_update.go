@@ -118,6 +118,21 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	locks, err := uc.loadManagedLocks(ctx, db, app.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if locks != nil {
+		var current *entity.AppDeploymentSettings
+		if deploymentSettings != nil {
+			if current, err = deploymentSettings.AsAppDeploymentSettings(); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
+		if err = checkManagedDeployment(locks, current, newDeploymentSettings); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
 
 	// Make sure all reference settings used in this settings exist actively
 	refObjects := entity.NewRefObjects()

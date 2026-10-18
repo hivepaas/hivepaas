@@ -52,6 +52,10 @@ type PrepareReq struct {
 	// the caller.
 	EncryptionKey string
 	Options       *Options
+
+	// OwnedEnv is set by PrepareDoc: the variables it added, which the app may
+	// not change afterwards.
+	OwnedEnv []string
 }
 
 // ConfigureReq is the app being provisioned, the settings its document was

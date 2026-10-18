@@ -60,6 +60,15 @@ func (uc *UC) UpdateAppStorageSettings(
 		// Nor are an app's artifacts, which its engine binds.
 		data.FinalMounts = artifactservice.KeepArtifactMounts(data.FinalMounts,
 			data.Service.Spec.TaskTemplate.ContainerSpec.Mounts)
+		// A managed app's data and archive mounts are its engine's.
+		locks, err := uc.loadManagedLocks(ctx, db, data.App.ID)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = checkManagedMounts(locks, data.Service.Spec.TaskTemplate.ContainerSpec.Mounts,
+			data.FinalMounts); err != nil {
+			return hperrors.Wrap(err)
+		}
 
 		err = uc.applyAppStorageSettings(ctx, db, data)
 		if err != nil {

@@ -202,5 +202,12 @@ func tagFamily(tag string) string {
 	return strings.Join(families, "-")
 }
 
+// ImageTagFamily is the family of an image's tag, as tagFamily reads it: what
+// another tag has to share for it to be the same build of the software on the
+// same base - trixie, alpine, pg18. "" for a tag without one.
+func ImageTagFamily(image string) string {
+	return tagFamily(imageref.Parse(image).Tag)
+}
+
 // pgMajorPattern matches the pgNN part of a tag such as 0.8.6-pg18-bookworm.
 var pgMajorPattern = regexp.MustCompile(`^pg[0-9]+$`)

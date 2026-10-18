@@ -97,6 +97,16 @@ func (uc *UC) loadAppContainerSettingsForUpdate(
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
+	locks, err := uc.loadManagedLocks(ctx, db, app.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	err = checkManagedContainer(locks, data.Service.Spec.TaskTemplate.ContainerSpec,
+		req.Image, req.Entrypoint, req.Command, req.User)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	return nil
 }
 

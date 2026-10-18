@@ -272,3 +272,28 @@ func TestConfigureNeedsTheDeploymentSetting(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid)
 }
+
+// What the engine owns is recorded as it is made, so that the settings screens
+// can refuse to change it without knowing anything of Postgres.
+func TestConfigureRecordsWhatTheEngineOwns(t *testing.T) {
+	deployment := deploymentSetting()
+	secret := &entity.Setting{ID: "secret-1", Type: base.SettingTypeSecret}
+	script := &entity.Setting{ID: "config-1", Type: base.SettingTypeConfigFile}
+	scriptMount := &entity.Setting{ID: "mount-1", Type: base.SettingTypeAppSettingMount}
+	routing := &entity.Setting{ID: "routing-1", Type: base.SettingTypeAppRouting}
+	req := configureReq(t, deployment, secret, script, scriptMount, routing)
+
+	resp, err := New().Configure(req)
+
+	assert.NoError(t, err)
+	locks := resp.Settings[0].MustAsAppManagedSettings().Locks
+	assert.Equal(t, "postgres:17.6-trixie", locks.Image)
+	assert.Equal(t, "17", locks.ImageLine)
+	assert.Equal(t, deployment.MustAsAppDeploymentSettings().Command, locks.Command)
+	assert.Equal(t, []string{"/var/lib/postgresql"}, locks.Mounts)
+	assert.ElementsMatch(t, []string{"secret-1", "config-1", "mount-1"}, locks.Settings, "not the routing")
+	for _, key := range []string{"WALG_S3_PREFIX", "AWS_ENDPOINT", "WALG_LIBSODIUM_KEY_TRANSFORM", "PGDATA"} {
+		assert.Contains(t, locks.EnvKeys, key)
+	}
+	assert.NotContains(t, locks.EnvKeys, "POSTGRES_DB", "the template's own stay the person's")
+}

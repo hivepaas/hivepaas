@@ -72,6 +72,12 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	}
 	addEnv(doc, env)
 	addSecretFiles(doc, secrets)
+	req.OwnedEnv = make([]string, 0, len(env)+1)
+	for _, pair := range env {
+		req.OwnedEnv = append(req.OwnedEnv, pair[0])
+	}
+	// The image sets it, and the scripts read it: it is the engine's as well.
+	req.OwnedEnv = append(req.OwnedEnv, "PGDATA")
 	return nil
 }
 

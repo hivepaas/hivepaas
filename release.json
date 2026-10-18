@@ -26,7 +26,7 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "603a25840fa28277ca8c5acda110a441ad0314cb",
+      "commit": "bd5c436aeaa402c2196d467716f0a9f6e7f65cd1",
       "indexSha256": "3c09f1d0227c730101dda74cff9caaf1612cba07122813ab102e6f0d4928e05e"
     }
   }

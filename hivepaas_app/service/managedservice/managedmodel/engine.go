@@ -14,4 +14,15 @@ type Engine interface {
 	// APIRange is the engine API versions this engine speaks: the contracts
 	// between it and the templates that name it.
 	APIRange() (minAPI, maxAPI int)
+
+	// PrepareDoc adds to an app's rendered document what the engine needs built
+	// with it - variables, secrets as files, the archive's mount - in the blocks a
+	// template may use, so that the spec builder builds and checks them as it
+	// does a template's. It refuses a document missing what the engine API needs.
+	PrepareDoc(req *PrepareReq) error
+
+	// Configure finishes the settings the document was built into - what no
+	// template may say, such as the server's arguments - and returns the
+	// engine's own: its state and its scheduled jobs.
+	Configure(req *ConfigureReq) (*ConfigureResp, error)
 }

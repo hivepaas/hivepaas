@@ -391,10 +391,30 @@ above:
 - Test: `configure_test.go`, golden output per major (17, 18) per storage kind (S3
   repo, cloud storage, volume repo on the same node, volume repo unpinned).
 
-- [ ] **Step 1:** Write the tests. The golden files show no secret value, and contain
+**As built.** It differs from the list above:
+- **Two steps instead of `Configure` and `Apply`:**
+  - `PrepareDoc(PrepareReq)` adds to the rendered `AppDoc`, in blocks a template may
+    use: the `WALG_*`, `AWS_*` and `HIVEPAAS_WALG_SECRETS_DIR` variables; the
+    secrets `WALG_AWS_ACCESS_KEY_ID`, `WALG_AWS_SECRET_ACCESS_KEY` and
+    `WALG_LIBSODIUM_KEY`, as files in `/run/secrets/walg`, uid 999, mode 400,
+    referenced by no variable; and a volume repository's mount at
+    `/var/lib/hivepaas-walg`. The spec builder then builds and checks it all, as it
+    does a template's. It refuses a template missing one of the API's six scripts.
+  - `Configure(ConfigureReq)` runs on the built settings. It sets the server's
+    arguments on `app-deployment` (a template cannot), and returns `app-managed` and
+    the three `container-command` jobs.
+- **No `Apply`.** The arguments live in `app-deployment`, which every deploy
+  applies, and Task 8 locks them.
+- **The nightly job runs one script**, `walg-nightly`, which does backup, retain and
+  verify. It is not a `job-sequence` of three jobs.
+- **Resolving the archive moves to Task 7:** credentials, prefix, the volume
+  repository's node and the placement warning. `PrepareDoc` takes it resolved, as
+  `managedmodel.Archive`.
+
+- [x] **Step 1:** Write the tests. The golden files show no secret value, and contain
   `archive_mode=on`, `WALG_PREVENT_WAL_OVERWRITE=true` and the prefix. Refused: a
   missing script, and a volume pinned to another node.
-- [ ] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the postgres engine - configure and apply`.
+- [x] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks. **Step 5:** Commit: `feat(managed): the postgres engine - configure and apply`.
 
 ## Task 7: Creating a managed app from a template
 

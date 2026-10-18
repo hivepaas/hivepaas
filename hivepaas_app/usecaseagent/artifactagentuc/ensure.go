@@ -32,6 +32,12 @@ func (uc *UC) Ensure(ctx context.Context, req *artifactagentdto.EnsureReq) (*art
 	if err := validateEnsureReq(req); err != nil {
 		return nil, err
 	}
+	// The host's path is what the app's bind mount names: without
+	// HP_STORAGE_HOST_DIR it would be relative, which the backend cannot tell for
+	// an artifact's and the task cannot start with.
+	if !filepath.IsAbs(uc.hostCacheDir) {
+		return nil, hperrors.Wrap(hperrors.ErrArtifactHostDirUnset)
+	}
 	lock := uc.lockFor(req.SHA256)
 	lock.Lock()
 	defer lock.Unlock()

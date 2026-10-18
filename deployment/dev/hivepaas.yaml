@@ -427,6 +427,9 @@ services:
       - local_net
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: worker
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
@@ -474,6 +477,9 @@ services:
       - local_net
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: updater
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas
@@ -505,6 +511,9 @@ services:
     stop_grace_period: 10m
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      # The app's: the host path of its data, which an artifact the agent keeps is
+      # bound from. A process without it would name that path relatively.
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
       HP_RUN_MODE: agent
       HP_AGENT_PORT: "10001"
       HP_AGENT_NODE_ID: "{{.Node.ID}}"

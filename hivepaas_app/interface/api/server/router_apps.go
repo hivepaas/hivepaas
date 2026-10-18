@@ -275,6 +275,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		managedGroup.POST("/unmanage", appManagedHandler.UnmanageApp)
 		managedGroup.GET("/switch", appManagedHandler.GetManagedSwitch)
 		managedGroup.POST("/switch", appManagedHandler.SwitchManaged)
+		managedGroup.POST("/replicas", appManagedHandler.AddManagedReplica)
+		managedGroup.DELETE("/replicas/:memberID", appManagedHandler.RemoveManagedReplica)
 	}
 
 	{ // App previews

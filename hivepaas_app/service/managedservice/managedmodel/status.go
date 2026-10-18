@@ -64,6 +64,27 @@ type Status struct {
 	// HeldBack is what the kept points make retention keep beyond its own,
 	// nil when they keep nothing more.
 	HeldBack *HeldBack
+	// Members are the replicas, each as the primary's last health check saw it.
+	Members []*MemberStatus
+}
+
+// The states of a member: the primary's pg_stat_replication's, and these.
+const (
+	// MemberUnknown is a member no health check has looked at yet.
+	MemberUnknown = "unknown"
+	// MemberDisconnected is a member the primary has no connection from.
+	MemberDisconnected = "disconnected"
+)
+
+// MemberStatus is a member, and how far behind the primary it was when the
+// health check last looked: LagBytes of WAL, and LagSeconds of time, nil while
+// nothing is written.
+type MemberStatus struct {
+	Member     *entity.ManagedMember
+	State      string
+	LagBytes   int64
+	LagSeconds *float64
+	CheckedAt  *time.Time
 }
 
 // RestorePointStatus is a point, and until when it can be restored: as long as

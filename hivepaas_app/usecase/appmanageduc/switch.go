@@ -134,7 +134,7 @@ func (uc *UC) SwitchManaged(
 			Scope:    base.ObjectScopeApp,
 			ObjectID: state.target.app.ID,
 			Source:   base.AuditLogSourceAPIUpdate,
-			Section:  "managed",
+			Section:  auditSectionManaged,
 			Auth:     auth,
 			ResType:  base.ResourceTypeApp,
 			ResID:    state.target.app.ID,

@@ -21766,6 +21766,186 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/replicas" : {
+      "post" : {
+        "description" : "An asynchronous replica on a volume of its own, pinned to a node: seeded from the database's\narchive, which must be in object storage, then streaming from the database, which is told to\nlet it in first. The database's scripts must be ones that can run a replica.",
+        "operationId" : "appManagedReplicaAdd",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.AddManagedReplicaReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.AddManagedReplicaResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Adds a read replica to a managed database",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/replicas/{memberID}" : {
+      "delete" : {
+        "description" : "The replica's app is deleted, with its directory of its volume.",
+        "operationId" : "appManagedReplicaRemove",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "the replica's app ID",
+          "in" : "path",
+          "name" : "memberID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.RemoveManagedReplicaResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Removes a read replica from a managed database",
+        "tags" : [ "Managed apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore" : {
       "post" : {
         "description" : "To the latest, a time, a restore point or a base backup, inside its restore window. The new app is\nmade from the same template, version and parameters, on the data volume given, and archives to its\nown prefix; the source is only read. The task returned sees the restore through.",
@@ -56429,6 +56609,54 @@
         "required" : [ "critical", "high", "ignored", "low", "medium", "unknown" ],
         "type" : "object"
       },
+      "appmanageddto.AddManagedReplicaDataResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "task" ],
+        "type" : "object"
+      },
+      "appmanageddto.AddManagedReplicaReq" : {
+        "properties" : {
+          "dataVolume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "dataVolume" ],
+        "type" : "object"
+      },
+      "appmanageddto.AddManagedReplicaResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.AddManagedReplicaDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appmanageddto.CreateRestorePointReq" : {
         "properties" : {
           "keepUntil" : {
@@ -56704,6 +56932,86 @@
         "required" : [ "command", "envKeys", "image", "imageLine", "mounts", "settings" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedMemberOfResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "role" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "role" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedMemberResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "at" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "node" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "at", "key", "node", "role", "volume" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedMemberStatusResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "checkedAt" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "lagBytes" : {
+            "type" : "integer"
+          },
+          "lagSeconds" : {
+            "nullable" : true,
+            "type" : "number"
+          },
+          "node" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "checkedAt", "key", "lagBytes", "lagSeconds", "node", "role", "state" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedRestorePointResp" : {
         "properties" : {
           "at" : {
@@ -56918,6 +57226,22 @@
             } ],
             "nullable" : true
           },
+          "memberOf" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedMemberOfResp"
+            } ],
+            "description" : "MemberOf is the primary this database is a replica of, null for a\ndatabase of its own.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "members" : {
+            "description" : "Members are the database's replicas.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedMemberResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "restore" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedRestoreResp"
@@ -56956,7 +57280,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
+        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -57009,6 +57333,14 @@
             } ],
             "nullable" : true
           },
+          "members" : {
+            "description" : "Members are the replicas, each as the database's last health check saw it.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedMemberStatusResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
           "placement" : {
             "description" : "Placement is where the archive is from the database: off-site, shared or\nsame-node, which the dashboard warns about.",
             "type" : "string"
@@ -57038,7 +57370,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastDump", "lastRestoreTest", "placement", "restorePoints", "restoreWindow", "suggestions" ],
+        "required" : [ "archiving", "backups", "engine", "engineApi", "heldBack", "lastBackup", "lastDump", "lastRestoreTest", "members", "placement", "restorePoints", "restoreWindow", "suggestions" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStorageResp" : {
@@ -57219,6 +57551,18 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.RemoveManagedReplicaResp" : {
+        "properties" : {
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "appmanageddto.RestoreManagedDataResp" : {

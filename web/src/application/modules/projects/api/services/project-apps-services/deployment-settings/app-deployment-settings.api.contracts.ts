@@ -19,6 +19,8 @@ type AppDeploymentSettings_UpdateBasePayload = {
     workingDir: string;
     preDeploymentCommand: string;
     postDeploymentCommand: string;
+    /** Null marks no restore point before a deploy. */
+    restorePointBeforeDeploy: { id: string } | null;
     notification: {
         successUseDefault: boolean;
         success?: {

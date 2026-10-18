@@ -58,6 +58,8 @@ export type BaseDeploymentSettings = {
     workingDir?: string;
     preDeploymentCommand?: string;
     postDeploymentCommand?: string;
+    /** The managed database each deployment marks a restore point on first; null for none. */
+    restorePointBeforeDeploy?: { id: string } | null;
 
     notification?: {
         successUseDefault: boolean;

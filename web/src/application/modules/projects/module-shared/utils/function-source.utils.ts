@@ -118,6 +118,8 @@ export function functionSettingsToPayload(settings: FunctionMethod, source: Func
         workingDir: settings.workingDir ?? "",
         preDeploymentCommand: settings.preDeploymentCommand ?? "",
         postDeploymentCommand: settings.postDeploymentCommand ?? "",
+        // Kept as it is: the request is the whole of the settings.
+        restorePointBeforeDeploy: settings.restorePointBeforeDeploy ?? null,
         notification: {
             successUseDefault: notification?.successUseDefault ?? true,
             ...(notification && !notification.successUseDefault && notification.success

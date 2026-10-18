@@ -24,6 +24,7 @@ const TEMPLATE = "postgres-managed";
 const REPO = { id: "e2emanagedrepo01", name: "e2e-archive" };
 const VOLUME = { id: "e2emanagedvol001", name: "e2e-restore-data" };
 const POINT = "before-migration";
+const DEPLOY_POINT = "deploy-shop-web-20261018093015";
 
 // A setting's fields every list's rows carry.
 function settingRow(id: string, name: string, type: string) {
@@ -156,6 +157,18 @@ function managedStatus() {
                 keepUntil: null,
                 kept: false,
                 restorableUntil: at(5 * DAY),
+                origin: "person",
+            },
+            {
+                name: DEPLOY_POINT,
+                lsn: "0/2B000028",
+                at: at(-4 * HOUR),
+                by: null,
+                note: "Before deployment e2edeploy00001 of shop web",
+                keepUntil: null,
+                kept: false,
+                restorableUntil: at(5 * DAY),
+                origin: "deploy",
             },
         ],
         heldBack: null,
@@ -284,6 +297,11 @@ test("a managed database's Database tab shows its engine's status", async ({ pag
     const points = page.getByRole("region", { name: "Restore points" });
     await expect(points.getByRole("row", { name: new RegExp(POINT) })).toContainText("Before the orders migration");
     await expect(points.getByRole("row", { name: new RegExp(POINT) })).toContainText("Not kept");
+    // A deployment's point says so; a person's does not.
+    const deployBadge = (name: string) =>
+        points.getByRole("row", { name: new RegExp(name) }).getByText("Deploy", { exact: true });
+    await expect(deployBadge(DEPLOY_POINT)).toBeVisible();
+    await expect(deployBadge(POINT)).toHaveCount(0);
 });
 
 // A restore goes into a new app, to the target chosen, on the volume chosen,

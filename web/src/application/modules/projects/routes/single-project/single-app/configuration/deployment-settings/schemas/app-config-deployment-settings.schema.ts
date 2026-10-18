@@ -23,6 +23,8 @@ const BaseDeploymentSettingsSchema = z.object({
     workingDir: z.string().optional(),
     preDeploymentCommand: z.string().optional(),
     postDeploymentCommand: z.string().optional(),
+    /** The managed database's id; empty for none. */
+    restorePointBeforeDeploy: z.string().optional(),
     notification: NotificationSchema.optional(),
 });
 

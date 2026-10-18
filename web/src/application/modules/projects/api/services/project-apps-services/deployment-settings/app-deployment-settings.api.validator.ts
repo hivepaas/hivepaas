@@ -26,6 +26,10 @@ const BaseDeploymentSettingsSchema = z.object({
     workingDir: OptionalStringSchema.optional(),
     preDeploymentCommand: OptionalStringSchema.optional(),
     postDeploymentCommand: OptionalStringSchema.optional(),
+    restorePointBeforeDeploy: z
+        .object({ id: z.string() })
+        .nullish()
+        .transform(value => (value?.id ? { id: value.id } : null)),
     notification: z
         .object({
             successUseDefault: z.boolean(),

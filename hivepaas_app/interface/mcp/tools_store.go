@@ -28,6 +28,11 @@ var installDescs = map[string]string{
 		"secret one not given is generated",
 	"dependencyParams": "the parameters of each app the template brings along, by the dependency's name " +
 		"(get_template's dependencies), each as params",
+	"managed": "required for a managed template (get_template's managed), refused for any other: storage " +
+		"is where the database archives - {backupRepo: {id}} for a backup repository (list_backup_repos) or " +
+		"{cloudStorage: {id}} for a cloud storage, exactly one, and keyAuth: {id} for a narrower key than the " +
+		"storage's own; retainFull, archiveTimeout (60s), baseBackupSchedule and restoreTestSchedule (cron) " +
+		"change the template's defaults, and restoreTestQuery is a query the weekly restore test runs",
 }
 
 // installInput is the input schema of the install tools. resetStorage, which

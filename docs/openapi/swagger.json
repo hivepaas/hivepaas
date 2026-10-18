@@ -12,7 +12,7 @@
     },
     "title" : "HivePaaS API",
     "version" : "0.1",
-    "x-api-level" : 3
+    "x-api-level" : 4
   },
   "servers" : [ {
     "url" : "/api"
@@ -61518,9 +61518,17 @@
             "description" : "Deployment is the app's first deployment, already queued: it pulls the\ntemplate's image.",
             "nullable" : true,
             "type" : "object"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.CreatedManagedResp"
+            } ],
+            "description" : "Managed is what the engine of a managed template set up, and null for any\nother template.",
+            "nullable" : true,
+            "type" : "object"
           }
         },
-        "required" : [ "app", "components", "dependencies", "deployment" ],
+        "required" : [ "app", "components", "dependencies", "deployment", "managed" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateReq" : {
@@ -61537,6 +61545,13 @@
           "imageTag" : {
             "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
             "type" : "string"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.ManagedCreateReq"
+            } ],
+            "description" : "Managed is how the engine of a managed template looks after the app: where\nit archives, and what the template's defaults are changed to. Required for\na managed template, and refused for any other.",
+            "type" : "object"
           },
           "name" : {
             "type" : "string"
@@ -61625,6 +61640,15 @@
           }
         },
         "required" : [ "app", "deployment", "name" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreatedManagedResp" : {
+        "properties" : {
+          "placement" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "placement" ],
         "type" : "object"
       },
       "apptemplatedto.GetAppTemplateBindingResp" : {
@@ -61718,6 +61742,44 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "apptemplatedto.ManagedCreateReq" : {
+        "properties" : {
+          "archiveTimeout" : {
+            "type" : "string"
+          },
+          "baseBackupSchedule" : {
+            "type" : "string"
+          },
+          "restoreTestQuery" : {
+            "type" : "string"
+          },
+          "restoreTestSchedule" : {
+            "type" : "string"
+          },
+          "retainFull" : {
+            "type" : "integer"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/apptemplatedto.ManagedStorageReq"
+          }
+        },
+        "required" : [ "storage" ],
+        "type" : "object"
+      },
+      "apptemplatedto.ManagedStorageReq" : {
+        "properties" : {
+          "backupRepo" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "keyAuth" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "type" : "object"
+      },
       "apptemplatedto.PreflightAppFromTemplateReq" : {
         "properties" : {
           "dependencyParams" : {
@@ -61732,6 +61794,13 @@
           "imageTag" : {
             "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
             "type" : "string"
+          },
+          "managed" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.ManagedCreateReq"
+            } ],
+            "description" : "Managed is how the engine of a managed template looks after the app: where\nit archives, and what the template's defaults are changed to. Required for\na managed template, and refused for any other.",
+            "type" : "object"
           },
           "name" : {
             "type" : "string"

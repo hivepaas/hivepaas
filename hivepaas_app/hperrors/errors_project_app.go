@@ -42,6 +42,12 @@ var (
 	// owns, naming the field. It is changed through the engine's settings, or the
 	// app unmanaged first.
 	ErrAppManagedFieldLocked = NewErr(ErrNonEditable, "ERR_APP_MANAGED_FIELD_LOCKED")
+	// ErrAppManagedVolumeNotPinned refuses a managed app whose data volume is not
+	// pinned to a node: its archive and its artifacts are decided by that node.
+	ErrAppManagedVolumeNotPinned = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_VOLUME_NOT_PINNED")
+	// ErrAppManagedArchiveUnreachable refuses a volume backup repository the
+	// database's node cannot mount: one pinned to another node.
+	ErrAppManagedArchiveUnreachable = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_ARCHIVE_UNREACHABLE")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

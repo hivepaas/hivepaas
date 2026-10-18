@@ -78,6 +78,8 @@ type fakeProvisionService struct {
 	names     []string
 	failName  string
 	deployFor []string
+	// specs are the service specs Configure wrote, by app.
+	specs []*swarm.ServiceSpec
 }
 
 func (f *fakeProvisionService) ProvisionApps(
@@ -121,6 +123,7 @@ func (f *fakeProvisionService) ProvisionApp(
 		ProjectEnv: &entity.ProjectEnv{ID: req.ProjectEnvID, Key: "prod", Name: "prod"},
 	}
 	spec := &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{ContainerSpec: &swarm.ContainerSpec{}}}
+	f.specs = append(f.specs, spec)
 	settings, err := req.Configure(ctx, db, app, spec)
 	if err != nil {
 		return nil, err

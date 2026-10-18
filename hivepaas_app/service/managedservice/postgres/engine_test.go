@@ -99,6 +99,7 @@ func TestPrepareDocArchivesToS3(t *testing.T) {
 	assert.Equal(t, "true", env["AWS_S3_FORCE_PATH_STYLE"])
 	assert.Equal(t, "true", env["WALG_PREVENT_WAL_OVERWRITE"])
 	assert.Equal(t, "zstd", env["WALG_COMPRESSION_METHOD"])
+	assert.Equal(t, "hex", env["WALG_LIBSODIUM_KEY_TRANSFORM"])
 	assert.Equal(t, secretsDir, env["HIVEPAAS_WALG_SECRETS_DIR"])
 	for _, value := range env {
 		assert.NotContains(t, value, "s3-secret-value", "no key in the environment")

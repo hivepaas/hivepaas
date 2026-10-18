@@ -7,10 +7,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/licenseservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -29,10 +31,12 @@ type UC struct {
 	appProvisionService appprovisionservice.Service
 	appService          appservice.Service
 	appTemplateService  apptemplateservice.Service
+	artifactService     artifactservice.Service
 	auditService        auditservice.Service
 	clusterService      clusterservice.Service
 	domainService       domainservice.Service
 	licenseService      licenseservice.Service
+	managedService      managedservice.Service
 	specService         specservice.Service
 	volumeService       volumeservice.Service
 }
@@ -50,10 +54,12 @@ func New(
 	appProvisionService appprovisionservice.Service,
 	appService appservice.Service,
 	appTemplateService apptemplateservice.Service,
+	artifactService artifactservice.Service,
 	auditService auditservice.Service,
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
 	licenseService licenseservice.Service,
+	managedService managedservice.Service,
 	specService specservice.Service,
 	volumeService volumeservice.Service,
 ) *UC {
@@ -70,10 +76,12 @@ func New(
 		appProvisionService: appProvisionService,
 		appService:          appService,
 		appTemplateService:  appTemplateService,
+		artifactService:     artifactService,
 		auditService:        auditService,
 		clusterService:      clusterService,
 		domainService:       domainService,
 		licenseService:      licenseService,
+		managedService:      managedService,
 		specService:         specService,
 		volumeService:       volumeService,
 	}

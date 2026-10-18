@@ -434,13 +434,36 @@ above:
     defaults from `managed.postgres`.
 - Test: `app_create_managed_test.go`.
 
-- [ ] **Step 1:** Write the tests:
+**As built:**
+- Before the transaction, `planManaged` resolves the plan:
+  - the engine and its API;
+  - the data volume's pin (`ERR_APP_MANAGED_VOLUME_NOT_PINNED`);
+  - the archive. From an S3 repository the prefix is `<repo prefix>/walg/<app key>`;
+    from a cloud storage it is `walg/<app key>`. An optional narrower `keyAuth` can be
+    given. A volume repository counts as `same-node` or `shared`, and one pinned to
+    another node is refused with `ERR_APP_MANAGED_ARCHIVE_UNREACHABLE`;
+  - a 32-byte hex key, with `WALG_LIBSODIUM_KEY_TRANSFORM=hex` added to the engine's
+    env;
+  - the options, the request's over the template's defaults, with the cron
+    schedules checked.
+
+  It then runs `PrepareDoc` and downloads the artifacts with `MountsFor`, on a spec
+  pinned like the data volume.
+- Inside the transaction, `configureFromTemplate` runs the engine's `Configure`, adds
+  the `app-artifacts` setting, and attaches the artifact mounts.
+- The response carries `managed.placement` (`off-site`, `shared`, `same-node`). A
+  managed template as a dependency is refused for now.
+- The request gained `managed`, so **the API level went from 3 to 4**. The CLI has to
+  be regenerated from the new spec and released before the server ships (see "After
+  the plan"). MCP's install tools describe the new field.
+
+- [x] **Step 1:** Write the tests:
   - success creates the app, the `app-managed` setting, three jobs and the artifact
     mount, in one transaction;
   - each refusal (feature, unpinned volume, engine unknown or out of range, storage of
     the wrong kind) creates nothing, and leaves no Swarm service;
   - a volume repository on the same node saves, with the warning in the response.
-- [ ] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): create a managed app from its template`.
+- [x] **Step 2:** Watch them fail. **Step 3:** Write the code. **Step 4:** Run the checks, and `make gen-swag`. **Step 5:** Commit: `feat(managed): create a managed app from its template`.
 
 ## Task 8: Fields the engine owns are refused, and an app can be unmanaged
 
@@ -645,6 +668,11 @@ above:
 - [ ] e2e for create, status and restore against a mocked API. Lint and types are
   clean.
 - [ ] Commit per screen.
+
+## After the plan: release
+
+- **The API level is 4** (Task 7). `hivepaas-cli` regenerates its client from the
+  new spec and is released before the server ships, as `docs/DEVELOPMENT.md` asks.
 
 ## After the plan: live checks on the Linux server
 

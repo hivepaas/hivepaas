@@ -1,5 +1,5 @@
 {
-  "level": 3,
+  "level": 4,
   "operations": {
     "DELETE /cluster/networks/{itemID}": "70b4e9a12bfd331f394ed35d25b5e2e15cff8d9d0d40030d079a3f18727af7a8",
     "DELETE /cluster/nodes/{itemID}": "70b4e9a12bfd331f394ed35d25b5e2e15cff8d9d0d40030d079a3f18727af7a8",
@@ -148,8 +148,8 @@
     "POST /projects/{projectID}/{projectEnv}/access-tokens": "965227829a1434978e8edb36085ed5a6e1a2dec0a8d5429cc9ee62774445d833",
     "POST /projects/{projectID}/{projectEnv}/acme-dns-providers": "efeb0f0476f6bbde24c13bc74818bd4a4dc4201f8d33c742e6321a05f8bbc25f",
     "POST /projects/{projectID}/{projectEnv}/apps": "6ac6f470f7e0f8ca732f1bd32ac6f84cd8e452e61f87cbceb31cd03473934e70",
-    "POST /projects/{projectID}/{projectEnv}/apps/from-template": "d7bc20494c6b02d2ce64b3529ffc977297bb534972fa73fa3dcd9e9efa3a67cb",
-    "POST /projects/{projectID}/{projectEnv}/apps/from-template/preflight": "d7bc20494c6b02d2ce64b3529ffc977297bb534972fa73fa3dcd9e9efa3a67cb",
+    "POST /projects/{projectID}/{projectEnv}/apps/from-template": "6d823081ec306830ce181965ce5c48fe682d6ff9a9225094bdb0ab2709dd6ba0",
+    "POST /projects/{projectID}/{projectEnv}/apps/from-template/preflight": "6d823081ec306830ce181965ce5c48fe682d6ff9a9225094bdb0ab2709dd6ba0",
     "POST /projects/{projectID}/{projectEnv}/apps/function": "8104c5dbc7aecad11b9bcfd9362b95262401fc13d409c5a7dec5815848344945",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/restore": "3bfb17619e3e27155c105d11ec56e31633729013cd98b4ab1d48f2b90553cdad",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute": "9b8bb2c8a5d77b845971cda0edcedd26e3b97ee6737d4ee3f9d9cb5fc7c6c845",

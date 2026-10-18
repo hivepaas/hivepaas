@@ -3,6 +3,7 @@ package apptemplateuc
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -55,6 +56,14 @@ func (uc *UC) CreateAppFromTemplate(
 	if err = uc.checkRequest(ctx, auth, req, rendered, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// A managed template's archive is resolved and its artifacts downloaded
+	// here, before the transaction: a download is not something to hold one open
+	// for.
+	managed, err := uc.planManaged(ctx, req, apps)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	managed.attach(apps)
 	// Whatever a previous install of these apps left on the volumes goes first,
 	// and only when the request says so. The preflight endpoint is where anybody
 	// is told there is something to clear; this is where it is cleared.
@@ -104,7 +113,11 @@ func (uc *UC) CreateAppFromTemplate(
 			return nil, hperrors.Wrap(err)
 		}
 	}
-	return transformCreated(apps, provisioned.Apps), nil
+	resp = transformCreated(apps, provisioned.Apps)
+	if managed != nil {
+		resp.Data.Managed = &apptemplatedto.CreatedManagedResp{Placement: managed.placement}
+	}
+	return resp, nil
 }
 
 // checkRequest runs every check that can refuse a request before anything is
@@ -250,7 +263,15 @@ func (uc *UC) configureFromTemplate(
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		return append(built.Settings, binding), nil
+		settings := append(slices.Clone(built.Settings), binding)
+		if target.managed != nil {
+			managed, managedErr := target.managed.configure(app, spec, settings, timeNow)
+			if managedErr != nil {
+				return nil, managedErr
+			}
+			settings = append(settings, managed...)
+		}
+		return settings, nil
 	}
 }
 
@@ -314,6 +335,9 @@ type appToProvision struct {
 	// these per component, and they differ in every way that matters.
 	result *templaterender.Result
 	links  appTemplateLinks
+	// managed is what a managed template's engine sets up, for the app the
+	// request is about; nil for every other.
+	managed *managedPlan
 }
 
 // key is the name this app will answer to on the project's network, and the

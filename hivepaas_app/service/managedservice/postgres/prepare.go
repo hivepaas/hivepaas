@@ -50,6 +50,8 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	env := [][2]string{
 		{"WALG_COMPRESSION_METHOD", "zstd"},
 		{"WALG_PREVENT_WAL_OVERWRITE", "true"},
+		// The key is 32 bytes, written as hex.
+		{"WALG_LIBSODIUM_KEY_TRANSFORM", "hex"},
 		{"HIVEPAAS_WALG_SECRETS_DIR", secretsDir},
 	}
 	secrets := map[string]string{secretSodiumKey: req.EncryptionKey}

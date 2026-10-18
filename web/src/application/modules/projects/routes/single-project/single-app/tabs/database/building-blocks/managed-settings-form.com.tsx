@@ -31,6 +31,8 @@ const QUERY_MAX_LENGTH = 2000;
 const DATABASE_KEY = "__database__";
 /** The dump's repository: none, dumps off. */
 const NO_DUMP = "__no-dump__";
+/** The base backups' host: the database itself. */
+const THIS_DATABASE = "__this-database__";
 /** The engine's dump schedule, which a database made before dumps were offered has not kept. */
 const DEFAULT_DUMP_SCHEDULE = "0 3 * * *";
 
@@ -42,6 +44,7 @@ const SettingsFormSchema = z
         restoreTestQuery: z.string().trim().max(QUERY_MAX_LENGTH, `At most ${QUERY_MAX_LENGTH} characters`),
         restoreTestMode: z.nativeEnum(MANAGED_RESTORE_TEST_MODE),
         dumpRepo: z.string(),
+        backupFrom: z.string(),
         dumpSchedule: z.string().trim().min(1, "A cron expression"),
         // Only for a move into a verifier: the volume it restores into, and its key.
         verifierVolume: z.string(),
@@ -77,6 +80,7 @@ function initialValuesOf(settings: AppManagedSettings): FormInput {
         restoreTestQuery: settings.restoreTest?.checkQuery ?? "",
         restoreTestMode: settings.restoreTest?.mode ?? MANAGED_RESTORE_TEST_MODE.container,
         dumpRepo: settings.dump.repo?.id ?? NO_DUMP,
+        backupFrom: settings.backupFrom?.id ?? THIS_DATABASE,
         dumpSchedule: dumpScheduleOf(settings),
         verifierVolume: "",
         verifierKey: DATABASE_KEY,
@@ -151,6 +155,7 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
     const { field: restoreTestQuery } = useController({ name: "restoreTestQuery", control });
     const { field: restoreTestMode } = useController({ name: "restoreTestMode", control });
     const { field: dumpRepo } = useController({ name: "dumpRepo", control });
+    const { field: backupFrom } = useController({ name: "backupFrom", control });
     const { field: dumpSchedule } = useController({ name: "dumpSchedule", control });
     const dumpScheduleValue = useWatch({ control, name: "dumpSchedule" });
     const baseBackupScheduleValue = useWatch({ control, name: "baseBackupSchedule" });
@@ -181,6 +186,9 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
         }
         if (values.restoreTestQuery !== (settings.restoreTest?.checkQuery ?? "")) {
             payload.restoreTestQuery = values.restoreTestQuery;
+        }
+        if (values.backupFrom !== (settings.backupFrom?.id ?? THIS_DATABASE)) {
+            payload.backupFrom = { id: values.backupFrom === THIS_DATABASE ? "" : values.backupFrom };
         }
         if (values.dumpRepo !== (settings.dump.repo?.id ?? NO_DUMP)) {
             payload.dumpRepo = { id: values.dumpRepo === NO_DUMP ? "" : values.dumpRepo };
@@ -264,6 +272,42 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                 <FieldError errors={[errors.baseBackupSchedule]} />
                             </InfoBlock>
                         </Field>
+
+                        {settings.members.length > 0 && (
+                            <Field>
+                                <InfoBlock
+                                    title="Base backups taken on"
+                                    titleWidth={TITLE_WIDTH}
+                                >
+                                    <Select
+                                        value={backupFrom.value}
+                                        onValueChange={backupFrom.onChange}
+                                    >
+                                        <SelectTrigger
+                                            className="w-full max-w-[360px]"
+                                            aria-label="Base backups taken on"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={THIS_DATABASE}>This database</SelectItem>
+                                            {settings.members.map(member => (
+                                                <SelectItem
+                                                    key={member.key}
+                                                    value={member.app?.id ?? member.key}
+                                                >
+                                                    Replica {member.key}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldDescription>
+                                        A replica takes the base backup, sparing this database its read; retention runs
+                                        here either way. Removing the replica takes them back here.
+                                    </FieldDescription>
+                                </InfoBlock>
+                            </Field>
+                        )}
 
                         <Field>
                             <InfoBlock

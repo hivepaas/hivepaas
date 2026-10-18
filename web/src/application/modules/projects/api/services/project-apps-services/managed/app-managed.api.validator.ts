@@ -113,6 +113,7 @@ const SettingsSchema = z.object({
         )
         .nullish()
         .transform(value => value ?? []),
+    backupFrom: ObjectRefSchema,
     memberOf: z
         .object({ app: ObjectRefSchema, role: z.string().optional().default("replica") })
         .nullish()

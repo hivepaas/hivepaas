@@ -91,6 +91,12 @@ export function ManagedStatusCards({ settings, status, snapshotsHref }: Props) {
                             {lastBackup.bytes > 0 && (
                                 <Line label="Size">{formatDataSizeCompact(lastBackup.bytes)}</Line>
                             )}
+                            {settings.backupFrom && (
+                                <Line label="Runs on">
+                                    {settings.members.find(member => member.app?.id === settings.backupFrom?.id)?.key ??
+                                        "a replica"}
+                                </Line>
+                            )}
                             {lastBackup.name !== "" && (
                                 <Line label="Name">
                                     <span className="font-mono text-[11px]">{lastBackup.name}</span>

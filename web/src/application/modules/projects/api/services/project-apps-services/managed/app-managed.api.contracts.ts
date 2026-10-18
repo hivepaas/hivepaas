@@ -27,6 +27,8 @@ export type AppManagedSettings_UpdatePayload = {
     /** A repository turns dumps on, an empty id turns them off. */
     dumpRepo?: { id: string };
     dumpSchedule?: string;
+    /** A replica takes the base backups; an empty id has the database take them. */
+    backupFrom?: { id: string };
     restoreTest?: {
         mode: ManagedRestoreTestMode;
         volume?: { id: string };

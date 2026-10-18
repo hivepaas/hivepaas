@@ -582,3 +582,31 @@ test("a replica's Database tab names its primary", async ({ page, api }) => {
     await expect(page.getByRole("button", { name: "Restore" })).toHaveCount(0);
     await expect(page.getByRole("region", { name: "Settings" })).toHaveCount(0);
 });
+
+// A database with a replica can have its base backups taken there; the card says
+// where they run, and taking them home again is a save away.
+test("a managed database's base backups are taken on its replica", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const member = {
+        app: { id: "e2ereplicaapp01" },
+        key: "e2e-db-r1",
+        role: "replica",
+        volume: { id: VOLUME.id },
+        node: "e2enode02",
+        at: at(-DAY),
+    };
+    const { updates } = await answerManaged(page, app, { members: [member], backupFrom: { id: "e2ereplicaapp01" } });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    await expect(page.getByRole("region", { name: "Last base backup" })).toContainText("Runs one2e-db-r1");
+    const settings = page.getByRole("region", { name: "Settings" });
+    const host = settings.getByRole("combobox", { name: "Base backups taken on" });
+    await expect(host).toHaveText("Replica e2e-db-r1");
+
+    await host.click();
+    await page.getByRole("option", { name: "This database" }).click();
+    await settings.getByRole("button", { name: "Save" }).click();
+    await expect.poll(() => updates.length, { message: "the settings were saved" }).toBe(1);
+    expect(updates[0]?.postDataJSON()).toEqual({ updateVer: 3, backupFrom: { id: "" } });
+});

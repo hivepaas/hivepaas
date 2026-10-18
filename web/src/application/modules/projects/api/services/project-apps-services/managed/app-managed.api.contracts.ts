@@ -81,3 +81,9 @@ export type AppManaged_Switch_Res = ApiResponseBase<{
     switched: { id: string }[];
     deployments: { app: { id: string }; deployment: { id: string }; task: { id: string } }[];
 }>;
+
+export type AppManaged_AddReplica_Req = ApiRequestBase<AppScope & { payload: { dataVolume: { id: string } } }>;
+export type AppManaged_AddReplica_Res = ApiResponseBase<{ app: { id: string }; task?: { id: string } }>;
+
+export type AppManaged_RemoveReplica_Req = ApiRequestBase<AppScope & { memberID: string }>;
+export type AppManaged_RemoveReplica_Res = ApiResponseBase<{ type: "success" }>;

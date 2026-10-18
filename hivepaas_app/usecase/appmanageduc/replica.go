@@ -260,10 +260,17 @@ func (uc *UC) RemoveManagedReplica(
 		if pg == nil || pg.Member(req.MemberID) == nil {
 			return hperrors.NewNotFound("Replica")
 		}
+		now := timeutil.NowUTC()
+		// The base backups taken on it are taken on the database again.
+		if pg.BackupFrom.ID == req.MemberID {
+			if err = uc.moveBaseBackupsHome(ctx, db, loaded, now); err != nil {
+				return err
+			}
+		}
 		pg.Members = slices.DeleteFunc(pg.Members, func(member *entity.ManagedMember) bool {
 			return member.App.ID == req.MemberID
 		})
-		if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, timeutil.NowUTC()); err != nil {
+		if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, now); err != nil {
 			return err
 		}
 		if err = uc.recordReplica(ctx, db, auth, loaded.app, "replicaRemoved", req.MemberID); err != nil {
@@ -464,6 +471,32 @@ func adaptForReplica(setting *entity.Setting, ids map[string]string) error {
 		deployment.PreDeploymentCommand, deployment.PostDeploymentCommand = "", ""
 		deployment.RestorePointBeforeDeploy = entity.ObjectID{}
 		return hperrors.Wrap(setting.SetData(deployment))
+	}
+	return nil
+}
+
+// moveBaseBackupsHome has the engine take the base backups on the database
+// again, and stores the nightly job it moved. The engine's setting is changed
+// in place, for the caller to store.
+func (uc *UC) moveBaseBackupsHome(ctx context.Context, db database.Tx, loaded *loadedManaged, now time.Time) error {
+	jobs := make(map[string]*entity.Setting, len(loaded.jobs))
+	for _, job := range loaded.jobs {
+		jobs[job.ID] = job
+	}
+	resp, err := loaded.engine.Reconfigure(&managedmodel.ReconfigureReq{App: loaded.app, ManagedID: loaded.setting.ID,
+		Managed: loaded.managed, Jobs: jobs, Change: &managedmodel.SettingsChange{BackupFrom: new("")}, Now: now})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	for _, setting := range resp.Changed {
+		setting.UpdatedAt = now
+		if err = uc.settingRepo.Update(ctx, db, setting,
+			bunex.UpdateColumns("data", "update_ver", "updated_at")); err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, setting, false); err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 	return nil
 }

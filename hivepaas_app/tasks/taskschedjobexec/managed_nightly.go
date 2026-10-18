@@ -19,7 +19,9 @@ import (
 // backup, then the retention its engine decides from the backups the first step
 // listed and the restore points kept (design §4, "Retention and kept points").
 // A backup that failed is not followed by retention. The run's outputs are both
-// steps', the retention's over the backup's.
+// steps', the retention's over the backup's. The backup is taken in the app the
+// job names, which may be a replica, sparing the database; retention and the
+// pruning after it run on the database the job is the engine's of.
 func (e *Executor) runNightly(
 	ctx context.Context,
 	db database.Tx,
@@ -30,10 +32,21 @@ func (e *Executor) runNightly(
 	if err != nil {
 		return nil, err
 	}
-	app := run.refObjects.RefApps[job.App.ID]
+	primary := run.refObjects.RefApps[run.jobSetting.ObjectID]
+	backupOn := run.refObjects.RefApps[job.App.ID]
+	if primary == nil {
+		primary = backupOn
+	}
+	if backupOn == nil {
+		// The replica named is gone: the database takes its own backup.
+		_ = run.execData.LogStore.Add(ctx, tasklog.NewWarnFrame(
+			"The replica the base backups are taken on is gone: this one is taken on the database.\n",
+			tasklog.TsNow))
+		backupOn = primary
+	}
 	result := &jobResult{outputs: map[string]string{}}
 
-	resp, err := e.execNightlyStep(ctx, db, run, app, job, engine.NightlyBackupArgs())
+	resp, err := e.execNightlyStep(ctx, db, run, backupOn, job, engine.NightlyBackupArgs())
 	result.add(resp)
 	if err != nil {
 		return result, hperrors.Wrap(err)
@@ -49,12 +62,12 @@ func (e *Executor) runNightly(
 	}
 	_ = run.execData.LogStore.Add(ctx, tasklog.NewOutFrame(line, tasklog.TsNow))
 
-	resp, err = e.execNightlyStep(ctx, db, run, app, job, retention.Args)
+	resp, err = e.execNightlyStep(ctx, db, run, primary, job, retention.Args)
 	result.add(resp)
 	if err != nil {
 		return result, hperrors.Wrap(err)
 	}
-	e.pruneDeployPoints(ctx, db, run, app, result.outputs)
+	e.pruneDeployPoints(ctx, db, run, primary, result.outputs)
 	return result, nil
 }
 

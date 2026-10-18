@@ -94,6 +94,9 @@ type SettingsChange struct {
 	// DumpRepo is the backup repository dumps go into: empty turns them off.
 	DumpRepo     *string
 	DumpSchedule *string
+	// BackupFrom is the member the base backups are taken on: empty for the
+	// database itself.
+	BackupFrom *string
 }
 
 // RestoreTestChange moves the restore test: into the verifier app given, or,

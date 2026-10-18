@@ -134,6 +134,9 @@ type ManagedPostgres struct {
 	Restore *ManagedRestore `json:"restore,omitempty"`
 	// Members are the database's replicas.
 	Members []*ManagedMember `json:"members,omitempty"`
+	// BackupFrom is the member the base backups are taken on, to spare the
+	// database; empty, they are taken on the database itself.
+	BackupFrom ObjectID `json:"backupFrom,omitzero"`
 	// ReplicationPassword is what the replicas stream with, made with the first
 	// one.
 	ReplicationPassword EncryptedField `json:"replicationPassword,omitzero"`

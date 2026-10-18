@@ -124,6 +124,9 @@ func (uc *UC) updateManagedSettings(
 	if req.DumpRepo != nil {
 		detail = detail.Set("dumpRepo", req.DumpRepo.ID)
 	}
+	if req.BackupFrom != nil {
+		detail = detail.Set("backupFrom", req.BackupFrom.ID)
+	}
 	if move != nil {
 		detail = detail.Set("restoreTest", req.RestoreTest.Mode)
 	}
@@ -189,9 +192,12 @@ func reconfigureManaged(
 	for _, job := range loaded.jobs {
 		jobs[job.ID] = job
 	}
-	var dumpRepo *string
+	var dumpRepo, backupFrom *string
 	if req.DumpRepo != nil {
 		dumpRepo = &req.DumpRepo.ID
+	}
+	if req.BackupFrom != nil {
+		backupFrom = &req.BackupFrom.ID
 	}
 	resp, err := loaded.engine.Reconfigure(&managedmodel.ReconfigureReq{
 		App:       loaded.app,
@@ -206,6 +212,7 @@ func reconfigureManaged(
 			RestoreTest:         move,
 			DumpRepo:            dumpRepo,
 			DumpSchedule:        req.DumpSchedule,
+			BackupFrom:          backupFrom,
 		},
 		Now: now,
 	})

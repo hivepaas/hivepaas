@@ -134,3 +134,25 @@ func TestTheSettingsSayWhereARestoredDatabaseCameFrom(t *testing.T) {
 		assert.Nil(t, restore.ReadyAt, "still restoring")
 	}
 }
+
+// The base backups move to a replica: the nightly job runs there, and the
+// settings say where.
+func TestReconfiguringMovesTheBaseBackupsToAReplica(t *testing.T) {
+	loaded := loadedPostgres(t)
+	loaded.managed.Postgres.Members = []*entity.ManagedMember{{App: entity.ObjectID{ID: "db-r1"}, Key: "db-r1",
+		Role: entity.ManagedRoleReplica}}
+
+	resp, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 3,
+		BackupFrom: &basedto.ObjectIDReq{ID: "db-r1"}}, nil, time.Now())
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"job-1"}, settingIDs(resp.Changed))
+	assert.Equal(t, "db-r1", resp.Changed[0].MustAsSchedJob().App.ID)
+	settings := appmanageddto.TransformManagedSettings(loaded.view())
+	assert.Equal(t, "db-r1", settings.BackupFrom.ID)
+
+	_, err = reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 4,
+		BackupFrom: &basedto.ObjectIDReq{}}, nil, time.Now())
+	assert.NoError(t, err)
+	assert.Nil(t, appmanageddto.TransformManagedSettings(loaded.view()).BackupFrom)
+}

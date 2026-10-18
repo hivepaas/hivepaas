@@ -57199,6 +57199,14 @@
           "archiveTimeout" : {
             "type" : "string"
           },
+          "backupFrom" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "BackupFrom is the replica the base backups are taken on, null for the\ndatabase itself.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "baseBackupSchedule" : {
             "type" : "string"
           },
@@ -57280,7 +57288,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "archiveTimeout", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
+        "required" : [ "archiveTimeout", "backupFrom", "baseBackupSchedule", "dump", "engine", "engineApi", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -57699,6 +57707,13 @@
       },
       "appmanageddto.UpdateManagedSettingsReq" : {
         "properties" : {
+          "backupFrom" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "BackupFrom is the replica the base backups are taken on, sparing the\ndatabase: {\"id\": \"\"} takes them on the database again. Retention runs on the\ndatabase either way.",
+            "type" : "object"
+          },
           "baseBackupSchedule" : {
             "type" : "string"
           },

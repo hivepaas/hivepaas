@@ -947,16 +947,16 @@ above:
 
 ## Task 14 (`hivepaas-dashboard`): the managed screens
 
-- [ ] **Store:**
+- [x] **Store:**
   - a "Managed" badge;
   - the missing feature, with the plans that grant it, instead of the form.
-- [ ] **Create form:** a Managed section with:
+- [x] **Create form:** a Managed section with:
   - storage: an S3 repository, a cloud storage or a volume repository;
   - an optional separate key, with the reason for one;
   - the placement warning;
   - the restore test's mode and node;
   - schedules and retention.
-- [ ] **The app's Database tab:**
+- [x] **The app's Database tab:**
   - Status: archiving, restore window, last backup and test, placement and
     suggestions;
   - Restore: the four targets (latest, a time bounded by the window, a restore
@@ -965,11 +965,66 @@ above:
     estimated storage; list each point with its "restorable until" date; delete;
   - Settings;
   - Unmanage, with a confirmation that names what goes.
-- [ ] **Locked fields:** shown read-only with the reason, on every screen Task 8
+- [x] **Locked fields:** shown read-only with the reason, on every screen Task 8
   covers. The jobs list shows managed jobs as managed.
-- [ ] e2e for create, status and restore against a mocked API. Lint and types are
+- [x] e2e for create, status and restore against a mocked API. Lint and types are
   clean.
-- [ ] Commit per screen.
+- [x] Commit per screen.
+
+**As built** (`../hivepaas-dashboard`, branch `feat/managed-db`, worktree
+`../hivepaas-dashboard-managed`; commits b0a2a072, fe829ba4, 60583caa, b88fe4b5,
+8606a921, bbd18ea2):
+- **API layer** (b0a2a072): hand-written contracts, zod validators and a service
+  for the nine endpoints under `/projects/{p}/{env}/apps/{app}/managed`; queries
+  `AppManagedQueries.useFindSettings|useFindStatus`, commands for the rest. The
+  plan-limit dialog says which feature a `PLAN_FEATURE_REQUIRED` refusal names.
+- **Store and create form** (fe829ba4): a Managed badge on the card and details;
+  a template missing a feature shows it, with the plans that grant it, and no
+  Deploy. The form's "Archive and backups" section chooses a backup repository
+  (S3 or volume) or a cloud storage, an optional narrower key for S3 with the
+  reason, warns of an archive on a volume, and takes the schedules, retention,
+  archive timeout and check query. The placement the create answers is toasted.
+  - **Deviation:** the restore test's mode is not chosen at create: the create
+    request has no field for it (Task 6), so a database starts with the test in
+    its container, and the Database tab's settings move it into a verifier.
+- **Database tab** (60583caa), `ROUTE...apps.single.database`, linked in the app
+  header only when the app's category is database and its managed settings
+  answer:
+  - status cards: archiving (badge, last archived, failures, `pg_wal` size,
+    timeout), restore window with the base backups kept, the last base backup and
+    restore test, the placement, the held-back storage and the suggestions;
+  - a restoring banner on a restored database until `readyAt`, polled every 10 s;
+  - restore points: a table with "restorable until", "kept until", restore to it,
+    edit and delete. The point dialog estimates what keeping holds back as the
+    nights past `retainFull` times the last base backup's size, and says the WAL
+    meanwhile is on top: the status has no WAL growth per day to go by;
+  - the restore dialog: the four targets, the time checked against the window,
+    points no kept backup reaches and volumes pinned to no node disabled, an
+    optional name; it then opens the new app's restore task;
+  - settings: retention, schedules, the check query, and the restore test's
+    mode, with the verifier's volume and key when moving into one; only changed
+    fields are sent;
+  - refresh credentials, and an unmanage dialog that lists what goes and what
+    stays and asks for the app's name.
+- **Locked fields** (b88fe4b5): `useAppManagedLocks` reads the header's cached
+  queries, and `ManagedLockNotice` gives the reason with a link to the Database
+  tab. Kind: category and engine (version and port stay editable). Deployment:
+  method, entrypoint, with the repository, line and command prefix said.
+  Container: entrypoint and user. Storage: locked targets tagged Managed, no
+  Remove, their edit form read-only. Env vars: locked keys read-only rows.
+  Secrets, config files and setting mounts: rows in `locks.settings` tagged
+  Managed, without edit or menu.
+- **Jobs** (8606a921): `managedBy` on the job, a Managed tag, no status change or
+  removal, the form read-only. `managed-nightly` and `managed-restore-test` were
+  added to `EAppScheduledJobType`: without them the jobs list of a managed app
+  failed to parse.
+- **e2e** (bbd18ea2): `e2e/tests/level-0/managed-database.spec.ts`, against a
+  mocked API in the HivePaaS project, with Traefik standing in for the database:
+  create from the store with the archive chosen, the Database tab's status, and a
+  restore to a point. It typechecks; it has not been run, as no local backend was
+  up and none is started against this machine's swarm.
+- **Checks:** `npm run lint:ci` (0 errors; the 6 warnings are in files this branch
+  does not touch), `npm run build`, `e2e` `tsc --noEmit`.
 
 ## After the plan: release
 

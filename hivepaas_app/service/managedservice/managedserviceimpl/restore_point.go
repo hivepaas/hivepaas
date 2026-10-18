@@ -112,8 +112,14 @@ func (s *service) runMark(ctx context.Context, db database.Tx, locked *lockedMan
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
-	if resp == nil || resp.ExitCode == nil || *resp.ExitCode != 0 {
-		return "", hperrors.Wrap(hperrors.ErrActionFailed).WithExtraDetail("the restore point could not be made")
+	// The mark did not start: the database's service runs no container, as one
+	// scaled to zero.
+	if resp == nil || resp.ExitCode == nil {
+		return "", hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", locked.app.Name)
+	}
+	if *resp.ExitCode != 0 {
+		return "", hperrors.Wrap(hperrors.ErrActionFailed).
+			WithExtraDetail("the restore point could not be made: the mark exited with %d", *resp.ExitCode)
 	}
 	lsn, err := locked.engine.MarkResult(stdout.String())
 	return lsn, hperrors.Wrap(err)

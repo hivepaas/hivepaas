@@ -100,6 +100,7 @@ func TestADeploymentWhosePointCannotBeMadeFails(t *testing.T) {
 	info, _ := hperrors.ParseError(err, "en")
 	assert.Contains(t, info.Detail, "shop-db")
 	assert.Contains(t, info.Detail, "not archived in time")
+	assert.NotContains(t, info.Detail, "ERR_APP_MANAGED_RESTORE_POINT_NOT_ARCHIVED", "the reason is said, not coded")
 }
 
 // The name fits PostgreSQL's 63 bytes whatever the key, and is the same for one

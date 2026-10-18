@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
 )
 
@@ -52,12 +53,21 @@ func (s *service) deployStepRestorePoint(ctx context.Context, data *appDeploymen
 	if err != nil {
 		return hperrors.Wrap(hperrors.ErrAppDeployRestorePointFailed).
 			WithParam("Database", s.appName(ctx, data.App.ProjectID, databaseID)).
-			WithParam("Reason", hperrors.GetErrorDetail(err, "")).
+			WithParam("Reason", reasonOf(err)).
 			WithCause(err)
 	}
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Restore point %s is on %s, at %s.",
 		marked.Point.Name, marked.App.Name, marked.Point.LSN), tasklog.TsNow))
 	return nil
+}
+
+// reasonOf is what an error says, for a sentence: its message without its code.
+func reasonOf(err error) string {
+	info, _ := hperrors.ParseError(err, translation.GetDefaultLang())
+	if info == nil || info.Detail == "" {
+		return err.Error()
+	}
+	return info.Detail
 }
 
 // appName is an app's name for a message, its id when it cannot be read.

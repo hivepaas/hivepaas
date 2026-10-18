@@ -35,11 +35,16 @@ type markExec struct {
 	exit     int
 	stdout   string
 	commands []string
+	// notStarted answers as for a service scaled to zero: no exit code, no error.
+	notStarted bool
 }
 
 func (f *markExec) RunCommand(_ context.Context, _ database.Tx, req *schedjobexecservice.RunCommandReq) (
 	*schedjobexecservice.RunCommandResp, error) {
 	f.commands = append(f.commands, req.Command.Command)
+	if f.notStarted {
+		return &schedjobexecservice.RunCommandResp{}, nil
+	}
 	_, _ = req.StdoutWriter.Write([]byte(f.stdout))
 	exit := f.exit
 	resp := &schedjobexecservice.RunCommandResp{ExitCode: &exit}
@@ -126,7 +131,10 @@ func TestARestorePointIsRefusedWhenItCannotBeListed(t *testing.T) {
 		"a name HivePaaS keeps": {pointsApp(), "hp-test-1", &markExec{}, hperrors.ErrArgumentInvalid, false},
 		"its WAL not archived in time": {pointsApp(), "late", &markExec{exit: managedmodel.MarkExitNotArchived},
 			hperrors.ErrAppManagedRestorePointNotArchived, true},
-		"no LSN printed": {pointsApp(), "quiet", &markExec{stdout: "done\n"}, hperrors.ErrInternal, true},
+		"no LSN printed":   {pointsApp(), "quiet", &markExec{stdout: "done\n"}, hperrors.ErrInternal, true},
+		"the mark failing": {pointsApp(), "failing", &markExec{exit: 1}, hperrors.ErrActionFailed, true},
+		"no container to mark in": {pointsApp(), "stopped", &markExec{notStarted: true},
+			hperrors.ErrActiveContainerNotFound, true},
 	} {
 		svc, settings := pointsService(tc.app, tc.exec)
 

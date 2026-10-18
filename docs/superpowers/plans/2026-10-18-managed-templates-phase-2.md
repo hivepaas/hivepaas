@@ -135,7 +135,43 @@ archived.
 - `engineApi` stays 1: no contract changes.
 - A restored app is not affected. Its promotion ends recovery with a checkpoint.
 
-- [ ] Commit: `walg-entrypoint: a checkpoint once the server is up`.
+- [x] Commit: `walg-entrypoint: a checkpoint once the server is up`.
+
+**As built** (app-templates 6d653f4, merged as 70fe28b; backend 11cf983e, merged as
+4be5c071):
+- **The backend changed too.** Only a restored database started through
+  `walg-entrypoint`; a new one started as the image does. `setServerArguments` now
+  sets the entrypoint for every managed database. Its non-restore path only execs
+  `docker-entrypoint.sh`, so nothing else changes. Task 5's standby mode needs this
+  anyway.
+- **`serve` in the entrypoint**, used by both of its `exec docker-entrypoint.sh` paths
+  (a normal start, and a restored database's later starts):
+  - when the command is `postgres`, it starts `checkpoint_once` detached twice. The
+    verifier's `sleep infinity` gets none.
+  - `checkpoint_once` waits up to 10 minutes for a server whose
+    `listen_addresses` is not empty. That skips the socket-only server the image runs
+    while it initializes a data directory.
+  - It runs `CHECKPOINT` once, logs either way, and always exits 0. Without an init,
+    the postmaster reaps it, and would take another exit for a backend's crash.
+  - HivePaaS runs containers with docker's init unless the image has one of its own
+    (`deployment_container_init.go`), so in practice PID 1 reaps it.
+- **Harness:**
+  - the archive database starts through `walg-entrypoint` with `--init`, as HivePaaS
+    does;
+  - a new check, `archived_unasked`, requires a write in the first minute to be
+    archived within archive_timeout + 30s, with no switch asked for. It failed before
+    the change. All 114 checks pass on 17 and 18 after it.
+- **Template.** The change to the template moves `index.json`: run `apptemplate index`
+  after `generate.sh`.
+- **README.** No change: the template's description already says a failure loses about
+  a minute of writes, which now holds from the first minute.
+- **Live check, on the e2e stack:**
+  - PG18 started 15:15:54, a write followed at 15:15:55, and it was archived at
+    15:16:54, archive_timeout after the start.
+  - PG17 was archived at 15:17:09, also archive_timeout after its start.
+  - The log says `checkpointed once the server was up`.
+- **To ship:** the template change reaches installations only through a new pin in
+  release.json, signed again, after the phase's other template tasks.
 
 ## Task 2: a restore point before every deploy
 

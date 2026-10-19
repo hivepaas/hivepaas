@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	CurrentAppManagedVersion = 1
+	CurrentAppManagedVersion = 2
 
 	// ManagedRestoreTestContainer runs the restore test in the database's own
 	// container; ManagedRestoreTestVerifier in a verifier app, scaled up for it.
@@ -48,10 +49,14 @@ func (s *appManagedSettingsParser) New() SettingData {
 //
 // See docs/superpowers/specs/2026-10-17-managed-templates-design.md §3.
 type AppManagedSettings struct {
-	Engine    string           `json:"engine"`
-	EngineAPI int              `json:"engineApi"`
-	Locks     ManagedLocks     `json:"locks"`
-	Postgres  *ManagedPostgres `json:"postgres,omitempty"`
+	Engine    string       `json:"engine"`
+	EngineAPI int          `json:"engineApi"`
+	Locks     ManagedLocks `json:"locks"`
+	// Database is the engine's state of the database it looks after, whatever
+	// the engine; nil for a member, whose state is its primary's.
+	Database *ManagedDatabase `json:"database,omitempty"`
+	// LegacyPostgres is where version 1 kept Database, read only to move it.
+	LegacyPostgres *ManagedDatabase `json:"postgres,omitempty"`
 	// SwitchedTo is the database restored from this one that its consumers were
 	// switched to: this one's jobs are paused since, and it is left running for
 	// the person to stop or delete.
@@ -123,7 +128,10 @@ type ManagedLocks struct {
 	Settings []string `json:"settings,omitempty"`
 }
 
-type ManagedPostgres struct {
+// ManagedDatabase is what the engine keeps of a database: its archive, its
+// jobs, its points and its members. None of it is one engine's: what differs
+// between engines, such as a point's position, is a value the engine defines.
+type ManagedDatabase struct {
 	// Storage is where WAL-G writes. It is chosen when the app is created, and
 	// its prefix never changes: the archive is there.
 	Storage ManagedStorage `json:"storage"`
@@ -133,8 +141,8 @@ type ManagedPostgres struct {
 	RetainFull     int                `json:"retainFull"`
 	RestoreTest    ManagedRestoreTest `json:"restoreTest"`
 	// Dump is the logical dump the engine takes beside the archive.
-	Dump ManagedDump         `json:"dump,omitzero"`
-	Jobs ManagedPostgresJobs `json:"jobs"`
+	Dump ManagedDump `json:"dump,omitzero"`
+	Jobs ManagedJobs `json:"jobs"`
 	// RestorePoints are the moments a person named, to restore to exactly.
 	RestorePoints []*ManagedRestorePoint `json:"restorePoints,omitempty"`
 	// Restore is where this database was restored from, when it was.
@@ -158,7 +166,7 @@ type ManagedPostgres struct {
 
 // WriterKey is the key of the cluster's primary: the writer member's, or app's
 // own.
-func (s *ManagedPostgres) WriterKey(app *App) string {
+func (s *ManagedDatabase) WriterKey(app *App) string {
 	if member := s.Member(s.Writer.ID); member != nil {
 		return member.Key
 	}
@@ -166,7 +174,7 @@ func (s *ManagedPostgres) WriterKey(app *App) string {
 }
 
 // Member is the member of that app, nil for none.
-func (s *ManagedPostgres) Member(appID string) *ManagedMember {
+func (s *ManagedDatabase) Member(appID string) *ManagedMember {
 	for _, member := range s.Members {
 		if member.App.ID == appID {
 			return member
@@ -175,12 +183,15 @@ func (s *ManagedPostgres) Member(appID string) *ManagedMember {
 	return nil
 }
 
-// ManagedRestorePoint is a moment a person named. A restore targets its LSN:
-// the name is a label, which Postgres does not keep unique (design §4).
+// ManagedRestorePoint is a moment a person named. A restore targets its
+// position, which the engine defines and reads back (a Postgres LSN): the name
+// is a label, which Postgres does not keep unique (design §4).
 type ManagedRestorePoint struct {
-	Name string    `json:"name"`
-	LSN  string    `json:"lsn"`
-	At   time.Time `json:"at"`
+	Name     string    `json:"name"`
+	Position string    `json:"position"`
+	At       time.Time `json:"at"`
+	// LegacyLSN is where version 1 kept Position, read only to move it.
+	LegacyLSN string `json:"lsn,omitempty"`
 	// By is the user who made it.
 	By   string `json:"by,omitempty"`
 	Note string `json:"note,omitempty"`
@@ -198,7 +209,7 @@ type ManagedRestorePoint struct {
 const ManagedPointOriginDeploy = "deploy"
 
 // RestorePoint is the app's point of that name, nil for none.
-func (s *ManagedPostgres) RestorePoint(name string) *ManagedRestorePoint {
+func (s *ManagedDatabase) RestorePoint(name string) *ManagedRestorePoint {
 	for _, point := range s.RestorePoints {
 		if point.Name == name {
 			return point
@@ -211,10 +222,12 @@ func (s *ManagedPostgres) RestorePoint(name string) *ManagedRestorePoint {
 type ManagedRestoreTarget struct {
 	Kind string    `json:"kind"`
 	Time time.Time `json:"time,omitzero"`
-	// Point and LSN are a restore point's name and where it is.
-	Point  string `json:"point,omitempty"`
-	LSN    string `json:"lsn,omitempty"`
-	Backup string `json:"backup,omitempty"`
+	// Point and Position are a restore point's name and where it is.
+	Point    string `json:"point,omitempty"`
+	Position string `json:"position,omitempty"`
+	Backup   string `json:"backup,omitempty"`
+	// LegacyLSN is where version 1 kept Position, read only to move it.
+	LegacyLSN string `json:"lsn,omitempty"`
 }
 
 // ManagedRestore is where a database restored into a new app came from, and
@@ -240,9 +253,10 @@ type ManagedStorage struct {
 	Placement string `json:"placement,omitempty"`
 }
 
-// ManagedDump is a pg_dump of the database into a backup repository, a data
-// backup like any other, run on the person's schedule. Without a repository
-// there is no dump: the schedule is kept for when there is one.
+// ManagedDump is a logical dump of the database into a backup repository (the
+// engine's dump tool: pg_dump for Postgres), a data backup like any other, run
+// on the person's schedule. Without a repository there is no dump: the
+// schedule is kept for when there is one.
 type ManagedDump struct {
 	Repo     ObjectID `json:"repo,omitzero"`
 	Schedule string   `json:"schedule,omitempty"`
@@ -259,14 +273,52 @@ type ManagedRestoreTest struct {
 	CheckQuery string   `json:"checkQuery,omitempty"`
 }
 
-// ManagedPostgresJobs are the scheduled jobs the engine made, by role. They are
-// data here, not references: each job points at this setting instead.
-type ManagedPostgresJobs struct {
+// ManagedJobs are the scheduled jobs the engine made, by role. They are data
+// here, not references: each job points at this setting instead.
+type ManagedJobs struct {
 	Nightly     ObjectID `json:"nightly,omitzero"`
 	Health      ObjectID `json:"health,omitzero"`
 	RestoreTest ObjectID `json:"restoreTest,omitzero"`
 	// Dump is the data backup that dumps the database; empty while dumps are off.
 	Dump ObjectID `json:"dump,omitzero"`
+}
+
+// UnmarshalJSON reads version 1's names as the current ones: "postgres" as
+// "database", a position's "lsn" as "position". Data migration rewrites rows
+// only while the stored data version is behind, which not every database's
+// is: a row it has not reached is read in the current shape all the same, and
+// written in it by SetAppManagedData.
+func (s *AppManagedSettings) UnmarshalJSON(data []byte) error {
+	type appManagedSettings AppManagedSettings // Without this type's methods, so this one does not call itself.
+	if err := json.Unmarshal(data, (*appManagedSettings)(s)); err != nil {
+		return hperrors.Wrap(err)
+	}
+	s.moveLegacyFields()
+	return nil
+}
+
+// moveLegacyFields moves what version 1 kept under its old names to the
+// current ones, and clears the old: written back, the row has the new only.
+func (s *AppManagedSettings) moveLegacyFields() {
+	if s.Database == nil {
+		s.Database = s.LegacyPostgres
+	}
+	s.LegacyPostgres = nil
+	if s.Database == nil {
+		return
+	}
+	for _, point := range s.Database.RestorePoints {
+		if point.Position == "" {
+			point.Position = point.LegacyLSN
+		}
+		point.LegacyLSN = ""
+	}
+	if restore := s.Database.Restore; restore != nil {
+		if restore.Target.Position == "" {
+			restore.Target.Position = restore.Target.LegacyLSN
+		}
+		restore.Target.LegacyLSN = ""
+	}
 }
 
 func (s *AppManagedSettings) GetType() base.SettingType {
@@ -281,20 +333,20 @@ func (s *AppManagedSettings) GetRefObjectIDs() *RefObjectIDs {
 	if s.MemberOf != nil && s.MemberOf.App.ID != "" {
 		refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.MemberOf.App.ID)
 	}
-	if s.Postgres == nil {
+	if s.Database == nil {
 		return refIDs
 	}
-	storage := s.Postgres.Storage
+	storage := s.Database.Storage
 	for _, id := range []string{storage.BackupRepo.ID, storage.CloudStorage.ID, storage.KeyAuth.ID,
-		s.Postgres.Dump.Repo.ID} {
+		s.Database.Dump.Repo.ID} {
 		if id != "" {
 			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, id)
 		}
 	}
-	if id := s.Postgres.RestoreTest.VerifierApp.ID; id != "" {
+	if id := s.Database.RestoreTest.VerifierApp.ID; id != "" {
 		refIDs.RefAppIDs = append(refIDs.RefAppIDs, id)
 	}
-	for _, member := range s.Postgres.Members {
+	for _, member := range s.Database.Members {
 		refIDs.RefAppIDs = append(refIDs.RefAppIDs, member.App.ID)
 		if member.Volume.ID != "" {
 			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, member.Volume.ID)
@@ -308,16 +360,24 @@ func (s *AppManagedSettings) GetResourceLinks(setting *Setting) []*ResLink {
 }
 
 func (s *AppManagedSettings) Decrypt() error {
-	if s.Postgres == nil {
+	if s.Database == nil {
 		return nil
 	}
-	if _, err := s.Postgres.EncryptionKey.GetPlain(); err != nil {
+	if _, err := s.Database.EncryptionKey.GetPlain(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if _, err := s.Postgres.ReplicationPassword.GetPlain(); err != nil {
+	if _, err := s.Database.ReplicationPassword.GetPlain(); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// SetAppManagedData stores the engine's state in its setting at the current
+// version, which its writers store with the data: a row read in an older
+// shape is written in this one.
+func (s *Setting) SetAppManagedData(data *AppManagedSettings) error {
+	s.Version = CurrentAppManagedVersion
+	return s.SetData(data)
 }
 
 func (s *Setting) AsAppManagedSettings() (*AppManagedSettings, error) {

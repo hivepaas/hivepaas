@@ -97,6 +97,9 @@ func (uc *UC) updateManagedSettings(
 	if req.UpdateVer != loaded.setting.UpdateVer {
 		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	if err = loaded.checkBackupFrom(req.BackupFrom); err != nil {
+		return nil, err
+	}
 	if err = uc.checkDumpRepo(ctx, db, loaded.app, req.DumpRepo); err != nil {
 		return nil, err
 	}
@@ -157,15 +160,15 @@ func (uc *UC) restoreTestMove(
 	plan *verifierPlan,
 	made **appprovisionservice.ProvisionAppsResp,
 ) (*managedmodel.RestoreTestChange, string, error) {
-	pg := loaded.managed.Postgres
-	if req.RestoreTest == nil || pg == nil || req.RestoreTest.Mode == pg.RestoreTest.Mode && plan == nil {
+	state := loaded.managed.Database
+	if req.RestoreTest == nil || state == nil || req.RestoreTest.Mode == state.RestoreTest.Mode && plan == nil {
 		return nil, "", nil
 	}
 	if plan == nil {
-		return &managedmodel.RestoreTestChange{}, pg.RestoreTest.VerifierApp.ID, nil
+		return &managedmodel.RestoreTestChange{}, state.RestoreTest.VerifierApp.ID, nil
 	}
 	// Checked again under the lock: two moves at once make one verifier.
-	if pg.RestoreTest.Mode == entity.ManagedRestoreTestVerifier {
+	if state.RestoreTest.Mode == entity.ManagedRestoreTestVerifier {
 		return nil, "", hperrors.Wrap(hperrors.ErrAppManagedVerifierExists)
 	}
 	var err error
@@ -219,7 +222,7 @@ func reconfigureManaged(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = loaded.setting.SetData(loaded.managed); err != nil {
+	if err = loaded.setting.SetAppManagedData(loaded.managed); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	loaded.setting.UpdateVer++
@@ -229,7 +232,8 @@ func reconfigureManaged(
 // storeReconfigured stores the engine's setting and its jobs as the change left
 // them, and schedules them again: a job rewritten keeps its coming runs unless
 // its schedule moved, one made gets its first, and one removed loses them, as
-// when a person deletes a job.
+// when a person deletes a job. Each is stored at the version it has: the
+// engine's setting at the one SetAppManagedData gave it.
 func (uc *UC) storeReconfigured(
 	ctx context.Context,
 	db database.Tx,
@@ -240,7 +244,7 @@ func (uc *UC) storeReconfigured(
 	for _, setting := range append([]*entity.Setting{managed}, resp.Changed...) {
 		setting.UpdatedAt = now
 		if err := uc.settingRepo.Update(ctx, db, setting,
-			bunex.UpdateColumns("kind", "data", "update_ver", "updated_at")); err != nil {
+			bunex.UpdateColumns("kind", "data", "version", "update_ver", "updated_at")); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
@@ -292,7 +296,7 @@ func (uc *UC) checkDumpRepo(ctx context.Context, db database.IDB, app *entity.Ap
 // view is what the settings are read from.
 func (l *loadedManaged) view() *appmanageddto.ManagedSettingsView {
 	view := &appmanageddto.ManagedSettingsView{Setting: l.setting, Managed: l.managed,
-		Jobs: make(map[string]*entity.SchedJob, len(l.jobs))}
+		Jobs: make(map[string]*entity.SchedJob, len(l.jobs)), Capabilities: l.engine.Capabilities()}
 	for _, setting := range l.jobs {
 		if job, err := setting.AsSchedJob(); err == nil {
 			view.Jobs[setting.ID] = job

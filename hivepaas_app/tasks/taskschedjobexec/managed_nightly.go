@@ -79,10 +79,10 @@ func (e *Executor) runNightly(
 // writerOf is the cluster's primary, from the run's apps when they hold it.
 func (e *Executor) writerOf(ctx context.Context, db database.Tx, run *jobRun, cluster *entity.App,
 	managed *entity.AppManagedSettings) (*entity.App, error) {
-	if managed.Postgres == nil || managed.Postgres.Writer.ID == "" || cluster == nil {
+	if managed.Database == nil || managed.Database.Writer.ID == "" || cluster == nil {
 		return cluster, nil
 	}
-	if writer := run.refObjects.RefApps[managed.Postgres.Writer.ID]; writer != nil {
+	if writer := run.refObjects.RefApps[managed.Database.Writer.ID]; writer != nil {
 		return writer, nil
 	}
 	writer, err := e.managedService.WriterOf(ctx, db, cluster, managed)

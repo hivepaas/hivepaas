@@ -69,13 +69,13 @@ func (f *savedSettings) Update(_ context.Context, _ database.IDB, setting *entit
 func pointsApp(points ...*entity.ManagedRestorePoint) *entity.App {
 	managed := &entity.Setting{ID: "managed-1", Type: base.SettingTypeAppManaged, Status: base.SettingStatusActive}
 	managed.MustSetData(&entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{RestorePoints: points}})
+		Database: &entity.ManagedDatabase{RestorePoints: points}})
 	return &entity.App{ID: "app-1", Settings: []*entity.Setting{managed}}
 }
 
 func pointsService(app *entity.App, exec *markExec) (*service, *savedSettings) {
 	settings := &savedSettings{}
-	return &service{registry: newRegistry(), settingRepo: settings, appService: &pointApps{app: app},
+	return &service{settingRepo: settings, appService: &pointApps{app: app},
 		schedJobExecService: exec}, settings
 }
 
@@ -84,7 +84,7 @@ func savedPoints(t *testing.T, settings *savedSettings) []*entity.ManagedRestore
 	if !assert.Len(t, settings.saved, 1) {
 		return nil
 	}
-	return settings.saved[0].MustAsAppManagedSettings().Postgres.RestorePoints
+	return settings.saved[0].MustAsAppManagedSettings().Database.RestorePoints
 }
 
 // A point is recorded once the WAL it is in is archived, with the LSN the mark
@@ -109,7 +109,7 @@ func TestARestorePointIsRecordedWithItsLSN(t *testing.T) {
 		point := points[0]
 		assert.Equal(t, marked.Point, point)
 		assert.Equal(t, point, recorded)
-		assert.Equal(t, "0/3000060", point.LSN)
+		assert.Equal(t, "0/3000060", point.Position)
 		assert.Equal(t, "u1", point.By)
 		assert.Equal(t, "migration 42", point.Note)
 		assert.Equal(t, keep, point.KeepUntil)
@@ -120,7 +120,7 @@ func TestARestorePointIsRecordedWithItsLSN(t *testing.T) {
 }
 
 func TestARestorePointIsRefusedWhenItCannotBeListed(t *testing.T) {
-	existing := &entity.ManagedRestorePoint{Name: "before-v42", LSN: "0/1"}
+	existing := &entity.ManagedRestorePoint{Name: "before-v42", Position: "0/1"}
 	for name, tc := range map[string]struct {
 		app      *entity.App
 		pointArg string
@@ -151,7 +151,7 @@ func TestARestorePointIsRefusedWhenItCannotBeListed(t *testing.T) {
 // A deployment run again asks for the point it made the first time: it is
 // answered as made, with nothing marked or saved.
 func TestAnExistingPointCanCountAsMade(t *testing.T) {
-	existing := &entity.ManagedRestorePoint{Name: "deploy-web-20261018120000", LSN: "0/1",
+	existing := &entity.ManagedRestorePoint{Name: "deploy-web-20261018120000", Position: "0/1",
 		Origin: entity.ManagedPointOriginDeploy}
 	exec := &markExec{}
 	svc, settings := pointsService(pointsApp(existing), exec)
@@ -161,7 +161,7 @@ func TestAnExistingPointCanCountAsMade(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.True(t, marked.Existed)
-	assert.Equal(t, existing.LSN, marked.Point.LSN)
+	assert.Equal(t, existing.Position, marked.Point.Position)
 	assert.Empty(t, exec.commands)
 	assert.Empty(t, settings.saved)
 }

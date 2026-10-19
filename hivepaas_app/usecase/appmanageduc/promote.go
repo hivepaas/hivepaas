@@ -148,9 +148,12 @@ func (uc *UC) planPromotion(ctx context.Context, req *appmanageddto.PromoteManag
 	if err != nil {
 		return nil, err
 	}
+	if err = loaded.requireReplicas(); err != nil {
+		return nil, err
+	}
 	p := &promotion{loaded: loaded}
-	if pg := loaded.managed.Postgres; pg != nil {
-		p.member = pg.Member(req.Member.ID)
+	if state := loaded.managed.Database; state != nil {
+		p.member = state.Member(req.Member.ID)
 	}
 	paths, err := uc.mountPaths(ctx, uc.db, loaded.app.ID)
 	if err != nil {
@@ -235,7 +238,7 @@ func (r *promotionRun) promote(ctx context.Context) (*int, error) {
 // allow lets the replicas into the promoted member. It fails no promotion: the
 // replicas follow it from the archive meanwhile.
 func (r *promotionRun) allow(ctx context.Context) {
-	password, err := r.p.loaded.managed.Postgres.ReplicationPassword.GetPlain()
+	password, err := r.p.loaded.managed.Database.ReplicationPassword.GetPlain()
 	if err == nil && password != "" {
 		err = transaction.Execute(ctx, r.uc.db, func(db database.Tx) error {
 			return r.uc.managedService.AllowReplicas(ctx, db, r.p.promoted, r.p.spec.Allow, password)
@@ -310,7 +313,7 @@ func (uc *UC) recordPromotion(
 	for _, job := range loaded.jobs {
 		jobs[job.ID] = job
 	}
-	if member := loaded.managed.Postgres.Member(p.member.App.ID); member == nil ||
+	if member := loaded.managed.Database.Member(p.member.App.ID); member == nil ||
 		member.Role != entity.ManagedRolePrimary {
 		resp, err := loaded.engine.Reconfigure(&managedmodel.ReconfigureReq{App: loaded.app,
 			ManagedID: loaded.setting.ID, Managed: loaded.managed, Jobs: jobs, Now: now,
@@ -318,7 +321,7 @@ func (uc *UC) recordPromotion(
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		if err = loaded.setting.SetData(loaded.managed); err != nil {
+		if err = loaded.setting.SetAppManagedData(loaded.managed); err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
 		loaded.setting.UpdateVer++
@@ -334,7 +337,7 @@ func (uc *UC) recordPromotion(
 		return nil, nil, err
 	}
 	var restarted []*entity.App
-	for _, member := range loaded.managed.Postgres.Members {
+	for _, member := range loaded.managed.Database.Members {
 		if member.Role != entity.ManagedRoleReplica {
 			continue
 		}

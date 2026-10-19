@@ -14,7 +14,7 @@ import (
 func managedPostgres() *AppManagedSettings {
 	return &AppManagedSettings{
 		Engine: "postgres", EngineAPI: 1,
-		Postgres: &ManagedPostgres{
+		Database: &ManagedDatabase{
 			Storage: ManagedStorage{BackupRepo: ObjectID{ID: "repo-1"}, KeyAuth: ObjectID{ID: "key-1"},
 				Prefix: "backups/walg/shop-db"},
 			EncryptionKey:  NewEncryptedField("0123456789abcdef0123456789abcdef"),
@@ -22,7 +22,7 @@ func managedPostgres() *AppManagedSettings {
 			RetainFull:     7,
 			RestoreTest: ManagedRestoreTest{Mode: ManagedRestoreTestVerifier,
 				VerifierApp: ObjectID{ID: "app-verifier"}, CheckQuery: "SELECT 1"},
-			Jobs: ManagedPostgresJobs{Nightly: ObjectID{ID: "job-1"}, Health: ObjectID{ID: "job-2"},
+			Jobs: ManagedJobs{Nightly: ObjectID{ID: "job-1"}, Health: ObjectID{ID: "job-2"},
 				RestoreTest: ObjectID{ID: "job-3"}},
 		},
 	}
@@ -40,10 +40,10 @@ func TestAppManagedSettingsRoundTrip(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "postgres", managed.Engine)
-	assert.Equal(t, "backups/walg/shop-db", managed.Postgres.Storage.Prefix)
+	assert.Equal(t, "backups/walg/shop-db", managed.Database.Storage.Prefix)
 	assert.NotContains(t, setting.Data, "0123456789abcdef", "the WAL-G key is stored encrypted")
 	assert.NoError(t, managed.Decrypt())
-	plain, err := managed.Postgres.EncryptionKey.GetPlain()
+	plain, err := managed.Database.EncryptionKey.GetPlain()
 	assert.NoError(t, err)
 	assert.Equal(t, "0123456789abcdef0123456789abcdef", plain)
 }

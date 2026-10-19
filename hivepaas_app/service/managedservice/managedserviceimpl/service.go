@@ -6,13 +6,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/engines"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type service struct {
-	registry    *registry
 	db          *database.DB
 	settingRepo repository.SettingRepo
 	appService  appservice.Service
@@ -30,10 +30,10 @@ func New(
 	schedJobExecService schedjobexecservice.Service,
 	dockerManager docker.Manager,
 ) managedservice.Service {
-	return &service{registry: newRegistry(), db: db, settingRepo: settingRepo, appService: appService,
+	return &service{db: db, settingRepo: settingRepo, appService: appService,
 		schedJobExecService: schedJobExecService, dockerManager: dockerManager}
 }
 
 func (s *service) Engine(name templatemodel.ManagedEngine) (managedmodel.Engine, bool) {
-	return s.registry.Engine(name)
+	return engines.Lookup(name)
 }

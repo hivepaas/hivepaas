@@ -124,7 +124,7 @@ func newManagedTest(t *testing.T) (*UC, *managedFakes) {
 	resp.Template.Metadata.Requires = templatemodel.Requires{VersionCode: "v000002",
 		Features: []string{"managed-databases"}}
 	resp.Template.Managed = &templatemodel.Managed{Engine: templatemodel.ManagedEnginePostgres, EngineAPI: 1,
-		Postgres: &templatemodel.ManagedPostgresDefaults{RetainFull: 9, BaseBackupSchedule: "0 3 * * *"}}
+		Postgres: &templatemodel.ManagedDefaults{RetainFull: 9, BaseBackupSchedule: "0 3 * * *"}}
 	resp.Template.Artifacts = []*templatemodel.Artifact{{Name: "wal-g", Version: "3.0.8",
 		MountPath: "/opt/hivepaas/bin/wal-g", Files: map[base.CPUArch]*templatemodel.ArtifactFile{
 			base.CPUArchAMD64: {URL: "https://example.com/wal-g", SHA256: "aa", Size: 1}}}}

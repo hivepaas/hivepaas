@@ -27,11 +27,11 @@ func TestAClusterIsNotDeletedInPart(t *testing.T) {
 		"a member is never the cluster")
 
 	held := managedApp("db", &entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{Writer: entity.ObjectID{ID: "db-r1"}}})
+		Database: &entity.ManagedDatabase{Writer: entity.ObjectID{ID: "db-r1"}}})
 	assert.ErrorIs(t, refuseClusterDeletion(held, false), hperrors.ErrAppManagedClusterHeld)
 	assert.NoError(t, refuseClusterDeletion(held, true), "the whole cluster, as asked")
 
-	primary := managedApp("db", &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{}})
+	primary := managedApp("db", &entity.AppManagedSettings{Engine: "postgres", Database: &entity.ManagedDatabase{}})
 	assert.NoError(t, refuseClusterDeletion(primary, false))
 	assert.NoError(t, refuseClusterDeletion(&entity.App{ID: "web"}, false))
 }

@@ -97,7 +97,7 @@ func (uc *UC) planManaged(
 	if err != nil {
 		return nil, err
 	}
-	options := managedOptions(tmpl.Managed.Postgres, req.Managed)
+	options := managedOptions(tmpl.Managed.Defaults(), req.Managed)
 	if err = checkSchedules(options); err != nil {
 		return nil, err
 	}
@@ -275,7 +275,7 @@ func (uc *UC) volumeArchive(
 // managedOptions are the request's options over the template's defaults; what
 // both leave out is the engine's.
 func managedOptions(
-	defaults *templatemodel.ManagedPostgresDefaults,
+	defaults *templatemodel.ManagedDefaults,
 	req *apptemplatedto.ManagedCreateReq,
 ) *managedmodel.Options {
 	options := &managedmodel.Options{}

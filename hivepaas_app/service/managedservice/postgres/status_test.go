@@ -14,10 +14,10 @@ import (
 var statusNow = time.Date(2026, 10, 18, 12, 0, 0, 0, time.UTC)
 
 func statusManaged(mode string) *entity.AppManagedSettings {
-	return &entity.AppManagedSettings{Engine: "postgres", EngineAPI: 1, Postgres: &entity.ManagedPostgres{
+	return &entity.AppManagedSettings{Engine: "postgres", EngineAPI: 1, Database: &entity.ManagedDatabase{
 		Storage:     entity.ManagedStorage{Placement: "same-node"},
 		RestoreTest: entity.ManagedRestoreTest{Mode: mode},
-		Jobs: entity.ManagedPostgresJobs{Nightly: entity.ObjectID{ID: "nightly"},
+		Jobs: entity.ManagedJobs{Nightly: entity.ObjectID{ID: "nightly"},
 			Health: entity.ObjectID{ID: "health"}, RestoreTest: entity.ObjectID{ID: "test"}},
 	}}
 }
@@ -45,7 +45,7 @@ func TestStatusOfAHealthyDatabase(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, managedmodel.ArchivingOK, status.Archiving.State)
 	assert.Equal(t, time.Date(2026, 10, 18, 11, 59, 30, 0, time.UTC), *status.Archiving.LastArchivedAt)
-	assert.Equal(t, int64(33554432), status.Archiving.PgWalBytes)
+	assert.Equal(t, int64(33554432), status.Archiving.PendingBytes)
 	assert.False(t, status.Archiving.Stale)
 	if assert.NotNil(t, status.RestoreWindow) {
 		assert.Equal(t, time.Date(2026, 10, 11, 2, 0, 4, 0, time.UTC), status.RestoreWindow.From)

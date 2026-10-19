@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 )
 
 const (
@@ -23,4 +24,15 @@ func (e *Engine) Name() templatemodel.ManagedEngine {
 
 func (e *Engine) APIRange() (int, int) {
 	return minAPI, maxAPI
+}
+
+// Capabilities are Postgres's: it has replicas, and runs its restore test in a
+// verifier app too.
+func (e *Engine) Capabilities() managedmodel.Capabilities {
+	return managedmodel.Capabilities{Replicas: true, VerifierApp: true}
+}
+
+// PointNameMax is what Postgres keeps of a restore point's name: 63 bytes.
+func (e *Engine) PointNameMax() int {
+	return pointNameMax
 }

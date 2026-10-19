@@ -16,13 +16,14 @@ import (
 const (
 	pointNoteMaxLen = 500
 	// MaxPointKeep is how far ahead a point may be kept: it holds back the
-	// archive, every backup and WAL from it on, for as long.
+	// archive, every backup and log from it on, for as long.
 	MaxPointKeep = 90 * 24 * time.Hour
 )
 
 // CreateRestorePointReq names a moment of a managed database, to restore to
-// exactly. The name is a label - letters, digits, '.', '_' and '-', at most 63,
-// not starting with "hp-" - and unique in the app.
+// exactly. The name is a label - letters, digits, '.', '_' and '-', at most the
+// engine's limit (63 for Postgres), not starting with "hp-" - and unique in the
+// app.
 type CreateRestorePointReq struct {
 	ProjectID    string `json:"-"`
 	ProjectEnvID string `json:"-"`
@@ -51,10 +52,13 @@ func (req *CreateRestorePointReq) Validate() hperrors.ValidationErrors {
 	if errs := validateAppPath(req.ProjectID, req.ProjectEnvID, req.AppID); len(errs) > 0 {
 		return errs
 	}
-	validators := make([]vld.Validator, 0, 3) //nolint:mnd
-	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, pointNameMaxLen, "name")...)
-	validators = append(validators, validatePoint(req.Note, req.KeepUntil)...)
-	return hperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validatePoint(req.Note, req.KeepUntil)...))
+}
+
+// ValidateName checks the name against the longest the app's engine takes,
+// which is known once the app is read.
+func (req *CreateRestorePointReq) ValidateName(maxLen int) hperrors.ValidationErrors {
+	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateStr(&req.Name, true, 1, maxLen, "name")...))
 }
 
 func validatePoint(note string, keepUntil *time.Time) []vld.Validator {
@@ -102,8 +106,9 @@ type UpdateRestorePointResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
 
-// DeleteRestorePointReq removes a point's record. The mark stays in the WAL,
-// harmlessly: a restore targets an LSN, never a name.
+// DeleteRestorePointReq removes a point's record. The mark stays in the
+// database's log (the WAL, for Postgres), harmlessly: a restore targets a
+// position, never a name.
 type DeleteRestorePointReq struct {
 	ProjectID    string `json:"-"`
 	ProjectEnvID string `json:"-"`
@@ -125,9 +130,10 @@ type DeleteRestorePointResp struct {
 }
 
 type ManagedRestorePointResp struct {
-	Name string    `json:"name"`
-	LSN  string    `json:"lsn"`
-	At   time.Time `json:"at"`
+	Name string `json:"name"`
+	// Position is where the point is, as the engine wrote it: a Postgres LSN.
+	Position string    `json:"position"`
+	At       time.Time `json:"at"`
 	// By is the user who made it.
 	By        *basedto.ObjectIDResp `json:"by"`
 	Note      string                `json:"note"`
@@ -144,7 +150,7 @@ type ManagedRestorePointResp struct {
 }
 
 func TransformRestorePoint(point *entity.ManagedRestorePoint) *ManagedRestorePointResp {
-	resp := &ManagedRestorePointResp{Name: point.Name, LSN: point.LSN, At: point.At, Note: point.Note,
+	resp := &ManagedRestorePointResp{Name: point.Name, Position: point.Position, At: point.At, Note: point.Note,
 		KeepUntil: timeOrNil(point.KeepUntil), Origin: pointOrigin(point.Origin)}
 	if point.By != "" {
 		resp.By = &basedto.ObjectIDResp{ID: point.By}

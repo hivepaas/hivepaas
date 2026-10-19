@@ -29,7 +29,7 @@ func (e *Engine) NightlyBackupArgs() string {
 // needs (design §4, "Retention and kept points"). Without the backups listed, it
 // deletes nothing.
 func (e *Engine) Retention(req *managedmodel.RetentionReq) (*managedmodel.Retention, error) {
-	pg := req.Managed.Postgres
+	pg := req.Managed.Database
 	if pg == nil {
 		return &managedmodel.Retention{Args: nightlyRetainArgs}, nil
 	}
@@ -158,7 +158,7 @@ func heldBack(backups []managedmodel.BackupRef, retainFull int, points []*entity
 }
 
 func (e *Engine) StaleDeployPoints(managed *entity.AppManagedSettings, outputs map[string]string) []string {
-	if managed == nil || managed.Postgres == nil {
+	if managed == nil || managed.Database == nil {
 		return nil
 	}
 	// Without the list there is no telling: an empty one would make every point
@@ -168,7 +168,7 @@ func (e *Engine) StaleDeployPoints(managed *entity.AppManagedSettings, outputs m
 		return nil
 	}
 	var stale []string
-	for _, point := range managed.Postgres.RestorePoints {
+	for _, point := range managed.Database.RestorePoints {
 		if point.Origin == entity.ManagedPointOriginDeploy && baseBefore(fulls, point.At) == nil {
 			stale = append(stale, point.Name)
 		}

@@ -34,7 +34,7 @@ type RunCommandReq struct {
 	// Stdin is what the command reads; its end is the command's input's end.
 	Stdin io.Reader
 	// StdoutWriter takes the command's stdout in place of the log: what it
-	// prints is its answer, a restore point's LSN.
+	// prints is its answer, a restore point's position.
 	StdoutWriter io.Writer
 }
 

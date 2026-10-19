@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
 )
 
 const (
@@ -50,9 +51,12 @@ type GetManagedSettingsResp struct {
 // archives, how long it keeps what, when its jobs run, and what it owns of the
 // app, which the settings screens show read-only.
 type ManagedSettingsResp struct {
-	UpdateVer           int                       `json:"updateVer"`
-	Engine              string                    `json:"engine"`
-	EngineAPI           int                       `json:"engineApi"`
+	UpdateVer int    `json:"updateVer"`
+	Engine    string `json:"engine"`
+	EngineAPI int    `json:"engineApi"`
+	// Capabilities are what the engine can do that not every engine can: what
+	// it cannot is refused, and not offered.
+	Capabilities        ManagedCapabilitiesResp   `json:"capabilities"`
 	Storage             *ManagedStorageResp       `json:"storage"`
 	ArchiveTimeout      timeutil.Duration         `json:"archiveTimeout"`
 	RetainFull          int                       `json:"retainFull"`
@@ -80,6 +84,14 @@ type ManagedSettingsResp struct {
 	// MemberOf is the primary this database is a replica of, null for a
 	// database of its own.
 	MemberOf *ManagedMemberOfResp `json:"memberOf"`
+}
+
+type ManagedCapabilitiesResp struct {
+	// Replicas are read replicas: adding and removing them, taking the base
+	// backups on one, promoting one.
+	Replicas bool `json:"replicas"`
+	// VerifierApp is the restore test in an app of its own.
+	VerifierApp bool `json:"verifierApp"`
 }
 
 type ManagedMemberResp struct {
@@ -110,11 +122,12 @@ type ManagedRestoreResp struct {
 }
 
 type ManagedRestoreTargetResp struct {
-	Kind   string     `json:"kind"`
-	Time   *time.Time `json:"time"`
-	Point  string     `json:"point"`
-	LSN    string     `json:"lsn"`
-	Backup string     `json:"backup"`
+	Kind  string     `json:"kind"`
+	Time  *time.Time `json:"time"`
+	Point string     `json:"point"`
+	// Position is where the point is, as the engine wrote it: a Postgres LSN.
+	Position string `json:"position"`
+	Backup   string `json:"backup"`
 }
 
 type ManagedStorageResp struct {
@@ -160,11 +173,12 @@ type ManagedJobsResp struct {
 }
 
 // ManagedSettingsView is what the settings are read from: the app-managed
-// setting, parsed, and the jobs its engine made, by id.
+// setting, parsed, the jobs its engine made, by id, and what the engine can do.
 type ManagedSettingsView struct {
-	Setting *entity.Setting
-	Managed *entity.AppManagedSettings
-	Jobs    map[string]*entity.SchedJob
+	Setting      *entity.Setting
+	Managed      *entity.AppManagedSettings
+	Jobs         map[string]*entity.SchedJob
+	Capabilities managedmodel.Capabilities
 }
 
 func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
@@ -174,6 +188,8 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		UpdateVer: view.Setting.UpdateVer,
 		Engine:    managed.Engine,
 		EngineAPI: managed.EngineAPI,
+		Capabilities: ManagedCapabilitiesResp{Replicas: view.Capabilities.Replicas,
+			VerifierApp: view.Capabilities.VerifierApp},
 		Locks: &ManagedLocksResp{Image: locks.Image, ImageLine: locks.ImageLine, Command: locks.Command,
 			Mounts: nonNil(locks.Mounts), EnvKeys: nonNil(locks.EnvKeys), Settings: nonNil(locks.Settings)},
 	}
@@ -184,44 +200,44 @@ func TransformManagedSettings(view *ManagedSettingsView) *ManagedSettingsResp {
 		resp.MemberOf = &ManagedMemberOfResp{App: objectID(memberOf.App), Role: memberOf.Role}
 	}
 	resp.Members = []*ManagedMemberResp{}
-	if managed.Postgres != nil {
-		resp.BackupFrom = objectID(managed.Postgres.BackupFrom)
-		resp.Writer = objectID(managed.Postgres.Writer)
-		resp.FencedAt = timeOrNil(managed.Postgres.FencedAt)
-		for _, member := range managed.Postgres.Members {
+	if managed.Database != nil {
+		resp.BackupFrom = objectID(managed.Database.BackupFrom)
+		resp.Writer = objectID(managed.Database.Writer)
+		resp.FencedAt = timeOrNil(managed.Database.FencedAt)
+		for _, member := range managed.Database.Members {
 			resp.Members = append(resp.Members, &ManagedMemberResp{App: objectID(member.App), Key: member.Key,
 				Role: member.Role, Volume: objectID(member.Volume), Node: member.Node, At: member.At})
 		}
 	}
-	pg := managed.Postgres
-	if pg == nil {
+	state := managed.Database
+	if state == nil {
 		return resp
 	}
 	resp.Storage = &ManagedStorageResp{
-		BackupRepo:   objectID(pg.Storage.BackupRepo),
-		CloudStorage: objectID(pg.Storage.CloudStorage),
-		KeyAuth:      objectID(pg.Storage.KeyAuth),
-		Prefix:       pg.Storage.Prefix,
-		Placement:    pg.Storage.Placement,
+		BackupRepo:   objectID(state.Storage.BackupRepo),
+		CloudStorage: objectID(state.Storage.CloudStorage),
+		KeyAuth:      objectID(state.Storage.KeyAuth),
+		Prefix:       state.Storage.Prefix,
+		Placement:    state.Storage.Placement,
 	}
-	resp.ArchiveTimeout = pg.ArchiveTimeout
-	resp.RetainFull = pg.RetainFull
-	resp.RestoreTest = &ManagedRestoreTestCfgRsp{Mode: pg.RestoreTest.Mode,
-		VerifierApp: objectID(pg.RestoreTest.VerifierApp), NodeID: pg.RestoreTest.NodeID,
-		KeyAuth: objectID(pg.RestoreTest.KeyAuth), CheckQuery: pg.RestoreTest.CheckQuery}
-	resp.Jobs = &ManagedJobsResp{Nightly: objectID(pg.Jobs.Nightly), Health: objectID(pg.Jobs.Health),
-		RestoreTest: objectID(pg.Jobs.RestoreTest), Dump: objectID(pg.Jobs.Dump)}
-	resp.Dump = &ManagedDumpCfgResp{Repo: objectID(pg.Dump.Repo),
-		Schedule: gofn.Coalesce(cronOf(view.Jobs[pg.Jobs.Dump.ID]), pg.Dump.Schedule)}
-	if restore := pg.Restore; restore != nil {
+	resp.ArchiveTimeout = state.ArchiveTimeout
+	resp.RetainFull = state.RetainFull
+	resp.RestoreTest = &ManagedRestoreTestCfgRsp{Mode: state.RestoreTest.Mode,
+		VerifierApp: objectID(state.RestoreTest.VerifierApp), NodeID: state.RestoreTest.NodeID,
+		KeyAuth: objectID(state.RestoreTest.KeyAuth), CheckQuery: state.RestoreTest.CheckQuery}
+	resp.Jobs = &ManagedJobsResp{Nightly: objectID(state.Jobs.Nightly), Health: objectID(state.Jobs.Health),
+		RestoreTest: objectID(state.Jobs.RestoreTest), Dump: objectID(state.Jobs.Dump)}
+	resp.Dump = &ManagedDumpCfgResp{Repo: objectID(state.Dump.Repo),
+		Schedule: gofn.Coalesce(cronOf(view.Jobs[state.Jobs.Dump.ID]), state.Dump.Schedule)}
+	if restore := state.Restore; restore != nil {
 		target := restore.Target
 		resp.Restore = &ManagedRestoreResp{SourceApp: objectID(restore.SourceApp),
 			Target: &ManagedRestoreTargetResp{Kind: target.Kind, Time: timeOrNil(target.Time), Point: target.Point,
-				LSN: target.LSN, Backup: target.Backup},
+				Position: target.Position, Backup: target.Backup},
 			ReadyAt: timeOrNil(restore.ReadyAt), SwitchedAt: timeOrNil(restore.SwitchedAt)}
 	}
-	resp.BaseBackupSchedule = cronOf(view.Jobs[pg.Jobs.Nightly.ID])
-	resp.RestoreTestSchedule = cronOf(view.Jobs[pg.Jobs.RestoreTest.ID])
+	resp.BaseBackupSchedule = cronOf(view.Jobs[state.Jobs.Nightly.ID])
+	resp.RestoreTestSchedule = cronOf(view.Jobs[state.Jobs.RestoreTest.ID])
 	return resp
 }
 

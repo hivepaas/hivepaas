@@ -16,7 +16,7 @@ const restorePointField = "restorePointBeforeDeploy"
 
 // checkRestorePointDatabase refuses a database a deployment of app cannot mark
 // a restore point on: the app itself, an app outside its environment, or one no
-// PostgreSQL engine looks after.
+// engine keeps an archive of (a member's is its primary's).
 func (uc *UC) checkRestorePointDatabase(ctx context.Context, db database.IDB, app *entity.App,
 	databaseID string) error {
 	if databaseID == "" {
@@ -52,8 +52,8 @@ func (uc *UC) checkRestorePointDatabase(ctx context.Context, db database.IDB, ap
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if managed.Postgres == nil {
-		return invalid("restore points are made on a managed PostgreSQL database")
+	if managed.Database == nil {
+		return invalid("restore points are made on a managed database, not on a replica")
 	}
 	return nil
 }

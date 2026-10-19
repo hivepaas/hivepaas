@@ -104,7 +104,7 @@ func unmanagedSettings(app *entity.App, now time.Time) ([]*entity.Setting, error
 	if data.MemberOf != nil {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedIsMember).WithParam("App", app.Name).ExposeParams("App")
 	}
-	if data.Postgres != nil && len(data.Postgres.Members) > 0 {
+	if data.Database != nil && len(data.Database.Members) > 0 {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedHasMembers).WithParam("App", app.Name).ExposeParams("App")
 	}
 	deleting := []*entity.Setting{managed}
@@ -131,8 +131,8 @@ func unmanagedSettings(app *entity.App, now time.Time) ([]*entity.Setting, error
 // in, empty for none.
 func verifierOf(managed *entity.Setting) string {
 	settings, err := managed.AsAppManagedSettings()
-	if err != nil || settings.Postgres == nil {
+	if err != nil || settings.Database == nil {
 		return ""
 	}
-	return settings.Postgres.RestoreTest.VerifierApp.ID
+	return settings.Database.RestoreTest.VerifierApp.ID
 }

@@ -17,7 +17,7 @@ func replicaReq(placement string) *managedmodel.ReplicaReq {
 		Primary: &entity.App{ID: "app-1", Key: "shop-db", Name: "shop-db"},
 		Managed: &entity.AppManagedSettings{Engine: "postgres", EngineAPI: 1,
 			Locks:    entity.ManagedLocks{Mounts: []string{volumeArchiveDir, "/var/lib/postgresql"}},
-			Postgres: &entity.ManagedPostgres{Storage: entity.ManagedStorage{Placement: placement}}},
+			Database: &entity.ManagedDatabase{Storage: entity.ManagedStorage{Placement: placement}}},
 		Key:        "shop-db-r1",
 		MountPaths: []string{scriptDir + "/walg-entrypoint", scriptDir + "/walg-replication", secretsDir + "/x"},
 	}
@@ -46,7 +46,7 @@ func TestAReplicaIsRefused(t *testing.T) {
 	old := replicaReq(entity.ManagedPlacementOffSite)
 	old.MountPaths = []string{scriptDir + "/walg-entrypoint"}
 	restoring := replicaReq(entity.ManagedPlacementOffSite)
-	restoring.Managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src"}}
+	restoring.Managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src"}}
 	member := replicaReq(entity.ManagedPlacementOffSite)
 	member.Managed.MemberOf = &entity.ManagedMemberOf{App: entity.ObjectID{ID: "p"}, Role: entity.ManagedRoleReplica}
 	for name, tc := range map[string]struct {
@@ -70,7 +70,7 @@ func TestAReplicaIsRefused(t *testing.T) {
 func TestStatusOfTheMembers(t *testing.T) {
 	managed := statusManaged(entity.ManagedRestoreTestContainer)
 	at := time.Date(2026, 10, 19, 9, 0, 0, 0, time.UTC)
-	managed.Postgres.Members = []*entity.ManagedMember{
+	managed.Database.Members = []*entity.ManagedMember{
 		{App: entity.ObjectID{ID: "r1"}, Key: "db-r1", Role: entity.ManagedRoleReplica, Node: "n1", At: at},
 		{App: entity.ObjectID{ID: "r2"}, Key: "db-r2", Role: entity.ManagedRoleReplica, Node: "n2", At: at},
 	}

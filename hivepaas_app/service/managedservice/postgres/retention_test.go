@@ -31,7 +31,7 @@ func backupName(n int) string {
 }
 
 func point(name string, daysAgo int, keepDays int) *entity.ManagedRestorePoint {
-	p := &entity.ManagedRestorePoint{Name: name, LSN: "0/1", At: retentionNow.AddDate(0, 0, -daysAgo)}
+	p := &entity.ManagedRestorePoint{Name: name, Position: "0/1", At: retentionNow.AddDate(0, 0, -daysAgo)}
 	if keepDays != 0 {
 		p.KeepUntil = retentionNow.AddDate(0, 0, keepDays)
 	}
@@ -67,7 +67,7 @@ func TestTheRetentionBoundary(t *testing.T) {
 // The nightly run's second step deletes what is before the boundary, decided
 // from the backups its first step listed; without a list, nothing.
 func TestTheNightlyRetentionStep(t *testing.T) {
-	managed := &entity.AppManagedSettings{Postgres: &entity.ManagedPostgres{RetainFull: 7,
+	managed := &entity.AppManagedSettings{Database: &entity.ManagedDatabase{RetainFull: 7,
 		RestorePoints: []*entity.ManagedRestorePoint{point("p", 8, 30)}}}
 	listed := ""
 	for _, b := range nightlies(10) {
@@ -153,7 +153,7 @@ func TestARestorePointsName(t *testing.T) {
 // A point is listed once the WAL it is in is archived: walg-mark waits twice the
 // archive timeout for it, and prints its LSN.
 func TestMarkingARestorePoint(t *testing.T) {
-	managed := &entity.AppManagedSettings{Postgres: &entity.ManagedPostgres{
+	managed := &entity.AppManagedSettings{Database: &entity.ManagedDatabase{
 		ArchiveTimeout: timeutil.Duration(90 * time.Second)}}
 
 	mark, err := New().MarkRestorePoint(managed, "before-v42")
@@ -179,7 +179,7 @@ func TestStaleDeployPoints(t *testing.T) {
 		p.Origin = entity.ManagedPointOriginDeploy
 		return p
 	}
-	managed := &entity.AppManagedSettings{Postgres: &entity.ManagedPostgres{RetainFull: 3,
+	managed := &entity.AppManagedSettings{Database: &entity.ManagedDatabase{RetainFull: 3,
 		RestorePoints: []*entity.ManagedRestorePoint{
 			deploy("deploy-old", 5), deploy("deploy-new", 1), point("person-old", 5, 0)}}}
 	listed := ""

@@ -48,7 +48,7 @@ const (
 
 func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, error) {
 	status := &managedmodel.Status{Archiving: managedmodel.ArchivingStatus{State: managedmodel.ArchivingUnknown}}
-	pg := req.Managed.Postgres
+	pg := req.Managed.Database
 	if pg == nil {
 		return status, nil
 	}
@@ -70,7 +70,7 @@ func (e *Engine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, erro
 		archiving.CheckedAt = &health.EndedAt
 		archiving.LastArchivedAt = outputTime(health.Outputs, outLastArchivedAt)
 		archiving.FailedCount = int(outputInt(health.Outputs, outFailedCount))
-		archiving.PgWalBytes = outputInt(health.Outputs, outPgWalBytes)
+		archiving.PendingBytes = outputInt(health.Outputs, outPgWalBytes)
 		archiving.Stale = req.Now.Sub(health.EndedAt) > staleHealthRuns*healthInterval
 	}
 	if nightly != nil {

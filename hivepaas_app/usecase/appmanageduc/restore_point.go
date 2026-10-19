@@ -20,28 +20,37 @@ import (
 )
 
 // CreateRestorePoint names a moment of a managed database (design §4, "Restore
-// points"): the engine makes the point and waits until the WAL it is in is
-// archived, so the point is restorable as soon as it is listed. No license is
-// asked: points are part of restoring, which is never gated. It answers the
-// point as Status lists it, with until when it can be restored.
+// points"): the engine makes the point and waits until the log it is in (the
+// WAL, for Postgres) is archived, so the point is restorable as soon as it is
+// listed. No license is asked: points are part of restoring, which is never
+// gated. It answers the point as Status lists it, with until when it can be
+// restored.
 func (uc *UC) CreateRestorePoint(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appmanageddto.CreateRestorePointReq,
 ) (*appmanageddto.CreateRestorePointResp, error) {
+	// The name is held to what the engine takes, which only the app says.
+	loaded, err := uc.loadManaged(ctx, uc.db, req.ProjectID, req.AppID)
+	if err != nil {
+		return nil, err
+	}
+	if errs := req.ValidateName(loaded.engine.PointNameMax()); len(errs) > 0 {
+		return nil, errs
+	}
 	marked, err := uc.managedService.MarkRestorePoint(ctx, markPointReq(auth, req,
 		func(ctx context.Context, db database.IDB, app *entity.App, point *entity.ManagedRestorePoint) error {
 			return uc.recordPoint(ctx, db, auth, app, "managed-restore-point-create", auditdetail.New().
-				Set("name", point.Name).Set("lsn", point.LSN).Set("kept", !point.KeepUntil.IsZero()))
+				Set("name", point.Name).Set("position", point.Position).Set("kept", !point.KeepUntil.IsZero()))
 		}))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	resp := &appmanageddto.CreateRestorePointResp{Data: appmanageddto.TransformRestorePoint(marked.Point)}
-	// Until when it can be restored is read as Status reads it. The point is made
-	// whether or not that can be read.
-	if loaded, loadErr := uc.loadManaged(ctx, uc.db, req.ProjectID, req.AppID); loadErr == nil {
-		if status, statusErr := uc.statusOf(ctx, loaded); statusErr == nil {
+	// Until when it can be restored is read as Status reads it, from the setting
+	// the point is now in. The point is made whether or not that can be read.
+	if reloaded, loadErr := uc.loadManaged(ctx, uc.db, req.ProjectID, req.AppID); loadErr == nil {
+		if status, statusErr := uc.statusOf(ctx, reloaded); statusErr == nil {
 			for _, point := range status.RestorePoints {
 				if point.Point.Name == marked.Point.Name {
 					resp.Data = appmanageddto.TransformRestorePointStatus(point)
@@ -102,9 +111,9 @@ func (uc *UC) updateRestorePoint(ctx context.Context, db database.Tx, req *appma
 	return loaded, point, uc.saveManaged(ctx, db, loaded)
 }
 
-// DeleteRestorePoint removes a point's record. The mark stays in the WAL,
-// harmlessly, and the archive is not touched: the retention it held back moves
-// on at the next nightly run.
+// DeleteRestorePoint removes a point's record. The mark stays in the
+// database's log, harmlessly, and the archive is not touched: the retention it
+// held back moves on at the next nightly run.
 func (uc *UC) DeleteRestorePoint(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -116,7 +125,7 @@ func (uc *UC) DeleteRestorePoint(
 			return err
 		}
 		return uc.recordPoint(ctx, db, auth, loaded.app, "managed-restore-point-delete", auditdetail.New().
-			Set("name", point.Name).Set("lsn", point.LSN))
+			Set("name", point.Name).Set("position", point.Position))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -130,8 +139,8 @@ func (uc *UC) deleteRestorePoint(ctx context.Context, db database.Tx, req *appma
 	if err != nil {
 		return nil, nil, err
 	}
-	pg := loaded.managed.Postgres
-	pg.RestorePoints = slices.DeleteFunc(pg.RestorePoints, func(p *entity.ManagedRestorePoint) bool {
+	state := loaded.managed.Database
+	state.RestorePoints = slices.DeleteFunc(state.RestorePoints, func(p *entity.ManagedRestorePoint) bool {
 		return p == point
 	})
 	return loaded, point, uc.saveManaged(ctx, db, loaded)
@@ -143,10 +152,10 @@ func (uc *UC) loadPoint(ctx context.Context, db database.Tx, projectID, appID, n
 	if err != nil {
 		return nil, nil, err
 	}
-	if loaded.managed.Postgres == nil {
+	if loaded.managed.Database == nil {
 		return nil, nil, hperrors.NewNotFound("Restore point")
 	}
-	point := loaded.managed.Postgres.RestorePoint(name)
+	point := loaded.managed.Database.RestorePoint(name)
 	if point == nil {
 		return nil, nil, hperrors.NewNotFound("Restore point")
 	}
@@ -155,13 +164,13 @@ func (uc *UC) loadPoint(ctx context.Context, db database.Tx, projectID, appID, n
 
 // saveManaged stores the engine's setting as it was changed.
 func (uc *UC) saveManaged(ctx context.Context, db database.IDB, loaded *loadedManaged) error {
-	if err := loaded.setting.SetData(loaded.managed); err != nil {
+	if err := loaded.setting.SetAppManagedData(loaded.managed); err != nil {
 		return hperrors.Wrap(err)
 	}
 	loaded.setting.UpdateVer++
 	loaded.setting.UpdatedAt = timeutil.NowUTC()
 	return hperrors.Wrap(uc.settingRepo.Update(ctx, db, loaded.setting,
-		bunex.UpdateColumns("data", "update_ver", "updated_at")))
+		bunex.UpdateColumns("data", "version", "update_ver", "updated_at")))
 }
 
 func (uc *UC) recordPoint(ctx context.Context, db database.IDB, auth *basedto.Auth, app *entity.App,

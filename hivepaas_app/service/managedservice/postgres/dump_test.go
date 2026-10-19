@@ -38,8 +38,8 @@ func TestConfigureMakesTheDumpJob(t *testing.T) {
 
 	assert.Len(t, jobs, 4)
 	assert.Equal(t, entity.ManagedDump{Repo: entity.ObjectID{ID: "repo-1"}, Schedule: "0 */6 * * *"},
-		managed.Postgres.Dump)
-	dumpSetting := jobs[managed.Postgres.Jobs.Dump.ID]
+		managed.Database.Dump)
+	dumpSetting := jobs[managed.Database.Jobs.Dump.ID]
 	if !assert.NotNil(t, dumpSetting) {
 		return
 	}
@@ -71,8 +71,8 @@ func TestConfigureMakesNoDumpWithoutARepository(t *testing.T) {
 	_, managed, jobs := configured(t, nil)
 
 	assert.Len(t, jobs, 3)
-	assert.Empty(t, managed.Postgres.Jobs.Dump.ID)
-	assert.Equal(t, entity.ManagedDump{Schedule: defaultDumpSchedule}, managed.Postgres.Dump)
+	assert.Empty(t, managed.Database.Jobs.Dump.ID)
+	assert.Equal(t, entity.ManagedDump{Schedule: defaultDumpSchedule}, managed.Database.Dump)
 }
 
 // A restored database's dump waits for it to recover, as its other jobs do.
@@ -87,7 +87,7 @@ func TestARestoredDatabasesDumpWaits(t *testing.T) {
 	assert.NoError(t, err)
 	managed := resp.Settings[0].MustAsAppManagedSettings()
 	for _, setting := range resp.Settings[1:] {
-		if setting.ID == managed.Postgres.Jobs.Dump.ID {
+		if setting.ID == managed.Database.Jobs.Dump.ID {
 			assert.Equal(t, base.SettingStatusDisabled, setting.Status)
 			return
 		}
@@ -116,8 +116,8 @@ func TestReconfigureTurnsDumpsOn(t *testing.T) {
 		return
 	}
 	created := resp.Created[0]
-	assert.Equal(t, created.ID, managed.Postgres.Jobs.Dump.ID)
-	assert.Equal(t, "repo-2", managed.Postgres.Dump.Repo.ID)
+	assert.Equal(t, created.ID, managed.Database.Jobs.Dump.ID)
+	assert.Equal(t, "repo-2", managed.Database.Dump.Repo.ID)
 	job := created.MustAsSchedJob()
 	assert.Equal(t, setting.ID, job.ManagedBy.ID)
 	assert.Equal(t, "15 3 * * *", job.Schedule.CronExpr)
@@ -130,19 +130,19 @@ func TestReconfigureTurnsDumpsOn(t *testing.T) {
 // default.
 func TestReconfigureTurnsDumpsOnWithTheDefaultSchedule(t *testing.T) {
 	setting, managed, jobs := configured(t, nil)
-	managed.Postgres.Dump = entity.ManagedDump{}
+	managed.Database.Dump = entity.ManagedDump{}
 
 	resp := changeDump(t, setting, managed, jobs, &managedmodel.SettingsChange{DumpRepo: new("repo-2")})
 
 	if assert.Len(t, resp.Created, 1) {
 		assert.Equal(t, defaultDumpSchedule, resp.Created[0].MustAsSchedJob().Schedule.CronExpr)
-		assert.Equal(t, defaultDumpSchedule, managed.Postgres.Dump.Schedule)
+		assert.Equal(t, defaultDumpSchedule, managed.Database.Dump.Schedule)
 	}
 }
 
 func TestReconfigureMovesTheDump(t *testing.T) {
 	setting, managed, jobs := configured(t, &managedmodel.Options{DumpRepo: "repo-1"})
-	dumpID := managed.Postgres.Jobs.Dump.ID
+	dumpID := managed.Database.Jobs.Dump.ID
 
 	resp := changeDump(t, setting, managed, jobs,
 		&managedmodel.SettingsChange{DumpRepo: new("repo-2"), DumpSchedule: new("0 */6 * * *")})
@@ -154,7 +154,7 @@ func TestReconfigureMovesTheDump(t *testing.T) {
 	assert.Equal(t, "repo-2", job.DataBackup.TargetRepository.ID)
 	assert.Equal(t, "0 */6 * * *", job.Schedule.CronExpr)
 	assert.Equal(t, entity.ManagedDump{Repo: entity.ObjectID{ID: "repo-2"}, Schedule: "0 */6 * * *"},
-		managed.Postgres.Dump)
+		managed.Database.Dump)
 
 	// Another repository alone changes the job, but not when it runs.
 	resp = changeDump(t, setting, managed, jobs, &managedmodel.SettingsChange{DumpRepo: new("repo-3")})
@@ -165,14 +165,14 @@ func TestReconfigureMovesTheDump(t *testing.T) {
 // Clearing the repository turns dumps off: the job goes, the schedule stays.
 func TestReconfigureTurnsDumpsOff(t *testing.T) {
 	setting, managed, jobs := configured(t, &managedmodel.Options{DumpRepo: "repo-1", DumpSchedule: "0 5 * * *"})
-	dumpID := managed.Postgres.Jobs.Dump.ID
+	dumpID := managed.Database.Jobs.Dump.ID
 
 	resp := changeDump(t, setting, managed, jobs, &managedmodel.SettingsChange{DumpRepo: new("")})
 
 	assert.Equal(t, []string{dumpID}, ids(resp.Deleted))
 	assert.Empty(t, resp.Changed)
-	assert.Empty(t, managed.Postgres.Jobs.Dump.ID)
-	assert.Equal(t, entity.ManagedDump{Schedule: "0 5 * * *"}, managed.Postgres.Dump)
+	assert.Empty(t, managed.Database.Jobs.Dump.ID)
+	assert.Equal(t, entity.ManagedDump{Schedule: "0 5 * * *"}, managed.Database.Dump)
 }
 
 // The schedule of dumps that are off is kept for when they are on.
@@ -183,7 +183,7 @@ func TestReconfigureKeepsTheScheduleOfDumpsOff(t *testing.T) {
 
 	assert.Empty(t, resp.Created)
 	assert.Empty(t, resp.Changed)
-	assert.Equal(t, "0 1 * * 0", managed.Postgres.Dump.Schedule)
+	assert.Equal(t, "0 1 * * 0", managed.Database.Dump.Schedule)
 }
 
 func TestReconfigureRefusesABadDumpSchedule(t *testing.T) {
@@ -200,7 +200,7 @@ func TestReconfigureRefusesABadDumpSchedule(t *testing.T) {
 // A dump turned on while the database is still being restored waits for it.
 func TestReconfigureTurnsDumpsOnForARestoringDatabase(t *testing.T) {
 	setting, managed, jobs := configured(t, nil)
-	managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "source-1"}}
+	managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "source-1"}}
 
 	resp := changeDump(t, setting, managed, jobs, &managedmodel.SettingsChange{DumpRepo: new("repo-1")})
 
@@ -212,7 +212,7 @@ func TestReconfigureTurnsDumpsOnForARestoringDatabase(t *testing.T) {
 // The last dump is read from its run's outputs, the snapshot it took.
 func TestStatusReadsTheLastDump(t *testing.T) {
 	managed := statusManaged(entity.ManagedRestoreTestContainer)
-	managed.Postgres.Jobs.Dump = entity.ObjectID{ID: "dump-1"}
+	managed.Database.Jobs.Dump = entity.ObjectID{ID: "dump-1"}
 	ended := time.Date(2026, 10, 18, 3, 1, 0, 0, time.UTC)
 	runs := healthyRuns()
 	runs["dump-1"] = &managedmodel.JobRun{Status: base.TaskStatusDone, EndedAt: ended,
@@ -234,11 +234,11 @@ func TestStatusReadsTheLastDump(t *testing.T) {
 // read the whole database at once.
 func TestStatusSuggestsTheDumpRunsApart(t *testing.T) {
 	managed := statusManaged(entity.ManagedRestoreTestContainer)
-	managed.Postgres.Jobs.Dump = entity.ObjectID{ID: "dump-1"}
+	managed.Database.Jobs.Dump = entity.ObjectID{ID: "dump-1"}
 	now := time.Date(2026, 10, 18, 12, 0, 0, 0, time.UTC)
 	schedules := func(dump string) map[string]*entity.SchedJobSchedule {
 		return map[string]*entity.SchedJobSchedule{
-			managed.Postgres.Jobs.Nightly.ID: {CronExpr: "0 2 * * *"},
+			managed.Database.Jobs.Nightly.ID: {CronExpr: "0 2 * * *"},
 			"dump-1":                         {CronExpr: dump},
 		}
 	}

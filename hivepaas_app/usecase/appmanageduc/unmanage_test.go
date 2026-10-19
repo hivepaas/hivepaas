@@ -56,7 +56,7 @@ func TestUnmanagingAnOrdinaryAppIsRefused(t *testing.T) {
 
 func TestUnmanagingFindsTheVerifierToDelete(t *testing.T) {
 	managed := setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{RestoreTest: entity.ManagedRestoreTest{
+		Database: &entity.ManagedDatabase{RestoreTest: entity.ManagedRestoreTest{
 			Mode: entity.ManagedRestoreTestVerifier, VerifierApp: entity.ObjectID{ID: "ver-1"}}}})
 
 	assert.Equal(t, "ver-1", verifierOf(managed))

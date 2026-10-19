@@ -24,7 +24,7 @@ type Service interface {
 		*managedmodel.S3Archive, error)
 
 	// MarkRestorePoint makes a restore point on a managed database (design §4,
-	// "Restore points"): its engine marks it and waits until the WAL it is in is
+	// "Restore points"): its engine marks it and waits until the log it is in is
 	// archived. It runs in a transaction of its own, which holds the database's
 	// row while the mark runs - never inside a longer one, such as a deployment's.
 	MarkRestorePoint(ctx context.Context, req *MarkPointReq) (*MarkedPoint, error)

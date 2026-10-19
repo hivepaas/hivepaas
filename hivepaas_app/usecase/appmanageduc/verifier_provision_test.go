@@ -32,7 +32,7 @@ func (f *fakeFeatures) CheckFeatures(_ context.Context, features []string) error
 
 func managedWith(test entity.ManagedRestoreTest, placement string) *loadedManaged {
 	managed := setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{Storage: entity.ManagedStorage{Placement: placement}, RestoreTest: test}})
+		Database: &entity.ManagedDatabase{Storage: entity.ManagedStorage{Placement: placement}, RestoreTest: test}})
 	app := &entity.App{ID: "app-1", Settings: []*entity.Setting{managed}}
 	return &loadedManaged{app: app, setting: managed, managed: managed.MustAsAppManagedSettings()}
 }

@@ -146,7 +146,7 @@ type VerifierSpec struct {
 
 // RestoreSource is what a database restored into a new app recovers from: the
 // source's archive, which it only reads, the key the archive is encrypted with,
-// and the target, a point resolved to its LSN.
+// and the target, a point resolved to its position.
 type RestoreSource struct {
 	SourceAppID   string
 	Archive       *Archive
@@ -204,14 +204,14 @@ type Retention struct {
 }
 
 // MarkCommand makes a restore point: Command, run in the database's task,
-// prints the point's LSN once the WAL it is in is archived, and gives up after
-// Timeout, exiting MarkExitNotArchived.
+// prints the point's position once the log it is in (the WAL, for Postgres) is
+// archived, and gives up after Timeout, exiting MarkExitNotArchived.
 type MarkCommand struct {
 	Command string
 	Timeout time.Duration
 }
 
-// MarkExitNotArchived is EX_TEMPFAIL: the point is made, but the WAL it is in
+// MarkExitNotArchived is EX_TEMPFAIL: the point is made, but the log it is in
 // was not archived in time, so it cannot be restored to yet.
 const MarkExitNotArchived = 75
 

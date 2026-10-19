@@ -22139,7 +22139,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points" : {
       "post" : {
-        "description" : "The point is made, and listed once the WAL it is in is archived; it can then be restored to for\nas long as retention keeps the base backup before it, or until keepUntil, which holds retention\nback. Names are labels: letters, digits, '.', '_' and '-', at most 63, not starting with \"hp-\".",
+        "description" : "The point is made, and listed once the log it is in (the WAL, for Postgres) is archived; it can\nthen be restored to for as long as retention keeps the base backup before it, or until keepUntil,\nwhich holds retention back. Names are labels: letters, digits, '.', '_' and '-', at most the\nengine's limit (63 for Postgres), not starting with \"hp-\".",
         "operationId" : "appManagedRestorePointCreate",
         "parameters" : [ {
           "description" : "project ID",
@@ -22226,7 +22226,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/restore-points/{name}" : {
       "delete" : {
-        "description" : "The archive is not touched, and the mark stays in the WAL, harmlessly: restores target an LSN.",
+        "description" : "The archive is not touched, and the mark stays in the database's log, harmlessly: restores target\nthe point's position, never its name.",
         "operationId" : "appManagedRestorePointDelete",
         "parameters" : [ {
           "description" : "project ID",
@@ -56874,7 +56874,8 @@
             "nullable" : true,
             "type" : "string"
           },
-          "pgWalBytes" : {
+          "pendingBytes" : {
+            "description" : "PendingBytes is what waits on the node to be archived: pg_wal for\nPostgres.",
             "type" : "integer"
           },
           "stale" : {
@@ -56886,7 +56887,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "checkedAt", "failedCount", "lastArchivedAt", "pgWalBytes", "stale", "state" ],
+        "required" : [ "checkedAt", "failedCount", "lastArchivedAt", "pendingBytes", "stale", "state" ],
         "type" : "object"
       },
       "appmanageddto.ManagedBackupRefResp" : {
@@ -56921,6 +56922,20 @@
           }
         },
         "required" : [ "at", "bytes", "endedAt", "name", "succeeded" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedCapabilitiesResp" : {
+        "properties" : {
+          "replicas" : {
+            "description" : "Replicas are read replicas: adding and removing them, taking the base\nbackups on one, promoting one.",
+            "type" : "boolean"
+          },
+          "verifierApp" : {
+            "description" : "VerifierApp is the restore test in an app of its own.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "replicas", "verifierApp" ],
         "type" : "object"
       },
       "appmanageddto.ManagedDumpCfgResp" : {
@@ -57137,9 +57152,6 @@
             "description" : "Kept says retention is held back for it now.",
             "type" : "boolean"
           },
-          "lsn" : {
-            "type" : "string"
-          },
           "name" : {
             "type" : "string"
           },
@@ -57150,13 +57162,17 @@
             "description" : "Origin is what made it: person, or deploy for a deployment of an app that\nasks for a point before each of its deploys, which the engine removes once\nit cannot be restored.",
             "type" : "string"
           },
+          "position" : {
+            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN.",
+            "type" : "string"
+          },
           "restorableUntil" : {
             "description" : "RestorableUntil is until when it can be restored, as retention's next runs\ngo; null when no base backup kept reaches it, or the schedule says nothing.",
             "nullable" : true,
             "type" : "string"
           }
         },
-        "required" : [ "at", "by", "keepUntil", "kept", "lsn", "name", "note", "origin", "restorableUntil" ],
+        "required" : [ "at", "by", "keepUntil", "kept", "name", "note", "origin", "position", "restorableUntil" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreResp" : {
@@ -57212,10 +57228,11 @@
           "kind" : {
             "type" : "string"
           },
-          "lsn" : {
+          "point" : {
             "type" : "string"
           },
-          "point" : {
+          "position" : {
+            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN.",
             "type" : "string"
           },
           "time" : {
@@ -57223,7 +57240,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "backup", "kind", "lsn", "point", "time" ],
+        "required" : [ "backup", "kind", "point", "position", "time" ],
         "type" : "object"
       },
       "appmanageddto.ManagedRestoreTestCfgRsp" : {
@@ -57313,6 +57330,13 @@
           },
           "baseBackupSchedule" : {
             "type" : "string"
+          },
+          "capabilities" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedCapabilitiesResp"
+            } ],
+            "description" : "Capabilities are what the engine can do that not every engine can: what\nit cannot is refused, and not offered.",
+            "type" : "object"
           },
           "dump" : {
             "allOf" : [ {
@@ -57404,7 +57428,7 @@
             "type" : "object"
           }
         },
-        "required" : [ "archiveTimeout", "backupFrom", "baseBackupSchedule", "dump", "engine", "engineApi", "fencedAt", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer", "writer" ],
+        "required" : [ "archiveTimeout", "backupFrom", "baseBackupSchedule", "capabilities", "dump", "engine", "engineApi", "fencedAt", "jobs", "locks", "memberOf", "members", "restore", "restoreTest", "restoreTestSchedule", "retainFull", "storage", "switchedTo", "updateVer", "writer" ],
         "type" : "object"
       },
       "appmanageddto.ManagedStatusResp" : {
@@ -57433,7 +57457,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/appmanageddto.ManagedHeldBackResp"
             } ],
-            "description" : "HeldBack is what the kept points make retention keep beyond its own: the\nbase backups and their size, the WAL after them not counted. Null when\nthey keep nothing more.",
+            "description" : "HeldBack is what the kept points make retention keep beyond its own: the\nbase backups and their size, the log after them not counted. Null when\nthey keep nothing more.",
             "nullable" : true,
             "type" : "object"
           },

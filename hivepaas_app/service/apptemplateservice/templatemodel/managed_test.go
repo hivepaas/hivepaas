@@ -70,6 +70,7 @@ func TestDecodeManagedTemplate(t *testing.T) {
 	assert.Equal(t, 1, tmpl.Managed.EngineAPI)
 	assert.Equal(t, 60*time.Second, tmpl.Managed.Postgres.ArchiveTimeout.Duration)
 	assert.Equal(t, 7, tmpl.Managed.Postgres.RetainFull)
+	assert.Same(t, tmpl.Managed.Postgres, tmpl.Managed.Defaults(), "the engine's defaults")
 	assert.Equal(t, []string{"managed-databases"}, tmpl.Metadata.Requires.Features)
 
 	walg := tmpl.FindArtifact("wal-g")
@@ -80,7 +81,9 @@ func TestDecodeManagedTemplate(t *testing.T) {
 }
 
 func TestAnOrdinaryTemplateIsNotManaged(t *testing.T) {
-	assert.False(t, mustDecode(t).IsManaged())
+	tmpl := mustDecode(t)
+	assert.False(t, tmpl.IsManaged())
+	assert.Nil(t, tmpl.Managed.Defaults())
 }
 
 func TestDecodeManagedTemplateRefusesUnknownFields(t *testing.T) {
@@ -104,7 +107,7 @@ func TestDecodeManagedTemplateRefusesUnknownFields(t *testing.T) {
 
 func TestValidateManagedReportsEveryProblem(t *testing.T) {
 	file := func(tm *Template) *ArtifactFile { return tm.Artifacts[0].Files[base.CPUArchAMD64] }
-	pg := func(tm *Template) *ManagedPostgresDefaults { return tm.Managed.Postgres }
+	pg := func(tm *Template) *ManagedDefaults { return tm.Managed.Postgres }
 	cases := map[string]struct {
 		mutate func(tm *Template)
 		want   string
@@ -173,6 +176,7 @@ func TestAManagedTemplateMayLeaveTheEngineDefaultsOut(t *testing.T) {
 	tmpl := mustDecodeManaged(t)
 	tmpl.Managed.Postgres = nil
 	assert.NoError(t, tmpl.Validate("pgm"))
+	assert.Nil(t, tmpl.Managed.Defaults())
 }
 
 func TestAnAlpineVariantNameIsRefusedToo(t *testing.T) {
@@ -189,6 +193,7 @@ func TestAnAlpineVariantNameIsRefusedToo(t *testing.T) {
 
 func TestEveryEngineContractNamesItsArtifacts(t *testing.T) {
 	for engine, contract := range ManagedEngines {
+		assert.NotEmpty(t, contract.Title, engine)
 		assert.LessOrEqual(t, 1, contract.MinAPI, engine)
 		assert.LessOrEqual(t, contract.MinAPI, contract.MaxAPI, engine)
 		assert.NotEmpty(t, contract.Artifacts, engine)

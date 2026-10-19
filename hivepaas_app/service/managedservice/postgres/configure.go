@@ -83,7 +83,7 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 			Engine:    string(e.Name()),
 			EngineAPI: maxAPI,
 			Locks:     locks(req, source),
-			Postgres: &entity.ManagedPostgres{
+			Database: &entity.ManagedDatabase{
 				Storage:        req.Storage,
 				EncryptionKey:  entity.NewEncryptedField(req.Prepared.EncryptionKey),
 				ArchiveTimeout: timeutil.Duration(options.ArchiveTimeout),
@@ -91,7 +91,7 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 				RestoreTest: entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer,
 					CheckQuery: options.RestoreTestQuery},
 				Dump: dump,
-				Jobs: entity.ManagedPostgresJobs{
+				Jobs: entity.ManagedJobs{
 					Nightly:     entity.ObjectID{ID: nightly.ID},
 					Health:      entity.ObjectID{ID: health.ID},
 					RestoreTest: entity.ObjectID{ID: restoreTest.ID},
@@ -102,7 +102,7 @@ func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.Config
 	managed.ID = managedID
 	if restore := req.Prepared.Restore; restore != nil {
 		data := managed.MustAsAppManagedSettings()
-		data.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: restore.SourceAppID},
+		data.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: restore.SourceAppID},
 			Target: restore.Target}
 		managed.MustSetData(data)
 	}

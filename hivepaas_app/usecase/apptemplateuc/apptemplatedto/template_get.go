@@ -274,12 +274,12 @@ func TransformAppTemplate(
 		Variants:         make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
 		Parameters:       make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
 	}
-	if managed := tmpl.Template.Managed; managed != nil && managed.Postgres != nil {
+	if defaults := tmpl.Template.Managed.Defaults(); defaults != nil {
 		resp.ManagedDefaults = &AppTemplateManagedDefaultsResp{
-			ArchiveTimeout:      timeutil.Duration(managed.Postgres.ArchiveTimeout.Duration),
-			BaseBackupSchedule:  managed.Postgres.BaseBackupSchedule,
-			RetainFull:          managed.Postgres.RetainFull,
-			RestoreTestSchedule: managed.Postgres.RestoreTestSchedule,
+			ArchiveTimeout:      timeutil.Duration(defaults.ArchiveTimeout.Duration),
+			BaseBackupSchedule:  defaults.BaseBackupSchedule,
+			RetainFull:          defaults.RetainFull,
+			RestoreTestSchedule: defaults.RestoreTestSchedule,
 		}
 	}
 	if links := metadata.Links; links != nil {

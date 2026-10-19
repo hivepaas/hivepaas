@@ -28,10 +28,10 @@ func restorableStatus() *managedmodel.Status {
 			{Name: "base_000000010000000000000042", At: windowTo.Add(-10 * time.Hour)}}}
 }
 
-func restorablePostgres() *entity.ManagedPostgres {
-	return &entity.ManagedPostgres{RestorePoints: []*entity.ManagedRestorePoint{
-		{Name: "before-v42", LSN: "0/3000060", At: windowTo.Add(-time.Hour)},
-		{Name: "ancient", LSN: "0/1000028", At: windowFrom.Add(-24 * time.Hour)},
+func restorablePostgres() *entity.ManagedDatabase {
+	return &entity.ManagedDatabase{RestorePoints: []*entity.ManagedRestorePoint{
+		{Name: "before-v42", Position: "0/3000060", At: windowTo.Add(-time.Hour)},
+		{Name: "ancient", Position: "0/1000028", At: windowFrom.Add(-24 * time.Hour)},
 	}}
 }
 
@@ -47,7 +47,7 @@ func TestATargetInsideTheWindowIsResolved(t *testing.T) {
 		"a time": {appmanageddto.ManagedRestoreTargetReq{Kind: "time", Time: &inside},
 			entity.ManagedRestoreTarget{Kind: "time", Time: inside}, time.Time{}},
 		"a point, by its LSN": {appmanageddto.ManagedRestoreTargetReq{Kind: "point", Point: "before-v42"},
-			entity.ManagedRestoreTarget{Kind: "point", Point: "before-v42", LSN: "0/3000060"}, windowTo.Add(-time.Hour)},
+			entity.ManagedRestoreTarget{Kind: "point", Point: "before-v42", Position: "0/3000060"}, windowTo.Add(-time.Hour)},
 		"a backup": {appmanageddto.ManagedRestoreTargetReq{Kind: "backup", Backup: "base_000000010000000000000042"},
 			entity.ManagedRestoreTarget{Kind: "backup", Backup: "base_000000010000000000000042"}, time.Time{}},
 	} {
@@ -119,8 +119,8 @@ func TestTheRestoredAppHasTheSourcesParameters(t *testing.T) {
 func TestTheRestoredAppArchivesWhereTheSourceDoesUnderItsOwnName(t *testing.T) {
 	loaded := loadedPostgres(t)
 	loaded.app = &entity.App{ID: "app-1", ProjectID: "p1", ProjectEnvID: "p1:prod", Name: "shop-db"}
-	loaded.managed.Postgres.Storage.KeyAuth = entity.ObjectID{ID: "key-1"}
-	loaded.managed.Postgres.RestoreTest.CheckQuery = "SELECT 1"
+	loaded.managed.Database.Storage.KeyAuth = entity.ObjectID{ID: "key-1"}
+	loaded.managed.Database.RestoreTest.CheckQuery = "SELECT 1"
 	binding := &entity.AppTemplateSettings{Template: "postgres-managed", Version: "17",
 		ImageOverride: "docker.io/library/postgres:17.5-trixie"}
 	defs := []*templatemodel.Parameter{{Name: "dataVolume", Type: templatemodel.ParamTypeVolume}}
@@ -146,7 +146,7 @@ func TestTheRestoredAppArchivesWhereTheSourceDoesUnderItsOwnName(t *testing.T) {
 	assert.Equal(t, "SELECT 1", managed.RestoreTestQuery)
 	assert.Equal(t, &apptemplatedto.ManagedDumpReq{}, managed.Dump, "the source is not dumped: neither is it")
 
-	loaded.managed.Postgres.Dump = entity.ManagedDump{Repo: entity.ObjectID{ID: "repo-2"}, Schedule: "0 5 * * *"}
+	loaded.managed.Database.Dump = entity.ManagedDump{Repo: entity.ObjectID{ID: "repo-2"}, Schedule: "0 5 * * *"}
 	req, err = restoreCreateReq(loaded, binding, defs, &appmanageddto.RestoreManagedReq{
 		DataVolume: &basedto.ObjectIDReq{ID: "vol-new"}}, now)
 	assert.NoError(t, err)

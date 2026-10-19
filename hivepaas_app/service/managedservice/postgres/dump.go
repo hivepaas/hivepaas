@@ -63,7 +63,7 @@ func newDumpJob(app *entity.App, managedID string, dump entity.ManagedDump, rest
 // job, one changed moves it, and none removes it. The schedule is kept whether
 // dumps are on or not.
 func reconfigureDump(req *managedmodel.ReconfigureReq, resp *managedmodel.ReconfigureResp) error {
-	pg, change := req.Managed.Postgres, req.Change
+	pg, change := req.Managed.Database, req.Change
 	if change.DumpRepo == nil && change.DumpSchedule == nil {
 		return nil
 	}

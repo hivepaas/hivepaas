@@ -21,11 +21,11 @@ func loadedPostgres(t *testing.T) *loadedManaged {
 	managed := setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{
 		Engine: "postgres", EngineAPI: 1,
 		Locks: entity.ManagedLocks{Image: "postgres:17.6-trixie", ImageLine: "17"},
-		Postgres: &entity.ManagedPostgres{
+		Database: &entity.ManagedDatabase{
 			Storage:        entity.ManagedStorage{BackupRepo: entity.ObjectID{ID: "repo-1"}, Prefix: "kopia/walg/db"},
 			ArchiveTimeout: timeutil.Duration(time.Minute), RetainFull: 7,
 			RestoreTest: entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer},
-			Jobs: entity.ManagedPostgresJobs{Nightly: entity.ObjectID{ID: "job-1"},
+			Jobs: entity.ManagedJobs{Nightly: entity.ObjectID{ID: "job-1"},
 				Health: entity.ObjectID{ID: "job-2"}, RestoreTest: entity.ObjectID{ID: "job-3"}},
 		},
 	})
@@ -53,6 +53,8 @@ func TestTheSettingsSayWhatTheEngineKeepsAndWhen(t *testing.T) {
 	assert.Equal(t, "container", resp.RestoreTest.Mode)
 	assert.Equal(t, "postgres:17.6-trixie", resp.Locks.Image)
 	assert.Equal(t, "job-1", resp.Jobs.Nightly.ID)
+	assert.Equal(t, appmanageddto.ManagedCapabilitiesResp{Replicas: true, VerifierApp: true}, resp.Capabilities,
+		"what the engine can do")
 }
 
 func TestReconfiguringRewritesTheSettingAndItsJobs(t *testing.T) {
@@ -63,7 +65,7 @@ func TestReconfiguringRewritesTheSettingAndItsJobs(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 4, loaded.setting.UpdateVer)
-	assert.Equal(t, 14, loaded.setting.MustAsAppManagedSettings().Postgres.RetainFull, "stored, not only parsed")
+	assert.Equal(t, 14, loaded.setting.MustAsAppManagedSettings().Database.RetainFull, "stored, not only parsed")
 	assert.Equal(t, []string{"job-1"}, settingIDs(resp.Changed))
 	assert.Equal(t, []string{"job-1"}, settingIDs(resp.Rescheduled))
 	assert.Equal(t, "30 1 * * *", resp.Changed[0].MustAsSchedJob().Schedule.CronExpr)
@@ -123,7 +125,7 @@ func TestTheSettingsSayWhereARestoredDatabaseCameFrom(t *testing.T) {
 	assert.Nil(t, appmanageddto.TransformManagedSettings(loaded.view()).Restore, "a database not restored")
 
 	at := time.Date(2026, 10, 18, 14, 32, 0, 0, time.UTC)
-	loaded.managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"},
+	loaded.managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"},
 		Target: entity.ManagedRestoreTarget{Kind: entity.ManagedRestoreToTime, Time: at}}
 	restore := appmanageddto.TransformManagedSettings(loaded.view()).Restore
 
@@ -139,7 +141,7 @@ func TestTheSettingsSayWhereARestoredDatabaseCameFrom(t *testing.T) {
 // settings say where.
 func TestReconfiguringMovesTheBaseBackupsToAReplica(t *testing.T) {
 	loaded := loadedPostgres(t)
-	loaded.managed.Postgres.Members = []*entity.ManagedMember{{App: entity.ObjectID{ID: "db-r1"}, Key: "db-r1",
+	loaded.managed.Database.Members = []*entity.ManagedMember{{App: entity.ObjectID{ID: "db-r1"}, Key: "db-r1",
 		Role: entity.ManagedRoleReplica}}
 
 	resp, err := reconfigureManaged(loaded, &appmanageddto.UpdateManagedSettingsReq{UpdateVer: 3,

@@ -44,7 +44,8 @@ const (
 type Status struct {
 	Archiving ArchivingStatus
 	// RestoreWindow is what a restore may target: from the oldest base backup
-	// kept to the last archived WAL. Nil before the first base backup.
+	// kept to the last log archived (WAL for Postgres). Nil before the first base
+	// backup.
 	RestoreWindow *TimeWindow
 	LastBackup    *BackupStatus
 	// Backups are the base backups kept, oldest first, as the last nightly run
@@ -98,7 +99,7 @@ type RestorePointStatus struct {
 }
 
 // HeldBack is the base backups kept for points beyond the retainFull newest,
-// and their size. The WAL after them is held back too, and not counted.
+// and their size. The log after them is held back too, and not counted.
 type HeldBack struct {
 	Backups int
 	Bytes   int64
@@ -109,7 +110,9 @@ type ArchivingStatus struct {
 	CheckedAt      *time.Time
 	LastArchivedAt *time.Time
 	FailedCount    int
-	PgWalBytes     int64
+	// PendingBytes is what waits on the node to be archived: pg_wal, or binary
+	// logs not yet pushed.
+	PendingBytes int64
 	// Stale says the health check has not run for a while: what it last said is
 	// old news.
 	Stale bool

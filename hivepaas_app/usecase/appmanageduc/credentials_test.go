@@ -43,7 +43,7 @@ func TestRefreshRewritesTheSecretsThatChanged(t *testing.T) {
 
 // The verifier's copies are refreshed too, under its own narrower key.
 func TestTheVerifierReadsTheArchiveWithItsOwnKey(t *testing.T) {
-	pg := &entity.ManagedPostgres{Storage: entity.ManagedStorage{CloudStorage: entity.ObjectID{ID: "s3-1"},
+	pg := &entity.ManagedDatabase{Storage: entity.ManagedStorage{CloudStorage: entity.ObjectID{ID: "s3-1"},
 		KeyAuth: entity.ObjectID{ID: "key-rw"}, Prefix: "walg/db"}}
 	app := &entity.App{ID: "db-1"}
 

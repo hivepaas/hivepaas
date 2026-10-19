@@ -15,6 +15,11 @@ type Engine interface {
 	// APIRange is the engine API versions this engine speaks: the contracts
 	// between it and the templates that name it.
 	APIRange() (minAPI, maxAPI int)
+	// Capabilities are what the engine can do beyond what every engine does: the
+	// use cases refuse the rest, and the dashboard does not offer it.
+	Capabilities() Capabilities
+	// PointNameMax is the longest name a restore point of the engine may have.
+	PointNameMax() int
 
 	// PrepareDoc adds to an app's rendered document what the engine needs built
 	// with it - variables, secrets as files, the archive's mount - in the blocks a
@@ -57,7 +62,8 @@ type Engine interface {
 	Retention(req *RetentionReq) (*Retention, error)
 	// MarkRestorePoint is the command that makes a restore point of that name.
 	MarkRestorePoint(managed *entity.AppManagedSettings, name string) (MarkCommand, error)
-	// MarkResult is the LSN the mark command printed.
+	// MarkResult is the point's position the mark command printed, as the engine
+	// reads it back when it restores to the point.
 	MarkResult(stdout string) (string, error)
 	// StaleDeployPoints are the names of the points deployments made that none
 	// of the base backups a nightly run's outputs list reaches: none starts
@@ -69,4 +75,13 @@ type Engine interface {
 	// Promote is how a member is promoted to the cluster's primary, refusing one
 	// that cannot be.
 	Promote(req *PromoteReq) (*PromoteSpec, error)
+}
+
+// Capabilities are what an engine can do that not every engine can.
+type Capabilities struct {
+	// Replicas are read replicas: adding and removing them, taking the base
+	// backups on one, promoting one, and the cluster's stable addresses.
+	Replicas bool
+	// VerifierApp is the restore test in an app of its own.
+	VerifierApp bool
 }

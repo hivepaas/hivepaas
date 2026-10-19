@@ -40,8 +40,11 @@ func (uc *UC) RestoreManagedApp(
 	if err != nil {
 		return nil, err
 	}
-	pg := loaded.managed.Postgres
-	if pg == nil {
+	if errs := req.ValidatePoint(loaded.engine.PointNameMax()); len(errs) > 0 {
+		return nil, errs
+	}
+	state := loaded.managed.Database
+	if state == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}
 	if loaded.app.ProjectEnvID != req.ProjectEnvID {
@@ -51,7 +54,7 @@ func (uc *UC) RestoreManagedApp(
 	if err != nil {
 		return nil, err
 	}
-	target, pointAt, err := resolveTarget(&req.Target, pg, status)
+	target, pointAt, err := resolveTarget(&req.Target, state, status)
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +99,10 @@ func (uc *UC) RestoreManagedApp(
 
 // resolveTarget checks a target against what the archive reaches - the restore
 // window, the points recorded, the base backups kept - and resolves it: a point
-// to its LSN, and when it was made.
+// to its position, and when it was made.
 func resolveTarget(
 	req *appmanageddto.ManagedRestoreTargetReq,
-	pg *entity.ManagedPostgres,
+	state *entity.ManagedDatabase,
 	status *managedmodel.Status,
 ) (entity.ManagedRestoreTarget, time.Time, error) {
 	target := entity.ManagedRestoreTarget{Kind: req.Kind}
@@ -123,14 +126,14 @@ func resolveTarget(
 		target.Time = at
 		return target, time.Time{}, nil
 	case entity.ManagedRestoreToPoint:
-		point := pg.RestorePoint(req.Point)
+		point := state.RestorePoint(req.Point)
 		if point == nil {
 			return target, time.Time{}, hperrors.NewNotFound("Restore point")
 		}
 		if point.At.Before(window.From) {
 			return target, time.Time{}, outside(point.At)
 		}
-		target.Point, target.LSN = point.Name, point.LSN
+		target.Point, target.Position = point.Name, point.Position
 		return target, point.At, nil
 	case entity.ManagedRestoreToBackup:
 		for _, backup := range status.Backups {
@@ -174,7 +177,7 @@ func restoreCreateReq(
 	if err != nil {
 		return nil, err
 	}
-	pg := loaded.managed.Postgres
+	state := loaded.managed.Database
 	create := &apptemplatedto.CreateAppFromTemplateReq{
 		ProjectID:    loaded.app.ProjectID,
 		ProjectEnvID: loaded.app.ProjectEnvID,
@@ -185,15 +188,15 @@ func restoreCreateReq(
 		ImageTag:     imageTag(binding.ImageOverride),
 		Params:       params,
 		Managed: &apptemplatedto.ManagedCreateReq{
-			Storage: apptemplatedto.ManagedStorageReq{BackupRepo: objectIDReq(pg.Storage.BackupRepo),
-				CloudStorage: objectIDReq(pg.Storage.CloudStorage), KeyAuth: objectIDReq(pg.Storage.KeyAuth)},
-			ArchiveTimeout:      pg.ArchiveTimeout,
-			RetainFull:          pg.RetainFull,
-			BaseBackupSchedule:  loaded.cronOf(pg.Jobs.Nightly.ID),
-			RestoreTestSchedule: loaded.cronOf(pg.Jobs.RestoreTest.ID),
-			RestoreTestQuery:    pg.RestoreTest.CheckQuery,
+			Storage: apptemplatedto.ManagedStorageReq{BackupRepo: objectIDReq(state.Storage.BackupRepo),
+				CloudStorage: objectIDReq(state.Storage.CloudStorage), KeyAuth: objectIDReq(state.Storage.KeyAuth)},
+			ArchiveTimeout:      state.ArchiveTimeout,
+			RetainFull:          state.RetainFull,
+			BaseBackupSchedule:  loaded.cronOf(state.Jobs.Nightly.ID),
+			RestoreTestSchedule: loaded.cronOf(state.Jobs.RestoreTest.ID),
+			RestoreTestQuery:    state.RestoreTest.CheckQuery,
 			// Dumped where and when the source is, or not at all.
-			Dump: &apptemplatedto.ManagedDumpReq{Repo: objectIDReq(pg.Dump.Repo), Schedule: pg.Dump.Schedule},
+			Dump: &apptemplatedto.ManagedDumpReq{Repo: objectIDReq(state.Dump.Repo), Schedule: state.Dump.Schedule},
 		},
 	}
 	if create.Name == "" {
@@ -276,23 +279,24 @@ func (uc *UC) restoreSource(
 	target entity.ManagedRestoreTarget,
 	pointAt time.Time,
 ) (*managedmodel.RestoreSource, error) {
-	pg := loaded.managed.Postgres
-	key, err := pg.EncryptionKey.GetPlain()
+	state := loaded.managed.Database
+	key, err := state.EncryptionKey.GetPlain()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	source := &managedmodel.RestoreSource{SourceAppID: loaded.app.ID, EncryptionKey: key, Target: target,
 		PointAt: pointAt}
 	scope := appScope(loaded.app)
-	if pg.Storage.Placement == entity.ManagedPlacementOffSite {
-		s3, resolveErr := uc.managedService.ResolveS3(ctx, uc.db, scope, pg.Storage)
+	if state.Storage.Placement == entity.ManagedPlacementOffSite {
+		s3, resolveErr := uc.managedService.ResolveS3(ctx, uc.db, scope, state.Storage)
 		if resolveErr != nil {
 			return nil, hperrors.Wrap(resolveErr)
 		}
 		source.Archive = &managedmodel.Archive{S3: s3}
 		return source, nil
 	}
-	setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeBackupRepo, pg.Storage.BackupRepo.ID, true)
+	setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeBackupRepo,
+		state.Storage.BackupRepo.ID, true)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -301,6 +305,6 @@ func (uc *UC) restoreSource(
 		return nil, hperrors.Wrap(err)
 	}
 	source.Archive = &managedmodel.Archive{Volume: &managedmodel.VolumeArchive{VolumeID: repo.Volume.ID,
-		Subpath: pg.Storage.Prefix}}
+		Subpath: state.Storage.Prefix}}
 	return source, nil
 }

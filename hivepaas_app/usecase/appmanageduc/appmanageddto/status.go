@@ -80,7 +80,7 @@ type ManagedArchivingResp struct {
 	LastArchivedAt *time.Time `json:"lastArchivedAt"`
 	FailedCount    int        `json:"failedCount"`
 	// PendingBytes is what waits on the node to be archived: pg_wal for
-	// Postgres.
+	// Postgres, the binary logs not yet pushed for MariaDB.
 	PendingBytes int64 `json:"pendingBytes"`
 	// Stale says the health check has not run for a while.
 	Stale bool `json:"stale"`

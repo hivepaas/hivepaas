@@ -56875,7 +56875,7 @@
             "type" : "string"
           },
           "pendingBytes" : {
-            "description" : "PendingBytes is what waits on the node to be archived: pg_wal for\nPostgres.",
+            "description" : "PendingBytes is what waits on the node to be archived: pg_wal for\nPostgres, the binary logs not yet pushed for MariaDB.",
             "type" : "integer"
           },
           "stale" : {
@@ -64289,7 +64289,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/apptemplatedto.ManagedDumpReq"
             } ],
-            "description" : "Dump is the database's pg_dump into a backup repository. Left out, a\ndatabase that archives into a backup repository is dumped into it too, and\none that archives into cloud storage is not dumped until a repository is\nchosen.",
+            "description" : "Dump is the database's logical dump (pg_dump, mariadb-dump) into a backup\nrepository. Left out, a\ndatabase that archives into a backup repository is dumped into it too, and\none that archives into cloud storage is not dumped until a repository is\nchosen.",
             "type" : "object"
           },
           "restoreTestQuery" : {

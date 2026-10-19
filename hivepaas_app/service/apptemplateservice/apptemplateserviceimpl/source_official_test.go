@@ -236,6 +236,24 @@ func TestOfficialSourceWithoutAPin(t *testing.T) {
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplatesUnavailable)
 }
 
+// A channel the release info names no release for is unreleased, and runs the
+// beta's - its templates too, as base.compiledRelease runs its images: a
+// production or development installation before the first stable release.
+func TestOfficialSourceOfAnUnreleasedChannelReadsTheBetaPin(t *testing.T) {
+	for _, env := range []string{config.EnvProd, config.EnvDev} {
+		fx := newOfficialFixture(t)
+		useEnv(t, env)
+		fx.release.Beta, fx.release.Stable = fx.release.Stable, nil
+
+		revision, err := fx.source.Revision(context.Background())
+		assert.NoError(t, err, env)
+		assert.Equal(t, testCommit, revision, env)
+		index, err := fx.source.Index(context.Background())
+		assert.NoError(t, err, env)
+		assert.NotNil(t, index, env)
+	}
+}
+
 func TestOfficialSourceReadsTheBetaPinInTheBetaEnv(t *testing.T) {
 	fx := newOfficialFixture(t)
 	useEnv(t, config.EnvBeta)

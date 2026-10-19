@@ -80,7 +80,8 @@ func (s *officialSource) ID() string {
 }
 
 // pin reads the templates pin for the installation's channel from the release
-// info, which is fetched, verified and cached by hpappservice.
+// info, which is fetched, verified and cached by hpappservice; the beta's for a
+// channel with no release yet.
 func (s *officialSource) pin(ctx context.Context) (*base.TemplatesRef, error) {
 	s.mu.Lock()
 	if s.pinMemo != nil && time.Since(s.pinReadAt) < pinMemoTTL {
@@ -96,6 +97,13 @@ func (s *officialSource) pin(ctx context.Context) (*base.TemplatesRef, error) {
 	}
 	release := info.Stable
 	if cfg := config.Current(); cfg != nil && cfg.IsBetaEnv() {
+		release = info.Beta
+	}
+	// A channel the release info names no release for is unreleased, and runs
+	// the beta's: base.compiledRelease runs its images, and its templates are the
+	// beta's too - a production or development installation before the first
+	// stable release.
+	if release == nil {
 		release = info.Beta
 	}
 	if release == nil || release.Templates == nil {

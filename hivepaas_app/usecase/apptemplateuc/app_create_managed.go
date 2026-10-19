@@ -32,7 +32,10 @@ const (
 	managedPlacementSameNode = entity.ManagedPlacementSameNode
 
 	// walgDir is the directory every archive goes in, under its storage's own
-	// prefix, so it never mixes with what a repository keeps.
+	// prefix, so it never mixes with what a repository keeps. An archive is
+	// <app key>/<app ID> below it: the key is shared by apps of other
+	// environments and projects, and by an app made again by a name whose archive
+	// is kept - HivePaaS deletes none.
 	walgDir = "walg"
 	// encryptionKeyBytes is the libsodium key's size.
 	encryptionKeyBytes = 32
@@ -90,7 +93,7 @@ func (uc *UC) planManaged(
 		return nil, err
 	}
 	planned := &managedPlan{engine: engine}
-	archive, err := uc.resolveArchive(ctx, scope, req.Managed.Storage, pin, main.key(), planned)
+	archive, err := uc.resolveArchive(ctx, scope, req.Managed.Storage, pin, path.Join(main.key(), main.id), planned)
 	if err != nil {
 		return nil, err
 	}
@@ -204,10 +207,10 @@ func (uc *UC) resolveArchive(
 	scope *entity.ObjectScope,
 	req apptemplatedto.ManagedStorageReq,
 	dataPin placementservice.VolumePin,
-	appKey string,
+	name string,
 	planned *managedPlan,
 ) (*managedmodel.Archive, error) {
-	prefix := path.Join(walgDir, appKey)
+	prefix := path.Join(walgDir, name)
 	if req.BackupRepo != nil && req.BackupRepo.ID != "" {
 		setting, err := uc.settingRepo.GetByID(ctx, uc.db, scope, base.SettingTypeBackupRepo, req.BackupRepo.ID, true)
 		if err != nil {
@@ -218,7 +221,7 @@ func (uc *UC) resolveArchive(
 			return nil, hperrors.Wrap(err)
 		}
 		planned.storage.BackupRepo = entity.ObjectID{ID: setting.ID}
-		prefix = path.Join(repo.StoragePrefix, walgDir, appKey)
+		prefix = path.Join(repo.StoragePrefix, walgDir, name)
 		if repo.Volume.ID != "" {
 			return uc.volumeArchive(ctx, scope, repo.Volume.ID, prefix, dataPin, planned)
 		}

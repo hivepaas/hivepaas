@@ -247,7 +247,7 @@ func TestAManagedAppArchivesToAnS3Repository(t *testing.T) {
 	if assert.NotNil(t, prepared) && assert.NotNil(t, prepared.Archive.S3) {
 		s3 := prepared.Archive.S3
 		assert.Equal(t, "backups", s3.Bucket)
-		assert.Equal(t, "kopia/walg/main-db", s3.Prefix, "beside the repository's own, never in it")
+		assert.Regexp(t, `^kopia/walg/main-db/[0-9A-Z]{26}$`, s3.Prefix, "beside the repository's own, never in it")
 		assert.Equal(t, "AKIA-REPO", s3.AccessKey)
 		assert.Equal(t, "repo-secret", s3.SecretKey)
 		assert.True(t, s3.ForcePathStyle, "an S3-compatible endpoint")
@@ -256,8 +256,8 @@ func TestAManagedAppArchivesToAnS3Repository(t *testing.T) {
 		assert.Equal(t, 9, prepared.Options.RetainFull, "the template's default")
 		assert.Equal(t, "0 3 * * *", prepared.Options.BaseBackupSchedule)
 	}
-	assert.Equal(t, entity.ManagedStorage{BackupRepo: entity.ObjectID{ID: "repo-s3"}, Prefix: "kopia/walg/main-db",
-		Placement: managedPlacementOffSite}, planned.storage)
+	assert.Equal(t, entity.ManagedStorage{BackupRepo: entity.ObjectID{ID: "repo-s3"},
+		Prefix: fakes.engine.prepared.Archive.S3.Prefix, Placement: managedPlacementOffSite}, planned.storage)
 	if assert.Len(t, fakes.artifacts.specs, 1) {
 		assert.Equal(t, []string{"node.id==n1"}, fakes.artifacts.specs[0].TaskTemplate.Placement.Constraints,
 			"the artifacts go where the data is")
@@ -278,12 +278,14 @@ func TestTheRequestOverridesTheTemplatesDefaults(t *testing.T) {
 	prepared := fakes.engine.prepared
 	assert.Equal(t, 3, prepared.Options.RetainFull)
 	assert.Equal(t, 2*time.Minute, prepared.Options.ArchiveTimeout)
-	assert.Equal(t, "walg/main-db", prepared.Archive.S3.Prefix)
+	// The app's key and its ID: no other app's, in any environment, nor one made
+	// again by the same name after this one is gone, whose archive is kept.
+	assert.Regexp(t, `^walg/main-db/[0-9A-Z]{26}$`, prepared.Archive.S3.Prefix)
 	assert.Equal(t, "AKIA-NARROW", prepared.Archive.S3.AccessKey, "the narrower key, not the storage's")
 	assert.Equal(t, "narrow-secret", prepared.Archive.S3.SecretKey)
 	assert.Equal(t, entity.ManagedStorage{CloudStorage: entity.ObjectID{ID: "cs-1"},
-		KeyAuth: entity.ObjectID{ID: "ka-narrow"}, Prefix: "walg/main-db", Placement: managedPlacementOffSite},
-		planned.storage)
+		KeyAuth: entity.ObjectID{ID: "ka-narrow"}, Prefix: prepared.Archive.S3.Prefix,
+		Placement: managedPlacementOffSite}, planned.storage)
 }
 
 func TestAVolumeRepositoryArchivesWhereTheDatabaseCanMountIt(t *testing.T) {
@@ -300,7 +302,7 @@ func TestAVolumeRepositoryArchivesWhereTheDatabaseCanMountIt(t *testing.T) {
 		assert.Equal(t, want, planned.placement, repo)
 		assert.Equal(t, want, planned.storage.Placement, "%s: kept for Status", repo)
 		if volume := fakes.engine.prepared.Archive.Volume; assert.NotNil(t, volume, repo) {
-			assert.Equal(t, "repo/walg/main-db", volume.Subpath, repo)
+			assert.Regexp(t, `^repo/walg/main-db/[0-9A-Z]{26}$`, volume.Subpath, repo)
 		}
 	}
 }

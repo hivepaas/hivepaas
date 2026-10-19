@@ -46,17 +46,21 @@ func (f *appMountsSettingRepo) List(
 type recordedHost struct {
 	madeSubDirs []string
 	permissions int
+	// onNodes are the pins the directories were made by, node id or label.
+	onNodes []string
 }
 
 func newAppMountsTest(volumes ...*entity.Setting) (*service, *recordedHost) {
 	host := &recordedHost{}
 	svc := &service{settingRepo: &appMountsSettingRepo{volumes: volumes}}
-	svc.makeSubDirInHost = func(_ context.Context, baseDir, subpath string, _ bool) error {
+	svc.makeSubDirInHost = func(_ context.Context, vol *entity.ClusterVolume, baseDir, subpath string, _ bool) error {
 		host.madeSubDirs = append(host.madeSubDirs, baseDir+"|"+subpath)
+		host.onNodes = append(host.onNodes, vol.NodeID+vol.NodeLabel)
 		return nil
 	}
-	svc.ensureVolumePermissions = func(context.Context, *mount.Mount, ...string) error {
+	svc.ensureVolumePermissions = func(_ context.Context, vol *entity.ClusterVolume, _ *mount.Mount, _ ...string) error {
 		host.permissions++
+		host.onNodes = append(host.onNodes, vol.NodeID+vol.NodeLabel)
 		return nil
 	}
 	return svc, host
@@ -128,6 +132,23 @@ func TestBuildAppMountsFillsInTheDriverConfigForANonBindVolume(t *testing.T) {
 	assert.Equal(t, "local", mnt.VolumeOptions.DriverConfig.Name)
 	assert.Equal(t, ":/exports/data", mnt.VolumeOptions.DriverConfig.Options["device"])
 	assert.Equal(t, 1, host.permissions)
+}
+
+// An app's directory in a volume pinned to a node is made on that node: the pin
+// goes with the volume to what makes it.
+func TestBuildAppMountsMakesTheDirectoryOnThePinnedNode(t *testing.T) {
+	svc, host := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject,
+		&entity.ClusterVolume{NodeID: "n2"}))
+
+	_, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+		App: mountTestApp(),
+		New: []*volumeservice.AppMountReq{{Type: mount.TypeVolume, Source: "vol-1", Target: "/data",
+			VolumeOptions: &volumeservice.AppMountVolumeOptions{}}},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, host.permissions)
+	assert.Equal(t, []string{"n2"}, host.onNodes)
 }
 
 func TestBuildAppMountsKeepsTheKeptMountsFirst(t *testing.T) {

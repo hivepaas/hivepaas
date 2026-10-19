@@ -26,3 +26,8 @@ func MakeDirWritableCmd(dir string) string {
 	q := shellquote.Join(dir)
 	return fmt.Sprintf(`mkdir -p %s && { [ -n "$(ls -A %s)" ] || chmod 777 %s; }`, q, q, q)
 }
+
+// QuoteArg is a word the shell reads as one, whatever it holds.
+func QuoteArg(arg string) string {
+	return shellquote.Join(arg)
+}

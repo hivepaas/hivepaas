@@ -24,14 +24,8 @@ func TestTheEngineIsMariaDBs(t *testing.T) {
 // job run, with half an engine.
 func TestWhatTheEngineDoesNotDoYetIsRefused(t *testing.T) {
 	engine := New()
-	managed := &entity.AppManagedSettings{Engine: "mariadb", EngineAPI: 1}
 
 	for name, call := range map[string]func() error{
-		"mark": func() error { _, err := engine.MarkRestorePoint(managed, "before-v2"); return err },
-		"mark result": func() error {
-			_, err := engine.MarkResult("POSITION=mariadb-bin.000003:389\n")
-			return err
-		},
 		"a verifier": func() error {
 			managed, jobs := reconfigureSetup(t)
 			_, err := engine.Reconfigure(&managedmodel.ReconfigureReq{App: &entity.App{ID: "app-1"}, Managed: managed,

@@ -12,7 +12,6 @@ package mariadb
 import (
 	"regexp"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
@@ -28,7 +27,7 @@ const (
 	// pointNameMax is the restore point names the engine takes: the name is the
 	// engine's alone, since MariaDB keeps none, and Postgres's limit keeps one
 	// set of names good for both.
-	pointNameMax = 63
+	pointNameMax = walgkit.PointNameMax
 )
 
 // profile is MariaDB, as what it shares with the other WAL-G engines needs it.
@@ -90,14 +89,6 @@ func unsupported(what string) error {
 
 func (e *Engine) Verifier() managedmodel.VerifierSpec {
 	return managedmodel.VerifierSpec{}
-}
-
-func (e *Engine) MarkRestorePoint(*entity.AppManagedSettings, string) (managedmodel.MarkCommand, error) {
-	return managedmodel.MarkCommand{}, unsupported("restore points")
-}
-
-func (e *Engine) MarkResult(string) (string, error) {
-	return "", unsupported("restore points")
 }
 
 func (e *Engine) Replica(*managedmodel.ReplicaReq) (*managedmodel.ReplicaSpec, error) {

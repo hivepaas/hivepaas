@@ -1,7 +1,7 @@
 /**
  * A managed app: one HivePaaS's engine for it looks after once it is created - a
- * PostgreSQL database it archives, backs up, tests and restores. The engine owns
- * part of the app (its locks), and keeps its own state (its status).
+ * database (PostgreSQL, MariaDB) it archives, backs up, tests and restores. The
+ * engine owns part of the app (its locks), and keeps its own state (its status).
  */
 
 export const MANAGED_RESTORE_TEST_MODE = {
@@ -55,7 +55,8 @@ export interface AppManagedRestoreTarget {
     kind: ManagedRestoreTargetKind;
     time?: Date;
     point: string;
-    lsn: string;
+    /** Where the point is, as the engine wrote it: a PostgreSQL LSN. */
+    position: string;
     backup: string;
 }
 
@@ -93,7 +94,10 @@ export interface AppManagedSwitch {
     switchedAt?: Date;
 }
 
-/** The pg_dump into a backup repository: none while dumps are off; the schedule is kept either way, empty for the engine's default. */
+/**
+ * The engine's dump (pg_dump, mariadb-dump) into a backup repository: none while dumps are off; the schedule is kept
+ * either way, empty for the engine's default.
+ */
 export interface AppManagedDump {
     repo?: ManagedObjectRef;
     schedule: string;
@@ -124,10 +128,19 @@ export interface AppManagedMemberStatus {
     checkedAt?: Date;
 }
 
+/** What the engine can do that not every engine can: the screens offer only these. */
+export interface AppManagedCapabilities {
+    /** Read replicas: adding and removing them, taking the base backups on one, promoting one. */
+    replicas: boolean;
+    /** The restore test in an app of its own. */
+    verifierApp: boolean;
+}
+
 export interface AppManagedSettings {
     updateVer: number;
     engine: string;
     engineApi: number;
+    capabilities: AppManagedCapabilities;
     storage?: AppManagedStorage;
     archiveTimeout: string;
     retainFull: number;
@@ -165,7 +178,8 @@ export type ManagedArchivingState = (typeof MANAGED_ARCHIVING_STATE)[keyof typeo
 
 export interface AppManagedRestorePoint {
     name: string;
-    lsn: string;
+    /** Where the point is, as the engine wrote it: a PostgreSQL LSN. */
+    position: string;
     at: Date;
     by?: ManagedObjectRef;
     note: string;
@@ -186,7 +200,8 @@ export interface AppManagedStatus {
         checkedAt?: Date;
         lastArchivedAt?: Date;
         failedCount: number;
-        pgWalBytes: number;
+        /** What waits on the node to be archived: the WAL, or binary logs not yet pushed. */
+        pendingBytes: number;
         stale: boolean;
     };
     /** What a restore may target; none before the first base backup. */

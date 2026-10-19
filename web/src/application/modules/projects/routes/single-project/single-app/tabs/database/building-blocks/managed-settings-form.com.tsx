@@ -15,7 +15,7 @@ import {
     ProjectKeyAuthQueries,
 } from "~/projects/data";
 import { type AppManagedSettings, MANAGED_RESTORE_TEST_MODE } from "~/projects/domain";
-import { volumePlaceOf } from "~/projects/module-shared/utils";
+import { managedEngineOf, volumePlaceOf } from "~/projects/module-shared/utils";
 
 import { CronTimezoneNote, InfoBlock } from "@application/shared/components";
 
@@ -121,6 +121,7 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
         mode: "onSubmit",
     });
     const { isDirty } = useFormState({ control });
+    const engine = managedEngineOf(settings.engine);
 
     const currentMode = settings.restoreTest?.mode ?? MANAGED_RESTORE_TEST_MODE.container;
     const mode = useWatch({ control, name: "restoreTestMode" });
@@ -274,7 +275,7 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                             </InfoBlock>
                         </Field>
 
-                        {settings.members.length > 0 && (
+                        {settings.capabilities.replicas && settings.members.length > 0 && (
                             <Field>
                                 <InfoBlock
                                     title="Base backups taken on"
@@ -337,7 +338,7 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                     aria-label="Restore test check"
                                     rows={2}
                                     className="font-mono text-xs"
-                                    placeholder="SELECT count(*) FROM orders"
+                                    placeholder={engine.checkQueryExample}
                                     aria-invalid={Boolean(errors.restoreTestQuery)}
                                 />
                                 <FieldDescription>
@@ -381,8 +382,9 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                     </SelectContent>
                                 </Select>
                                 <FieldDescription>
-                                    A pg_dump into a backup repository, beside the archive: a copy any PostgreSQL can
-                                    load. Its snapshots are the app&apos;s backup snapshots, restored from there.
+                                    A {engine.dumpTool} into a backup repository, beside the archive: a copy any{" "}
+                                    {engine.name} can load. Its snapshots are the app&apos;s backup snapshots, restored
+                                    from there.
                                 </FieldDescription>
                             </InfoBlock>
                         </Field>
@@ -428,9 +430,12 @@ export function ManagedSettingsForm({ projectId, env, appId, settings, readOnly 
                                         <TabsTrigger value={MANAGED_RESTORE_TEST_MODE.container}>
                                             The database&apos;s container
                                         </TabsTrigger>
-                                        <TabsTrigger value={MANAGED_RESTORE_TEST_MODE.verifier}>
-                                            A verifier app
-                                        </TabsTrigger>
+                                        {(settings.capabilities.verifierApp ||
+                                            currentMode === MANAGED_RESTORE_TEST_MODE.verifier) && (
+                                            <TabsTrigger value={MANAGED_RESTORE_TEST_MODE.verifier}>
+                                                A verifier app
+                                            </TabsTrigger>
+                                        )}
                                     </TabsList>
                                 </Tabs>
                                 <FieldDescription>

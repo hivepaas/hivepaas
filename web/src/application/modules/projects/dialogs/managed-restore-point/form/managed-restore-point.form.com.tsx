@@ -2,7 +2,7 @@ import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
-import { estimateKeptBytes } from "~/projects/module-shared/utils";
+import { estimateKeptBytes, managedEngineOf } from "~/projects/module-shared/utils";
 
 import { BrowserTimezoneNote, InfoBlock } from "@application/shared/components";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
@@ -24,6 +24,7 @@ const TITLE_WIDTH = 150;
 export function ManagedRestorePointForm({
     creating,
     initialValues,
+    engine,
     retainFull,
     lastBackupBytes,
     isPending,
@@ -59,6 +60,7 @@ export function ManagedRestorePointForm({
     } = useController({ name: "keepUntil", control });
     const keptUntil = useWatch({ control, name: "keepUntil" });
     const estimate = keptUntil ? estimateKeptBytes(keptUntil, new Date(), retainFull, lastBackupBytes) : null;
+    const { archiveNoun } = managedEngineOf(engine);
 
     function onValid(values: ManagedRestorePointFormOutput) {
         if (readOnly) {
@@ -104,8 +106,8 @@ export function ManagedRestorePointForm({
                                 />
                                 <FieldDescription>
                                     {creating
-                                        ? "What the point is known by. A restore targets its position in the WAL, " +
-                                          "so a name used again in the past does not matter."
+                                        ? "What the point is known by. A restore targets its position in the " +
+                                          `${archiveNoun}, so a name used again in the past does not matter.`
                                         : "A point's name stays as it was made."}
                                 </FieldDescription>
                                 <FieldError errors={[errors.name]} />
@@ -147,7 +149,7 @@ export function ManagedRestorePointForm({
                                 <BrowserTimezoneNote />
                                 <FieldDescription>
                                     {keptUntil
-                                        ? keptCopy(estimate)
+                                        ? keptCopy(estimate, archiveNoun)
                                         : "Without a date, it can be restored while retention keeps the base backup " +
                                           `before it: about ${retainFull} ${retainFull === 1 ? "day" : "days"}.`}
                                 </FieldDescription>
@@ -159,7 +161,8 @@ export function ManagedRestorePointForm({
                 <DialogActionFooter>
                     {isPending && creating && (
                         <span className="mr-auto text-xs text-muted-foreground">
-                            Waiting for the point&apos;s WAL to be archived, so it can be restored once listed.
+                            Waiting for the point&apos;s {archiveNoun} to be archived, so it can be restored once
+                            listed.
                         </span>
                     )}
                     <Button
@@ -176,8 +179,9 @@ export function ManagedRestorePointForm({
     );
 }
 
-function keptCopy(estimate: ReturnType<typeof estimateKeptBytes>): string {
-    const holds = "Retention keeps every base backup from the one before it, and all WAL after, until then.";
+function keptCopy(estimate: ReturnType<typeof estimateKeptBytes>, archiveNoun: string): string {
+    const holds =
+        "Retention keeps every base backup from the one before it, and all " + `${archiveNoun} after, until then.`;
     if (estimate === null) {
         return `${holds} There is no base backup yet to estimate the storage from.`;
     }
@@ -186,13 +190,16 @@ function keptCopy(estimate: ReturnType<typeof estimateKeptBytes>): string {
     }
     return (
         `${holds} About ${formatDataSizeCompact(estimate.bytes)} more, at ${estimate.backups} base ` +
-        `${estimate.backups === 1 ? "backup" : "backups"} the size of the last, with the WAL written meanwhile on top.`
+        `${estimate.backups === 1 ? "backup" : "backups"} the size of the last, with the ${archiveNoun} written ` +
+        "meanwhile on top."
     );
 }
 
 interface Props {
     creating: boolean;
     initialValues?: ManagedRestorePointFormInput;
+    /** The database's engine, which the copy names what it archives after. */
+    engine: string;
     retainFull: number;
     lastBackupBytes?: number;
     isPending: boolean;

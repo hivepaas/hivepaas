@@ -4,7 +4,7 @@ import { AppManagedCommands } from "~/projects/data";
 import { useManagedRestoreDialog } from "~/projects/dialogs/managed-restore";
 import { useManagedRestorePointDialog } from "~/projects/dialogs/managed-restore-point";
 import { type AppManagedRestorePoint, MANAGED_RESTORE_TARGET } from "~/projects/domain";
-import { formatManagedTime } from "~/projects/module-shared/utils";
+import { formatManagedTime, managedEngineOf } from "~/projects/module-shared/utils";
 
 import { PopConfirm } from "@application/shared/components";
 
@@ -17,6 +17,8 @@ interface Props {
     env: string;
     appId: string;
     appName: string;
+    /** The database's engine, which the copy names what it archives after. */
+    engine: string;
     points: AppManagedRestorePoint[];
     canWrite: boolean;
     /** A restoring database has no archive of its own yet to mark. */
@@ -27,7 +29,7 @@ interface Props {
  * The moments a person named, to come back to exactly. Each is restorable until
  * retention deletes the base backup before it, unless it is kept.
  */
-export function ManagedRestorePoints({ projectId, env, appId, appName, points, canWrite, canMark }: Props) {
+export function ManagedRestorePoints({ projectId, env, appId, appName, engine, points, canWrite, canMark }: Props) {
     const target = { projectId, env, appId };
     const { actions: pointDialog } = useManagedRestorePointDialog();
     const { actions: restoreDialog } = useManagedRestoreDialog();
@@ -167,8 +169,9 @@ export function ManagedRestorePoints({ projectId, env, appId, appName, points, c
                                             <PopConfirm
                                                 title={`Delete ${point.name}?`}
                                                 description={
-                                                    "Only the record goes: the mark stays in the WAL, and a kept " +
-                                                    "point stops holding retention back."
+                                                    "Only the record goes: the mark stays in the " +
+                                                    `${managedEngineOf(engine).archiveNoun}, and a kept point stops ` +
+                                                    "holding retention back."
                                                 }
                                                 confirmText="Delete"
                                                 variant="destructive"

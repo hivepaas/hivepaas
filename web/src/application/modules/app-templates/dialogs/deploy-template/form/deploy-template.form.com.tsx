@@ -733,6 +733,7 @@ export function DeployTemplateForm({
                 {template.managed && (
                     <ManagedFields
                         control={control}
+                        engine={template.managed}
                         archive={watch("managed.archive")}
                         archives={managedArchives}
                         keyAuths={keyAuths}

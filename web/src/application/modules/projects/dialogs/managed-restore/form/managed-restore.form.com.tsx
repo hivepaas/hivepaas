@@ -2,7 +2,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 import { type AppManagedStatus, MANAGED_RESTORE_TARGET, type ManagedRestoreTargetKind } from "~/projects/domain";
-import { formatManagedTime } from "~/projects/module-shared/utils";
+import { formatManagedTime, managedEngineOf } from "~/projects/module-shared/utils";
 
 import { BrowserTimezoneNote, InfoBlock } from "@application/shared/components";
 
@@ -52,6 +52,7 @@ export function ManagedRestoreForm({
 }: Props) {
     const { restoreWindow } = status;
     const offSite = status.placement === "off-site";
+    const { archiveNoun } = managedEngineOf(status.engine);
     const {
         handleSubmit,
         control,
@@ -223,7 +224,8 @@ export function ManagedRestoreForm({
                                         </SelectContent>
                                     </Select>
                                     <FieldDescription>
-                                        Exactly the database when the point was made, by its position in the WAL.
+                                        Exactly the database when the point was made, by its position in the{" "}
+                                        {archiveNoun}.
                                     </FieldDescription>
                                     <FieldError errors={[errors.point]} />
                                 </InfoBlock>
@@ -268,7 +270,7 @@ export function ManagedRestoreForm({
                                         </SelectContent>
                                     </Select>
                                     <FieldDescription>
-                                        The database as the backup was taken, with no WAL replayed after it.
+                                        The database as the backup was taken, with no {archiveNoun} replayed after it.
                                     </FieldDescription>
                                     <FieldError errors={[errors.backup]} />
                                 </InfoBlock>

@@ -12,6 +12,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AppManagedCommands } from "~/projects/data";
 import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
+import { managedEngineOf } from "~/projects/module-shared/utils";
 
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -63,6 +64,7 @@ export function ManagedUnmanageDialog() {
     }
 
     const isConfirmed = target !== null && typed === target.appName;
+    const { archiveNoun } = managedEngineOf(target?.engine ?? "");
 
     return (
         <Dialog
@@ -106,8 +108,13 @@ export function ManagedUnmanageDialog() {
                             <div className="flex flex-col gap-1.5">
                                 <p className="font-medium">What stays</p>
                                 <ul className="list-disc pl-5 text-muted-foreground space-y-0.5">
-                                    <li>The database, its data, and its WAL archiving, which goes on where it did.</li>
-                                    <li>The archive&apos;s base backups and WAL, for you to keep or delete.</li>
+                                    <li>
+                                        The database, its data, and the archiving of its {archiveNoun}, which goes on
+                                        where it did.
+                                    </li>
+                                    <li>
+                                        The archive&apos;s base backups and {archiveNoun}, for you to keep or delete.
+                                    </li>
                                     <li>The scripts, secrets and settings the engine gave the app.</li>
                                 </ul>
                             </div>

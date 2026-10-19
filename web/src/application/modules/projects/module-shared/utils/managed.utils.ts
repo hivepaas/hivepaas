@@ -30,8 +30,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /**
  * About how much more the archive keeps for a point kept until then, at one base
  * backup a night: the base backups retention would have deleted by then, each of
- * about the last one's size. The WAL written meanwhile is kept too, and is not
- * counted: null when there is no base backup to go by.
+ * about the last one's size. The log written meanwhile (the WAL, the binary logs)
+ * is kept too, and is not counted: null when there is no base backup to go by.
  */
 export function estimateKeptBytes(
     keepUntil: Date,
@@ -51,7 +51,7 @@ export function estimateKeptBytes(
 /** The most a point may be kept for, as the server allows. */
 export const MAX_POINT_KEEP_DAYS = 90;
 
-/** A restore point's name, as the engine takes it: Postgres's 63 bytes, and not one of HivePaaS's own. */
+/** A restore point's name, as engines take it: Postgres's 63 bytes, which others keep; not one of HivePaaS's own. */
 export const POINT_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/;
 export const RESERVED_POINT_PREFIX = "hp-";
 

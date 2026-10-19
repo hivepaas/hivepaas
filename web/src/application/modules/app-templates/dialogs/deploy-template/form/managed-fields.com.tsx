@@ -1,5 +1,6 @@
 import { AlertTriangle, DatabaseBackup } from "lucide-react";
 import { type Control, Controller } from "react-hook-form";
+import { managedEngineOf } from "~/projects/module-shared/utils";
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ import { type ManagedArchiveOption, type ManagedFormState, NO_DUMP, NO_KEY } fro
 
 interface ManagedFieldsProps {
     control: Control<DeployTemplateFormState>;
+    /** The template's engine, which the copy names what it works with after. */
+    engine: string;
     archive: string;
     archives: ManagedArchiveOption[];
     keyAuths: { id: string; name: string }[];
@@ -31,7 +34,16 @@ interface ManagedFieldsProps {
  * Where a managed database archives and how long its engine keeps what. The archive and its key are chosen here
  * for good: the prefix the archive is under never moves.
  */
-export function ManagedFields({ control, archive, archives, keyAuths, defaults, readOnly }: ManagedFieldsProps) {
+export function ManagedFields({
+    control,
+    engine: engineName,
+    archive,
+    archives,
+    keyAuths,
+    defaults,
+    readOnly,
+}: ManagedFieldsProps) {
+    const engine = managedEngineOf(engineName);
     const chosen = archives.find(option => `${option.kind}:${option.id}` === archive);
     const repos = archives.filter(option => option.kind === "repo");
     const storages = archives.filter(option => option.kind === "storage");
@@ -202,7 +214,10 @@ export function ManagedFields({ control, archive, archives, keyAuths, defaults, 
                     name="managed.archiveTimeout"
                     label="Archive timeout"
                     placeholder={orDefault(defaults?.archiveTimeout, "60s")}
-                    description="The most a failure can lose: a quiet database's WAL is archived at least this often."
+                    description={
+                        `The most a failure can lose: a quiet database's ${engine.archiveNoun} ` +
+                        `${engine.archiveNounPlural ? "are" : "is"} archived at least this often.`
+                    }
                     readOnly={readOnly}
                     pattern={/^(\d+(s|m|h))*$/}
                     patternMessage="A duration such as 60s or 5m"
@@ -213,7 +228,7 @@ export function ManagedFields({ control, archive, archives, keyAuths, defaults, 
                 control={control}
                 name="managed.restoreTestQuery"
                 label="Restore test check"
-                placeholder="SELECT count(*) FROM orders"
+                placeholder={engine.checkQueryExample}
                 description="A query the restored copy must answer, besides listing its databases. Optional."
                 readOnly={readOnly}
             />
@@ -270,8 +285,8 @@ export function ManagedFields({ control, archive, archives, keyAuths, defaults, 
                                 </SelectContent>
                             </Select>
                             <FieldDescription className="text-[11px]">
-                                A pg_dump into a backup repository, beside the archive: a copy any PostgreSQL can load,
-                                restored from the app&apos;s backup snapshots.
+                                A {engine.dumpTool} into a backup repository, beside the archive: a copy any{" "}
+                                {engine.name} can load, restored from the app&apos;s backup snapshots.
                             </FieldDescription>
                         </Field>
                     )}

@@ -102,6 +102,7 @@ function managedSettings() {
         updateVer: 3,
         engine: "postgres",
         engineApi: 1,
+        capabilities: { replicas: true, verifierApp: true },
         storage: {
             backupRepo: { id: REPO.id },
             cloudStorage: null,
@@ -160,7 +161,7 @@ function managedSwitch() {
 const RESTORED = {
     restore: {
         sourceApp: { id: "e2esourcedb0001" },
-        target: { kind: "latest", time: null, point: "", lsn: "", backup: "" },
+        target: { kind: "latest", time: null, point: "", position: "", backup: "" },
         readyAt: at(-HOUR),
         switchedAt: null,
     },
@@ -175,7 +176,7 @@ function managedStatus() {
             checkedAt: at(-60_000),
             lastArchivedAt: at(-90_000),
             failedCount: 0,
-            pgWalBytes: 48 * 1024 * 1024,
+            pendingBytes: 48 * 1024 * 1024,
             stale: false,
         },
         restoreWindow: { from: at(-2 * DAY), to: at(-90_000) },
@@ -191,7 +192,7 @@ function managedStatus() {
         restorePoints: [
             {
                 name: POINT,
-                lsn: "0/2A000028",
+                position: "0/2A000028",
                 at: at(-5 * HOUR),
                 by: null,
                 note: "Before the orders migration",
@@ -202,7 +203,7 @@ function managedStatus() {
             },
             {
                 name: DEPLOY_POINT,
-                lsn: "0/2B000028",
+                position: "0/2B000028",
                 at: at(-4 * HOUR),
                 by: null,
                 note: "Before deployment e2edeploy00001 of shop web",

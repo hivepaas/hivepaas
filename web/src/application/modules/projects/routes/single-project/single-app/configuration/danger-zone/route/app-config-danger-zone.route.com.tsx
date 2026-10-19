@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
-import { ProjectAppsQueries } from "~/projects/data/queries";
+import { AppManagedQueries, ProjectAppsQueries } from "~/projects/data/queries";
 import { AppDangerAction, useConfirmAppDangerActionDialog } from "~/projects/dialogs/confirm-app-danger-action";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
@@ -29,6 +29,11 @@ export function AppConfigDangerZoneRoute() {
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+    // Only a database can be managed, and hold a cluster: any other app is not asked.
+    const { data: managed } = AppManagedQueries.useFindSettings(
+        { projectID: projectId, env, appID: appId },
+        { enabled: data?.data.category === "database" },
     );
 
     if (isLoading) {
@@ -56,12 +61,17 @@ export function AppConfigDangerZoneRoute() {
     const statusButtonLabel = isDisabled ? "Re-enable App" : "Disable App";
     const statusButtonVariant = isDisabled ? "default" : "destructive";
 
+    // A replica was promoted over it: it holds the cluster, deleted only with all of it.
+    const holdsCluster = Boolean(managed?.data.writer?.id);
     const target = {
         projectId,
         env,
         appId,
         appName: app.name,
         updateVer: app.updateVer,
+        cluster: holdsCluster
+            ? { members: (managed?.data.members ?? []).map(member => ({ key: member.key, role: member.role })) }
+            : undefined,
     };
 
     return (

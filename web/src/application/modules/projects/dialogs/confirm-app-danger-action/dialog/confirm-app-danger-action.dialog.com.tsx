@@ -82,6 +82,7 @@ export function ConfirmAppDangerActionDialog() {
                 env: target.env,
                 appID: target.appId,
                 removeStorage: values.removeStorage,
+                deleteCluster: target.cluster ? values.deleteCluster : false,
             });
             return;
         }
@@ -128,6 +129,7 @@ export function ConfirmAppDangerActionDialog() {
                         <ConfirmAppDangerActionForm
                             action={action}
                             appName={target.appName}
+                            cluster={action === AppDangerAction.Delete ? target.cluster : undefined}
                             isPending={isPending}
                             onSubmit={handleSubmit}
                             readOnly={!canWrite}

@@ -168,12 +168,12 @@ export class ProjectAppsApi extends BaseApi {
      * Delete a project app
      */
     async deleteOne(request: ProjectApps_DeleteOne_Req): Promise<Result<ProjectApps_DeleteOne_Res, Error>> {
-        const { projectID, env, appID, removeStorage } = request.data;
+        const { projectID, env, appID, removeStorage, deleteCluster } = request.data;
 
         return lastValueFrom(
             from(
                 this.client.v1.delete(`/projects/${projectID}/${env}/apps/${appID}`, {
-                    params: { removeStorage: removeStorage ?? false },
+                    params: { removeStorage: removeStorage ?? false, deleteCluster: deleteCluster ?? false },
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),

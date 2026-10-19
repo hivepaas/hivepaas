@@ -65771,9 +65771,9 @@
         "x-enum-varnames" : [ "IMServiceKindSlack", "IMServiceKindDiscord", "IMServiceKindTelegram", "IMServiceKindLark" ]
       },
       "base.ImageScanSource" : {
-        "enum" : [ "node", "registry" ],
+        "enum" : [ "node", "registry", "artifact" ],
         "type" : "string",
-        "x-enum-varnames" : [ "ImageScanSourceNode", "ImageScanSourceRegistry" ]
+        "x-enum-varnames" : [ "ImageScanSourceNode", "ImageScanSourceRegistry", "ImageScanSourceArtifact" ]
       },
       "base.ImageScanStatus" : {
         "enum" : [ "done", "failed" ],

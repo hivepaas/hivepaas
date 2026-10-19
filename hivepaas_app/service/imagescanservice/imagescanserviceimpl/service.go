@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagescanservice/imagescanrun"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
@@ -46,6 +47,7 @@ type service struct {
 	taskRepo      repository.TaskRepo
 
 	agentService        agentservice.Service
+	artifactService     artifactservice.Service
 	nodeExecService     nodeexecservice.Service
 	notificationService notificationservice.Service
 	registryAuthService registryauthservice.Service
@@ -71,6 +73,7 @@ func New(
 	imageScanRepo repository.ImageScanRepo,
 	taskRepo repository.TaskRepo,
 	agentService agentservice.Service,
+	artifactService artifactservice.Service,
 	nodeExecService nodeexecservice.Service,
 	notificationService notificationservice.Service,
 	registryAuthService registryauthservice.Service,
@@ -87,6 +90,7 @@ func New(
 		imageScanRepo:       imageScanRepo,
 		taskRepo:            taskRepo,
 		agentService:        agentService,
+		artifactService:     artifactService,
 		nodeExecService:     nodeExecService,
 		notificationService: notificationService,
 		registryAuthService: registryAuthService,

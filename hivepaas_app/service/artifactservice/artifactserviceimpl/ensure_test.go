@@ -139,6 +139,20 @@ func TestEnsureOnNodeRefusesANodeTheArtifactHasNoBuildFor(t *testing.T) {
 	assert.Empty(t, agent.reqs, "no agent is asked for a file that does not exist")
 }
 
+// A build asked for is had on any node, to be read there: the arm64 file on
+// an amd64 node.
+func TestEnsureOnNodeHasTheBuildAskedFor(t *testing.T) {
+	svc, agent := newTestService("")
+
+	resp, err := svc.EnsureOnNode(context.Background(), &artifactservice.EnsureOnNodeReq{NodeID: "n1",
+		Artifact: walg(), Arch: base.CPUArchARM64})
+
+	assert.NoError(t, err)
+	assert.Equal(t, base.CPUArchARM64, resp.Arch)
+	assert.Equal(t, "bb", agent.reqs[0].SHA256)
+	assert.Equal(t, []string{"n1:10001"}, agent.addrs)
+}
+
 func TestEnsureOnNodePassesTheAgentsRefusalOn(t *testing.T) {
 	svc, agent := newTestService("")
 	agent.err = hperrors.Wrap(hperrors.ErrArtifactHashMismatch)

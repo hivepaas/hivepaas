@@ -9,7 +9,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/distribution/reference"
@@ -23,6 +25,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -66,10 +69,20 @@ var (
 // FormatCycloneDX asks for the image's SBOM, in place of its vulnerabilities.
 const FormatCycloneDX = "cyclonedx"
 
+// ModeRootfs scans a file of the artifacts cache in place of an image, as a
+// root filesystem of one file: Trivy reads a Go binary's modules there. The
+// file is the one the cache keeps by ImageID, its sha256.
+const ModeRootfs = "rootfs"
+
+// artifactTarget is where an artifact's file is bound in the container.
+const artifactTarget = "/scan/artifact"
+
 // RunReq is a scan of one image.
 type RunReq struct {
 	// Format is empty for a scan's report, FormatCycloneDX for an SBOM.
 	Format string
+	// Mode is empty for an image, ModeRootfs for an artifact's file.
+	Mode string
 	// TrivyImage is what the container runs; pulled when the node lacks it.
 	TrivyImage string
 	// ImageID is the image's ID as the node running it gives it.
@@ -230,6 +243,9 @@ func (r *Runner) runContainer(ctx context.Context, containerID string, req *RunR
 // source is where the image is read: this node's Docker when it has the
 // image, its registry otherwise.
 func (r *Runner) source(ctx context.Context, req *RunReq) (base.ImageScanSource, error) {
+	if req.Mode == ModeRootfs {
+		return base.ImageScanSourceArtifact, nil
+	}
 	_, err := r.Docker.ImageInspect(ctx, req.ImageID)
 	switch {
 	case err == nil:
@@ -306,9 +322,13 @@ func containerOptions(req *RunReq, source base.ImageScanSource, insecure bool) c
 	volume.Target = DataDir
 	mounts := []mount.Mount{volume}
 	var env []string
-	if source == base.ImageScanSourceNode {
+	switch {
+	case source == base.ImageScanSourceArtifact:
+		mounts = append(mounts, mount.Mount{Type: mount.TypeBind, Source: artifactPath(req.ImageID),
+			Target: artifactTarget, ReadOnly: true})
+	case source == base.ImageScanSourceNode:
 		mounts = append(mounts, mount.Mount{Type: mount.TypeBind, Source: dockerSocket, Target: dockerSocket})
-	} else if len(req.DockerConfig) > 0 {
+	case len(req.DockerConfig) > 0:
 		env = append(env, "DOCKER_CONFIG="+authDir)
 	}
 	return client.ContainerCreateOptions{
@@ -353,10 +373,28 @@ func (req *RunReq) validate() error {
 	if req.Format != "" && req.Format != FormatCycloneDX {
 		return invalid("%q is no format a scan writes.", req.Format)
 	}
+	switch req.Mode {
+	case "":
+	case ModeRootfs:
+		if req.RemoteRef != "" {
+			return invalid("An artifact is read from the artifacts cache, not from a registry.")
+		}
+		if artifactservice.CacheHostDir() == "" {
+			return invalid("This node keeps no artifacts: no host directory is configured.")
+		}
+	default:
+		return invalid("%q is no mode a scan runs in.", req.Mode)
+	}
 	if req.TrivyImage == "" || req.CacheDir == "" || req.Volume.Source == "" || req.Timeout <= 0 {
 		return invalid("The scan is missing its image, its volume or its timeout.")
 	}
 	return nil
+}
+
+// artifactPath is the file of the artifacts cache an artifact's ID names: the
+// cache keeps each by its sha256, which the ID is.
+func artifactPath(id string) string {
+	return filepath.Join(artifactservice.CacheHostDir(), strings.TrimPrefix(id, "sha256:"))
 }
 
 // capBuffer keeps what is written up to max, and says when there was more.

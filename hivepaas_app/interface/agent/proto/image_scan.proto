@@ -30,6 +30,9 @@ message ImageScanRunReq {
   int64 timeout_seconds = 13;
   // Empty for a scan's report; cyclonedx for the image's SBOM.
   string format = 14;
+  // Empty for an image; rootfs for a file of the artifacts cache, image_id its
+  // sha256.
+  string mode = 15;
 }
 
 message ImageScanRunResp {

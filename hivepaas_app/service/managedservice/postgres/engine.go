@@ -23,6 +23,7 @@ var profile = &walgkit.Profile{
 	DeltaMarker:        "_D_",
 	PendingBytesOutput: outPgWalBytes,
 	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".dump"},
+	RestoreTarget:      targetEnv,
 	Members:            membersStatus,
 }
 

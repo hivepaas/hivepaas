@@ -42,9 +42,9 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	secrets[walgkit.SecretSodiumKey] = req.EncryptionKey
 	walgkit.AddSecretFiles(doc, walgkit.SecretsDir, "", postgresUID, secrets)
 	if req.Restore != nil {
-		restoreEnv, err := e.prepareRestore(doc, req.Restore)
+		restoreEnv, err := walgkit.PrepareRestore(profile, doc, req.Restore)
 		if err != nil {
-			return err
+			return hperrors.Wrap(err)
 		}
 		env = append(env, restoreEnv...)
 	}

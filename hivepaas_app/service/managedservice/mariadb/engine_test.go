@@ -27,15 +27,6 @@ func TestWhatTheEngineDoesNotDoYetIsRefused(t *testing.T) {
 	managed := &entity.AppManagedSettings{Engine: "mariadb", EngineAPI: 1}
 
 	for name, call := range map[string]func() error{
-		"restore": func() error {
-			req := prepareReq(t, s3Archive())
-			req.Restore = &managedmodel.RestoreSource{Archive: s3Archive()}
-			return engine.PrepareDoc(req)
-		},
-		"finish restore": func() error {
-			_, err := engine.FinishRestore(&managedmodel.FinishRestoreReq{})
-			return err
-		},
 		"mark": func() error { _, err := engine.MarkRestorePoint(managed, "before-v2"); return err },
 		"mark result": func() error {
 			_, err := engine.MarkResult("POSITION=mariadb-bin.000003:389\n")

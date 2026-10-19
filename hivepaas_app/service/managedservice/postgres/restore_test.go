@@ -52,8 +52,8 @@ func TestEachTargetIsItsRecoverySettings(t *testing.T) {
 		assert.NoError(t, New().PrepareDoc(req), kind)
 
 		env := envOf(req.Doc)
-		assert.Equal(t, want[0], env[envRestoreBackup], kind)
-		assert.Equal(t, want[1], env[envRestoreBefore], kind)
+		assert.Equal(t, want[0], env[walgkit.EnvRestoreBackup], kind)
+		assert.Equal(t, want[1], env[walgkit.EnvRestoreBefore], kind)
 		assert.Equal(t, want[2], env[envRestoreRecovery], kind)
 	}
 }
@@ -68,20 +68,21 @@ func TestARestoredAppReadsTheSourceAndArchivesToItsOwn(t *testing.T) {
 
 	env := envOf(req.Doc)
 	assert.Equal(t, "s3://backups/pg/walg/shop-db-restored", env["WALG_S3_PREFIX"], "its own")
-	assert.Equal(t, "s3://backups/pg/walg/shop-db", env[restoreEnvPrefix+"WALG_S3_PREFIX"], "the source's")
-	assert.Equal(t, "https://s3.example.com", env[restoreEnvPrefix+"AWS_ENDPOINT"])
-	assert.Equal(t, restoreSecretsDir, env[envRestoreSecretsDir])
+	assert.Equal(t, "s3://backups/pg/walg/shop-db", env[walgkit.RestoreEnvPrefix+"WALG_S3_PREFIX"], "the source's")
+	assert.Equal(t, "https://s3.example.com", env[walgkit.RestoreEnvPrefix+"AWS_ENDPOINT"])
+	assert.Equal(t, walgkit.RestoreSecretsDir, env[walgkit.EnvRestoreSecretsDir])
 	for _, value := range env {
 		assert.NotContains(t, value, "source-secret-value", "no key in the environment")
 		assert.NotContains(t, value, "source-libsodium-key")
 	}
 
 	secrets := secretsOf(req.Doc)
+	own, source := walgkit.SecretsDir+"/", walgkit.RestoreSecretsDir+"/"
 	for name, want := range map[string][2]string{
-		"WALG_AWS_ACCESS_KEY_ID":                       {"AKIAEXAMPLE", walgkit.SecretsDir + "/WALG_AWS_ACCESS_KEY_ID"},
-		"WALG_LIBSODIUM_KEY":                           {"libsodium-key-value", walgkit.SecretsDir + "/WALG_LIBSODIUM_KEY"},
-		restoreSecretPrefix + "WALG_AWS_ACCESS_KEY_ID": {"AKIA-SOURCE", restoreSecretsDir + "/WALG_AWS_ACCESS_KEY_ID"},
-		restoreSecretPrefix + "WALG_LIBSODIUM_KEY":     {"source-libsodium-key", restoreSecretsDir + "/WALG_LIBSODIUM_KEY"},
+		"WALG_AWS_ACCESS_KEY_ID":                               {"AKIAEXAMPLE", own + "WALG_AWS_ACCESS_KEY_ID"},
+		"WALG_LIBSODIUM_KEY":                                   {"libsodium-key-value", own + "WALG_LIBSODIUM_KEY"},
+		walgkit.RestoreSecretPrefix + "WALG_AWS_ACCESS_KEY_ID": {"AKIA-SOURCE", source + "WALG_AWS_ACCESS_KEY_ID"},
+		walgkit.RestoreSecretPrefix + "WALG_LIBSODIUM_KEY":     {"source-libsodium-key", source + "WALG_LIBSODIUM_KEY"},
 	} {
 		if assert.Contains(t, secrets, name) {
 			assert.Equal(t, want[0], secrets[name]["value"], name)
@@ -89,8 +90,8 @@ func TestARestoredAppReadsTheSourceAndArchivesToItsOwn(t *testing.T) {
 			assert.Equal(t, want[1], file["name"], name)
 		}
 	}
-	assert.Contains(t, req.OwnedEnv, envRestoreBackup, "locked while it restores")
-	assert.Contains(t, req.OwnedEnv, restoreEnvPrefix+"WALG_S3_PREFIX")
+	assert.Contains(t, req.OwnedEnv, walgkit.EnvRestoreBackup, "locked while it restores")
+	assert.Contains(t, req.OwnedEnv, walgkit.RestoreEnvPrefix+"WALG_S3_PREFIX")
 	assert.NoError(t, specmodel.CheckBuildable(req.Doc))
 }
 
@@ -105,21 +106,21 @@ func TestARestoreFromAVolumeMountsTheSourceReadOnly(t *testing.T) {
 
 	mounts := req.Doc.Deployment.Storage.Mounts
 	assert.Equal(t, "backups/walg/shop-db-restored", mounts[walgkit.VolumeArchiveDir].VolumeOptions.Subpath)
-	source := mounts[restoreSourceDir]
+	source := mounts[walgkit.RestoreSourceDir]
 	assert.Equal(t, "vol-repo", source.Source)
 	assert.Equal(t, "backups/walg/shop-db", source.VolumeOptions.Subpath)
 	assert.True(t, source.ReadOnly, "the source is only read")
 	env := envOf(req.Doc)
 	assert.Equal(t, walgkit.VolumeArchiveDir, env["WALG_FILE_PREFIX"])
-	assert.Equal(t, restoreSourceDir, env[restoreEnvPrefix+"WALG_FILE_PREFIX"])
-	assert.Equal(t, []string{restoreSecretPrefix + "WALG_LIBSODIUM_KEY"}, restoreSecretNames(secretsOf(req.Doc)))
+	assert.Equal(t, walgkit.RestoreSourceDir, env[walgkit.RestoreEnvPrefix+"WALG_FILE_PREFIX"])
+	assert.Equal(t, []string{walgkit.RestoreSecretPrefix + "WALG_LIBSODIUM_KEY"}, restoreSecretNames(secretsOf(req.Doc)))
 	assert.NoError(t, specmodel.CheckBuildable(req.Doc))
 }
 
 func restoreSecretNames(secrets map[string]map[string]any) []string {
 	var out []string
 	for name := range secrets {
-		if strings.HasPrefix(name, restoreSecretPrefix) {
+		if strings.HasPrefix(name, walgkit.RestoreSecretPrefix) {
 			out = append(out, name)
 		}
 	}
@@ -170,21 +171,21 @@ func TestANewAppStartsThroughTheEntrypoint(t *testing.T) {
 func TestFinishingARestoreDropsWhatItWasRestoredWith(t *testing.T) {
 	env := &entity.Setting{ID: "env-1", Type: base.SettingTypeEnvVar, UpdateVer: 1}
 	env.MustSetData(&entity.EnvVars{Data: []*entity.EnvVar{{Key: "WALG_S3_PREFIX", Value: "s3://b/new"},
-		{Key: restoreEnvPrefix + "WALG_S3_PREFIX", Value: "s3://b/src"}, {Key: envRestoreRecovery, Value: "x"},
+		{Key: walgkit.RestoreEnvPrefix + "WALG_S3_PREFIX", Value: "s3://b/src"}, {Key: envRestoreRecovery, Value: "x"},
 		{Key: "TZ", Value: "UTC"}}})
 	ownKey := &entity.Setting{ID: "sec-1", Type: base.SettingTypeSecret, Name: "WALG_LIBSODIUM_KEY"}
 	ownKey.MustSetData(&entity.Secret{Key: "WALG_LIBSODIUM_KEY"})
 	sourceKey := &entity.Setting{ID: "sec-2", Type: base.SettingTypeSecret,
-		Name: restoreSecretPrefix + "WALG_LIBSODIUM_KEY"}
-	sourceKey.MustSetData(&entity.Secret{Key: restoreSecretPrefix + "WALG_LIBSODIUM_KEY"})
+		Name: walgkit.RestoreSecretPrefix + "WALG_LIBSODIUM_KEY"}
+	sourceKey.MustSetData(&entity.Secret{Key: walgkit.RestoreSecretPrefix + "WALG_LIBSODIUM_KEY"})
 	ownMount := &entity.Setting{ID: "mnt-1", Type: base.SettingTypeAppSettingMount}
 	ownMount.MustSetData(&entity.AppSettingMount{Source: entity.ObjectID{ID: "sec-1"}})
 	sourceMount := &entity.Setting{ID: "mnt-2", Type: base.SettingTypeAppSettingMount}
 	sourceMount.MustSetData(&entity.AppSettingMount{Source: entity.ObjectID{ID: "sec-2"}})
 	now := time.Date(2026, 10, 18, 16, 0, 0, 0, time.UTC)
 	managed := &entity.AppManagedSettings{Engine: "postgres",
-		Locks: entity.ManagedLocks{EnvKeys: []string{"WALG_S3_PREFIX", restoreEnvPrefix + "WALG_S3_PREFIX",
-			envRestoreRecovery}, Mounts: []string{"/var/lib/postgresql", restoreSourceDir},
+		Locks: entity.ManagedLocks{EnvKeys: []string{"WALG_S3_PREFIX", walgkit.RestoreEnvPrefix + "WALG_S3_PREFIX",
+			envRestoreRecovery}, Mounts: []string{"/var/lib/postgresql", walgkit.RestoreSourceDir},
 			Settings: []string{"sec-1", "sec-2", "mnt-1", "mnt-2"}},
 		Database: &entity.ManagedDatabase{Restore: &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}}}}
 
@@ -201,8 +202,8 @@ func TestFinishingARestoreDropsWhatItWasRestoredWith(t *testing.T) {
 		assert.Equal(t, 2, resp.Changed[0].UpdateVer)
 	}
 	assert.ElementsMatch(t, []string{"sec-2", "mnt-2"}, ids(resp.Deleted))
-	assert.ElementsMatch(t, []string{restoreEnvPrefix + "WALG_S3_PREFIX", envRestoreRecovery}, resp.EnvKeys)
-	assert.Equal(t, []string{restoreSourceDir}, resp.MountTargets)
+	assert.ElementsMatch(t, []string{walgkit.RestoreEnvPrefix + "WALG_S3_PREFIX", envRestoreRecovery}, resp.EnvKeys)
+	assert.Equal(t, []string{walgkit.RestoreSourceDir}, resp.MountTargets)
 	assert.Equal(t, []string{"WALG_S3_PREFIX"}, managed.Locks.EnvKeys)
 	assert.Equal(t, []string{"/var/lib/postgresql"}, managed.Locks.Mounts)
 	assert.Equal(t, []string{"sec-1", "mnt-1"}, managed.Locks.Settings)

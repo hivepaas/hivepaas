@@ -28,11 +28,8 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	if err := walgkit.CheckScripts(profile, doc); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if req.Restore != nil {
-		return unsupported("restores")
-	}
 	archive := req.Archive
-	if !walgkit.OneArchive(archive) {
+	if !walgkit.OneArchive(archive) || (req.Restore != nil && !walgkit.OneArchive(req.Restore.Archive)) {
 		return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("mariadb: exactly one archive is required")
 	}
 	options := walgkit.WithDefaults(req.Options)
@@ -51,6 +48,13 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	secrets := e.ArchiveSecrets(archive)
 	secrets[walgkit.SecretSodiumKey] = req.EncryptionKey
 	walgkit.AddSecretFiles(doc, walgkit.SecretsDir, "", mysqlUID, secrets)
+	if req.Restore != nil {
+		restoreEnv, err := walgkit.PrepareRestore(profile, doc, req.Restore)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		env = append(env, restoreEnv...)
+	}
 	// The template sets the account's variables; one that does not gets them.
 	have := docEnvKeys(doc)
 	for _, pair := range localhostAccount {

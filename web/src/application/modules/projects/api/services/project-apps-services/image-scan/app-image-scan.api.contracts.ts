@@ -30,7 +30,11 @@ export interface ScannedImage {
     osEosl: boolean;
     /** done or failed. */
     status: string;
-    /** Where the last scan read the image: "node", the node running it; "registry", its registry. */
+    /**
+     * Where the last scan read the image: "node", the node running it; "registry", its registry; "artifact", a file
+     * of the app's managed artifacts, from a node's artifacts cache - imageId is its sha256, imageRef its name and
+     * version.
+     */
     source: string;
     /** Why the last scan failed; the findings are the scan's before. */
     error: string;

@@ -98,7 +98,103 @@ Work on a branch per repository, in a worktree.
 **Not yet:** `apptemplate index`. The backend's lint does not know engine `mariadb`
 until Task 2.
 
-- [ ] Commit (app-templates).
+- [x] Commit (app-templates).
+
+**As built** (app-templates, branch `feat/mariadb-managed-scripts`, worktree
+`../app-templates-wt`, commit 2bf4f03; **not merged**. CI's lint of the templates and
+its `index -check` would fail on `main` until Task 2 teaches the backend engine
+`mariadb`, so it merges with Task 2):
+- **Credentials, open question 1 answered:**
+  - root@localhost in the official image has a password only, no unix_socket.
+  - The scripts reach the server as `mysql@localhost`, `IDENTIFIED VIA unix_socket`,
+    and run as the OS user `mysql` through `gosu`. This works for the `mariadb`
+    client, `mariadb-backup`, and WAL-G's Go driver (DSN
+    `mysql@unix(/run/mysqld/mysqld.sock)/mysql`). No password is used anywhere.
+  - The account comes from the image's own `MARIADB_MYSQL_LOCALHOST_USER=1` and
+    `MARIADB_MYSQL_LOCALHOST_GRANTS=ALL`, in the template's env, not an initdb file.
+    A restored database brings the source's. Task 2's `PrepareDoc` locks both
+    variables.
+  - Replaying arbitrary events needs ALL: DDL, `SET gtid_*`, and the privilege to
+    replay binary logs.
+  - A verifier's restore test reaches the live database over the network as root. Its
+    password goes into an option file in `/dev/shm` and is never on argv.
+- **The data directory** is `/var/lib/mysql/data` (`--datadir`), on a volume mounted
+  at `/var/lib/mysql`. The state files sit beside it:
+  - `hivepaas-archive.state` and `.lock`;
+  - `hivepaas-restore.state`, `.log` and `.backup`;
+  - `hivepaas-refused`;
+  - the restore test's scratch copy;
+  - the replay's fetched logs (`hivepaas-replay`).
+
+  `walg-entrypoint` chowns the mount point and the loop's state files to `mysql`, for
+  volumes Docker did not copy the image's ownership into.
+- **The locked command** the harness uses, and Task 2 locks:
+  `mariadbd --datadir=/var/lib/mysql/data --log-bin=mariadb-bin --binlog-format=ROW
+  --server-id=1 --log-slave-updates --binlog-expire-logs-seconds=172800`. The
+  entrypoint is `walg-entrypoint`, and `HIVEPAAS_ARCHIVE_TIMEOUT` (seconds, default
+  60) sets the loop's period.
+- **`walg-archive`:**
+  - **Flush rule.** A pass flushes when the active log's end is past the offset where
+    the last flush left a new log. A log the server only rotated to, or opened at
+    start, has just its header and stays open: an idle database adds no log.
+  - **Purge.** It then pushes, and purges to the active log.
+  - **Retries.** Its push runs with `WALG_S3_MAX_RETRIES=3`. With WAL-G's default,
+    an unreachable store held a pass, and the lock, for many minutes. The next pass
+    is the retry.
+  - **Locking.** It holds the lock on an fd (`flock`), so a pass and `walg-mark`
+    never push at the same time.
+- **WAL-G's MySQL output, verified:**
+  - `backup-list --detail --json` gives `backup_name`, `start_local_time`,
+    `compressed_size` and `binlog_start`.
+  - Backup names are `stream_YYYYMMDDTHHMMSSZ`.
+  - `binlog-list --json` gives `name`, `size` and `last_modified`.
+  - `binlog_start` is the last binary log *already uploaded* when the backup started,
+    not the one it starts in. The backup starts in a later log, and
+    `mariadb_backup_binlog_info` names it.
+  - `delete before FIND_FULL <name>` deletes every binary log uploaded before the
+    backup's name time, `binlog_start` included. The log the backup starts in was
+    still open then, so it is kept. The harness restores the oldest backup kept after
+    retention, to the latest.
+- **`walg-mark NAME SECONDS`:**
+  - It prints `POSITION=<file>:<offset>` and `GTID=<gtid_binlog_pos>` on two lines,
+    not the design's one `POSITION=<file>:<offset>/<gtid>`. Task 3's `MarkResult`
+    reads `POSITION`.
+  - It flushes and runs `walg-archive once` (under `timeout`) until the point's log
+    is listed. Otherwise it exits 75.
+- **`walg-replay`:**
+  - It fetches into a work directory on the volume, and deletes each log once it is
+    replayed.
+  - A stop position in a log the archive lacks fails before anything is replayed.
+- **`walg-nightly retain`** checks the chain in place of `wal-verify`. The archived
+  logs from the one after the oldest backup's `binlog_start` must be numbered one
+  after another. A log removed from the middle fails it, naming the log.
+- **`walg-health`:**
+  - It fails when the last pass failed, when no pass has succeeded for three periods,
+    or when none has in three periods of uptime.
+  - `PENDING_BYTES` and `READY_COUNT` come from `SHOW BINARY LOGS`.
+  - `REPLICAS` is empty.
+- **`walg-restore-test`:**
+  - It marks a point, fetches into `<scratch>/hivepaas-restore-test/data`, and starts
+    a second `mariadbd` on `/run/mysqld/hivepaas-restore-test.sock`, with
+    `--skip-networking --skip-log-bin --innodb-buffer-pool-size=64M`.
+  - It replays to the point and runs the check query on `MARIADB_DATABASE`.
+  - `RESTORED_TO` is the position.
+- **`walg-entrypoint` restore mode:**
+  - It fetches, starts the server on its socket alone, replays, stops it, and serves.
+  - The targets are:
+    - `HIVEPAAS_RESTORE_TARGET_BACKUP` (or `LATEST`), or
+      `HIVEPAAS_RESTORE_TARGET_BEFORE`;
+    - then `HIVEPAAS_RESTORE_STOP_TIME`, `HIVEPAAS_RESTORE_STOP_POSITION`, or
+      `HIVEPAAS_RESTORE_REPLAY=none`.
+  - A restore stopped before it ends fetches again.
+  - `status` prints the last lines the scripts and WAL-G wrote, not the server's.
+- **Known noise:** each push makes the server log "Aborted connection … Got an error
+  reading communication packets". WAL-G's driver closes without `COM_QUIT`, so this
+  shows once a minute in the container's log.
+- **Harness:** `scripts/test/walg-mariadb/run.sh` passes 194 checks, 97 on each of 11.8 and
+  11.4. This includes a base backup taken while 60 flushes rotate the logs: its
+  restore holds all 61 rows. No key and no root password was seen in any process's
+  arguments during a backup or a restore.
 
 ## Task 1 (backend, dashboard, CLI): engine-neutral state and capabilities
 
@@ -158,7 +254,60 @@ a dind live check are rerun.
 - the existing suites, renamed;
 - e2e level-0 15/15.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend e603e1d0, merged as 5758a987; dashboard 3a4734de, merged as
+11c41d01; CLI 441a2b4, merged as 90799de; the API changed in responses only, at level 4):
+- **Startup data migration never runs.** This was found here and is not fixed:
+  - `data_migrations` is created with the row `v1-20251019`. That sorts after every
+    `v00000N` code, so `migration.ID >= base.CurrentVersion` always skips.
+  - Turning it on is a task of its own. Setting updates do not bump a row's
+    `version`, so old steps would run again over newer data. For example, the
+    deployment settings' version-3 step would turn auto-deploy back on where it was
+    turned off.
+- **So the app-managed setting does not rely on migration:**
+  - `AppManagedSettings.UnmarshalJSON` reads the old `postgres` and `lsn` as `database`
+    and `position`, and clears the legacy fields. `Migrate` still moves them, tested
+    both ways.
+  - Every writer stores through `Setting.SetAppManagedData`, which sets version 2, and
+    updates the `version` column. A row converts at its next save.
+  - On dind the other app-managed rows stayed version 1 and read correctly. A restored
+    one that was never saved again read its `target.position`.
+- **`VersionCodeV3` is added here** and is `CurrentVersion`, following `base/version.go`
+  (a code per data version). Task 2 extends its comment to engine `mariadb`, and adds
+  no code. Nothing is released between Task 1 and Task 2: a v000003 HivePaaS would be
+  offered `mariadb-managed`.
+- **Engine lookup** is `service/managedservice/engines` (`Lookup`), not the managed
+  service. The environment-variable service needs it, and asking the service would be
+  a dependency cycle: envvar → managed → schedjobexec → command → envvar.
+- **`templatemodel.EngineContract.Title`** ("PostgreSQL") names the engine in
+  `ERR_APP_MANAGED_UNSUPPORTED_BY_ENGINE`, e.g. "PostgreSQL databases do not have
+  replicas yet". Task 2 adds "MariaDB".
+- **Refusals:**
+  - Replica add and remove, promote, and backup-from naming a replica need
+    `Replicas`. An empty backup-from, meaning the database itself, is every engine's.
+  - Moving the restore test to a verifier app needs `VerifierApp`.
+  - The deploy restore-point check asks for any managed database. Its refusal reads
+    "restore points are made on a managed database, not on a replica". Deploy point
+    names are still cut to 63 bytes, which every engine takes.
+- **The point-name limit** is checked against the engine's `PointNameMax` once the app
+  is loaded. Postgres gets the same field errors at 64 characters as before.
+- **Dashboard:**
+  - `managed-engines.ts` holds the one engine table: name, archive noun and its
+    number, dump tool, example check query. MariaDB's row is already there.
+  - The verifier-app option is hidden without `capabilities.verifierApp`.
+  - The unmanage dialog uses the engine's terms. For Postgres one bullet now reads "the
+    archiving of its WAL".
+- **CLI:** `db mark` prints the position, and its help says "the log".
+- **Checked:**
+  - backend lint, and tests in 277 packages;
+  - dashboard tsc, lint, prettier and build;
+  - e2e level-0 15/15;
+  - CLI build, test and lint.
+  - On dind (APP_PG18), the settings answered `capabilities`, and the status answered
+    `pendingBytes` and an old point's `position` read from its `lsn`. A new point was
+    stored at version 2 with no `postgres` or `lsn` key.
+- **Not rerun:** the Postgres harness. Its scripts did not change.
 
 ## Task 2 (backend, app-templates): the template contract and the engine's skeleton
 

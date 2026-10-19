@@ -27,21 +27,25 @@ func TestWhatTheEngineDoesNotDoYetIsRefused(t *testing.T) {
 	managed := &entity.AppManagedSettings{Engine: "mariadb", EngineAPI: 1}
 
 	for name, call := range map[string]func() error{
-		"prepare":   func() error { return engine.PrepareDoc(&managedmodel.PrepareReq{}) },
-		"configure": func() error { _, err := engine.Configure(&managedmodel.ConfigureReq{}); return err },
-		"status":    func() error { _, err := engine.Status(&managedmodel.StatusReq{}); return err },
-		"reconfigure": func() error {
-			_, err := engine.Reconfigure(&managedmodel.ReconfigureReq{})
-			return err
+		"restore": func() error {
+			req := prepareReq(t, s3Archive())
+			req.Restore = &managedmodel.RestoreSource{Archive: s3Archive()}
+			return engine.PrepareDoc(req)
 		},
 		"finish restore": func() error {
 			_, err := engine.FinishRestore(&managedmodel.FinishRestoreReq{})
 			return err
 		},
-		"retention": func() error { _, err := engine.Retention(&managedmodel.RetentionReq{}); return err },
-		"mark":      func() error { _, err := engine.MarkRestorePoint(managed, "before-v2"); return err },
+		"mark": func() error { _, err := engine.MarkRestorePoint(managed, "before-v2"); return err },
 		"mark result": func() error {
 			_, err := engine.MarkResult("POSITION=mariadb-bin.000003:389\n")
+			return err
+		},
+		"a verifier": func() error {
+			managed, jobs := reconfigureSetup(t)
+			_, err := engine.Reconfigure(&managedmodel.ReconfigureReq{App: &entity.App{ID: "app-1"}, Managed: managed,
+				Jobs: jobs, Change: &managedmodel.SettingsChange{
+					RestoreTest: &managedmodel.RestoreTestChange{Verifier: &entity.App{ID: "app-v"}}}})
 			return err
 		},
 		"replica": func() error { _, err := engine.Replica(&managedmodel.ReplicaReq{}); return err },

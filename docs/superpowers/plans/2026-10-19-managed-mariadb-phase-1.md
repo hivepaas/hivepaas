@@ -399,7 +399,85 @@ mirror the Postgres engine's.
 - run the nightly; health is green;
 - the Database tab shows status and backups in MariaDB's words.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend e127afca and 49a3d1bc; the CLI's spec copy
+re-pinned for descriptions only, 7be2a7a; the API stays at level 4; no dashboard
+change):
+- **`service/managedservice/walgkit`, a refactor first** (e127afca). The two engines
+  share what engine API 1's scripts promise and what an engine makes of it:
+  - the paths, secret names, defaults and job timeouts;
+  - the outputs;
+  - the archive's variables and secret files;
+  - `Configure` (the setting and its four jobs);
+  - `Status`, retention and kept points;
+  - `Reconfigure` (schedules, retention, check query, verifier move, dump, base
+    backups' member);
+  - the dump job.
+
+  An engine passes a `Profile` with what differs:
+  - its scripts and their uid;
+  - its backup-name pattern and delta marker;
+  - the walg-health output for pending bytes;
+  - its dump commands;
+  - a members reader (Postgres's, nil for MariaDB).
+
+  The Postgres engine keeps its server command, restore, mark, replicas and promotion.
+  Its tests pass unchanged apart from names. On dind after the refactor, pg18s (with a
+  replica) ran health and nightly, and its status read as before, the replica
+  streaming. `walgkit` has no tests of its own: both engines' suites test it.
+- **`PrepareDoc`:**
+  - It sets `WALG_COMPRESSION_METHOD=zstd`, `WALG_LIBSODIUM_KEY_TRANSFORM=hex` and
+    `HIVEPAAS_WALG_SECRETS_DIR`.
+  - `HIVEPAAS_ARCHIVE_TIMEOUT` is the archive timeout in seconds, read by
+    `walg-archive` and `walg-health`.
+  - It sets the S3 or volume archive's variables. There is no
+    `WALG_PREVENT_WAL_OVERWRITE`, which `binlog-push` lacks.
+  - The secret files belong to uid 999, the images' mysql user, at mode 400. The
+    archive loop runs as mysql.
+  - `MARIADB_MYSQL_LOCALHOST_USER=1` and `…_GRANTS=ALL` are added when the template
+    lacks them. Either way they are owned (locked), with every variable it adds.
+  - A restore is refused until Task 4.
+- **`Configure`:**
+  - The command is `mariadbd --datadir=/var/lib/mysql/data --log-bin=mariadb-bin
+    --binlog-format=ROW --server-id=1 --log-slave-updates
+    --binlog-expire-logs-seconds=172800`. It adds `--innodb-buffer-pool-size` at a
+    quarter of the memory limit (at least 128M), as Postgres's shared buffers; none
+    without a limit.
+  - The entrypoint is `walg-entrypoint`.
+- **The dump** came here rather than in Task 6. The create form dumps into the
+  archive's repository by default, so a MariaDB `Configure` without it would drop that
+  choice.
+  - It runs `gosu mysql mariadb-dump --user=mysql --single-transaction --routines
+    --events --triggers --hex-blob "$MARIADB_DATABASE"` into `<key>.sql`.
+  - Restore runs `gosu mysql mariadb --user=mysql "$MARIADB_DATABASE"`. It is not one
+    transaction, since MariaDB commits DDL, and it needs `mysql@localhost`: this
+    database, or another managed one.
+- **`Reconfigure`** is walgkit's. Moving the restore test into a verifier is refused
+  ("MariaDB databases do not have verifier apps yet") until Task 6. The dashboard
+  still offers the option, since the capability is true.
+- **Still refused:**
+  - restore (`PrepareDoc` with a restore, and `FinishRestore`);
+  - restore points (`MarkRestorePoint`, `MarkResult`), so a deploy asking for a point
+    on a MariaDB stops before it changes anything;
+  - replicas and promotion.
+- **DTO comments** now name both engines (the dump; `pendingBytes`). gen-swag changed
+  descriptions only, at level 4.
+- **Live on dind** (`lc/check19.sh`), `lc-maria` 11.8 archiving to lc-s3 and dumping
+  to lc-dumps:
+  - It started through `walg-entrypoint` with the locked command and the archive
+    loop, its data in `/var/lib/mysql/data`.
+  - A write's log was archived 58s later, unasked.
+  - Nightly, health, dump and restore test all finished `done`.
+  - Status:
+    - archiving ok, 389 B pending;
+    - the `stream_…` backup;
+    - a restore window;
+    - the dump's snapshot;
+    - the test restored to `mariadb-bin.000003:737`.
+  - A second nightly kept 2 backups. A settings PUT (retention, schedule) saved.
+  - The Database tab reads "MariaDB, archived continuously under …" and "Binary logs on
+    the node", with no Replicas section.
 
 ## Task 4 (backend): restore into a new app
 

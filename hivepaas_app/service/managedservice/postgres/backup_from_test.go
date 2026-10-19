@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 // Base backups move to a replica, and back: the nightly job runs where they are
@@ -32,7 +33,7 @@ func TestReconfigureMovesTheBaseBackups(t *testing.T) {
 	assert.Empty(t, resp.Rescheduled, "when it runs stays")
 	nightly := jobs[nightlyID].MustAsSchedJob()
 	assert.Equal(t, "app-1-r1", nightly.App.ID)
-	assert.Equal(t, defaultBaseBackupSchedule, nightly.Schedule.CronExpr)
+	assert.Equal(t, walgkit.DefaultBaseBackupSchedule, nightly.Schedule.CronExpr)
 
 	resp, err = reconfigure("app-1-r1")
 	assert.NoError(t, err)

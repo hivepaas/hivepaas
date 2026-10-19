@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 // configured is what Configure made: the engine's setting, parsed, and its jobs
@@ -72,7 +73,7 @@ func TestConfigureMakesNoDumpWithoutARepository(t *testing.T) {
 
 	assert.Len(t, jobs, 3)
 	assert.Empty(t, managed.Database.Jobs.Dump.ID)
-	assert.Equal(t, entity.ManagedDump{Schedule: defaultDumpSchedule}, managed.Database.Dump)
+	assert.Equal(t, entity.ManagedDump{Schedule: walgkit.DefaultDumpSchedule}, managed.Database.Dump)
 }
 
 // A restored database's dump waits for it to recover, as its other jobs do.
@@ -135,8 +136,8 @@ func TestReconfigureTurnsDumpsOnWithTheDefaultSchedule(t *testing.T) {
 	resp := changeDump(t, setting, managed, jobs, &managedmodel.SettingsChange{DumpRepo: new("repo-2")})
 
 	if assert.Len(t, resp.Created, 1) {
-		assert.Equal(t, defaultDumpSchedule, resp.Created[0].MustAsSchedJob().Schedule.CronExpr)
-		assert.Equal(t, defaultDumpSchedule, managed.Database.Dump.Schedule)
+		assert.Equal(t, walgkit.DefaultDumpSchedule, resp.Created[0].MustAsSchedJob().Schedule.CronExpr)
+		assert.Equal(t, walgkit.DefaultDumpSchedule, managed.Database.Dump.Schedule)
 	}
 }
 
@@ -216,7 +217,7 @@ func TestStatusReadsTheLastDump(t *testing.T) {
 	ended := time.Date(2026, 10, 18, 3, 1, 0, 0, time.UTC)
 	runs := healthyRuns()
 	runs["dump-1"] = &managedmodel.JobRun{Status: base.TaskStatusDone, EndedAt: ended,
-		Outputs: map[string]string{outSnapshotID: "k1a2b3", outSnapshotBytes: "52428800"}}
+		Outputs: map[string]string{walgkit.OutSnapshotID: "k1a2b3", walgkit.OutSnapshotBytes: "52428800"}}
 
 	status, err := New().Status(&managedmodel.StatusReq{Managed: managed, Runs: runs, Now: ended.Add(time.Hour)})
 

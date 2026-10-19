@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 var retentionNow = time.Date(2026, 10, 18, 2, 30, 0, 0, time.UTC)
@@ -60,7 +61,7 @@ func TestTheRetentionBoundary(t *testing.T) {
 		"deltas are not counted": {append(nightlies(7), managedmodel.BackupRef{
 			Name: backupName(99) + "_D_" + backupName(7)[5:], At: retentionNow}), nil, backupName(1)},
 	} {
-		assert.Equal(t, tc.want, RetentionBoundary(tc.backups, 7, tc.points, retentionNow), name)
+		assert.Equal(t, tc.want, walgkit.RetentionBoundary(profile, tc.backups, 7, tc.points, retentionNow), name)
 	}
 }
 
@@ -75,7 +76,7 @@ func TestTheNightlyRetentionStep(t *testing.T) {
 	}
 
 	retention, err := New().Retention(&managedmodel.RetentionReq{Managed: managed,
-		Outputs: map[string]string{outBackups: listed}, Now: retentionNow})
+		Outputs: map[string]string{walgkit.OutBackups: listed}, Now: retentionNow})
 
 	assert.NoError(t, err)
 	assert.Equal(t, &managedmodel.Retention{Args: "retain " + backupName(2), Boundary: backupName(2)}, retention)
@@ -105,7 +106,8 @@ func TestUntilWhenAPointCanBeRestored(t *testing.T) {
 		return nil
 	}
 
-	points := pointsStatus([]*entity.ManagedRestorePoint{recent, oldest, ancient}, backups, 7, daily, retentionNow)
+	points := walgkit.PointsStatus(profile, []*entity.ManagedRestorePoint{recent, oldest, ancient}, backups, 7, daily,
+		retentionNow)
 
 	assert.Equal(t, time.Date(2026, 10, 24, 2, 0, 0, 0, time.UTC), *until(points, "recent"), "six more nights")
 	assert.Equal(t, time.Date(2026, 10, 19, 2, 0, 0, 0, time.UTC), *until(points, "oldest"), "the next night")
@@ -114,7 +116,8 @@ func TestUntilWhenAPointCanBeRestored(t *testing.T) {
 		points[1].Point.Name, points[2].Point.Name}, "oldest first")
 
 	kept := point("kept", 6, 20) // beside the oldest, kept 20 days
-	points = pointsStatus([]*entity.ManagedRestorePoint{recent, oldest, kept}, backups, 7, daily, retentionNow)
+	points = walgkit.PointsStatus(profile, []*entity.ManagedRestorePoint{recent, oldest, kept}, backups, 7, daily,
+		retentionNow)
 
 	afterKept := time.Date(2026, 11, 8, 2, 0, 0, 0, time.UTC)
 	assert.Equal(t, afterKept, *until(points, "kept"), "the first run after its date")
@@ -128,10 +131,10 @@ func TestUntilWhenAPointCanBeRestored(t *testing.T) {
 func TestWhatKeptPointsHoldBack(t *testing.T) {
 	backups := nightlies(10)
 
-	held := heldBack(backups, 7, []*entity.ManagedRestorePoint{point("p", 8, 30)}, retentionNow)
+	held := walgkit.HeldBack(profile, backups, 7, []*entity.ManagedRestorePoint{point("p", 8, 30)}, retentionNow)
 
 	assert.Equal(t, &managedmodel.HeldBack{Backups: 2, Bytes: 200}, held)
-	assert.Nil(t, heldBack(backups, 7, nil, retentionNow), "retention's own keep nothing back")
+	assert.Nil(t, walgkit.HeldBack(profile, backups, 7, nil, retentionNow), "retention's own keep nothing back")
 }
 
 func TestARestorePointsName(t *testing.T) {
@@ -159,7 +162,7 @@ func TestMarkingARestorePoint(t *testing.T) {
 	mark, err := New().MarkRestorePoint(managed, "before-v42")
 
 	assert.NoError(t, err)
-	assert.Equal(t, managedmodel.MarkCommand{Command: scriptDir + "/walg-mark before-v42 180",
+	assert.Equal(t, managedmodel.MarkCommand{Command: walgkit.ScriptDir + "/walg-mark before-v42 180",
 		Timeout: 3 * time.Minute}, mark)
 	_, err = New().MarkRestorePoint(managed, "x'; DROP TABLE t; --")
 	assert.Error(t, err)
@@ -188,7 +191,7 @@ func TestStaleDeployPoints(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"deploy-old"},
-		New().StaleDeployPoints(managed, map[string]string{outBackups: listed}))
+		New().StaleDeployPoints(managed, map[string]string{walgkit.OutBackups: listed}))
 	assert.Nil(t, New().StaleDeployPoints(managed, map[string]string{}), "no list, nothing stale")
-	assert.Nil(t, New().StaleDeployPoints(&entity.AppManagedSettings{}, map[string]string{outBackups: listed}))
+	assert.Nil(t, New().StaleDeployPoints(&entity.AppManagedSettings{}, map[string]string{walgkit.OutBackups: listed}))
 }

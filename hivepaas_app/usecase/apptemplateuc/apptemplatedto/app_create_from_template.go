@@ -61,7 +61,8 @@ type ManagedCreateReq struct {
 	BaseBackupSchedule  string            `json:"baseBackupSchedule,omitempty"`
 	RestoreTestSchedule string            `json:"restoreTestSchedule,omitempty"`
 	RestoreTestQuery    string            `json:"restoreTestQuery,omitempty"`
-	// Dump is the database's pg_dump into a backup repository. Left out, a
+	// Dump is the database's logical dump (pg_dump, mariadb-dump) into a backup
+	// repository. Left out, a
 	// database that archives into a backup repository is dumped into it too, and
 	// one that archives into cloud storage is not dumped until a repository is
 	// chosen.

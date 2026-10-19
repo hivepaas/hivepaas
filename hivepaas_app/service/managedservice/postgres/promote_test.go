@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 func promoteReq() *managedmodel.PromoteReq {
@@ -18,7 +19,7 @@ func promoteReq() *managedmodel.PromoteReq {
 			Members: []*entity.ManagedMember{{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1",
 				Role: entity.ManagedRoleReplica}}}},
 		Member:     &entity.ManagedMember{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRoleReplica},
-		MountPaths: []string{scriptDir + "/walg-replication", scriptDir + "/walg-promote"},
+		MountPaths: []string{walgkit.ScriptDir + "/walg-replication", walgkit.ScriptDir + "/walg-promote"},
 	}
 }
 
@@ -29,15 +30,15 @@ func TestAPromotionsSpec(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, [][2]string{{envFenced, "shop-db-r1 was promoted"}}, spec.FenceEnv)
-	assert.Equal(t, scriptDir+"/walg-promote", spec.Promote.Command)
-	assert.Equal(t, scriptDir+"/walg-replication", spec.Allow.Command, "the replicas let into it")
+	assert.Equal(t, walgkit.ScriptDir+"/walg-promote", spec.Promote.Command)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-replication", spec.Allow.Command, "the replicas let into it")
 	assert.Equal(t, []string{envStandbyHost, envStandbyName, envStandbyPasswordFile}, spec.StandbyEnvKeys)
 	assert.Equal(t, envStandbyHost, spec.StandbyHostKey)
 }
 
 func TestAPromotionIsRefused(t *testing.T) {
 	old := promoteReq()
-	old.MountPaths = []string{scriptDir + "/walg-replication"}
+	old.MountPaths = []string{walgkit.ScriptDir + "/walg-replication"}
 	primary := promoteReq()
 	primary.Member.Role = entity.ManagedRolePrimary
 	member := promoteReq()

@@ -10,20 +10,50 @@
 package mariadb
 
 import (
+	"regexp"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 const (
 	minAPI = 1
 	maxAPI = 1
+	// mysqlUID owns the secret files: the official images' mysql user, which the
+	// archive loop runs as.
+	mysqlUID = "999"
 	// pointNameMax is the restore point names the engine takes: the name is the
 	// engine's alone, since MariaDB keeps none, and Postgres's limit keeps one
 	// set of names good for both.
 	pointNameMax = 63
 )
+
+// profile is MariaDB, as what it shares with the other WAL-G engines needs it.
+var profile = &walgkit.Profile{
+	Engine:             templatemodel.ManagedEngineMariaDB,
+	API:                maxAPI,
+	Scripts:            apiScripts,
+	FileOwner:          mysqlUID,
+	BackupPattern:      backupPattern,
+	PendingBytesOutput: outPendingBytes,
+	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".sql"},
+}
+
+// apiScripts are the scripts engine API 1 runs, which the template ships as
+// config files in walgkit.ScriptDir; walg-lib is what the others source. What
+// each takes, prints and exits with is the contract: the scripts' own comments
+// say it, and the MariaDB design §5.
+var apiScripts = []string{
+	"walg-lib", "walg-run", "walg-archive", "walg-replay", "walg-nightly", "walg-health", "walg-mark",
+	"walg-restore-test", "walg-entrypoint",
+}
+
+// backupPattern is a base backup's name: WAL-G names MySQL's by the time they
+// start, and they are full ones.
+var backupPattern = regexp.MustCompile(`^stream_[0-9]{8}T[0-9]{6}Z$`)
 
 type Engine struct{}
 
@@ -57,26 +87,6 @@ func unsupported(what string) error {
 		WithParam("What", what).ExposeParams("Engine", "What")
 }
 
-func (e *Engine) PrepareDoc(*managedmodel.PrepareReq) error {
-	return unsupported("archiving")
-}
-
-func (e *Engine) Configure(*managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
-	return nil, unsupported("archiving")
-}
-
-func (e *Engine) Status(*managedmodel.StatusReq) (*managedmodel.Status, error) {
-	return nil, unsupported("a status")
-}
-
-func (e *Engine) Reconfigure(*managedmodel.ReconfigureReq) (*managedmodel.ReconfigureResp, error) {
-	return nil, unsupported("settings")
-}
-
-func (e *Engine) ArchiveSecrets(*managedmodel.Archive) map[string]string {
-	return nil
-}
-
 func (e *Engine) Verifier() managedmodel.VerifierSpec {
 	return managedmodel.VerifierSpec{}
 }
@@ -93,24 +103,12 @@ func (e *Engine) FinishRestore(*managedmodel.FinishRestoreReq) (*managedmodel.Fi
 	return nil, unsupported("restores")
 }
 
-func (e *Engine) NightlyBackupArgs() string {
-	return ""
-}
-
-func (e *Engine) Retention(*managedmodel.RetentionReq) (*managedmodel.Retention, error) {
-	return nil, unsupported("nightly backups")
-}
-
 func (e *Engine) MarkRestorePoint(*entity.AppManagedSettings, string) (managedmodel.MarkCommand, error) {
 	return managedmodel.MarkCommand{}, unsupported("restore points")
 }
 
 func (e *Engine) MarkResult(string) (string, error) {
 	return "", unsupported("restore points")
-}
-
-func (e *Engine) StaleDeployPoints(*entity.AppManagedSettings, map[string]string) []string {
-	return nil
 }
 
 func (e *Engine) Replica(*managedmodel.ReplicaReq) (*managedmodel.ReplicaSpec, error) {

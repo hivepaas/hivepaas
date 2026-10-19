@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 var statusNow = time.Date(2026, 10, 18, 12, 0, 0, 0, time.UTC)
@@ -25,15 +26,15 @@ func statusManaged(mode string) *entity.AppManagedSettings {
 func healthyRuns() map[string]*managedmodel.JobRun {
 	return map[string]*managedmodel.JobRun{
 		"health": {Status: base.TaskStatusDone, EndedAt: statusNow.Add(-2 * time.Minute), Outputs: map[string]string{
-			outLastArchivedAt: "2026-10-18T11:59:30Z", outFailedCount: "0", outPgWalBytes: "33554432",
-			outDBBytes: "1073741824", outFreeBytes: "10737418240",
+			walgkit.OutLastArchivedAt: "2026-10-18T11:59:30Z", walgkit.OutFailedCount: "0", outPgWalBytes: "33554432",
+			walgkit.OutDBBytes: "1073741824", walgkit.OutFreeBytes: "10737418240",
 		}},
 		"nightly": {Status: base.TaskStatusDone, EndedAt: statusNow.Add(-10 * time.Hour), Outputs: map[string]string{
-			outBackupName: "base_000000010000000000000042", outBackupAt: "2026-10-18T02:00:05Z",
-			outBackupBytes: "52428800", outOldestBackupAt: "2026-10-11T02:00:04Z",
+			walgkit.OutBackupName: "base_000000010000000000000042", walgkit.OutBackupAt: "2026-10-18T02:00:05Z",
+			walgkit.OutBackupBytes: "52428800", walgkit.OutOldestBackupAt: "2026-10-11T02:00:04Z",
 		}},
 		"test": {Status: base.TaskStatusDone, EndedAt: statusNow.Add(-32 * time.Hour), Outputs: map[string]string{
-			outRestoredTo: "hp-test-20261017T0400", outDurationSeconds: "95",
+			walgkit.OutRestoredTo: "hp-test-20261017T0400", walgkit.OutDurationSeconds: "95",
 		}},
 	}
 }
@@ -69,7 +70,7 @@ func TestStatusOfAHealthyDatabase(t *testing.T) {
 // restorable: the window never ends before it, nor before it starts.
 func TestTheRestoreWindowReachesTheNewestBackup(t *testing.T) {
 	runs := healthyRuns()
-	runs["health"].Outputs[outLastArchivedAt] = "2026-10-18T01:59:00Z"
+	runs["health"].Outputs[walgkit.OutLastArchivedAt] = "2026-10-18T01:59:00Z"
 
 	status, _ := New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
 		Runs: runs, Now: statusNow})
@@ -77,8 +78,8 @@ func TestTheRestoreWindowReachesTheNewestBackup(t *testing.T) {
 		assert.Equal(t, time.Date(2026, 10, 18, 2, 0, 5, 0, time.UTC), status.RestoreWindow.To)
 	}
 
-	runs["nightly"].Outputs[outOldestBackupAt] = runs["nightly"].Outputs[outBackupAt]
-	delete(runs["nightly"].Outputs, outBackupAt)
+	runs["nightly"].Outputs[walgkit.OutOldestBackupAt] = runs["nightly"].Outputs[walgkit.OutBackupAt]
+	delete(runs["nightly"].Outputs, walgkit.OutBackupAt)
 	status, _ = New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
 		Runs: runs, Now: statusNow})
 	if assert.NotNil(t, status.RestoreWindow) {
@@ -89,7 +90,7 @@ func TestTheRestoreWindowReachesTheNewestBackup(t *testing.T) {
 func TestStatusOfAFailingArchive(t *testing.T) {
 	runs := healthyRuns()
 	runs["health"].Status = base.TaskStatusFailed
-	runs["health"].Outputs[outFailedCount] = "12"
+	runs["health"].Outputs[walgkit.OutFailedCount] = "12"
 
 	status, err := New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),
 		Runs: runs, Now: statusNow})
@@ -126,10 +127,10 @@ func TestStatusOfANewDatabase(t *testing.T) {
 func TestStatusSuggestsTheVerifier(t *testing.T) {
 	for name, change := range map[string]func(runs map[string]*managedmodel.JobRun){
 		"no room": func(runs map[string]*managedmodel.JobRun) {
-			runs["health"].Outputs[outFreeBytes] = "1073741824" // 1 GiB free for a 1 GiB database
+			runs["health"].Outputs[walgkit.OutFreeBytes] = "1073741824" // 1 GiB free for a 1 GiB database
 		},
 		"too long": func(runs map[string]*managedmodel.JobRun) {
-			runs["test"].Outputs[outDurationSeconds] = "2400"
+			runs["test"].Outputs[walgkit.OutDurationSeconds] = "2400"
 		},
 	} {
 		runs := healthyRuns()
@@ -147,7 +148,7 @@ func TestStatusSuggestsTheVerifier(t *testing.T) {
 
 func TestStatusListsTheBaseBackupsKept(t *testing.T) {
 	runs := healthyRuns()
-	runs["nightly"].Outputs[outBackups] = "base_000000010000000000000040@2026-10-16T02:00:03Z " +
+	runs["nightly"].Outputs[walgkit.OutBackups] = "base_000000010000000000000040@2026-10-16T02:00:03Z " +
 		"garbage base_000000010000000000000042@2026-10-18T02:00:05Z"
 
 	status, err := New().Status(&managedmodel.StatusReq{Managed: statusManaged(entity.ManagedRestoreTestContainer),

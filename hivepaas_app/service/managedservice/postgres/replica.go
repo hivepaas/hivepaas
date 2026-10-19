@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 const (
@@ -45,7 +46,7 @@ func (e *Engine) Replica(req *managedmodel.ReplicaReq) (*managedmodel.ReplicaSpe
 	if pg == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}
-	if !slices.Contains(req.MountPaths, scriptDir+"/"+replicationScript) {
+	if !slices.Contains(req.MountPaths, walgkit.ScriptDir+"/"+replicationScript) {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedReplicaUnsupported).
 			WithParam("App", req.Primary.Name).ExposeParams("App")
 	}
@@ -60,7 +61,7 @@ func (e *Engine) Replica(req *managedmodel.ReplicaReq) (*managedmodel.ReplicaSpe
 	}
 	target := ""
 	for _, mount := range managed.Locks.Mounts {
-		if mount != volumeArchiveDir {
+		if mount != walgkit.VolumeArchiveDir {
 			target = mount
 			break
 		}
@@ -81,7 +82,7 @@ func (e *Engine) Replica(req *managedmodel.ReplicaReq) (*managedmodel.ReplicaSpe
 		SecretName:   replicaSecretName,
 		PasswordFile: replicaPasswordFile,
 		DataTarget:   target,
-		Allow:        &entity.CommandTemplate{Command: scriptDir + "/" + replicationScript},
+		Allow:        &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + replicationScript},
 	}, nil
 }
 

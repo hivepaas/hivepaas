@@ -571,7 +571,26 @@ point's log is pushed) and `MarkResult` (the `position`). A restore to a point m
   has the rows up to the mark;
 - a deploy with "restore point before deploy" on a MariaDB marks one.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend 5bb1208b; no script change, Task 0's `walg-mark` as it was; API
+unchanged, at level 4):
+- **`walgkit/mark.go`** is shared:
+  - the point name's rules (`ValidPointName`, the reserved `hp-` prefix,
+    `PointNameMax` 63);
+  - `walg-mark NAME SECONDS` with a wait of two archive timeouts;
+  - `MarkResult(stdout, key, pattern)`.
+
+  Postgres reads `LSN`, MariaDB reads `POSITION`. The latter is checked against the
+  restore target's pattern, so what is stored is what a restore takes.
+- **Live on dind** (`lc/check21.sh`, on `lc-maria-latest-0003`):
+  - A point was marked at `mariadb-bin.000007:971`, between 10 rows and 10 more. It is
+    listed, restorable until the run that drops its backup.
+  - Restored to the point, the new app holds the 10 rows.
+  - With `restorePointBeforeDeploy` naming the MariaDB, each deploy of `lc-web`
+    marked `deploy-lc-web-<time>` at the end of a fresh binary log.
+- **Not run:** the CLI (`hivepaas db mark`). It posts the same endpoint, and its output
+  names the position.
 
 ## Task 6 (backend, app-templates, dashboard): restore test, verifier, dump, e2e and the cluster
 

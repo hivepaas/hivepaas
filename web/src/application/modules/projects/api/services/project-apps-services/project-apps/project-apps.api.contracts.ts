@@ -76,6 +76,11 @@ export type ProjectApps_DeleteOne_Req = ApiRequestBase<{
     appID: string;
     /** Also delete the directories the app kept its data in. */
     removeStorage?: boolean;
+    /**
+     * Delete a managed database a replica was promoted over with its whole cluster: it holds the cluster, and
+     * deleting it deletes every member, the primary among them. Refused without it.
+     */
+    deleteCluster?: boolean;
 }>;
 
 export type ProjectApps_DeleteOne_Res = ApiResponseBase<{

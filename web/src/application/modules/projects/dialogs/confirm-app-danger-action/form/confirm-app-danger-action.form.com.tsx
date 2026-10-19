@@ -14,7 +14,7 @@ import {
     type ConfirmAppDangerActionFormOutput,
     createConfirmAppDangerActionFormSchema,
 } from "../schemas";
-import { AppDangerAction } from "../types";
+import { AppDangerAction, type ConfirmAppDangerActionCluster } from "../types";
 
 const actionCopy: Record<
     AppDangerAction,
@@ -53,7 +53,14 @@ const actionCopy: Record<
     },
 };
 
-export function ConfirmAppDangerActionForm({ action, appName, isPending = false, readOnly = false, onSubmit }: Props) {
+export function ConfirmAppDangerActionForm({
+    action,
+    appName,
+    cluster,
+    isPending = false,
+    readOnly = false,
+    onSubmit,
+}: Props) {
     const {
         formState: { errors },
         handleSubmit,
@@ -66,8 +73,9 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
             appName: "",
             removeStorage: false,
             cascade: true,
+            deleteCluster: false,
         },
-        resolver: zodResolver(createConfirmAppDangerActionFormSchema(appName)),
+        resolver: zodResolver(createConfirmAppDangerActionFormSchema(appName, cluster !== undefined)),
         mode: "onSubmit",
     });
 
@@ -76,6 +84,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
             appName: "",
             removeStorage: false,
             cascade: true,
+            deleteCluster: false,
         });
     }, [action, appName, reset]);
 
@@ -83,6 +92,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
     const isConfirmed = enteredAppName === appName;
     const removeStorage = watch("removeStorage");
     const cascade = watch("cascade");
+    const deleteCluster = watch("deleteCluster");
     const copy = actionCopy[action];
 
     function onInvalid(_errors: FieldErrors<ConfirmAppDangerActionFormInput>) {
@@ -138,6 +148,39 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                     </label>
                 )}
 
+                {cluster && (
+                    <Field>
+                        <label
+                            className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                            htmlFor="app-delete-cluster"
+                        >
+                            <Checkbox
+                                id="app-delete-cluster"
+                                className="mt-1"
+                                checked={deleteCluster}
+                                disabled={readOnly || isPending}
+                                onCheckedChange={checked => {
+                                    setValue("deleteCluster", checked === true);
+                                }}
+                            />
+                            <span>
+                                <span className="block">Delete the whole cluster</span>
+                                <span className="block text-xs text-muted-foreground leading-normal">
+                                    A replica was promoted over {appName}, which still holds the cluster: its settings,
+                                    its jobs and its members. Deleting it deletes them all -{" "}
+                                    {cluster.members
+                                        .map(member =>
+                                            member.role === "primary" ? `${member.key} (the primary)` : member.key,
+                                        )
+                                        .join(", ")}
+                                    . The archive is kept.
+                                </span>
+                            </span>
+                        </label>
+                        <FieldError errors={[errors.deleteCluster]} />
+                    </Field>
+                )}
+
                 {copy.cascadeLabel && (
                     <label
                         className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
@@ -189,6 +232,8 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
 interface Props {
     action: AppDangerAction;
     appName: string;
+    /** The cluster the app holds, when it does: deleting it is confirmed as deleting the cluster. */
+    cluster?: ConfirmAppDangerActionCluster;
     isPending?: boolean;
     readOnly?: boolean;
     onSubmit: (values: ConfirmAppDangerActionFormOutput) => void;

@@ -689,6 +689,44 @@ test("a fenced managed database says which member is the primary", async ({ page
     await expect(row.getByRole("button", { name: "Remove e2e-db-r1" })).toBeDisabled();
 });
 
+// A database a replica was promoted over holds its cluster: it is deleted only
+// with all of it, which its Danger zone asks to be confirmed, and says what goes.
+test("a fenced managed database is deleted only with its whole cluster", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    await answerManaged(page, app, {
+        writer: { id: "e2ereplicaapp01" },
+        fencedAt: at(-HOUR),
+        members: [{ ...REPLICA_STATUS, role: "primary", volume: { id: VOLUME.id }, at: at(-DAY) }],
+    });
+    const deletes: Request[] = [];
+    await page.route(
+        url => url.pathname === `/api/projects/${app.projectId}/${app.env}/apps/${app.id}`,
+        async route => {
+            if (route.request().method() !== "DELETE") return route.fallback();
+            deletes.push(route.request());
+            return route.fulfill({ json: { meta: {}, data: {} } });
+        },
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/danger-zone/`);
+    await page.getByRole("button", { name: "Delete App" }).click();
+    const dialog = page.getByRole("dialog", { name: "Delete app" });
+    await expect(dialog.getByText("Delete the whole cluster")).toBeVisible();
+    await expect(dialog).toContainText("e2e-db-r1 (the primary)");
+    await dialog.getByRole("textbox").fill(app.name);
+    await dialog.getByRole("button", { name: "Delete this App" }).click();
+    await expect(dialog.getByText("it is deleted only with all of it")).toBeVisible();
+    expect(deletes, "nothing is deleted unconfirmed").toHaveLength(0);
+
+    await dialog.getByRole("checkbox", { name: /Delete the whole cluster/ }).click();
+    await dialog.getByRole("button", { name: "Delete this App" }).click();
+    await expect.poll(() => deletes.length, { message: "the cluster's deletion was asked for" }).toBe(1);
+    const asked = new URL(deletes[0]?.url() ?? "");
+    expect(asked.searchParams.get("deleteCluster")).toBe("true");
+    expect(asked.searchParams.get("removeStorage")).toBe("false");
+});
+
 const WALG_SHA = "965a7147852435bc4b54f272799b63df826b54ef65cf7c4fc688c82b96c0c4eb";
 
 // counts is a severity summary with only HIGH findings, all fixable.

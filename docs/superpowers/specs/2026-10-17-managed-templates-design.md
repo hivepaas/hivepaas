@@ -218,12 +218,17 @@ is mounted at the same path on every node (phase 2, Task 8).
   placed on a node that lacks the file fails, and Swarm retries elsewhere, until the
   reconcile has run.
 - **A volume that claims to be shared but is not** gives an empty directory on another
-  node. That database initializes afresh and archives into the same prefix.
-  - `WALG_PREVENT_WAL_OVERWRITE` refuses the segments the archive already has, so
-    archiving fails where status shows it.
-  - Nothing else stops it yet: its nightly base backup would join the archive's.
-  - Refusing an empty data directory over an archive that has backups is a
-    follow-up.
+  node. `walg-entrypoint` initializes an empty data directory only over an archive
+  that holds nothing (`wal-g st ls` lists no `basebackups_005/` or `wal_005/`). Over
+  one with history, which is this database's lost data, it:
+  - idles without starting its server;
+  - writes why beside the data, so that the container's health passes and
+    `walg-health` fails, saying why;
+  - leaves the database to be restored into a new app, or given its volume back.
+
+  An archive it cannot read within `HIVEPAAS_ARCHIVE_CHECK_TIMEOUT` (60s) fails the
+  start, for Swarm to try again: it never initializes what it cannot tell is new.
+  The same guard covers a volume whose data was lost.
 
 ### When
 
@@ -316,19 +321,25 @@ type ManagedStorage struct {
     BackupRepo   ObjectID // either: a backup repository, reused (S3 or volume)
     CloudStorage ObjectID // or: any cloud storage setting
     KeyAuth      ObjectID // optional: a narrower key than the storage's own
-    Prefix       string   // walg/<app key>, set at creation, never changed
+    Prefix       string   // walg/<app key>/<app ID>, set at creation, never changed
 }
 ```
+
+**The prefix carries the app's ID.** An app key is unique within its environment
+only, and HivePaaS deletes no archive. With `walg/<app key>` alone (phase 1), two
+environments' or projects' databases of one name on one storage shared an archive, and
+so did a database made again by the name of a deleted one. Apps made before keep the
+prefix they recorded.
 
 **There are three places WAL-G can write to.** Two of them resolve to a `CloudStorage`
 setting, which already exists with its key in an encrypted `KeyAuth`.
 
 - **Reuse an S3 backup repository.** Its cloud storage is used with the prefix
-  `<repo prefix>/walg/<app key>`, which no Kopia repository uses.
+  `<repo prefix>/walg/<app key>/<app ID>`, which no Kopia repository uses.
 - **A cloud storage of the user's choice.** Any `CloudStorage` setting, used by a
   repository or not.
 - **Reuse a volume backup repository.** WAL-G writes with its file storage
-  (`WALG_FILE_PREFIX`). The engine mounts the subpath `<repo prefix>/walg/<app key>` of
+  (`WALG_FILE_PREFIX`). The engine mounts the subpath `<repo prefix>/walg/<app key>/<app ID>` of
   the repository's volume into the container, as an ordinary volume mount. That needs
   the volume to be reachable where the database runs: pinned to the database's node,
   or unpinned (shared storage). A volume pinned to another node is refused, with the
@@ -513,7 +524,7 @@ command. A migration that breaks data then has its way back already marked.
    window, and a data volume for the new app.
 2. **Create the new app.** The use case creates `<app>-restored-<yyyymmdd-hhmmss>` from
    the same managed template, version and parameters, with a new prefix
-   `walg/<new app key>`. It is not a logical child of the source: it must outlive it.
+   `walg/<new app key>/<new app ID>`. It is not a logical child of the source: it must outlive it.
 3. **Recover.** The new app's container starts through `walg-entrypoint`, with the
    source prefix and the target time in its environment. Since `PGDATA` is empty, it:
    - runs `backup-fetch` from the source prefix: the latest base backup before the

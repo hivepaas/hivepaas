@@ -127,6 +127,7 @@ export function ManagedRestorePointDialog() {
                         key={state.mode === "edit" ? state.point.name : state.mode}
                         creating={creating}
                         initialValues={initialValues}
+                        engine={settings?.data.engine ?? ""}
                         retainFull={settings?.data.retainFull ?? 0}
                         lastBackupBytes={status?.data.lastBackup?.bytes}
                         isPending={isPending}

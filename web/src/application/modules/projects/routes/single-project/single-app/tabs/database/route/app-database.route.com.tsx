@@ -8,7 +8,7 @@ import { AppManagedCommands, AppManagedQueries, ProjectAppsQueries } from "~/pro
 import { useManagedRestoreDialog } from "~/projects/dialogs/managed-restore";
 import { useManagedUnmanageDialog } from "~/projects/dialogs/managed-unmanage";
 import type { AppManagedRestoreTarget, AppManagedSettings } from "~/projects/domain";
-import { formatManagedTime, isRestoring } from "~/projects/module-shared/utils";
+import { formatManagedTime, isRestoring, managedEngineOf } from "~/projects/module-shared/utils";
 
 import { AppLink, AppLoader, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -31,10 +31,11 @@ const STATUS_REFETCH_INTERVAL_MS = 30_000;
 const RESTORING_REFETCH_INTERVAL_MS = 10_000;
 
 /**
- * A managed database's engine, as a person sees and steers it: whether its WAL
- * is archived and how far back a restore can go; restores into a new app; the
- * restore points; the settings it lets a person change; and the way out of
- * being managed.
+ * A managed database's engine, as a person sees and steers it: whether its log
+ * (the WAL, the binary logs) is archived and how far back a restore can go;
+ * restores into a new app; its replicas, where its engine has them; the restore
+ * points; the settings it lets a person change; and the way out of being
+ * managed.
  */
 export function AppDatabaseRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
@@ -105,7 +106,9 @@ export function AppDatabaseRoute() {
             <div className={cn(listBox, "@container flex flex-col gap-6")}>
                 <div className="flex flex-col">
                     <h1 className="text-base font-semibold">Managed database</h1>
-                    <p className="text-xs text-muted-foreground">{engineName(settings.engine)} read replica.</p>
+                    <p className="text-xs text-muted-foreground">
+                        {managedEngineOf(settings.engine).name} read replica.
+                    </p>
                 </div>
                 <ManagedMemberBanner
                     projectId={projectID}
@@ -122,7 +125,7 @@ export function AppDatabaseRoute() {
                 <div className="flex flex-col">
                     <h1 className="text-base font-semibold">Managed database</h1>
                     <p className="text-xs text-muted-foreground">
-                        {engineName(settings.engine)}, archived continuously
+                        {managedEngineOf(settings.engine).name}, archived continuously
                         {settings.storage?.prefix ? ` under ${settings.storage.prefix}` : ""}.
                     </p>
                 </div>
@@ -189,21 +192,24 @@ export function AppDatabaseRoute() {
                             appID,
                         )}
                     />
-                    <ManagedReplicas
-                        projectId={projectID}
-                        env={env}
-                        appId={appID}
-                        appKey={app?.data.key ?? ""}
-                        writerName={writerKeyOf(settings) ?? appName}
-                        members={status.members}
-                        placement={status.placement}
-                        canWrite={canWrite && !restoring}
-                    />
+                    {settings.capabilities.replicas && (
+                        <ManagedReplicas
+                            projectId={projectID}
+                            env={env}
+                            appId={appID}
+                            appKey={app?.data.key ?? ""}
+                            writerName={writerKeyOf(settings) ?? appName}
+                            members={status.members}
+                            placement={status.placement}
+                            canWrite={canWrite && !restoring}
+                        />
+                    )}
                     <ManagedRestorePoints
                         projectId={projectID}
                         env={env}
                         appId={appID}
                         appName={appName}
+                        engine={settings.engine}
                         points={status.restorePoints}
                         canWrite={canWrite}
                         canMark={!restoring}
@@ -284,6 +290,7 @@ export function AppDatabaseRoute() {
                                     env,
                                     appId: appID,
                                     appName,
+                                    engine: settings.engine,
                                     hasVerifier: Boolean(settings.restoreTest?.verifierApp),
                                 });
                             }}
@@ -366,8 +373,4 @@ function targetText(target: AppManagedRestoreTarget): string {
 function writerKeyOf(settings: AppManagedSettings): string | undefined {
     const writerId = settings.writer?.id;
     return writerId ? settings.members.find(member => member.app?.id === writerId)?.key : undefined;
-}
-
-function engineName(engine: string): string {
-    return engine === "postgres" ? "PostgreSQL" : engine;
 }

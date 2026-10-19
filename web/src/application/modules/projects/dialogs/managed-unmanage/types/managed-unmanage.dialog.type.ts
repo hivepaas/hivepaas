@@ -4,6 +4,8 @@ export interface ManagedUnmanageTarget {
     env: string;
     appId: string;
     appName: string;
+    /** Its engine, which the copy names what it archives after. */
+    engine: string;
     /** Its restore test runs in a verifier app, which goes with the engine. */
     hasVerifier: boolean;
 }

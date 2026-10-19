@@ -1,9 +1,10 @@
 import type React from "react";
 
 import { cn } from "@lib/utils";
+import { capitalize } from "@utils/common/text-converters";
 import { Lightbulb } from "lucide-react";
 import { type AppManagedSettings, type AppManagedStatus, MANAGED_ARCHIVING_STATE } from "~/projects/domain";
-import { formatManagedTime } from "~/projects/module-shared/utils";
+import { formatManagedTime, managedEngineOf } from "~/projects/module-shared/utils";
 
 import { AppLink } from "@application/shared/components";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
@@ -21,7 +22,7 @@ interface Props {
 }
 
 /**
- * What a managed database's engine knows of it: whether its WAL is archived,
+ * What a managed database's engine knows of it: whether its log is archived,
  * how far back a restore can go, its last base backup, restore test and dump,
  * and where its archive is from it.
  */
@@ -29,6 +30,7 @@ export function ManagedStatusCards({ settings, status, snapshotsHref }: Props) {
     const { archiving, restoreWindow, lastBackup, lastRestoreTest, lastDump } = status;
     const dumping = settings.dump.repo !== undefined;
     const placement = status.placement === "" ? undefined : PLACEMENT_COPY[status.placement];
+    const engine = managedEngineOf(settings.engine);
 
     return (
         <div className="flex flex-col gap-3">
@@ -48,7 +50,9 @@ export function ManagedStatusCards({ settings, status, snapshotsHref }: Props) {
                         <Line label="Last archived">Nothing yet</Line>
                     )}
                     {archiving.failedCount > 0 && <Line label="Failed">{archiving.failedCount} times</Line>}
-                    <Line label="WAL on the node">{formatDataSizeCompact(archiving.pgWalBytes)}</Line>
+                    <Line label={`${capitalize(engine.archiveNoun)} on the node`}>
+                        {formatDataSizeCompact(archiving.pendingBytes)}
+                    </Line>
                     <Line label="Archive timeout">{settings.archiveTimeout}</Line>
                 </StatusCard>
 

@@ -35,7 +35,7 @@ const RestoreTargetSchema = z.object({
     kind: z.enum(["latest", "time", "point", "backup"]),
     time: OptionalDateSchema,
     point: z.string().optional().default(""),
-    lsn: z.string().optional().default(""),
+    position: z.string().optional().default(""),
     backup: z.string().optional().default(""),
 });
 
@@ -43,6 +43,14 @@ const SettingsSchema = z.object({
     updateVer: z.number(),
     engine: z.string(),
     engineApi: z.number(),
+    // What an engine does not say it can, it is not offered.
+    capabilities: z
+        .object({
+            replicas: z.boolean().optional().default(false),
+            verifierApp: z.boolean().optional().default(false),
+        })
+        .nullish()
+        .transform(value => value ?? { replicas: false, verifierApp: false }),
     storage: z
         .object({
             backupRepo: ObjectRefSchema,
@@ -156,7 +164,7 @@ const SwitchResultSchema = z.object({
 
 const RestorePointSchema = z.object({
     name: z.string(),
-    lsn: z.string(),
+    position: z.string().optional().default(""),
     at: z.coerce.date(),
     by: ObjectRefSchema,
     note: z.string().optional().default(""),
@@ -174,7 +182,7 @@ const StatusSchema = z.object({
         checkedAt: OptionalDateSchema,
         lastArchivedAt: OptionalDateSchema,
         failedCount: z.number().optional().default(0),
-        pgWalBytes: z.number().optional().default(0),
+        pendingBytes: z.number().optional().default(0),
         stale: z.boolean().optional().default(false),
     }),
     restoreWindow: z

@@ -1,4 +1,5 @@
 import { DatabaseBackup, ExternalLink, Lock } from "lucide-react";
+import { managedEngineOf } from "~/projects/module-shared/utils";
 
 import { LICENSE_DOCS } from "@application/shared/constants";
 import { useReadableLicense } from "@application/shared/hooks";
@@ -6,8 +7,6 @@ import { licenseFeatureCopy } from "@application/shared/utils";
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-import { managedEngineName } from "../utils";
 
 /** A managed template's mark: HivePaaS goes on looking after what it creates. */
 export function ManagedTemplateBadge({ engine }: { engine: string }) {
@@ -23,8 +22,8 @@ export function ManagedTemplateBadge({ engine }: { engine: string }) {
                 </Badge>
             </TooltipTrigger>
             <TooltipContent className="max-w-[260px]">
-                HivePaaS looks after this {managedEngineName(engine)}: it archives every change, takes nightly backups,
-                tests that they restore, and restores it to any moment into a new app.
+                HivePaaS looks after this {managedEngineOf(engine).name}: it archives every change, takes nightly
+                backups, tests that they restore, and restores it to any moment into a new app.
             </TooltipContent>
         </Tooltip>
     );

@@ -40,6 +40,7 @@ func ImageScanRun(
 		MemoryBytes:      req.GetMemoryBytes(),
 		Timeout:          time.Duration(req.GetTimeoutSeconds()) * time.Second,
 		Format:           req.GetFormat(),
+		Mode:             req.GetMode(),
 	})
 	if err != nil {
 		return nil, hperrors.ToGRPCError(err) //nolint:wrapcheck

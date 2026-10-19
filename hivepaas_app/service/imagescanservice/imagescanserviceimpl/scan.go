@@ -69,6 +69,9 @@ type runningImage struct {
 	// RemoteRef is the image's repository and digest, where a node that does not
 	// have it reads it; empty when it is in no registry.
 	RemoteRef string
+	// Artifact is set for a file of the app's artifacts in place of an image:
+	// its ID is the file's sha256, Ref the artifact's name and version.
+	Artifact *artifactFile
 }
 
 func (s *service) ScanApp(
@@ -101,6 +104,12 @@ func (s *service) ScanApp(
 func (s *service) scanApp(ctx context.Context, app *entity.App, ignores []*imagescanservice.Ignore,
 	with *imageScanReq) (*entity.TaskImageScanOutput, error) {
 	images, imagesErr := s.appImages(ctx, app, with.log)
+	artifacts, err := s.appArtifacts(ctx, app, images)
+	if err != nil {
+		_ = with.log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's artifacts could not be read, "+
+			"its images are scanned without them: %s", hperrors.GetErrorDetail(err, "")), tasklog.TsNow))
+	}
+	images = append(images, artifacts...)
 	auth, err := s.pullAuth(ctx, app)
 	if err != nil {
 		_ = with.log.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("The app's registry credentials could not be read, "+
@@ -224,6 +233,9 @@ func (s *service) scanImage(ctx context.Context, req *imageScanReq) *entity.Task
 		_ = log.Add(ctx, tasklog.NewErrFrame("Scan failed: "+result.Error, tasklog.TsNow))
 		failure := &entity.ImageScan{ImageID: img.ID, ImageRef: img.Ref, Status: base.ImageScanStatusFailed,
 			Error: result.Error, ScannedAt: now, UpdatedAt: now}
+		if img.Artifact != nil {
+			failure.Source, failure.Platform = base.ImageScanSourceArtifact, img.Platform
+		}
 		if markErr := s.imageScanRepo.MarkFailed(ctx, s.db, failure); markErr != nil {
 			s.logger.Errorf("image scan: failed to record the failed scan of %s: %v", img.ID, markErr)
 		}
@@ -261,21 +273,12 @@ func (s *service) runScan(ctx context.Context, req *imageScanReq) (*imagescanser
 	if err != nil {
 		return nil, err
 	}
-	runReq := &imagescanrun.RunReq{
-		TrivyImage:       trivyImage(),
-		ImageID:          img.ID,
-		ImageNode:        img.NodeID,
-		RemoteRef:        img.RemoteRef,
-		Platform:         img.Platform,
-		DockerConfig:     auth,
-		Volume:           req.volume.Mount,
-		CacheDir:         cacheDir(),
-		DBRepository:     cfg.DBRepository,
-		JavaDBRepository: cfg.JavaDBRepository,
-		NanoCPUs:         int64(cfg.ScanCPULimit() * 1e9), //nolint:mnd // CPUs in billionths
-		MemoryBytes:      cfg.ScanMemoryLimit().Bytes(),
-		Timeout:          trivyTimeout,
+	if img.Artifact != nil {
+		if err = s.ensureArtifact(ctx, scanNode, img); err != nil {
+			return nil, err
+		}
 	}
+	runReq := runReqOf(img, cfg, req.volume, auth, "")
 	_ = req.log.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Scanning %s (%s), run on node %s, on node %s",
 		img.Ref, shortID(img.ID), img.NodeID, scanNode), tasklog.TsNow))
 
@@ -383,6 +386,10 @@ func readScan(resp *imagescanrun.RunResp, img runningImage, cfg *entity.ImageSca
 		return nil, hperrors.Wrap(hperrors.ErrImageScanFailed).WithExtraDetail("Trivy's report: %v", err)
 	}
 	report.Scan.Source = resp.Source
+	if img.Artifact != nil && report.Scan.Platform == "" {
+		// A file's report names no platform: the build is the node's.
+		report.Scan.Platform = img.Platform
+	}
 	if updatedAt := out.DBUpdatedAt(); !updatedAt.IsZero() {
 		report.Scan.DBUpdatedAt = updatedAt
 	}

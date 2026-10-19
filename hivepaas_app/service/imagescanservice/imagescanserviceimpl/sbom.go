@@ -25,6 +25,9 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 	if err != nil && !errors.As(err, &unread) {
 		return nil, err
 	}
+	if artifacts, artifactsErr := s.appArtifacts(ctx, req.App, images); artifactsErr == nil {
+		images = append(images, artifacts...)
+	}
 	var img *runningImage
 	for i := range images {
 		if images[i].ID == req.ImageID {
@@ -46,20 +49,14 @@ func (s *service) SBOM(ctx context.Context, req *imagescanservice.SBOMReq) ([]by
 		return nil, err
 	}
 
-	resp, err := s.runLocked(ctx, volume, volume.scanNode(img.NodeID), sbomLockTries, &imagescanrun.RunReq{
-		Format:       imagescanrun.FormatCycloneDX,
-		TrivyImage:   trivyImage(),
-		ImageID:      img.ID,
-		ImageNode:    img.NodeID,
-		RemoteRef:    img.RemoteRef,
-		Platform:     img.Platform,
-		DockerConfig: config,
-		Volume:       volume.Mount,
-		CacheDir:     cacheDir(),
-		NanoCPUs:     int64(cfg.ScanCPULimit() * 1e9), //nolint:mnd // CPUs in billionths
-		MemoryBytes:  cfg.ScanMemoryLimit().Bytes(),
-		Timeout:      trivyTimeout,
-	})
+	scanNode := volume.scanNode(img.NodeID)
+	if img.Artifact != nil {
+		if err = s.ensureArtifact(ctx, scanNode, *img); err != nil {
+			return nil, err
+		}
+	}
+	resp, err := s.runLocked(ctx, volume, scanNode, sbomLockTries,
+		runReqOf(*img, cfg, volume, config, imagescanrun.FormatCycloneDX))
 	if err != nil {
 		return nil, err
 	}

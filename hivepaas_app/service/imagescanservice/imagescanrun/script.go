@@ -12,15 +12,19 @@ import (
 // is let renew it: it is a 935 MiB download, and Trivy's own is three days.
 const javaDBMaxAgeDays = 7
 
-// Script is what the scan's container runs: Trivy on the image, then trivy
-// version, for the DB's date a standalone report does not carry, and both in
-// one JSON object on the standard output - imagescanservice.ScanOutput. It
-// exits with Trivy's code. An SBOM is the image's packages alone: no scanner,
-// so no DB.
+// Script is what the scan's container runs: Trivy on the image, or on an
+// artifact's file as a root filesystem, then trivy version, for the DB's date a
+// standalone report does not carry, and both in one JSON object on the standard
+// output - imagescanservice.ScanOutput. It exits with Trivy's code. An SBOM is
+// the packages alone: no scanner, so no DB.
 func Script(req *RunReq, source base.ImageScanSource, insecure bool) string {
 	cacheDir := executil.ArgQuote(req.CacheDir)
+	target := "image"
+	if source == base.ImageScanSourceArtifact {
+		target = "rootfs"
+	}
 	args := []string{
-		"trivy", "image",
+		"trivy", target,
 		"--cache-dir", cacheDir,
 		"--disable-telemetry",
 		"--skip-version-check",
@@ -38,9 +42,12 @@ func Script(req *RunReq, source base.ImageScanSource, insecure bool) string {
 			args = append(args, "--java-db-repository", executil.ArgQuote(req.JavaDBRepository))
 		}
 	}
-	if source == base.ImageScanSourceNode {
+	switch source {
+	case base.ImageScanSourceArtifact:
+		args = append(args, artifactTarget)
+	case base.ImageScanSourceNode:
 		args = append(args, "--image-src", "docker", req.ImageID)
-	} else {
+	case base.ImageScanSourceRegistry:
 		args = append(args, "--image-src", "remote", "--platform", req.Platform)
 		if insecure {
 			args = append(args, "--insecure")

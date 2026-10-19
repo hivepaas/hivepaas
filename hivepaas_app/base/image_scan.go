@@ -46,6 +46,9 @@ const (
 	// ImageScanSourceRegistry is the image's registry, by digest: the node the
 	// scans run on does not have it.
 	ImageScanSourceRegistry ImageScanSource = "registry"
+	// ImageScanSourceArtifact is a file of an app's artifacts in place of an
+	// image, read from the artifacts cache of the node the scan ran on.
+	ImageScanSourceArtifact ImageScanSource = "artifact"
 )
 
 // ImageScanTrigger is what asked for a scan.

@@ -133,3 +133,33 @@ func TestParseScanOutput(t *testing.T) {
 		assert.True(t, out.DBUpdatedAt().IsZero())
 	}
 }
+
+// A Go binary's findings, from a scan of it as a root filesystem - WAL-G's: by
+// module, with no image or OS of its own, kept by the ID it was asked by. The
+// binary's own module, built from a commit, is matched by its pseudo-version.
+func TestParseReportOfAGoBinary(t *testing.T) {
+	const sha = "sha256:965a7147852435bc4b54f272799b63df826b54ef65cf7c4fc688c82b96c0c4eb"
+	r, err := ParseReport(readFixture(t, "walg-gobinary.json"), sha, "wal-g v3.0.8", scannedAt)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, sha, r.Scan.ImageID)
+	assert.Equal(t, "wal-g v3.0.8", r.Scan.ImageRef)
+	assert.Empty(t, r.Scan.Platform, "the report names none: the caller knows the build's")
+	assert.Empty(t, r.Scan.OSFamily)
+	assert.Equal(t, "0.75.0", r.Scan.TrivyVersion)
+	if !assert.Len(t, r.Findings, 4) {
+		return
+	}
+	byID := map[string]string{}
+	for _, f := range r.Findings {
+		assert.Equal(t, "gobinary", f.PkgType)
+		assert.Equal(t, sha, f.ImageID)
+		byID[f.VulnID] = f.PkgName + " " + f.InstalledVersion + " " + string(f.Severity) + " " + f.FixedVersion
+	}
+	assert.Equal(t, "golang.org/x/net v0.58.0 HIGH 0.60.0", byID["CVE-2026-78669"])
+	assert.Equal(t, "golang.org/x/crypto v0.55.0 UNKNOWN ", byID["GO-2026-5932"])
+	assert.Equal(t, "github.com/wal-g/wal-g v0.0.0-20260820091616-3e493188db28+dirty HIGH 1.1",
+		byID["CVE-2021-38599"])
+}

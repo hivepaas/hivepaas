@@ -1,0 +1,65 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.75.0"
+  },
+  "ArtifactName": "/scan/artifact",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "artifact",
+      "Class": "lang-pkgs",
+      "Type": "gobinary",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2021-38599",
+          "PkgID": "github.com/wal-g/wal-g@v0.0.0-20260820091616-3e493188db28+dirty",
+          "PkgName": "github.com/wal-g/wal-g",
+          "InstalledVersion": "v0.0.0-20260820091616-3e493188db28+dirty",
+          "FixedVersion": "1.1",
+          "Status": "fixed",
+          "Severity": "HIGH",
+          "Title": "Improper use of cryptographic key in wal-g",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-38599",
+          "PublishedDate": "2021-08-12T16:15:10.533Z"
+        },
+        {
+          "VulnerabilityID": "GO-2026-5932",
+          "PkgID": "golang.org/x/crypto@v0.55.0",
+          "PkgName": "golang.org/x/crypto",
+          "InstalledVersion": "v0.55.0",
+          "FixedVersion": null,
+          "Status": "affected",
+          "Severity": "UNKNOWN",
+          "Title": "The golang.org/x/crypto/openpgp package is unmaintained, unsafe by design, and has known security issues",
+          "PrimaryURL": null,
+          "PublishedDate": null
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78669",
+          "PkgID": "golang.org/x/net@v0.58.0",
+          "PkgName": "golang.org/x/net",
+          "InstalledVersion": "v0.58.0",
+          "FixedVersion": "0.60.0",
+          "Status": "fixed",
+          "Severity": "HIGH",
+          "Title": "net/http: net/http/internal/http2: golang.org/x/net/http2: net/http: Denial of Service via excessive HTTP/2 SETTINGS frames",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78669",
+          "PublishedDate": "2026-10-08T23:17:04.01Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-33818",
+          "PkgID": "stdlib@v1.25.11",
+          "PkgName": "stdlib",
+          "InstalledVersion": "v1.25.11",
+          "FixedVersion": "1.25.13, 1.26.6, 1.27.0-rc.3",
+          "Status": "fixed",
+          "Severity": "HIGH",
+          "Title": "encoding/asn1: golang: Go encoding/asn1: Denial of Service via excessive recursion in Unmarshal",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-33818",
+          "PublishedDate": "2026-08-13T22:17:19.84Z"
+        }
+      ]
+    }
+  ]
+}

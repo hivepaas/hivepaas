@@ -20,6 +20,9 @@ func (s *service) EnsureOnNode(
 	}
 	description := inspect.Node.Description
 	arch, known := base.CPUArchFromDocker(description.Platform.Architecture)
+	if req.Arch != "" {
+		arch, known = req.Arch, true
+	}
 	file := req.Artifact.Files[arch]
 	if !known || file == nil {
 		reported := string(arch)

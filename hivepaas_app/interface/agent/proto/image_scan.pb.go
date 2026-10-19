@@ -42,7 +42,10 @@ type ImageScanRunReq struct {
 	MemoryBytes      int64  `protobuf:"varint,12,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`
 	TimeoutSeconds   int64  `protobuf:"varint,13,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
 	// Empty for a scan's report; cyclonedx for the image's SBOM.
-	Format        string `protobuf:"bytes,14,opt,name=format,proto3" json:"format,omitempty"`
+	Format string `protobuf:"bytes,14,opt,name=format,proto3" json:"format,omitempty"`
+	// Empty for an image; rootfs for a file of the artifacts cache, image_id its
+	// sha256.
+	Mode          string `protobuf:"bytes,15,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,6 +178,13 @@ func (x *ImageScanRunReq) GetFormat() string {
 	return ""
 }
 
+func (x *ImageScanRunReq) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
 type ImageScanRunResp struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Source string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
@@ -264,7 +274,7 @@ var File_image_scan_proto protoreflect.FileDescriptor
 
 const file_image_scan_proto_rawDesc = "" +
 	"\n" +
-	"\x10image_scan.proto\x12\x05agent\"\xe0\x03\n" +
+	"\x10image_scan.proto\x12\x05agent\"\xf4\x03\n" +
 	"\x0fImageScanRunReq\x12\x1f\n" +
 	"\vtrivy_image\x18\x01 \x01(\tR\n" +
 	"trivyImage\x12\x19\n" +
@@ -283,7 +293,8 @@ const file_image_scan_proto_rawDesc = "" +
 	"\tnano_cpus\x18\v \x01(\x03R\bnanoCpus\x12!\n" +
 	"\fmemory_bytes\x18\f \x01(\x03R\vmemoryBytes\x12'\n" +
 	"\x0ftimeout_seconds\x18\r \x01(\x03R\x0etimeoutSeconds\x12\x16\n" +
-	"\x06format\x18\x0e \x01(\tR\x06format\"\xb5\x01\n" +
+	"\x06format\x18\x0e \x01(\tR\x06format\x12\x12\n" +
+	"\x04mode\x18\x0f \x01(\tR\x04mode\"\xb5\x01\n" +
 	"\x10ImageScanRunResp\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\fR\x06output\x12\x10\n" +

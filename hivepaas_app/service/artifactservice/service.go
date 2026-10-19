@@ -55,6 +55,9 @@ type ReconcileFailure struct {
 type EnsureOnNodeReq struct {
 	NodeID   string
 	Artifact *entity.AppArtifact
+	// Arch picks the build in place of the node's architecture: a file the
+	// node keeps to read rather than run, as a scan of another node's build.
+	Arch base.CPUArch
 }
 
 type EnsureOnNodeResp struct {

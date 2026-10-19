@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 var shopDB = &entity.App{ID: "app-1", Key: "shop-db"}
@@ -37,9 +38,9 @@ func TestTheRestoreTestMovesIntoAVerifier(t *testing.T) {
 	assert.Equal(t, base.SchedJobTypeManagedRestoreTest, job.JobType)
 	assert.Equal(t, string(base.SchedJobTypeManagedRestoreTest), setting.Kind)
 	assert.Equal(t, "ver-1", job.App.ID)
-	assert.Equal(t, "shop-db", jobEnv(job, envRestoreSourceHost))
-	assert.Equal(t, verifierScratchDir, jobEnv(job, envRestoreScratchDir))
-	assert.Equal(t, scriptDir+"/walg-restore-test", job.Command.Command, "the same script")
+	assert.Equal(t, "shop-db", jobEnv(job, walgkit.EnvRestoreSourceHost))
+	assert.Equal(t, walgkit.VerifierScratchDir, jobEnv(job, walgkit.EnvRestoreScratchDir))
+	assert.Equal(t, walgkit.ScriptDir+"/walg-restore-test", job.Command.Command, "the same script")
 	assert.Equal(t, []string{setting.ID}, ids(resp.Changed))
 	assert.Empty(t, resp.Rescheduled, "it runs when it did")
 }
@@ -59,7 +60,7 @@ func TestTheRestoreTestMovesBackIntoTheContainer(t *testing.T) {
 	assert.Equal(t, string(base.SchedJobTypeContainerCommand), setting.Kind)
 	assert.Equal(t, "app-1", job.App.ID)
 	for _, env := range job.Command.EnvVars {
-		assert.NotContains(t, []string{envRestoreSourceHost, envRestoreScratchDir}, env.Key)
+		assert.NotContains(t, []string{walgkit.EnvRestoreSourceHost, walgkit.EnvRestoreScratchDir}, env.Key)
 	}
 	assert.Len(t, resp.Changed, 1)
 }
@@ -71,5 +72,5 @@ func TestTheVerifierRunsNoServer(t *testing.T) {
 
 	assert.Equal(t, "sleep infinity", spec.Command)
 	assert.NotContains(t, spec.Command, "postgres")
-	assert.Equal(t, verifierScratchDir, spec.ScratchDir)
+	assert.Equal(t, walgkit.VerifierScratchDir, spec.ScratchDir)
 }

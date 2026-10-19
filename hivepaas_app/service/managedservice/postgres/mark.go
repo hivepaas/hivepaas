@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 const (
@@ -39,13 +40,13 @@ func (e *Engine) MarkRestorePoint(managed *entity.AppManagedSettings, name strin
 	if !ValidPointName(name) {
 		return managedmodel.MarkCommand{}, hperrors.NewArgumentInvalid("name")
 	}
-	archiveTimeout := defaultArchiveTimeout
+	archiveTimeout := walgkit.DefaultArchiveTimeout
 	if managed != nil && managed.Database != nil && managed.Database.ArchiveTimeout > 0 {
 		archiveTimeout = managed.Database.ArchiveTimeout.ToDuration()
 	}
 	timeout := markWaits * archiveTimeout
 	return managedmodel.MarkCommand{
-		Command: fmt.Sprintf("%s/walg-mark %s %d", scriptDir, name, int(timeout/time.Second)),
+		Command: fmt.Sprintf("%s/walg-mark %s %d", walgkit.ScriptDir, name, int(timeout/time.Second)),
 		Timeout: timeout,
 	}, nil
 }

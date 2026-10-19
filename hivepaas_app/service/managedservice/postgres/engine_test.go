@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -41,7 +42,7 @@ func scriptsYAML(skip string) string {
 			continue
 		}
 		lines = append(lines, "    "+script+":\n      content: \"#!/bin/sh\\n\"\n"+
-			"      swarmRef: {file: {name: "+scriptDir+"/"+script+", mode: 555}}")
+			"      swarmRef: {file: {name: "+walgkit.ScriptDir+"/"+script+", mode: 555}}")
 	}
 	return strings.Join(lines, "\n")
 }
@@ -100,7 +101,7 @@ func TestPrepareDocArchivesToS3(t *testing.T) {
 	assert.Equal(t, "true", env["WALG_PREVENT_WAL_OVERWRITE"])
 	assert.Equal(t, "zstd", env["WALG_COMPRESSION_METHOD"])
 	assert.Equal(t, "hex", env["WALG_LIBSODIUM_KEY_TRANSFORM"])
-	assert.Equal(t, secretsDir, env["HIVEPAAS_WALG_SECRETS_DIR"])
+	assert.Equal(t, walgkit.SecretsDir, env["HIVEPAAS_WALG_SECRETS_DIR"])
 	for _, value := range env {
 		assert.NotContains(t, value, "s3-secret-value", "no key in the environment")
 		assert.NotContains(t, value, "libsodium-key-value")
@@ -114,7 +115,7 @@ func TestPrepareDocArchivesToS3(t *testing.T) {
 	} {
 		assert.Equal(t, value, secrets[name]["value"], name)
 		file := secrets[name]["swarmRef"].(map[string]any)["file"].(map[string]any)
-		assert.Equal(t, secretsDir+"/"+name, file["name"], name)
+		assert.Equal(t, walgkit.SecretsDir+"/"+name, file["name"], name)
 		assert.Equal(t, "400", file["mode"], "only the postgres user reads it")
 		assert.Equal(t, postgresUID, file["uid"])
 	}
@@ -128,9 +129,9 @@ func TestPrepareDocArchivesToAVolume(t *testing.T) {
 	assert.NoError(t, New().PrepareDoc(req))
 
 	env := envOf(req.Doc)
-	assert.Equal(t, volumeArchiveDir, env["WALG_FILE_PREFIX"])
+	assert.Equal(t, walgkit.VolumeArchiveDir, env["WALG_FILE_PREFIX"])
 	assert.NotContains(t, env, "WALG_S3_PREFIX")
-	archive := req.Doc.Deployment.Storage.Mounts[volumeArchiveDir]
+	archive := req.Doc.Deployment.Storage.Mounts[walgkit.VolumeArchiveDir]
 	assert.Equal(t, "vol-repo", archive.Source)
 	assert.Equal(t, "backups/walg/shop-db", archive.VolumeOptions.Subpath)
 	assert.Contains(t, req.Doc.Deployment.Storage.Mounts, "/var/lib/postgresql", "the data volume stays")
@@ -146,7 +147,7 @@ func TestPrepareDocRefusesATemplateMissingAScript(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid)
 	info, _ := hperrors.ParseError(err, "en")
-	assert.Contains(t, info.Detail, scriptDir+"/walg-fetch")
+	assert.Contains(t, info.Detail, walgkit.ScriptDir+"/walg-fetch")
 }
 
 func TestPrepareDocRefusesNoArchive(t *testing.T) {
@@ -263,11 +264,11 @@ func TestConfigureMakesTheManagedSettingAndItsJobs(t *testing.T) {
 	assert.Equal(t, base.SchedJobTypeContainerCommand, health.JobType)
 	assert.Equal(t, base.SchedJobTypeContainerCommand, restoreTest.JobType)
 	assert.Equal(t, "30 1 * * *", nightly.Schedule.CronExpr)
-	assert.Equal(t, scriptDir+"/walg-nightly", nightly.Command.Command)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-nightly", nightly.Command.Command)
 	assert.Equal(t, 5*time.Minute, time.Duration(health.Schedule.Interval))
-	assert.Equal(t, scriptDir+"/walg-health", health.Command.Command)
-	assert.Equal(t, defaultRestoreTestSchedule, restoreTest.Schedule.CronExpr)
-	assert.Equal(t, scriptDir+"/walg-restore-test", restoreTest.Command.Command)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-health", health.Command.Command)
+	assert.Equal(t, walgkit.DefaultRestoreTestSchedule, restoreTest.Schedule.CronExpr)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-restore-test", restoreTest.Command.Command)
 }
 
 func TestConfigureNeedsTheDeploymentSetting(t *testing.T) {
@@ -324,9 +325,9 @@ func TestConfigureTellsTheScriptsTheirOptions(t *testing.T) {
 	for _, setting := range resp.Settings[1:] {
 		jobs[setting.ID] = setting.MustAsSchedJob()
 	}
-	assert.Equal(t, "14", jobEnv(jobs[data.Database.Jobs.Nightly.ID], envRetainFull))
+	assert.Equal(t, "14", jobEnv(jobs[data.Database.Jobs.Nightly.ID], walgkit.EnvRetainFull))
 	assert.Equal(t, "SELECT count(*) FROM orders",
-		jobEnv(jobs[data.Database.Jobs.RestoreTest.ID], envRestoreCheckQuery))
+		jobEnv(jobs[data.Database.Jobs.RestoreTest.ID], walgkit.EnvRestoreCheckQuery))
 	assert.Equal(t, "SELECT count(*) FROM orders", data.Database.RestoreTest.CheckQuery)
 }
 
@@ -354,9 +355,9 @@ func TestReconfigureChangesTheJobsItMade(t *testing.T) {
 	nightly := jobs[managed.Database.Jobs.Nightly.ID].MustAsSchedJob()
 	test := jobs[managed.Database.Jobs.RestoreTest.ID].MustAsSchedJob()
 	assert.Equal(t, "0 1 * * *", nightly.Schedule.CronExpr)
-	assert.Equal(t, "30", jobEnv(nightly, envRetainFull))
+	assert.Equal(t, "30", jobEnv(nightly, walgkit.EnvRetainFull))
 	assert.Equal(t, "0 5 * * 6", test.Schedule.CronExpr)
-	assert.Equal(t, "SELECT 1", jobEnv(test, envRestoreCheckQuery))
+	assert.Equal(t, "SELECT 1", jobEnv(test, walgkit.EnvRestoreCheckQuery))
 	assert.ElementsMatch(t, []string{managed.Database.Jobs.Nightly.ID, managed.Database.Jobs.RestoreTest.ID},
 		ids(resp.Changed), "the health check is left alone")
 	assert.ElementsMatch(t, ids(resp.Changed), ids(resp.Rescheduled), "both schedules moved")
@@ -371,8 +372,8 @@ func TestReconfigureLeavesWhatItIsNotAsked(t *testing.T) {
 
 	assert.NoError(t, err)
 	nightly := jobs[managed.Database.Jobs.Nightly.ID].MustAsSchedJob()
-	assert.Equal(t, defaultBaseBackupSchedule, nightly.Schedule.CronExpr)
-	assert.Equal(t, "3", jobEnv(nightly, envRetainFull))
+	assert.Equal(t, walgkit.DefaultBaseBackupSchedule, nightly.Schedule.CronExpr)
+	assert.Equal(t, "3", jobEnv(nightly, walgkit.EnvRetainFull))
 	assert.Len(t, resp.Changed, 1)
 	assert.Empty(t, resp.Rescheduled, "no schedule moved")
 }
@@ -401,7 +402,7 @@ func TestReconfigureClearsTheCheckQuery(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Empty(t, managed.Database.RestoreTest.CheckQuery)
-	assert.Empty(t, jobEnv(jobs[managed.Database.Jobs.RestoreTest.ID].MustAsSchedJob(), envRestoreCheckQuery))
+	assert.Empty(t, jobEnv(jobs[managed.Database.Jobs.RestoreTest.ID].MustAsSchedJob(), walgkit.EnvRestoreCheckQuery))
 }
 
 func TestReconfigureRefusesABadSchedule(t *testing.T) {
@@ -414,7 +415,7 @@ func TestReconfigureRefusesABadSchedule(t *testing.T) {
 }
 
 func TestArchiveSecretsAreTheS3Keys(t *testing.T) {
-	assert.Equal(t, map[string]string{secretAccessKey: "AKIAEXAMPLE", secretSecretKey: "s3-secret-value"},
+	assert.Equal(t, map[string]string{walgkit.SecretAccessKey: "AKIAEXAMPLE", walgkit.SecretSecretKey: "s3-secret-value"},
 		New().ArchiveSecrets(s3Archive()))
 	assert.Empty(t, New().ArchiveSecrets(&managedmodel.Archive{Volume: &managedmodel.VolumeArchive{}}),
 		"a volume archive has none")

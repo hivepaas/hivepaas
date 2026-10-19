@@ -2,230 +2,50 @@ package postgres
 
 import (
 	"fmt"
-	"maps"
-	"slices"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/tiendc/gofn"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
 const (
-	defaultArchiveTimeout      = time.Minute
-	defaultRetainFull          = 7
-	defaultBaseBackupSchedule  = "0 2 * * *"
-	defaultRestoreTestSchedule = "0 4 * * 0"
-	healthInterval             = 5 * time.Minute
-
-	// envRetainFull and envRestoreCheckQuery are what walg-nightly and
-	// walg-restore-test read their options from, in their job's environment.
-	envRetainFull        = "WALG_RETAIN_FULL"
-	envRestoreCheckQuery = "HIVEPAAS_RESTORE_CHECK_QUERY"
-
-	nightlyTimeout     = 6 * time.Hour
-	healthTimeout      = 2 * time.Minute
-	restoreTestTimeout = 6 * time.Hour
-
 	// sharedBuffersShare is the memory limit's share Postgres caches pages in,
 	// the usual quarter, and minSharedBuffers its floor.
 	sharedBuffersShare = 4
 	minSharedBuffers   = 128 * unit.MB
 )
 
+// Configure gives the server what archiving needs, and makes the engine's
+// setting and jobs. Every database starts through walg-entrypoint: it hands
+// over to the image's, with a checkpoint once the server is up so that
+// archive_timeout holds from the start, and recovers a restored database first.
 func (e *Engine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
-	options := withDefaults(req.Prepared.Options)
-	source, err := setServerArguments(req.Settings, req.Prepared.Doc, options)
-	if err != nil {
-		return nil, err
-	}
-
-	managedID := gofn.Must(ulid.NewStringULID())
-	restoring := req.Prepared.Restore != nil
-	job := func(jobType base.SchedJobType, name, script string, schedule *entity.SchedJobSchedule,
-		timeout time.Duration, env ...*entity.EnvVar) *entity.Setting {
-		return newJob(req.App.ID, managedID, name, &entity.SchedJob{
-			JobType:  jobType,
-			Schedule: schedule,
-			Timeout:  timeutil.Duration(timeout),
-			Command:  &entity.CommandTemplate{Command: scriptDir + "/" + script, EnvVars: env},
-		}, restoring, req.Now)
-	}
-	// The nightly run is two steps, its retention decided by the engine between
-	// them (see Retention).
-	nightly := job(base.SchedJobTypeManagedNightly, "Nightly base backup", "walg-nightly",
-		&entity.SchedJobSchedule{CronExpr: options.BaseBackupSchedule, InitialTime: req.Now}, nightlyTimeout,
-		&entity.EnvVar{Key: envRetainFull, Value: strconv.Itoa(options.RetainFull)})
-	health := job(base.SchedJobTypeContainerCommand, "Archive health", "walg-health",
-		&entity.SchedJobSchedule{Interval: timeutil.Duration(healthInterval), InitialTime: req.Now}, healthTimeout)
-	restoreTest := job(base.SchedJobTypeContainerCommand, "Restore test", "walg-restore-test",
-		&entity.SchedJobSchedule{CronExpr: options.RestoreTestSchedule, InitialTime: req.Now}, restoreTestTimeout,
-		&entity.EnvVar{Key: envRestoreCheckQuery, Value: options.RestoreTestQuery})
-	jobs := []*entity.Setting{nightly, health, restoreTest}
-	dump := entity.ManagedDump{Repo: entity.ObjectID{ID: options.DumpRepo}, Schedule: options.DumpSchedule}
-	var dumpJob *entity.Setting
-	if dump.Repo.ID != "" {
-		dumpJob = newDumpJob(req.App, managedID, dump, restoring, req.Now)
-		jobs = append(jobs, dumpJob)
-	}
-
-	managed := newAppSetting(req.App.ID, base.SettingTypeAppManaged, "", entity.CurrentAppManagedVersion,
-		req.Now, &entity.AppManagedSettings{
-			Engine:    string(e.Name()),
-			EngineAPI: maxAPI,
-			Locks:     locks(req, source),
-			Database: &entity.ManagedDatabase{
-				Storage:        req.Storage,
-				EncryptionKey:  entity.NewEncryptedField(req.Prepared.EncryptionKey),
-				ArchiveTimeout: timeutil.Duration(options.ArchiveTimeout),
-				RetainFull:     options.RetainFull,
-				RestoreTest: entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer,
-					CheckQuery: options.RestoreTestQuery},
-				Dump: dump,
-				Jobs: entity.ManagedJobs{
-					Nightly:     entity.ObjectID{ID: nightly.ID},
-					Health:      entity.ObjectID{ID: health.ID},
-					RestoreTest: entity.ObjectID{ID: restoreTest.ID},
-					Dump:        settingID(dumpJob),
-				},
-			},
-		})
-	managed.ID = managedID
-	if restore := req.Prepared.Restore; restore != nil {
-		data := managed.MustAsAppManagedSettings()
-		data.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: restore.SourceAppID},
-			Target: restore.Target}
-		managed.MustSetData(data)
-	}
-
-	return &managedmodel.ConfigureResp{Settings: append([]*entity.Setting{managed}, jobs...)}, nil
-}
-
-// newAppSetting is a setting of the app's, active, made now.
-func newAppSetting(appID string, typ base.SettingType, name string, version int, now time.Time,
-	data entity.SettingData) *entity.Setting {
-	setting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		ObjectID:  appID,
-		Type:      typ,
-		Name:      name,
-		Status:    base.SettingStatusActive,
-		Version:   version,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-	setting.MustSetData(data)
-	return setting
-}
-
-// newJob is one of the engine's jobs on the app: managed by its setting, and
-// notifying when it fails. A restored database's jobs wait for it to recover:
-// until then there is no server to check, back up, test or dump, and each run
-// would fail.
-func newJob(appID, managedID, name string, job *entity.SchedJob, restoring bool, now time.Time) *entity.Setting {
-	job.App = entity.ObjectID{ID: appID}
-	job.ManagedBy = entity.ObjectID{ID: managedID}
-	job.Notification = &entity.BaseEventNotification{FailureUseDefault: true}
-	setting := newAppSetting(appID, base.SettingTypeSchedJob, name, entity.CurrentSchedJobVersion, now, job)
-	setting.Kind = string(job.JobType)
-	if restoring {
-		setting.Status = base.SettingStatusDisabled
-	}
-	return setting
-}
-
-func settingID(setting *entity.Setting) entity.ObjectID {
-	if setting == nil {
-		return entity.ObjectID{}
-	}
-	return entity.ObjectID{ID: setting.ID}
-}
-
-func withDefaults(options *managedmodel.Options) managedmodel.Options {
-	out := managedmodel.Options{}
-	if options != nil {
-		out = *options
-	}
-	out.ArchiveTimeout = gofn.Coalesce(out.ArchiveTimeout, defaultArchiveTimeout)
-	out.RetainFull = gofn.Coalesce(out.RetainFull, defaultRetainFull)
-	out.BaseBackupSchedule = gofn.Coalesce(out.BaseBackupSchedule, defaultBaseBackupSchedule)
-	out.RestoreTestSchedule = gofn.Coalesce(out.RestoreTestSchedule, defaultRestoreTestSchedule)
-	out.DumpSchedule = gofn.Coalesce(out.DumpSchedule, defaultDumpSchedule)
-	return out
-}
-
-// setServerArguments gives the server what archiving needs, on the
-// app-deployment setting the document was built into: a template may not set a
-// command, and these are the engine's, re-applied by every deploy as the setting
-// is. Locked fields keep a person from changing them. Every database starts
-// through walg-entrypoint: it hands over to the image's, with a checkpoint once
-// the server is up so that archive_timeout holds from the start, and recovers a
-// restored database first.
-func setServerArguments(
-	settings []*entity.Setting,
-	doc *specmodel.AppDoc,
-	options managedmodel.Options,
-) (*entity.AppDeploymentSettings, error) {
-	var deployment *entity.Setting
-	for _, setting := range settings {
-		if setting.Type == base.SettingTypeAppDeployment {
-			deployment = setting
-		}
-	}
-	if deployment == nil {
-		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("postgres: the app deploys nothing")
-	}
-	source, err := deployment.AsAppDeploymentSettings()
+	options := walgkit.WithDefaults(req.Prepared.Options)
+	source, err := walgkit.SetServerCommand(profile, req.Settings, serverCommand(req.Prepared.Doc, options))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	resp, err := walgkit.Configure(profile, req, options, source)
+	return resp, hperrors.Wrap(err)
+}
+
+// serverCommand is the server's: archiving on, every WAL segment pushed by
+// walg-run, and a share of the memory limit for shared buffers.
+func serverCommand(doc *specmodel.AppDoc, options managedmodel.Options) string {
 	args := []string{
 		"postgres",
 		"-c wal_level=replica",
 		"-c archive_mode=on",
 		fmt.Sprintf("-c archive_timeout=%ds", int(options.ArchiveTimeout.Seconds())),
-		`-c "archive_command=` + scriptDir + `/walg-run wal-push %p"`,
+		`-c "archive_command=` + walgkit.ScriptDir + `/walg-run wal-push %p"`,
 	}
 	if buffers := sharedBuffers(doc); buffers > 0 {
 		args = append(args, fmt.Sprintf("-c shared_buffers=%dMB", buffers/unit.MB))
 	}
-	source.Command = strings.Join(args, " ")
-	source.Entrypoint = scriptDir + "/walg-entrypoint"
-	return source, hperrors.Wrap(deployment.SetData(source))
-}
-
-// locks are what the engine owns of the app: its image's line, its command, the
-// mounts and variables it relies on, and the secrets, config files and setting
-// mounts the app was built with.
-func locks(req *managedmodel.ConfigureReq, source *entity.AppDeploymentSettings) entity.ManagedLocks {
-	out := entity.ManagedLocks{
-		ImageLine: req.Prepared.Version,
-		Command:   source.Command,
-		EnvKeys:   slices.Clone(req.Prepared.OwnedEnv),
-	}
-	if source.ImageSource != nil {
-		out.Image = source.ImageSource.Image
-	}
-	if doc := req.Prepared.Doc; doc.Deployment != nil && doc.Deployment.Storage != nil {
-		out.Mounts = slices.Sorted(maps.Keys(doc.Deployment.Storage.Mounts))
-	}
-	for _, setting := range req.Settings {
-		switch setting.Type { //nolint:exhaustive // three types hold what the engine built the app with
-		case base.SettingTypeSecret, base.SettingTypeConfigFile, base.SettingTypeAppSettingMount:
-			out.Settings = append(out.Settings, setting.ID)
-		}
-	}
-	return out
+	return strings.Join(args, " ")
 }
 
 // sharedBuffers is a quarter of the memory limit, at least minSharedBuffers;

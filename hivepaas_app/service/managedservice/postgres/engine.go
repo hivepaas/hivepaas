@@ -5,12 +5,26 @@ package postgres
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 const (
 	minAPI = 1
 	maxAPI = 1
 )
+
+// profile is Postgres, as what it shares with the other WAL-G engines needs it.
+var profile = &walgkit.Profile{
+	Engine:             templatemodel.ManagedEnginePostgres,
+	API:                maxAPI,
+	Scripts:            apiScripts,
+	FileOwner:          postgresUID,
+	BackupPattern:      backupPattern,
+	DeltaMarker:        "_D_",
+	PendingBytesOutput: outPgWalBytes,
+	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".dump"},
+	Members:            membersStatus,
+}
 
 type Engine struct{}
 

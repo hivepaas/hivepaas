@@ -10,16 +10,18 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 func replicaReq(placement string) *managedmodel.ReplicaReq {
 	return &managedmodel.ReplicaReq{
 		Primary: &entity.App{ID: "app-1", Key: "shop-db", Name: "shop-db"},
 		Managed: &entity.AppManagedSettings{Engine: "postgres", EngineAPI: 1,
-			Locks:    entity.ManagedLocks{Mounts: []string{volumeArchiveDir, "/var/lib/postgresql"}},
+			Locks:    entity.ManagedLocks{Mounts: []string{walgkit.VolumeArchiveDir, "/var/lib/postgresql"}},
 			Database: &entity.ManagedDatabase{Storage: entity.ManagedStorage{Placement: placement}}},
-		Key:        "shop-db-r1",
-		MountPaths: []string{scriptDir + "/walg-entrypoint", scriptDir + "/walg-replication", secretsDir + "/x"},
+		Key: "shop-db-r1",
+		MountPaths: []string{walgkit.ScriptDir + "/walg-entrypoint", walgkit.ScriptDir + "/walg-replication",
+			walgkit.SecretsDir + "/x"},
 	}
 }
 
@@ -39,12 +41,12 @@ func TestAReplicasSpec(t *testing.T) {
 	assert.True(t, strings.HasPrefix(spec.PasswordFile, "/run/secrets/"))
 	assert.NotEmpty(t, spec.SecretName)
 	assert.Equal(t, "/var/lib/postgresql", spec.DataTarget, "not the archive's volume")
-	assert.Equal(t, scriptDir+"/walg-replication", spec.Allow.Command)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-replication", spec.Allow.Command)
 }
 
 func TestAReplicaIsRefused(t *testing.T) {
 	old := replicaReq(entity.ManagedPlacementOffSite)
-	old.MountPaths = []string{scriptDir + "/walg-entrypoint"}
+	old.MountPaths = []string{walgkit.ScriptDir + "/walg-entrypoint"}
 	restoring := replicaReq(entity.ManagedPlacementOffSite)
 	restoring.Managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src"}}
 	member := replicaReq(entity.ManagedPlacementOffSite)

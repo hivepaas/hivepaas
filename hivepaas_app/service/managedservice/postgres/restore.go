@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -35,7 +36,7 @@ const (
 	envRestoreBefore     = restoreEnvPrefix + "TARGET_BEFORE"
 	envRestoreRecovery   = restoreEnvPrefix + "RECOVERY"
 	restoreSecretPrefix  = "RESTORE_"
-	restoreSecretsDir    = secretsDir + "/restore" //nolint:gosec // G101: a directory
+	restoreSecretsDir    = walgkit.SecretsDir + "/restore" //nolint:gosec // G101: a directory
 	// restoreSourceDir is where a volume archive the app is restored from is
 	// mounted, read-only.
 	restoreSourceDir = "/var/lib/hivepaas-walg-source"
@@ -61,15 +62,15 @@ func (e *Engine) prepareRestore(doc *specmodel.AppDoc, source *managedmodel.Rest
 		return nil, err
 	}
 	env := [][2]string{{envRestoreSecretsDir, restoreSecretsDir}}
-	for _, pair := range archiveEnv(source.Archive, restoreSourceDir) {
+	for _, pair := range walgkit.ArchiveEnv(source.Archive, restoreSourceDir) {
 		env = append(env, [2]string{restoreEnvPrefix + pair[0], pair[1]})
 	}
 	if source.Archive.Volume != nil {
-		mountArchiveVolume(doc, restoreSourceDir, source.Archive.Volume, true)
+		walgkit.MountArchiveVolume(doc, restoreSourceDir, source.Archive.Volume, true)
 	}
 	secrets := e.ArchiveSecrets(source.Archive)
-	secrets[secretSodiumKey] = source.EncryptionKey
-	addSecretFiles(doc, restoreSecretsDir, restoreSecretPrefix, secrets)
+	secrets[walgkit.SecretSodiumKey] = source.EncryptionKey
+	walgkit.AddSecretFiles(doc, restoreSecretsDir, restoreSecretPrefix, postgresUID, secrets)
 	return append(env, target...), nil
 }
 
@@ -109,7 +110,7 @@ func targetInvalid(detail string) error {
 }
 
 func (e *Engine) RecoveryCheck() managedmodel.RecoveryCheck {
-	return managedmodel.RecoveryCheck{Command: scriptDir + "/walg-entrypoint status"}
+	return managedmodel.RecoveryCheck{Command: walgkit.ScriptDir + "/walg-entrypoint status"}
 }
 
 func (e *Engine) FirstBackupJob(managed *entity.AppManagedSettings) string {

@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 )
 
 const (
@@ -38,14 +39,14 @@ func (e *Engine) Promote(req *managedmodel.PromoteReq) (*managedmodel.PromoteSpe
 	if req.Member == nil || req.Member.Role != entity.ManagedRoleReplica {
 		return nil, hperrors.NewArgumentInvalid("member").WithExtraDetail("only a replica is promoted")
 	}
-	if !slices.Contains(req.MountPaths, scriptDir+"/"+promoteScript) {
+	if !slices.Contains(req.MountPaths, walgkit.ScriptDir+"/"+promoteScript) {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedPromoteUnsupported).
 			WithParam("App", req.Primary.Name).ExposeParams("App")
 	}
 	return &managedmodel.PromoteSpec{
 		FenceEnv:       [][2]string{{envFenced, req.Member.Key + " was promoted"}},
-		Promote:        &entity.CommandTemplate{Command: scriptDir + "/" + promoteScript},
-		Allow:          &entity.CommandTemplate{Command: scriptDir + "/" + replicationScript},
+		Promote:        &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + promoteScript},
+		Allow:          &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + replicationScript},
 		StandbyEnvKeys: []string{envStandbyHost, envStandbyName, envStandbyPasswordFile},
 		StandbyHostKey: envStandbyHost,
 	}, nil
@@ -114,7 +115,7 @@ func pointJobsAtWriter(req *managedmodel.ReconfigureReq, resp *managedmodel.Reco
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		if setCommandEnv(job.Command, envRestoreSourceHost, pg.WriterKey(req.App)) {
+		if walgkit.SetCommandEnv(job.Command, walgkit.EnvRestoreSourceHost, pg.WriterKey(req.App)) {
 			if err = changeJob(setting, job, resp); err != nil {
 				return err
 			}

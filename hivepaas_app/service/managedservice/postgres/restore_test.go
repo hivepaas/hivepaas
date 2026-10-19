@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/walgkit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -77,8 +78,8 @@ func TestARestoredAppReadsTheSourceAndArchivesToItsOwn(t *testing.T) {
 
 	secrets := secretsOf(req.Doc)
 	for name, want := range map[string][2]string{
-		"WALG_AWS_ACCESS_KEY_ID":                       {"AKIAEXAMPLE", secretsDir + "/WALG_AWS_ACCESS_KEY_ID"},
-		"WALG_LIBSODIUM_KEY":                           {"libsodium-key-value", secretsDir + "/WALG_LIBSODIUM_KEY"},
+		"WALG_AWS_ACCESS_KEY_ID":                       {"AKIAEXAMPLE", walgkit.SecretsDir + "/WALG_AWS_ACCESS_KEY_ID"},
+		"WALG_LIBSODIUM_KEY":                           {"libsodium-key-value", walgkit.SecretsDir + "/WALG_LIBSODIUM_KEY"},
 		restoreSecretPrefix + "WALG_AWS_ACCESS_KEY_ID": {"AKIA-SOURCE", restoreSecretsDir + "/WALG_AWS_ACCESS_KEY_ID"},
 		restoreSecretPrefix + "WALG_LIBSODIUM_KEY":     {"source-libsodium-key", restoreSecretsDir + "/WALG_LIBSODIUM_KEY"},
 	} {
@@ -103,13 +104,13 @@ func TestARestoreFromAVolumeMountsTheSourceReadOnly(t *testing.T) {
 	assert.NoError(t, New().PrepareDoc(req))
 
 	mounts := req.Doc.Deployment.Storage.Mounts
-	assert.Equal(t, "backups/walg/shop-db-restored", mounts[volumeArchiveDir].VolumeOptions.Subpath)
+	assert.Equal(t, "backups/walg/shop-db-restored", mounts[walgkit.VolumeArchiveDir].VolumeOptions.Subpath)
 	source := mounts[restoreSourceDir]
 	assert.Equal(t, "vol-repo", source.Source)
 	assert.Equal(t, "backups/walg/shop-db", source.VolumeOptions.Subpath)
 	assert.True(t, source.ReadOnly, "the source is only read")
 	env := envOf(req.Doc)
-	assert.Equal(t, volumeArchiveDir, env["WALG_FILE_PREFIX"])
+	assert.Equal(t, walgkit.VolumeArchiveDir, env["WALG_FILE_PREFIX"])
 	assert.Equal(t, restoreSourceDir, env[restoreEnvPrefix+"WALG_FILE_PREFIX"])
 	assert.Equal(t, []string{restoreSecretPrefix + "WALG_LIBSODIUM_KEY"}, restoreSecretNames(secretsOf(req.Doc)))
 	assert.NoError(t, specmodel.CheckBuildable(req.Doc))
@@ -138,7 +139,7 @@ func TestARestoredAppStartsThroughTheEntrypoint(t *testing.T) {
 
 	assert.NoError(t, err)
 	settings := deployment.MustAsAppDeploymentSettings()
-	assert.Equal(t, scriptDir+"/walg-entrypoint", settings.Entrypoint)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-entrypoint", settings.Entrypoint)
 	assert.True(t, strings.HasPrefix(settings.Command, "postgres "), "the server's arguments, as always")
 	managed := resp.Settings[0].MustAsAppManagedSettings()
 	assert.Equal(t, &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}, Target: target},
@@ -157,7 +158,7 @@ func TestANewAppStartsThroughTheEntrypoint(t *testing.T) {
 	resp, err := New().Configure(configureReq(t, deployment))
 
 	assert.NoError(t, err)
-	assert.Equal(t, scriptDir+"/walg-entrypoint", deployment.MustAsAppDeploymentSettings().Entrypoint)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-entrypoint", deployment.MustAsAppDeploymentSettings().Entrypoint)
 	assert.Nil(t, resp.Settings[0].MustAsAppManagedSettings().Database.Restore)
 	for _, job := range resp.Settings[1:] {
 		assert.Equal(t, base.SettingStatusActive, job.Status, job.Name)
@@ -213,5 +214,5 @@ func TestTheFirstBackupIsTheNightlyJobsRun(t *testing.T) {
 	managed, _ := reconfigureSetup(t)
 
 	assert.Equal(t, managed.Database.Jobs.Nightly.ID, New().FirstBackupJob(managed))
-	assert.Equal(t, scriptDir+"/walg-entrypoint status", New().RecoveryCheck().Command)
+	assert.Equal(t, walgkit.ScriptDir+"/walg-entrypoint status", New().RecoveryCheck().Command)
 }

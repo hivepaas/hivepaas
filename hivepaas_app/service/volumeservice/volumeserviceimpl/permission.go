@@ -41,26 +41,7 @@ func (s *service) EnsureVolumePermissions(
 
 	// Determine helper image
 	image := gofn.Coalesce(s.hpAppService.GetHpAgentImage(ctx), rsyncDefaultImage)
-
-	targetMnt := *volMount
-	targetMnt.Target = "/mnt/vol"
-	targetMnt.ReadOnly = false
-	if targetMnt.BindOptions != nil {
-		targetMnt.BindOptions = new(*targetMnt.BindOptions)
-	}
-	if targetMnt.VolumeOptions != nil {
-		targetMnt.VolumeOptions = new(*targetMnt.VolumeOptions)
-		targetMnt.VolumeOptions.Subpath = ""
-	}
-
-	cmds := []string{volumeservice.MakeDirWritableCmd("/mnt/vol")}
-	for _, sub := range subpaths {
-		if sub == "" {
-			continue
-		}
-		cmds = append(cmds, volumeservice.MakeDirWritableCmd(path.Join("/mnt/vol", sub)))
-	}
-	shCmd := []string{"sh", "-c", strings.Join(cmds, " && ")}
+	targetMnt, shCmd := volumePermissionsCommand(volMount, subpaths)
 
 	// 2. High-Performance ContainerCreate (~100ms, direct container with AutoRemove)
 	_, statusCode, err := s.dockerManager.ContainerCreateToExec(ctx, image, shCmd,
@@ -85,6 +66,30 @@ func (s *service) EnsureVolumePermissions(
 			"volume init swarm task exited with status code %d", statusCode)
 	}
 	return nil
+}
+
+// volumePermissionsCommand is the volume's mount for a helper, at its root, and
+// the shell that makes its root and the subpaths writable while they are empty.
+func volumePermissionsCommand(volMount *mount.Mount, subpaths []string) (mount.Mount, []string) {
+	targetMnt := *volMount
+	targetMnt.Target = "/mnt/vol"
+	targetMnt.ReadOnly = false
+	if targetMnt.BindOptions != nil {
+		targetMnt.BindOptions = new(*targetMnt.BindOptions)
+	}
+	if targetMnt.VolumeOptions != nil {
+		targetMnt.VolumeOptions = new(*targetMnt.VolumeOptions)
+		targetMnt.VolumeOptions.Subpath = ""
+	}
+
+	cmds := []string{volumeservice.MakeDirWritableCmd("/mnt/vol")}
+	for _, sub := range subpaths {
+		if sub == "" {
+			continue
+		}
+		cmds = append(cmds, volumeservice.MakeDirWritableCmd(path.Join("/mnt/vol", sub)))
+	}
+	return targetMnt, []string{"sh", "-c", strings.Join(cmds, " && ")}
 }
 
 func (s *service) ensurePermissionsOnDirectHostPath(

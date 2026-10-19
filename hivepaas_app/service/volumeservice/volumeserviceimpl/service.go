@@ -5,6 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
@@ -33,8 +34,8 @@ func New(
 		settingRepo: settingRepo,
 		logger:      logger,
 	}
-	svc.makeSubDirInHost = svc.MakeSubDirInHost
-	svc.ensureVolumePermissions = svc.EnsureVolumePermissions
+	svc.makeSubDirInHost = svc.makeSubDirOnNode
+	svc.ensureVolumePermissions = svc.ensureVolumePermissionsOnNode
 	return svc
 }
 
@@ -50,9 +51,12 @@ type service struct {
 
 	logger logging.Logger
 
-	// makeSubDirInHost and ensureVolumePermissions reach the host through a
-	// throwaway container. They are fields so a test of mount building can stand
-	// in for the host without a docker daemon.
-	makeSubDirInHost        func(ctx context.Context, baseDirInHost, subpath string, requireBaseDirExist bool) error
-	ensureVolumePermissions func(ctx context.Context, volMount *mount.Mount, subpaths ...string) error
+	// makeSubDirInHost and ensureVolumePermissions reach the host of the volume's
+	// node - vol's pin; this node's for a volume with none - through a throwaway
+	// container or that node's agent. They are fields so a test of mount building
+	// can stand in for the hosts without a docker daemon.
+	makeSubDirInHost func(ctx context.Context, vol *entity.ClusterVolume, baseDirInHost, subpath string,
+		requireBaseDirExist bool) error
+	ensureVolumePermissions func(ctx context.Context, vol *entity.ClusterVolume, volMount *mount.Mount,
+		subpaths ...string) error
 }

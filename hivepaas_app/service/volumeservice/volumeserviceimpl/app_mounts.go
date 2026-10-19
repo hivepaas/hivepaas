@@ -144,7 +144,7 @@ func (s *service) buildAppMount(
 		if dockerMnt.VolumeOptions != nil {
 			subpath = dockerMnt.VolumeOptions.Subpath
 		}
-		_ = s.ensureVolumePermissions(ctx, dockerMnt, subpath)
+		_ = s.ensureVolumePermissions(ctx, vol, dockerMnt, subpath)
 	}
 	return dockerMnt, nil
 }
@@ -192,7 +192,7 @@ func (s *service) useBindMountIfAppropriate(
 	if !ok {
 		return
 	}
-	if err := s.makeSubDirInHost(ctx, vol.DriverOpts["device"], subpath, true); err != nil {
+	if err := s.makeSubDirInHost(ctx, vol, vol.DriverOpts["device"], subpath, true); err != nil {
 		return
 	}
 

@@ -89,3 +89,27 @@ func TestAnyNodeCarries(t *testing.T) {
 		assert.Equal(t, want, got, label)
 	}
 }
+
+func pinnedTo(nodeID string) *entity.Setting {
+	setting := &entity.Setting{ID: "v1", RefID: "v1", Name: "data", Type: base.SettingTypeClusterVolume}
+	setting.MustSetData(&entity.ClusterVolume{NodeID: nodeID, Managed: true, Driver: "local"})
+	return setting
+}
+
+// A volume pinned to a node the cluster no longer has - removed, or the swarm
+// made anew - went with the node: removing it removes nothing and asks no
+// agent, so that its setting goes. A node that is there, though down, still
+// has it.
+func TestAVolumeOfANodeTheClusterNoLongerHasIsRemovedWithNothingToRemove(t *testing.T) {
+	agents := &askedAgents{}
+	down := labeledNode(swarm.NodeStateDown, nil)
+	down.ID = "n-down"
+	svc := &service{dockerManager: &clusterOf{nodes: []swarm.Node{down}}, agentService: agents}
+
+	assert.NoError(t, svc.RemoveVolumeInCluster(context.Background(), pinnedTo("n-gone"), false, true, 1, 0))
+	assert.Empty(t, agents.labels)
+
+	gone, err := svc.nodeIsGone(context.Background(), "n-down")
+	assert.NoError(t, err)
+	assert.False(t, gone, "a down node is there")
+}

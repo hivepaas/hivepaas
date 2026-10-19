@@ -31,6 +31,8 @@ const ManagedEnginePostgres ManagedEngine = "postgres"
 // speaks, and the artifacts it mounts by name. A template outside the range is
 // one this HivePaaS cannot look after.
 type EngineContract struct {
+	// Title is how the engine is named to a person: PostgreSQL.
+	Title     string
 	MinAPI    int
 	MaxAPI    int
 	Artifacts []string
@@ -40,7 +42,7 @@ type EngineContract struct {
 // managedservice's; its registry is tested against this table, as the spec
 // builders are against BuildableBlocks.
 var ManagedEngines = map[ManagedEngine]EngineContract{
-	ManagedEnginePostgres: {MinAPI: 1, MaxAPI: 1, Artifacts: []string{"wal-g"}},
+	ManagedEnginePostgres: {Title: "PostgreSQL", MinAPI: 1, MaxAPI: 1, Artifacts: []string{"wal-g"}},
 }
 
 // Managed binds a template to its engine.
@@ -51,14 +53,26 @@ type Managed struct {
 	EngineAPI int `yaml:"engineApi"`
 	// Postgres holds the defaults of the create form, for engine postgres. Any of
 	// them may be left out, and the engine's own default applies.
-	Postgres *ManagedPostgresDefaults `yaml:"postgres,omitempty"`
+	Postgres *ManagedDefaults `yaml:"postgres,omitempty"`
 }
 
-type ManagedPostgresDefaults struct {
+// ManagedDefaults are the create form's defaults, the same for every engine.
+// The YAML key they are under is the engine's, so that a template says which
+// engine it means.
+type ManagedDefaults struct {
 	ArchiveTimeout      Duration `yaml:"archiveTimeout,omitempty"`
 	BaseBackupSchedule  string   `yaml:"baseBackupSchedule,omitempty"`
 	RetainFull          int      `yaml:"retainFull,omitempty"`
 	RestoreTestSchedule string   `yaml:"restoreTestSchedule,omitempty"`
+}
+
+// Defaults are the create form's defaults the template gives for its engine,
+// nil for none.
+func (m *Managed) Defaults() *ManagedDefaults {
+	if m == nil {
+		return nil
+	}
+	return m.Postgres
 }
 
 const (
@@ -212,7 +226,7 @@ func validateManaged(t *Template, p *problems) {
 	}
 }
 
-func validatePostgresDefaults(defaults *ManagedPostgresDefaults, p *problems) {
+func validatePostgresDefaults(defaults *ManagedDefaults, p *problems) {
 	if defaults == nil {
 		return
 	}

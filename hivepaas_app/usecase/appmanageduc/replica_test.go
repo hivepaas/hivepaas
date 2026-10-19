@@ -130,7 +130,7 @@ func TestAReplicasSettings(t *testing.T) {
 	member := managed[0].MustAsAppManagedSettings()
 	assert.Equal(t, &entity.ManagedMemberOf{App: entity.ObjectID{ID: "app-1"}, Role: entity.ManagedRoleReplica},
 		member.MemberOf)
-	assert.Nil(t, member.Postgres, "its engine state is its primary's")
+	assert.Nil(t, member.Database, "its engine state is its primary's")
 	assert.Equal(t, "postgres:18.6-trixie", member.Locks.Image)
 	assert.Equal(t, []string{"/var/lib/postgresql"}, member.Locks.Mounts)
 	assert.Contains(t, member.Locks.EnvKeys, "HIVEPAAS_STANDBY_HOST")
@@ -139,7 +139,7 @@ func TestAReplicasSettings(t *testing.T) {
 }
 
 func TestAReplicasKey(t *testing.T) {
-	pg := &entity.ManagedPostgres{}
+	pg := &entity.ManagedDatabase{}
 	assert.Equal(t, "shop-db-r1", replicaKey("shop-db", pg))
 
 	pg.Members = []*entity.ManagedMember{{Key: "shop-db-r1"}, {Key: "shop-db-r3"}}
@@ -164,7 +164,7 @@ func TestMembersAndTheirPrimaryAreNotUnmanaged(t *testing.T) {
 
 	primary := &entity.App{ID: "app-1", Name: "shop-db", Settings: []*entity.Setting{
 		setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{Engine: "postgres",
-			Postgres: &entity.ManagedPostgres{Members: []*entity.ManagedMember{{App: entity.ObjectID{ID: "r1"}}}}}),
+			Database: &entity.ManagedDatabase{Members: []*entity.ManagedMember{{App: entity.ObjectID{ID: "r1"}}}}}),
 	}}
 	_, err = unmanagedSettings(primary, time.Now())
 	assert.ErrorIs(t, err, hperrors.ErrAppManagedHasMembers)

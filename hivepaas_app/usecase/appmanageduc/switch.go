@@ -62,7 +62,7 @@ func (uc *UC) GetManagedSwitch(
 	data := &appmanageddto.ManagedSwitchDataResp{
 		Source:     switchApp(state.source),
 		Consumers:  make([]*appmanageddto.ManagedSwitchConsumerResp, 0, len(state.consumers)),
-		SwitchedAt: switchedAt(state.target.managed.Postgres.Restore.SwitchedAt),
+		SwitchedAt: switchedAt(state.target.managed.Database.Restore.SwitchedAt),
 	}
 	for _, consumer := range state.consumers {
 		data.Consumers = append(data.Consumers, &appmanageddto.ManagedSwitchConsumerResp{
@@ -190,7 +190,7 @@ func (uc *UC) loadSwitch(
 	}
 	state := &switchState{target: target}
 	for _, app := range apps {
-		if app.ID == target.managed.Postgres.Restore.SourceApp.ID {
+		if app.ID == target.managed.Database.Restore.SourceApp.ID {
 			state.source = app
 		}
 	}
@@ -205,12 +205,12 @@ func (uc *UC) loadSwitch(
 // checkSwitchable refuses a database that was not restored from another, or is
 // still being restored.
 func checkSwitchable(target *loadedManaged) error {
-	pg := target.managed.Postgres
-	if pg == nil || pg.Restore == nil || pg.Restore.SourceApp.ID == "" {
+	state := target.managed.Database
+	if state == nil || state.Restore == nil || state.Restore.SourceApp.ID == "" {
 		return hperrors.Wrap(hperrors.ErrAppManagedSwitchNotRestored).
 			WithParam("App", target.app.Name).ExposeParams("App")
 	}
-	if pg.Restore.ReadyAt.IsZero() {
+	if state.Restore.ReadyAt.IsZero() {
 		return hperrors.Wrap(hperrors.ErrAppManagedSwitchNotReady).
 			WithParam("App", target.app.Name).ExposeParams("App")
 	}
@@ -352,19 +352,19 @@ func (uc *UC) pauseSource(ctx context.Context, db database.Tx, state *switchStat
 			return err
 		}
 	}
-	state.target.managed.Postgres.Restore.SwitchedAt = now
+	state.target.managed.Database.Restore.SwitchedAt = now
 	return uc.saveManagedSetting(ctx, db, state.target.setting, state.target.managed, now)
 }
 
 func (uc *UC) saveManagedSetting(ctx context.Context, db database.Tx, setting *entity.Setting,
 	managed *entity.AppManagedSettings, now time.Time) error {
-	if err := setting.SetData(managed); err != nil {
+	if err := setting.SetAppManagedData(managed); err != nil {
 		return hperrors.Wrap(err)
 	}
 	setting.UpdateVer++
 	setting.UpdatedAt = now
 	return hperrors.Wrap(uc.settingRepo.Update(ctx, db, setting,
-		bunex.UpdateColumns("data", "update_ver", "updated_at")))
+		bunex.UpdateColumns("data", "version", "update_ver", "updated_at")))
 }
 
 // pauseManagedJobs disables the active jobs the engine's setting made, and

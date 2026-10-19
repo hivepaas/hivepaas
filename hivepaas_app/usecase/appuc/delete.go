@@ -88,7 +88,7 @@ func refuseClusterDeletion(app *entity.App, deleteCluster bool) error {
 	if managed.MemberOf != nil {
 		return hperrors.Wrap(hperrors.ErrAppManagedIsMember).WithParam("App", app.Name).ExposeParams("App")
 	}
-	if managed.Postgres != nil && managed.Postgres.Writer.ID != "" && !deleteCluster {
+	if managed.Database != nil && managed.Database.Writer.ID != "" && !deleteCluster {
 		return hperrors.Wrap(hperrors.ErrAppManagedClusterHeld).WithParam("App", app.Name).ExposeParams("App")
 	}
 	return nil

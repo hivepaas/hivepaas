@@ -37,11 +37,11 @@ func (uc *UC) RefreshManagedCredentials(
 		if err != nil {
 			return err
 		}
-		if loaded.managed.Postgres == nil {
+		if loaded.managed.Database == nil {
 			return hperrors.NewNotFound("Managed archive")
 		}
 		var changed []*entity.Setting
-		for _, reader := range archiveReaders(loaded.app, loaded.managed.Postgres) {
+		for _, reader := range archiveReaders(loaded.app, loaded.managed.Database) {
 			refreshed, refreshErr := uc.refreshArchiveSecrets(ctx, db, loaded, reader)
 			if refreshErr != nil {
 				return refreshErr
@@ -97,12 +97,12 @@ type archiveReader struct {
 
 // archiveReaders are the database, with its storage, and its verifier app when
 // it has one, with the verifier's narrower key when it was given one.
-func archiveReaders(app *entity.App, pg *entity.ManagedPostgres) []archiveReader {
-	readers := []archiveReader{{appID: app.ID, storage: pg.Storage}}
-	if verifier := pg.RestoreTest.VerifierApp.ID; verifier != "" {
-		storage := pg.Storage
-		if pg.RestoreTest.KeyAuth.ID != "" {
-			storage.KeyAuth = pg.RestoreTest.KeyAuth
+func archiveReaders(app *entity.App, state *entity.ManagedDatabase) []archiveReader {
+	readers := []archiveReader{{appID: app.ID, storage: state.Storage}}
+	if verifier := state.RestoreTest.VerifierApp.ID; verifier != "" {
+		storage := state.Storage
+		if state.RestoreTest.KeyAuth.ID != "" {
+			storage.KeyAuth = state.RestoreTest.KeyAuth
 		}
 		readers = append(readers, archiveReader{appID: verifier, storage: storage})
 	}

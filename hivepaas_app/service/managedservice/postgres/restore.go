@@ -88,12 +88,12 @@ func targetEnv(source *managedmodel.RestoreSource) ([][2]string, error) {
 		return [][2]string{{envRestoreBefore, at.Format(time.RFC3339)},
 			{envRestoreRecovery, "recovery_target_time=" + at.Format(recoveryTimeLayout)}}, nil
 	case entity.ManagedRestoreToPoint:
-		if !lsnPattern.MatchString(target.LSN) || source.PointAt.IsZero() {
+		if !lsnPattern.MatchString(target.Position) || source.PointAt.IsZero() {
 			return nil, targetInvalid("the point has no LSN to recover to")
 		}
 		return [][2]string{
 			{envRestoreBefore, source.PointAt.UTC().Format(time.RFC3339)},
-			{envRestoreRecovery, "recovery_target_lsn=" + target.LSN + " recovery_target_inclusive=on"},
+			{envRestoreRecovery, "recovery_target_lsn=" + target.Position + " recovery_target_inclusive=on"},
 		}, nil
 	case entity.ManagedRestoreToBackup:
 		if !backupPattern.MatchString(target.Backup) {
@@ -113,14 +113,14 @@ func (e *Engine) RecoveryCheck() managedmodel.RecoveryCheck {
 }
 
 func (e *Engine) FirstBackupJob(managed *entity.AppManagedSettings) string {
-	if managed == nil || managed.Postgres == nil {
+	if managed == nil || managed.Database == nil {
 		return ""
 	}
-	return managed.Postgres.Jobs.Nightly.ID
+	return managed.Database.Jobs.Nightly.ID
 }
 
 func (e *Engine) FinishRestore(req *managedmodel.FinishRestoreReq) (*managedmodel.FinishRestoreResp, error) {
-	pg := req.Managed.Postgres
+	pg := req.Managed.Database
 	if pg == nil || pg.Restore == nil {
 		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("postgres: not a restored database")
 	}

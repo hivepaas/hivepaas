@@ -27,7 +27,7 @@ func (e *Engine) Promote(req *managedmodel.PromoteReq) (*managedmodel.PromoteSpe
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedIsMember).
 			WithParam("App", req.Primary.Name).ExposeParams("App")
 	}
-	pg := managed.Postgres
+	pg := managed.Database
 	if pg == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}
@@ -55,7 +55,7 @@ func (e *Engine) Promote(req *managedmodel.PromoteReq) (*managedmodel.PromoteSpe
 // is fenced - the app itself, or the member promoted before - and the engine's
 // jobs move to it.
 func promoteWriter(req *managedmodel.ReconfigureReq, resp *managedmodel.ReconfigureResp) error {
-	pg, change := req.Managed.Postgres, req.Change
+	pg, change := req.Managed.Database, req.Change
 	if change.Writer == nil {
 		return nil
 	}
@@ -81,7 +81,7 @@ func promoteWriter(req *managedmodel.ReconfigureReq, resp *managedmodel.Reconfig
 // on the replica its backups are taken on, if any; the restore test in a
 // verifier makes its point on the primary.
 func pointJobsAtWriter(req *managedmodel.ReconfigureReq, resp *managedmodel.ReconfigureResp) error {
-	pg := req.Managed.Postgres
+	pg := req.Managed.Database
 	writer := gofn.Coalesce(pg.Writer.ID, req.App.ID)
 	targets := map[string]string{
 		pg.Jobs.Nightly.ID: gofn.Coalesce(pg.BackupFrom.ID, writer),

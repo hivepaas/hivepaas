@@ -13,7 +13,7 @@ import (
 
 func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.ReconfigureResp, error) {
 	resp := &managedmodel.ReconfigureResp{}
-	pg, change := req.Managed.Postgres, req.Change
+	pg, change := req.Managed.Database, req.Change
 	if pg == nil || change == nil {
 		return resp, nil
 	}
@@ -89,7 +89,7 @@ func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.Re
 // way: the run takes its backup where the job points, and retains on the job's
 // own app.
 func moveBaseBackups(req *managedmodel.ReconfigureReq, resp *managedmodel.ReconfigureResp) error {
-	pg, change := req.Managed.Postgres, req.Change
+	pg, change := req.Managed.Database, req.Change
 	if change.BackupFrom == nil {
 		return nil
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -50,6 +51,18 @@ func (f *fakeTasks) ListByTarget(_ context.Context, _ database.IDB, targetID str
 type fakeEngine struct {
 	managedmodel.Engine
 	req *managedmodel.StatusReq
+	// lacking is an engine that has neither replicas nor a verifier app.
+	lacking bool
+	// pointNameMax is the longest point name it takes, Postgres's when zero.
+	pointNameMax int
+}
+
+func (e *fakeEngine) Capabilities() managedmodel.Capabilities {
+	return managedmodel.Capabilities{Replicas: !e.lacking, VerifierApp: !e.lacking}
+}
+
+func (e *fakeEngine) PointNameMax() int {
+	return gofn.Coalesce(e.pointNameMax, 63) //nolint:mnd
 }
 
 func (e *fakeEngine) Status(req *managedmodel.StatusReq) (*managedmodel.Status, error) {

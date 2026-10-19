@@ -14,7 +14,7 @@ import (
 func promoteReq() *managedmodel.PromoteReq {
 	return &managedmodel.PromoteReq{
 		Primary: &entity.App{ID: "app-1", Key: "shop-db", Name: "shop-db"},
-		Managed: &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{
+		Managed: &entity.AppManagedSettings{Engine: "postgres", Database: &entity.ManagedDatabase{
 			Members: []*entity.ManagedMember{{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1",
 				Role: entity.ManagedRoleReplica}}}},
 		Member:     &entity.ManagedMember{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRoleReplica},
@@ -43,7 +43,7 @@ func TestAPromotionIsRefused(t *testing.T) {
 	member := promoteReq()
 	member.Managed.MemberOf = &entity.ManagedMemberOf{App: entity.ObjectID{ID: "p"}, Role: entity.ManagedRoleReplica}
 	restoring := promoteReq()
-	restoring.Managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src"}}
+	restoring.Managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src"}}
 	for name, tc := range map[string]struct {
 		req  *managedmodel.PromoteReq
 		want error
@@ -77,7 +77,7 @@ func promoted(t *testing.T, setting *entity.Setting, managed *entity.AppManagedS
 // fenced. A second promotion fences the member that wrote.
 func TestReconfigurePromotesAWriter(t *testing.T) {
 	setting, managed, jobs := configured(t, &managedmodel.Options{DumpRepo: "repo-1"})
-	pg := managed.Postgres
+	pg := managed.Database
 	pg.Members = []*entity.ManagedMember{
 		{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRoleReplica},
 		{App: entity.ObjectID{ID: "r2"}, Key: "shop-db-r2", Role: entity.ManagedRoleReplica},
@@ -117,7 +117,7 @@ func TestReconfigurePromotesAWriter(t *testing.T) {
 // the fenced database; a new replica streams from the writer.
 func TestTheWriterIsWhereTheDatabaseIs(t *testing.T) {
 	setting, managed, jobs := configured(t, nil)
-	pg := managed.Postgres
+	pg := managed.Database
 	pg.Members = []*entity.ManagedMember{
 		{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRoleReplica},
 		{App: entity.ObjectID{ID: "r2"}, Key: "shop-db-r2", Role: entity.ManagedRoleReplica},
@@ -141,7 +141,7 @@ func TestTheWriterIsWhereTheDatabaseIs(t *testing.T) {
 
 func TestStatusOfAPromotedCluster(t *testing.T) {
 	managed := statusManaged(entity.ManagedRestoreTestContainer)
-	managed.Postgres.Members = []*entity.ManagedMember{
+	managed.Database.Members = []*entity.ManagedMember{
 		{App: entity.ObjectID{ID: "r1"}, Key: "db-r1", Role: entity.ManagedRolePrimary},
 		{App: entity.ObjectID{ID: "r2"}, Key: "db-r2", Role: entity.ManagedRoleReplica},
 		{App: entity.ObjectID{ID: "r3"}, Key: "db-r3", Role: entity.ManagedRoleFenced},

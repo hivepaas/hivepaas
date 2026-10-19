@@ -50,7 +50,7 @@ func newResolveTest(t *testing.T) *service {
 	settings.add("repo-s3", base.SettingTypeBackupRepo, "", &entity.BackupRepo{
 		CloudStorage: entity.ObjectID{ID: "cs-1"}, StoragePrefix: "kopia"})
 	settings.add("repo-vol", base.SettingTypeBackupRepo, "", &entity.BackupRepo{Volume: entity.ObjectID{ID: "v"}})
-	return &service{registry: newRegistry(), settingRepo: settings}
+	return &service{settingRepo: settings}
 }
 
 func TestResolveS3ThroughARepository(t *testing.T) {

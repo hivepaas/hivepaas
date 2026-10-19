@@ -15,9 +15,9 @@ import (
 // taken, on the same schedule.
 func TestReconfigureMovesTheBaseBackups(t *testing.T) {
 	setting, managed, jobs := configured(t, nil)
-	managed.Postgres.Members = []*entity.ManagedMember{{App: entity.ObjectID{ID: "app-1-r1"}, Key: "shop-db-r1",
+	managed.Database.Members = []*entity.ManagedMember{{App: entity.ObjectID{ID: "app-1-r1"}, Key: "shop-db-r1",
 		Role: entity.ManagedRoleReplica}}
-	nightlyID := managed.Postgres.Jobs.Nightly.ID
+	nightlyID := managed.Database.Jobs.Nightly.ID
 	reconfigure := func(backupFrom string) (*managedmodel.ReconfigureResp, error) {
 		return New().Reconfigure(&managedmodel.ReconfigureReq{App: &entity.App{ID: "app-1", Key: "shop-db"},
 			ManagedID: setting.ID, Managed: managed, Jobs: jobs, Now: time.Now().UTC(),
@@ -27,7 +27,7 @@ func TestReconfigureMovesTheBaseBackups(t *testing.T) {
 	resp, err := reconfigure("app-1-r1")
 
 	assert.NoError(t, err)
-	assert.Equal(t, "app-1-r1", managed.Postgres.BackupFrom.ID)
+	assert.Equal(t, "app-1-r1", managed.Database.BackupFrom.ID)
 	assert.Equal(t, []string{nightlyID}, ids(resp.Changed))
 	assert.Empty(t, resp.Rescheduled, "when it runs stays")
 	nightly := jobs[nightlyID].MustAsSchedJob()
@@ -40,7 +40,7 @@ func TestReconfigureMovesTheBaseBackups(t *testing.T) {
 
 	resp, err = reconfigure("")
 	assert.NoError(t, err)
-	assert.Empty(t, managed.Postgres.BackupFrom.ID, "the primary")
+	assert.Empty(t, managed.Database.BackupFrom.ID, "the primary")
 	assert.Equal(t, []string{nightlyID}, ids(resp.Changed))
 	assert.Equal(t, "app-1", jobs[nightlyID].MustAsSchedJob().App.ID)
 

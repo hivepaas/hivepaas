@@ -239,17 +239,17 @@ func TestConfigureMakesTheManagedSettingAndItsJobs(t *testing.T) {
 	data := managed.MustAsAppManagedSettings()
 	assert.Equal(t, "postgres", data.Engine)
 	assert.Equal(t, 1, data.EngineAPI)
-	assert.Equal(t, "storage-1", data.Postgres.Storage.CloudStorage.ID)
-	assert.Equal(t, 14, data.Postgres.RetainFull)
-	assert.Equal(t, time.Minute, time.Duration(data.Postgres.ArchiveTimeout))
-	assert.Equal(t, entity.ManagedRestoreTestContainer, data.Postgres.RestoreTest.Mode)
+	assert.Equal(t, "storage-1", data.Database.Storage.CloudStorage.ID)
+	assert.Equal(t, 14, data.Database.RetainFull)
+	assert.Equal(t, time.Minute, time.Duration(data.Database.ArchiveTimeout))
+	assert.Equal(t, entity.ManagedRestoreTestContainer, data.Database.RestoreTest.Mode)
 	assert.NoError(t, data.Decrypt())
-	plain, _ := data.Postgres.EncryptionKey.GetPlain()
+	plain, _ := data.Database.EncryptionKey.GetPlain()
 	assert.Equal(t, "libsodium-key-value", plain)
 
-	nightly := jobs[data.Postgres.Jobs.Nightly.ID]
-	health := jobs[data.Postgres.Jobs.Health.ID]
-	restoreTest := jobs[data.Postgres.Jobs.RestoreTest.ID]
+	nightly := jobs[data.Database.Jobs.Nightly.ID]
+	health := jobs[data.Database.Jobs.Health.ID]
+	restoreTest := jobs[data.Database.Jobs.RestoreTest.ID]
 	for name, job := range map[string]*entity.SchedJob{"nightly": nightly, "health": health, "test": restoreTest} {
 		if !assert.NotNil(t, job, name) {
 			continue
@@ -324,10 +324,10 @@ func TestConfigureTellsTheScriptsTheirOptions(t *testing.T) {
 	for _, setting := range resp.Settings[1:] {
 		jobs[setting.ID] = setting.MustAsSchedJob()
 	}
-	assert.Equal(t, "14", jobEnv(jobs[data.Postgres.Jobs.Nightly.ID], envRetainFull))
+	assert.Equal(t, "14", jobEnv(jobs[data.Database.Jobs.Nightly.ID], envRetainFull))
 	assert.Equal(t, "SELECT count(*) FROM orders",
-		jobEnv(jobs[data.Postgres.Jobs.RestoreTest.ID], envRestoreCheckQuery))
-	assert.Equal(t, "SELECT count(*) FROM orders", data.Postgres.RestoreTest.CheckQuery)
+		jobEnv(jobs[data.Database.Jobs.RestoreTest.ID], envRestoreCheckQuery))
+	assert.Equal(t, "SELECT count(*) FROM orders", data.Database.RestoreTest.CheckQuery)
 }
 
 func reconfigureSetup(t *testing.T) (*entity.AppManagedSettings, map[string]*entity.Setting) {
@@ -349,15 +349,15 @@ func TestReconfigureChangesTheJobsItMade(t *testing.T) {
 			RestoreTestSchedule: new("0 5 * * 6"), RestoreTestQuery: new("SELECT 1")}})
 
 	assert.NoError(t, err)
-	assert.Equal(t, 30, managed.Postgres.RetainFull)
-	assert.Equal(t, "SELECT 1", managed.Postgres.RestoreTest.CheckQuery)
-	nightly := jobs[managed.Postgres.Jobs.Nightly.ID].MustAsSchedJob()
-	test := jobs[managed.Postgres.Jobs.RestoreTest.ID].MustAsSchedJob()
+	assert.Equal(t, 30, managed.Database.RetainFull)
+	assert.Equal(t, "SELECT 1", managed.Database.RestoreTest.CheckQuery)
+	nightly := jobs[managed.Database.Jobs.Nightly.ID].MustAsSchedJob()
+	test := jobs[managed.Database.Jobs.RestoreTest.ID].MustAsSchedJob()
 	assert.Equal(t, "0 1 * * *", nightly.Schedule.CronExpr)
 	assert.Equal(t, "30", jobEnv(nightly, envRetainFull))
 	assert.Equal(t, "0 5 * * 6", test.Schedule.CronExpr)
 	assert.Equal(t, "SELECT 1", jobEnv(test, envRestoreCheckQuery))
-	assert.ElementsMatch(t, []string{managed.Postgres.Jobs.Nightly.ID, managed.Postgres.Jobs.RestoreTest.ID},
+	assert.ElementsMatch(t, []string{managed.Database.Jobs.Nightly.ID, managed.Database.Jobs.RestoreTest.ID},
 		ids(resp.Changed), "the health check is left alone")
 	assert.ElementsMatch(t, ids(resp.Changed), ids(resp.Rescheduled), "both schedules moved")
 }
@@ -370,7 +370,7 @@ func TestReconfigureLeavesWhatItIsNotAsked(t *testing.T) {
 		Change: &managedmodel.SettingsChange{RetainFull: new(3)}})
 
 	assert.NoError(t, err)
-	nightly := jobs[managed.Postgres.Jobs.Nightly.ID].MustAsSchedJob()
+	nightly := jobs[managed.Database.Jobs.Nightly.ID].MustAsSchedJob()
 	assert.Equal(t, defaultBaseBackupSchedule, nightly.Schedule.CronExpr)
 	assert.Equal(t, "3", jobEnv(nightly, envRetainFull))
 	assert.Len(t, resp.Changed, 1)
@@ -400,8 +400,8 @@ func TestReconfigureClearsTheCheckQuery(t *testing.T) {
 		Change: &managedmodel.SettingsChange{RestoreTestQuery: new("")}})
 
 	assert.NoError(t, err)
-	assert.Empty(t, managed.Postgres.RestoreTest.CheckQuery)
-	assert.Empty(t, jobEnv(jobs[managed.Postgres.Jobs.RestoreTest.ID].MustAsSchedJob(), envRestoreCheckQuery))
+	assert.Empty(t, managed.Database.RestoreTest.CheckQuery)
+	assert.Empty(t, jobEnv(jobs[managed.Database.Jobs.RestoreTest.ID].MustAsSchedJob(), envRestoreCheckQuery))
 }
 
 func TestReconfigureRefusesABadSchedule(t *testing.T) {

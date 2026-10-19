@@ -111,6 +111,9 @@ func (uc *UC) planReplica(ctx context.Context, req *appmanageddto.AddManagedRepl
 	if err != nil {
 		return nil, err
 	}
+	if err = loaded.requireReplicas(); err != nil {
+		return nil, err
+	}
 	paths, err := uc.mountPaths(ctx, uc.db, loaded.app.ID)
 	if err != nil {
 		return nil, err
@@ -155,8 +158,8 @@ func (uc *UC) addReplica(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	pg := loaded.managed.Postgres
-	key := replicaKey(loaded.app.Key, pg)
+	state := loaded.managed.Database
+	key := replicaKey(loaded.app.Key, state)
 	// It streams from, and is let in by, the cluster's primary.
 	writer, err := uc.managedService.WriterOf(ctx, db, loaded.app, loaded.managed)
 	if err != nil {
@@ -168,13 +171,13 @@ func (uc *UC) addReplica(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	password, err := pg.ReplicationPassword.GetPlain()
+	password, err := state.ReplicationPassword.GetPlain()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if password == "" {
 		password = newReplicationPassword()
-		pg.ReplicationPassword = entity.NewEncryptedField(password)
+		state.ReplicationPassword = entity.NewEncryptedField(password)
 	}
 	// First: a database that does not let the replica in would leave it waiting.
 	if err = uc.managedService.AllowReplicas(ctx, db, writer, spec.Allow, password); err != nil {
@@ -186,7 +189,7 @@ func (uc *UC) addReplica(
 	}
 	now := timeutil.NowUTC()
 	replica := made.Apps[0].App
-	pg.Members = append(pg.Members, &entity.ManagedMember{App: entity.ObjectID{ID: replica.ID}, Key: replica.Key,
+	state.Members = append(state.Members, &entity.ManagedMember{App: entity.ObjectID{ID: replica.ID}, Key: replica.Key,
 		Role: entity.ManagedRoleReplica, Volume: entity.ObjectID{ID: plan.volumeID}, Node: plan.node, At: now})
 	if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, now); err != nil {
 		return made, err
@@ -254,41 +257,53 @@ func (uc *UC) RemoveManagedReplica(
 	req *appmanageddto.RemoveManagedReplicaReq,
 ) (*appmanageddto.RemoveManagedReplicaResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		loaded, err := uc.loadManaged(ctx, db, req.ProjectID, req.AppID, bunex.SelectFor("UPDATE OF app"))
-		if err != nil {
-			return err
-		}
-		pg := loaded.managed.Postgres
-		if pg == nil || pg.Member(req.MemberID) == nil {
-			return hperrors.NewNotFound("Replica")
-		}
-		if pg.Writer.ID == req.MemberID {
-			return hperrors.Wrap(hperrors.ErrAppManagedIsWriter).
-				WithParam("App", pg.Member(req.MemberID).Key).ExposeParams("App")
-		}
-		now := timeutil.NowUTC()
-		// The base backups taken on it are taken on the database again.
-		if pg.BackupFrom.ID == req.MemberID {
-			if err = uc.moveBaseBackupsHome(ctx, db, loaded, now); err != nil {
-				return err
-			}
-		}
-		pg.Members = slices.DeleteFunc(pg.Members, func(member *entity.ManagedMember) bool {
-			return member.App.ID == req.MemberID
-		})
-		if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, now); err != nil {
-			return err
-		}
-		if err = uc.recordReplica(ctx, db, auth, loaded.app, "replicaRemoved", req.MemberID); err != nil {
-			return err
-		}
-		// Last: a deletion reaches past the database.
-		return uc.deleteVerifier(ctx, db, loaded.app, req.MemberID)
+		return uc.removeReplica(ctx, db, auth, req)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &appmanageddto.RemoveManagedReplicaResp{}, nil
+}
+
+func (uc *UC) removeReplica(
+	ctx context.Context,
+	db database.Tx,
+	auth *basedto.Auth,
+	req *appmanageddto.RemoveManagedReplicaReq,
+) error {
+	loaded, err := uc.loadManaged(ctx, db, req.ProjectID, req.AppID, bunex.SelectFor("UPDATE OF app"))
+	if err != nil {
+		return err
+	}
+	if err = loaded.requireReplicas(); err != nil {
+		return err
+	}
+	state := loaded.managed.Database
+	if state == nil || state.Member(req.MemberID) == nil {
+		return hperrors.NewNotFound("Replica")
+	}
+	if state.Writer.ID == req.MemberID {
+		return hperrors.Wrap(hperrors.ErrAppManagedIsWriter).
+			WithParam("App", state.Member(req.MemberID).Key).ExposeParams("App")
+	}
+	now := timeutil.NowUTC()
+	// The base backups taken on it are taken on the database again.
+	if state.BackupFrom.ID == req.MemberID {
+		if err = uc.moveBaseBackupsHome(ctx, db, loaded, now); err != nil {
+			return err
+		}
+	}
+	state.Members = slices.DeleteFunc(state.Members, func(member *entity.ManagedMember) bool {
+		return member.App.ID == req.MemberID
+	})
+	if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, now); err != nil {
+		return err
+	}
+	if err = uc.recordReplica(ctx, db, auth, loaded.app, "replicaRemoved", req.MemberID); err != nil {
+		return err
+	}
+	// Last: a deletion reaches past the database.
+	return uc.deleteVerifier(ctx, db, loaded.app, req.MemberID)
 }
 
 func (uc *UC) recordReplica(ctx context.Context, db database.IDB, auth *basedto.Auth, app *entity.App,
@@ -336,11 +351,11 @@ func mountPathsOf(settings []*entity.Setting) []string {
 }
 
 // replicaKey is the first <primary key>-r<n> no member has.
-func replicaKey(primaryKey string, pg *entity.ManagedPostgres) string {
+func replicaKey(primaryKey string, state *entity.ManagedDatabase) string {
 	for n := 1; ; n++ {
 		key := projecthelper.CalcAppKey(fmt.Sprintf("%s-r%d", primaryKey, n))
 		taken := false
-		for _, member := range pg.Members {
+		for _, member := range state.Members {
 			taken = taken || member.Key == key
 		}
 		if !taken {

@@ -31,8 +31,8 @@ func TestTheRestoreTestMovesIntoAVerifier(t *testing.T) {
 
 	assert.Equal(t, entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestVerifier,
 		VerifierApp: entity.ObjectID{ID: "ver-1"}, NodeID: "node-2", KeyAuth: entity.ObjectID{ID: "key-ro"}},
-		managed.Postgres.RestoreTest)
-	setting := jobs[managed.Postgres.Jobs.RestoreTest.ID]
+		managed.Database.RestoreTest)
+	setting := jobs[managed.Database.Jobs.RestoreTest.ID]
 	job := setting.MustAsSchedJob()
 	assert.Equal(t, base.SchedJobTypeManagedRestoreTest, job.JobType)
 	assert.Equal(t, string(base.SchedJobTypeManagedRestoreTest), setting.Kind)
@@ -46,14 +46,14 @@ func TestTheRestoreTestMovesIntoAVerifier(t *testing.T) {
 
 func TestTheRestoreTestMovesBackIntoTheContainer(t *testing.T) {
 	managed, jobs := reconfigureSetup(t)
-	managed.Postgres.RestoreTest.CheckQuery = "SELECT 1"
+	managed.Database.RestoreTest.CheckQuery = "SELECT 1"
 	reconfigureRestoreTest(t, managed, jobs, &managedmodel.RestoreTestChange{Verifier: &entity.App{ID: "ver-1"}})
 
 	resp := reconfigureRestoreTest(t, managed, jobs, &managedmodel.RestoreTestChange{})
 
 	assert.Equal(t, entity.ManagedRestoreTest{Mode: entity.ManagedRestoreTestContainer, CheckQuery: "SELECT 1"},
-		managed.Postgres.RestoreTest)
-	setting := jobs[managed.Postgres.Jobs.RestoreTest.ID]
+		managed.Database.RestoreTest)
+	setting := jobs[managed.Database.Jobs.RestoreTest.ID]
 	job := setting.MustAsSchedJob()
 	assert.Equal(t, base.SchedJobTypeContainerCommand, job.JobType)
 	assert.Equal(t, string(base.SchedJobTypeContainerCommand), setting.Kind)

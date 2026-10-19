@@ -12,9 +12,10 @@ import (
 
 // CreateRestorePoint Names a moment of a managed database, to restore to exactly
 // @Summary Names a moment of a managed database, to restore to exactly
-// @Description The point is made, and listed once the WAL it is in is archived; it can then be restored to for
-// @Description as long as retention keeps the base backup before it, or until keepUntil, which holds retention
-// @Description back. Names are labels: letters, digits, '.', '_' and '-', at most 63, not starting with "hp-".
+// @Description The point is made, and listed once the log it is in (the WAL, for Postgres) is archived; it can
+// @Description then be restored to for as long as retention keeps the base backup before it, or until keepUntil,
+// @Description which holds retention back. Names are labels: letters, digits, '.', '_' and '-', at most the
+// @Description engine's limit (63 for Postgres), not starting with "hp-".
 // @Tags    Managed apps
 // @Produce json
 // @Id      appManagedRestorePointCreate
@@ -101,7 +102,8 @@ func (h *Handler) UpdateRestorePoint(ctx *gin.Context) {
 
 // DeleteRestorePoint Removes a restore point's record
 // @Summary Removes a restore point's record
-// @Description The archive is not touched, and the mark stays in the WAL, harmlessly: restores target an LSN.
+// @Description The archive is not touched, and the mark stays in the database's log, harmlessly: restores target
+// @Description the point's position, never its name.
 // @Tags    Managed apps
 // @Produce json
 // @Id      appManagedRestorePointDelete

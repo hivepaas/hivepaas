@@ -46,7 +46,7 @@ func TestEachTargetIsItsRecoverySettings(t *testing.T) {
 		entity.ManagedRestoreToBackup: {"base_000000010000000000000004", "", "recovery_target=immediate"},
 	} {
 		req := restoreReq(t, entity.ManagedRestoreTarget{Kind: kind, Time: targetTime, Point: "before-v42",
-			LSN: "0/3000060", Backup: "base_000000010000000000000004"})
+			Position: "0/3000060", Backup: "base_000000010000000000000004"})
 
 		assert.NoError(t, New().PrepareDoc(req), kind)
 
@@ -142,7 +142,7 @@ func TestARestoredAppStartsThroughTheEntrypoint(t *testing.T) {
 	assert.True(t, strings.HasPrefix(settings.Command, "postgres "), "the server's arguments, as always")
 	managed := resp.Settings[0].MustAsAppManagedSettings()
 	assert.Equal(t, &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}, Target: target},
-		managed.Postgres.Restore)
+		managed.Database.Restore)
 	for _, job := range resp.Settings[1:] {
 		assert.Equal(t, base.SettingStatusDisabled, job.Status, "%s waits for the recovery", job.Name)
 	}
@@ -158,7 +158,7 @@ func TestANewAppStartsThroughTheEntrypoint(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, scriptDir+"/walg-entrypoint", deployment.MustAsAppDeploymentSettings().Entrypoint)
-	assert.Nil(t, resp.Settings[0].MustAsAppManagedSettings().Postgres.Restore)
+	assert.Nil(t, resp.Settings[0].MustAsAppManagedSettings().Database.Restore)
 	for _, job := range resp.Settings[1:] {
 		assert.Equal(t, base.SettingStatusActive, job.Status, job.Name)
 	}
@@ -185,7 +185,7 @@ func TestFinishingARestoreDropsWhatItWasRestoredWith(t *testing.T) {
 		Locks: entity.ManagedLocks{EnvKeys: []string{"WALG_S3_PREFIX", restoreEnvPrefix + "WALG_S3_PREFIX",
 			envRestoreRecovery}, Mounts: []string{"/var/lib/postgresql", restoreSourceDir},
 			Settings: []string{"sec-1", "sec-2", "mnt-1", "mnt-2"}},
-		Postgres: &entity.ManagedPostgres{Restore: &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}}}}
+		Database: &entity.ManagedDatabase{Restore: &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}}}}
 
 	resp, err := New().FinishRestore(&managedmodel.FinishRestoreReq{Managed: managed,
 		Settings: []*entity.Setting{env, ownKey, sourceKey, ownMount, sourceMount}, Now: now})
@@ -205,13 +205,13 @@ func TestFinishingARestoreDropsWhatItWasRestoredWith(t *testing.T) {
 	assert.Equal(t, []string{"WALG_S3_PREFIX"}, managed.Locks.EnvKeys)
 	assert.Equal(t, []string{"/var/lib/postgresql"}, managed.Locks.Mounts)
 	assert.Equal(t, []string{"sec-1", "mnt-1"}, managed.Locks.Settings)
-	assert.Equal(t, now, managed.Postgres.Restore.ReadyAt)
-	assert.Equal(t, "app-src", managed.Postgres.Restore.SourceApp.ID, "where it came from stays told")
+	assert.Equal(t, now, managed.Database.Restore.ReadyAt)
+	assert.Equal(t, "app-src", managed.Database.Restore.SourceApp.ID, "where it came from stays told")
 }
 
 func TestTheFirstBackupIsTheNightlyJobsRun(t *testing.T) {
 	managed, _ := reconfigureSetup(t)
 
-	assert.Equal(t, managed.Postgres.Jobs.Nightly.ID, New().FirstBackupJob(managed))
+	assert.Equal(t, managed.Database.Jobs.Nightly.ID, New().FirstBackupJob(managed))
 	assert.Equal(t, scriptDir+"/walg-entrypoint status", New().RecoveryCheck().Command)
 }

@@ -307,7 +307,7 @@ func clusterKind() *entity.AppKindSettings {
 
 // One database: its own address, in the strings a cluster's would be.
 func TestClusterEnvVars_OneMember(t *testing.T) {
-	managed := &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{}}
+	managed := &entity.AppManagedSettings{Engine: "postgres", Database: &entity.ManagedDatabase{}}
 
 	vars, err := clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
 
@@ -326,7 +326,7 @@ func TestClusterEnvVars_OneMember(t *testing.T) {
 // Three members, one promoted over the database: the writer first, then the
 // replicas; the fenced database and a fenced member are not tried.
 func TestClusterEnvVars_ThreeMembers(t *testing.T) {
-	managed := &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{
+	managed := &entity.AppManagedSettings{Engine: "postgres", Database: &entity.ManagedDatabase{
 		Writer:   entity.ObjectID{ID: "r2"},
 		FencedAt: time.Now(),
 		Members: []*entity.ManagedMember{
@@ -342,8 +342,8 @@ func TestClusterEnvVars_ThreeMembers(t *testing.T) {
 	assert.Contains(t, envMap(vars)[base.AppSystemEnvVarDatabaseURLRW], "@shop-db-r2:6432,shop-db-r1:6432/shop?")
 
 	// Before a promotion: the database first, then its replicas.
-	managed.Postgres.Writer, managed.Postgres.FencedAt = entity.ObjectID{}, time.Time{}
-	managed.Postgres.Members[1].Role = entity.ManagedRoleReplica
+	managed.Database.Writer, managed.Database.FencedAt = entity.ObjectID{}, time.Time{}
+	managed.Database.Members[1].Role = entity.ManagedRoleReplica
 	vars, err = clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
 	assert.NoError(t, err)
 	assert.Contains(t, envMap(vars)[base.AppSystemEnvVarDatabaseURLRO],
@@ -354,6 +354,20 @@ func TestClusterEnvVars_ThreeMembers(t *testing.T) {
 	vars, err = clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db-r1"}, "")
 	assert.NoError(t, err)
 	assert.Empty(t, vars)
+}
+
+// The cluster's addresses are an engine's with replicas: a database whose
+// engine has none, or that this HivePaaS does not know, has no cluster to
+// address.
+func TestClusterEnvVars_OnlyForAnEngineWithReplicas(t *testing.T) {
+	for _, engine := range []string{"mariadb", "oracle"} {
+		managed := &entity.AppManagedSettings{Engine: engine, Database: &entity.ManagedDatabase{}}
+
+		vars, err := clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
+
+		assert.NoError(t, err)
+		assert.Empty(t, vars, engine)
+	}
 }
 
 func envMap(vars []*envvarservice.EnvVar) map[string]string {

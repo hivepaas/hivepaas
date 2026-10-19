@@ -64,6 +64,7 @@ ERR_APP_MANAGED_CLUSTER_HELD = "{{.App}} holds its cluster - its settings, its j
 ERR_APP_MANAGED_IS_WRITER = "{{.App}} is the cluster's primary: promote another replica first"
 ERR_APP_MANAGED_IS_MEMBER = "{{.App}} is a replica of another database: do this on its primary"
 ERR_APP_MANAGED_HAS_MEMBERS = "{{.App}} has replicas: remove them first"
+ERR_APP_MANAGED_UNSUPPORTED_BY_ENGINE = "{{.Engine}} databases do not have {{.What}} yet"
 ERR_APP_DEPLOY_RESTORE_POINT_FAILED = "The deployment stopped before anything changed: the restore point it asks for on {{.Database}} could not be made: {{.Reason}}"
 ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
 ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"

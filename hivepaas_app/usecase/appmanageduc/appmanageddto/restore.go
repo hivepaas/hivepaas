@@ -13,7 +13,6 @@ import (
 
 const (
 	appNameMaxLen    = 100
-	pointNameMaxLen  = 63
 	backupNameMaxLen = 64
 )
 
@@ -65,12 +64,19 @@ func (req *RestoreManagedReq) Validate() hperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateCond((target.Kind == entity.ManagedRestoreToTime) ==
 		(target.Time != nil), "target.time")...)
 	validators = append(validators, basedto.ValidateCond((target.Kind == entity.ManagedRestoreToPoint) ==
-		(target.Point != "") && len(target.Point) <= pointNameMaxLen, "target.point")...)
+		(target.Point != ""), "target.point")...)
 	validators = append(validators, basedto.ValidateCond((target.Kind == entity.ManagedRestoreToBackup) ==
 		(target.Backup != "") && len(target.Backup) <= backupNameMaxLen, "target.backup")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 0, appNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateObjectIDReq(req.DataVolume, true, "dataVolume")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+// ValidatePoint checks the target point's name against the longest the
+// source's engine takes, which is known once the source is read.
+func (req *RestoreManagedReq) ValidatePoint(maxLen int) hperrors.ValidationErrors {
+	return hperrors.NewValidationErrors(vld.Validate(
+		basedto.ValidateCond(len(req.Target.Point) <= maxLen, "target.point")...))
 }
 
 type RestoreManagedResp struct {

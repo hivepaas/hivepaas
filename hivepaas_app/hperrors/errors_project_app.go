@@ -118,6 +118,9 @@ var (
 	ErrAppManagedIsMember = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_IS_MEMBER")
 	// ErrAppManagedHasMembers refuses to unmanage a primary while it has members.
 	ErrAppManagedHasMembers = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_HAS_MEMBERS")
+	// ErrAppManagedUnsupportedByEngine refuses what the database's engine cannot
+	// do (yet), such as replicas: engines differ in what they can.
+	ErrAppManagedUnsupportedByEngine = NewErr(ErrPreconditionFailed, "ERR_APP_MANAGED_UNSUPPORTED_BY_ENGINE")
 	// What only a function has: a test run, say.
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )

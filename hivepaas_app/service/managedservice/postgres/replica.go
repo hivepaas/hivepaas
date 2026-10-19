@@ -41,7 +41,7 @@ func (e *Engine) Replica(req *managedmodel.ReplicaReq) (*managedmodel.ReplicaSpe
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedIsMember).
 			WithParam("App", req.Primary.Name).ExposeParams("App")
 	}
-	pg := managed.Postgres
+	pg := managed.Database
 	if pg == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}

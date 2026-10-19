@@ -21,7 +21,9 @@ const (
 	// deploy-<app key>-<when the deployment was made>.
 	deployPointPrefix = "deploy-"
 	deployPointTime   = "20060102150405"
-	// pointNameMax is what PostgreSQL keeps of a restore point's name.
+	// pointNameMax is the longest restore point name every engine takes
+	// (Engine.PointNameMax): PostgreSQL's 63 bytes, which the others keep too so
+	// that names read the same.
 	pointNameMax = 63
 )
 
@@ -57,7 +59,7 @@ func (s *service) deployStepRestorePoint(ctx context.Context, data *appDeploymen
 			WithCause(err)
 	}
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Restore point %s is on %s, at %s.",
-		marked.Point.Name, marked.App.Name, marked.Point.LSN), tasklog.TsNow))
+		marked.Point.Name, marked.App.Name, marked.Point.Position), tasklog.TsNow))
 	return nil
 }
 
@@ -81,7 +83,7 @@ func (s *service) appName(ctx context.Context, projectID, appID string) string {
 
 // deployPointName is a deployment's point's name, from when the deployment was
 // made, so that a run of it again names the same point. The app's key is cut
-// to fit PostgreSQL's 63 bytes.
+// to fit the 63 bytes every engine takes.
 func deployPointName(appKey string, made time.Time) string {
 	suffix := "-" + made.UTC().Format(deployPointTime)
 	key := appKey

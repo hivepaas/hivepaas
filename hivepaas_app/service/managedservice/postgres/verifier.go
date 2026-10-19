@@ -30,7 +30,7 @@ func (e *Engine) Verifier() managedmodel.VerifierSpec {
 
 // moveRestoreTest points the restore test at the verifier given, or back at the
 // database, and says whether its job changed. Its schedule stays.
-func moveRestoreTest(app *entity.App, pg *entity.ManagedPostgres, setting *entity.Setting,
+func moveRestoreTest(app *entity.App, pg *entity.ManagedDatabase, setting *entity.Setting,
 	change *managedmodel.RestoreTestChange) (bool, error) {
 	if app == nil {
 		return false, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("moving a restore test needs its app")

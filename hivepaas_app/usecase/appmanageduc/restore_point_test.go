@@ -42,7 +42,7 @@ func (f *savedSettings) Update(_ context.Context, _ database.IDB, setting *entit
 
 func pointsApp(points ...*entity.ManagedRestorePoint) *entity.App {
 	managed := setting("managed-1", base.SettingTypeAppManaged, &entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{RestorePoints: points}})
+		Database: &entity.ManagedDatabase{RestorePoints: points}})
 	return &entity.App{ID: "app-1", Settings: []*entity.Setting{managed}}
 }
 
@@ -56,7 +56,7 @@ func savedPoints(t *testing.T, settings *savedSettings) []*entity.ManagedRestore
 	if !assert.Len(t, settings.saved, 1) {
 		return nil
 	}
-	return settings.saved[0].MustAsAppManagedSettings().Postgres.RestorePoints
+	return settings.saved[0].MustAsAppManagedSettings().Database.RestorePoints
 }
 
 // A person's request reaches the engine's service as asked, with who asked:
@@ -80,7 +80,7 @@ func TestAPersonsPointRequest(t *testing.T) {
 }
 
 func TestARestorePointsKeepAndNoteChange(t *testing.T) {
-	point := &entity.ManagedRestorePoint{Name: "p", LSN: "0/1", KeepUntil: time.Now().Add(time.Hour)}
+	point := &entity.ManagedRestorePoint{Name: "p", Position: "0/1", KeepUntil: time.Now().Add(time.Hour)}
 	uc, settings := pointsUC(pointsApp(point))
 
 	_, _, err := uc.updateRestorePoint(context.Background(), database.Tx{},
@@ -96,8 +96,8 @@ func TestARestorePointsKeepAndNoteChange(t *testing.T) {
 // Deleting a point removes its record. The archive is left as it is: the use
 // case has nothing that runs in the database.
 func TestDeletingARestorePointLeavesTheArchiveAlone(t *testing.T) {
-	uc, settings := pointsUC(pointsApp(&entity.ManagedRestorePoint{Name: "a", LSN: "0/1"},
-		&entity.ManagedRestorePoint{Name: "b", LSN: "0/2"}))
+	uc, settings := pointsUC(pointsApp(&entity.ManagedRestorePoint{Name: "a", Position: "0/1"},
+		&entity.ManagedRestorePoint{Name: "b", Position: "0/2"}))
 
 	_, _, err := uc.deleteRestorePoint(context.Background(), database.Tx{},
 		&appmanageddto.DeleteRestorePointReq{Name: "a"})
@@ -110,4 +110,21 @@ func TestDeletingARestorePointLeavesTheArchiveAlone(t *testing.T) {
 	_, _, err = uc.deleteRestorePoint(context.Background(), database.Tx{},
 		&appmanageddto.DeleteRestorePointReq{Name: "never-made"})
 	assert.ErrorIs(t, err, hperrors.ErrNotFound)
+}
+
+// A point's name is held to what its engine takes, before anything is marked;
+// so is a restore's target point.
+func TestAPointNameIsHeldToTheEnginesLimit(t *testing.T) {
+	uc := &UC{appService: &fakeApps{app: managedApp()},
+		managedService: &fakeManaged{engine: &fakeEngine{pointNameMax: 10}}}
+	var invalid hperrors.ValidationErrors
+
+	_, err := uc.CreateRestorePoint(context.Background(), nil, &appmanageddto.CreateRestorePointReq{
+		ProjectID: "p1", ProjectEnvID: "p1:prod", AppID: "app-1", Name: "before-v42x"})
+	assert.ErrorAs(t, err, &invalid)
+
+	_, err = uc.RestoreManagedApp(context.Background(), nil, &appmanageddto.RestoreManagedReq{
+		ProjectID: "p1", ProjectEnvID: "p1:prod", AppID: "app-1",
+		Target: appmanageddto.ManagedRestoreTargetReq{Kind: entity.ManagedRestoreToPoint, Point: "before-v42x"}})
+	assert.ErrorAs(t, err, &invalid)
 }

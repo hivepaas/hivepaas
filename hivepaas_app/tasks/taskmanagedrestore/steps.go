@@ -203,13 +203,13 @@ func (e *Executor) persistFinish(ctx context.Context, db database.Tx, run *resto
 			return hperrors.Wrap(err)
 		}
 	}
-	if err := run.setting.SetData(run.managed); err != nil {
+	if err := run.setting.SetAppManagedData(run.managed); err != nil {
 		return hperrors.Wrap(err)
 	}
 	run.setting.UpdateVer++
 	run.setting.UpdatedAt = now
 	return hperrors.Wrap(e.settingRepo.Update(ctx, db, run.setting,
-		bunex.UpdateColumns("data", "update_ver", "updated_at")))
+		bunex.UpdateColumns("data", "version", "update_ver", "updated_at")))
 }
 
 // applyFinish brings the app's service in line: its variables built again, the

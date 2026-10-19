@@ -168,8 +168,8 @@ func testExecutor() (*Executor, *time.Time) {
 func exit(code int) *int { return &code }
 
 func testRun(step string) *restoreRun {
-	managed := &entity.AppManagedSettings{Engine: "postgres", Postgres: &entity.ManagedPostgres{
-		Jobs:    entity.ManagedPostgresJobs{Nightly: entity.ObjectID{ID: "job-nightly"}},
+	managed := &entity.AppManagedSettings{Engine: "postgres", Database: &entity.ManagedDatabase{
+		Jobs:    entity.ManagedJobs{Nightly: entity.ObjectID{ID: "job-nightly"}},
 		Restore: &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "app-src"}},
 	}}
 	setting := &entity.Setting{ID: "managed-1", Type: base.SettingTypeAppManaged, UpdateVer: 1}
@@ -341,7 +341,7 @@ func TestFinishingTakesOffWhatTheAppWasRestoredWith(t *testing.T) {
 	assert.Equal(t, *now, updated["sec-2"].DeletedAt)
 	assert.Equal(t, *now, updated["mnt-2"].DeletedAt)
 	ready := updated["managed-1"].MustAsAppManagedSettings()
-	assert.Equal(t, *now, ready.Postgres.Restore.ReadyAt)
+	assert.Equal(t, *now, ready.Database.Restore.ReadyAt)
 	assert.Equal(t, []string{"/var/lib/postgresql"}, ready.Locks.Mounts)
 	if assert.Len(t, envs.applied, 1) {
 		assert.Equal(t, "app-new", envs.applied[0].App.ID)

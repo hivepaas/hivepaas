@@ -60,8 +60,8 @@ func (s *service) markRestorePoint(ctx context.Context, db database.Tx, req *man
 	if err != nil {
 		return nil, err
 	}
-	pg := locked.managed.Postgres
-	if existing := pg.RestorePoint(req.Name); existing != nil {
+	state := locked.managed.Database
+	if existing := state.RestorePoint(req.Name); existing != nil {
 		if req.ExistingOK {
 			return &managedservice.MarkedPoint{App: locked.app, Point: existing, Existed: true}, nil
 		}
@@ -74,16 +74,16 @@ func (s *service) markRestorePoint(ctx context.Context, db database.Tx, req *man
 	// When it was asked for: the point is after it, and the base backup a restore
 	// to it fetches is the latest that starts before.
 	at := timeutil.NowUTC()
-	lsn, err := s.runMark(ctx, db, locked, mark)
+	position, err := s.runMark(ctx, db, locked, mark)
 	if err != nil {
 		return nil, err
 	}
-	point := &entity.ManagedRestorePoint{Name: req.Name, LSN: lsn, At: at, By: req.By, Note: req.Note,
-		Origin: req.Origin}
+	point := &entity.ManagedRestorePoint{Name: req.Name, Position: position, At: at, By: req.By,
+		Note: req.Note, Origin: req.Origin}
 	if !req.KeepUntil.IsZero() {
 		point.KeepUntil = req.KeepUntil.UTC()
 	}
-	pg.RestorePoints = append(pg.RestorePoints, point)
+	state.RestorePoints = append(state.RestorePoints, point)
 	if err = s.saveManaged(ctx, db, locked); err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (s *service) markRestorePoint(ctx context.Context, db database.Tx, req *man
 }
 
 // runMark runs the engine's mark in the database's task, and reads the point's
-// LSN from what it printed.
+// position from what it printed.
 func (s *service) runMark(ctx context.Context, db database.Tx, locked *lockedManaged,
 	mark managedmodel.MarkCommand) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, mark.Timeout+markSlack)
@@ -124,8 +124,8 @@ func (s *service) runMark(ctx context.Context, db database.Tx, locked *lockedMan
 		return "", hperrors.Wrap(hperrors.ErrActionFailed).
 			WithExtraDetail("the restore point could not be made: the mark exited with %d", *resp.ExitCode)
 	}
-	lsn, err := locked.engine.MarkResult(stdout.String())
-	return lsn, hperrors.Wrap(err)
+	position, err := locked.engine.MarkResult(stdout.String())
+	return position, hperrors.Wrap(err)
 }
 
 func (s *service) PruneDeployPoints(ctx context.Context, db database.IDB, projectID, appID string,
@@ -138,8 +138,8 @@ func (s *service) PruneDeployPoints(ctx context.Context, db database.IDB, projec
 	if len(stale) == 0 {
 		return nil, nil
 	}
-	pg := locked.managed.Postgres
-	pg.RestorePoints = slices.DeleteFunc(pg.RestorePoints, func(p *entity.ManagedRestorePoint) bool {
+	state := locked.managed.Database
+	state.RestorePoints = slices.DeleteFunc(state.RestorePoints, func(p *entity.ManagedRestorePoint) bool {
 		return slices.Contains(stale, p.Name)
 	})
 	return stale, s.saveManaged(ctx, db, locked)
@@ -176,10 +176,10 @@ func (s *service) lockManaged(ctx context.Context, db database.IDB, projectID, a
 	if locked.managed, err = locked.setting.AsAppManagedSettings(); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if locked.managed.Postgres == nil {
+	if locked.managed.Database == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}
-	engine, found := s.registry.Engine(templatemodel.ManagedEngine(locked.managed.Engine))
+	engine, found := s.Engine(templatemodel.ManagedEngine(locked.managed.Engine))
 	if !found {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateIncompatible).
 			WithExtraDetail("engine %s is not one this HivePaaS has", locked.managed.Engine)
@@ -194,21 +194,21 @@ func (s *service) lockManaged(ctx context.Context, db database.IDB, projectID, a
 // WriterOf is the cluster's primary: the app, or the member promoted over it.
 func (s *service) WriterOf(ctx context.Context, db database.IDB, app *entity.App,
 	managed *entity.AppManagedSettings) (*entity.App, error) {
-	if managed.Postgres == nil || managed.Postgres.Writer.ID == "" {
+	if managed.Database == nil || managed.Database.Writer.ID == "" {
 		return app, nil
 	}
-	writer, err := s.appService.LoadApp(ctx, db, app.ProjectID, managed.Postgres.Writer.ID, false, false,
+	writer, err := s.appService.LoadApp(ctx, db, app.ProjectID, managed.Database.Writer.ID, false, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...))
 	return writer, hperrors.Wrap(err)
 }
 
 // saveManaged stores the engine's setting as it was changed.
 func (s *service) saveManaged(ctx context.Context, db database.IDB, locked *lockedManaged) error {
-	if err := locked.setting.SetData(locked.managed); err != nil {
+	if err := locked.setting.SetAppManagedData(locked.managed); err != nil {
 		return hperrors.Wrap(err)
 	}
 	locked.setting.UpdateVer++
 	locked.setting.UpdatedAt = timeutil.NowUTC()
 	return hperrors.Wrap(s.settingRepo.Update(ctx, db, locked.setting,
-		bunex.UpdateColumns("data", "update_ver", "updated_at")))
+		bunex.UpdateColumns("data", "version", "update_ver", "updated_at")))
 }

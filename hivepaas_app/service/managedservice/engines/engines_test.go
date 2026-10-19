@@ -1,4 +1,4 @@
-package managedserviceimpl
+package engines
 
 import (
 	"slices"
@@ -12,11 +12,9 @@ import (
 // The engines HivePaaS has are the ones templates may name, speaking the API
 // versions templates are told they speak: the table in the template format and
 // the engines here are held to each other.
-func TestTheRegistryMatchesTheTemplateFormat(t *testing.T) {
-	registry := newRegistry()
-
+func TestTheEnginesMatchTheTemplateFormat(t *testing.T) {
 	names := make([]templatemodel.ManagedEngine, 0)
-	for _, engine := range registry.engines {
+	for _, engine := range all {
 		names = append(names, engine.Name())
 		contract, known := templatemodel.ManagedEngines[engine.Name()]
 		if assert.True(t, known, "%s is not in templatemodel.ManagedEngines", engine.Name()) {
@@ -31,12 +29,21 @@ func TestTheRegistryMatchesTheTemplateFormat(t *testing.T) {
 }
 
 func TestEngineLooksUpByName(t *testing.T) {
-	registry := newRegistry()
-
-	engine, found := registry.Engine(templatemodel.ManagedEnginePostgres)
+	engine, found := Lookup(templatemodel.ManagedEnginePostgres)
 	assert.True(t, found)
 	assert.Equal(t, templatemodel.ManagedEnginePostgres, engine.Name())
 
-	_, found = registry.Engine("oracle")
+	_, found = Lookup("oracle")
 	assert.False(t, found)
+}
+
+// Postgres keeps what it had before engines said what they can do: replicas,
+// a verifier app, and 63-byte point names.
+func TestPostgresCanDoWhatItDid(t *testing.T) {
+	engine, _ := Lookup(templatemodel.ManagedEnginePostgres)
+
+	caps := engine.Capabilities()
+	assert.True(t, caps.Replicas)
+	assert.True(t, caps.VerifierApp)
+	assert.Equal(t, 63, engine.PointNameMax())
 }

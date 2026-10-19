@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -77,4 +78,41 @@ func (uc *UC) loadManaged(
 		}
 	}
 	return out, nil
+}
+
+// requireReplicas refuses replicas of a database whose engine has none: adding
+// or removing one, taking the base backups on one, promoting one.
+func (l *loadedManaged) requireReplicas() error {
+	if l.engine.Capabilities().Replicas {
+		return nil
+	}
+	return l.unsupported("replicas")
+}
+
+// requireVerifierApp refuses a verifier app for a database whose engine runs
+// its restore test in the database's container only.
+func (l *loadedManaged) requireVerifierApp() error {
+	if l.engine.Capabilities().VerifierApp {
+		return nil
+	}
+	return l.unsupported("verifier apps")
+}
+
+// checkBackupFrom refuses base backups taken on a replica of a database whose
+// engine has none. Taking them on the database itself is every engine's.
+func (l *loadedManaged) checkBackupFrom(backupFrom *basedto.ObjectIDReq) error {
+	if backupFrom == nil || backupFrom.ID == "" {
+		return nil
+	}
+	return l.requireReplicas()
+}
+
+// unsupported refuses what the database's engine cannot do, named as what.
+func (l *loadedManaged) unsupported(what string) error {
+	engine := l.managed.Engine
+	if contract, found := templatemodel.ManagedEngines[templatemodel.ManagedEngine(engine)]; found {
+		engine = contract.Title
+	}
+	return hperrors.Wrap(hperrors.ErrAppManagedUnsupportedByEngine).
+		WithParam("Engine", engine).WithParam("What", what).ExposeParams("Engine", "What")
 }

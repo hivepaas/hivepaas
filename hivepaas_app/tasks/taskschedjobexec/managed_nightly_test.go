@@ -82,7 +82,7 @@ func nightlyRun(points ...*entity.ManagedRestorePoint) *jobRun {
 	setting.MustSetData(job)
 	managed := &entity.Setting{ID: "m1", Type: base.SettingTypeAppManaged}
 	managed.MustSetData(&entity.AppManagedSettings{Engine: "postgres",
-		Postgres: &entity.ManagedPostgres{RetainFull: 7, RestorePoints: points}})
+		Database: &entity.ManagedDatabase{RetainFull: 7, RestorePoints: points}})
 	refs := entity.NewRefObjects()
 	refs.RefApps["db-1"] = &entity.App{ID: "db-1"}
 	refs.RefSettings["m1"] = managed
@@ -97,7 +97,7 @@ func TestANightlyRunBacksUpThenKeepsWhatTheEngineSays(t *testing.T) {
 		"backup": {"BACKUP_NAME": "base_00000000000000000000000A", "BACKUPS": keptBackups(10)},
 		"retain": {"OLDEST_BACKUP_AT": "2026-10-10T02:00:00Z", "BACKUPS": "after-retention"},
 	}}
-	kept := &entity.ManagedRestorePoint{Name: "p", LSN: "0/1", At: time.Now().UTC().AddDate(0, 0, -8),
+	kept := &entity.ManagedRestorePoint{Name: "p", Position: "0/1", At: time.Now().UTC().AddDate(0, 0, -8),
 		KeepUntil: time.Now().UTC().AddDate(0, 0, 30)}
 	managed := &fakeManaged{}
 	e := &Executor{schedJobExecService: exec, managedService: managed}
@@ -183,7 +183,7 @@ func TestANightlyRunRetainsOnThePromotedMember(t *testing.T) {
 	run.refObjects.RefApps["db-1-r1"] = &entity.App{ID: "db-1-r1", LogicalParentID: "db-1"}
 	setting := run.refObjects.RefSettings["m1"]
 	data := setting.MustAsAppManagedSettings()
-	data.Postgres.Writer = entity.ObjectID{ID: "db-1-r1"}
+	data.Database.Writer = entity.ObjectID{ID: "db-1-r1"}
 	setting.MustSetData(data)
 
 	_, err := e.runJob(context.Background(), database.Tx{}, run)

@@ -36,8 +36,9 @@ type verifierPlan struct {
 
 // planVerifier resolves a move of the restore test into a verifier app, or
 // returns nil for a request that asks none. It refuses what would refuse it
-// later, before anything is downloaded: a plan without the feature, a verifier
-// already there, an archive on a volume, a volume not pinned to a node.
+// later, before anything is downloaded: a plan without the feature, an engine
+// without verifier apps, a verifier already there, an archive on a volume, a
+// volume not pinned to a node.
 func (uc *UC) planVerifier(ctx context.Context, req *appmanageddto.UpdateManagedSettingsReq) (*verifierPlan, error) {
 	if req.RestoreTest == nil || req.RestoreTest.Mode != entity.ManagedRestoreTestVerifier {
 		return nil, nil
@@ -50,14 +51,17 @@ func (uc *UC) planVerifier(ctx context.Context, req *appmanageddto.UpdateManaged
 	if err != nil {
 		return nil, err
 	}
-	pg := loaded.managed.Postgres
-	if pg == nil {
+	if err = loaded.requireVerifierApp(); err != nil {
+		return nil, err
+	}
+	state := loaded.managed.Database
+	if state == nil {
 		return nil, hperrors.NewNotFound("Managed archive")
 	}
-	if pg.RestoreTest.Mode == entity.ManagedRestoreTestVerifier {
+	if state.RestoreTest.Mode == entity.ManagedRestoreTestVerifier {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedVerifierExists)
 	}
-	if pg.Storage.Placement != entity.ManagedPlacementOffSite {
+	if state.Storage.Placement != entity.ManagedPlacementOffSite {
 		return nil, hperrors.Wrap(hperrors.ErrAppManagedVerifierNeedsObjectStorage)
 	}
 
@@ -69,7 +73,7 @@ func (uc *UC) planVerifier(ctx context.Context, req *appmanageddto.UpdateManaged
 	}
 	plan.volumeID, plan.nodeID = req.RestoreTest.Volume.ID, pin.NodeID
 	if keyAuth := req.RestoreTest.KeyAuth; keyAuth != nil && keyAuth.ID != "" {
-		storage := pg.Storage
+		storage := state.Storage
 		storage.KeyAuth = entity.ObjectID{ID: keyAuth.ID}
 		s3, resolveErr := uc.managedService.ResolveS3(ctx, uc.db, scope, storage)
 		if resolveErr != nil {

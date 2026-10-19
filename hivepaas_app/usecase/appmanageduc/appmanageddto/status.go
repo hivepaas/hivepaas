@@ -63,7 +63,7 @@ type ManagedStatusResp struct {
 	// RestorePoints are the points recorded, oldest first.
 	RestorePoints []*ManagedRestorePointResp `json:"restorePoints"`
 	// HeldBack is what the kept points make retention keep beyond its own: the
-	// base backups and their size, the WAL after them not counted. Null when
+	// base backups and their size, the log after them not counted. Null when
 	// they keep nothing more.
 	HeldBack *ManagedHeldBackResp `json:"heldBack"`
 }
@@ -79,7 +79,9 @@ type ManagedArchivingResp struct {
 	CheckedAt      *time.Time `json:"checkedAt"`
 	LastArchivedAt *time.Time `json:"lastArchivedAt"`
 	FailedCount    int        `json:"failedCount"`
-	PgWalBytes     int64      `json:"pgWalBytes"`
+	// PendingBytes is what waits on the node to be archived: pg_wal for
+	// Postgres.
+	PendingBytes int64 `json:"pendingBytes"`
 	// Stale says the health check has not run for a while.
 	Stale bool `json:"stale"`
 }
@@ -142,7 +144,7 @@ func TransformManagedStatus(engine string, engineAPI int, status *managedmodel.S
 			CheckedAt:      status.Archiving.CheckedAt,
 			LastArchivedAt: status.Archiving.LastArchivedAt,
 			FailedCount:    status.Archiving.FailedCount,
-			PgWalBytes:     status.Archiving.PgWalBytes,
+			PendingBytes:   status.Archiving.PendingBytes,
 			Stale:          status.Archiving.Stale,
 		},
 		Placement:   status.Placement,

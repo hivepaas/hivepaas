@@ -33,7 +33,7 @@ func (f *markingManaged) MarkRestorePoint(_ context.Context, req *managedservice
 		return nil, f.err
 	}
 	return &managedservice.MarkedPoint{App: &entity.App{Name: "shop-db"},
-		Point: &entity.ManagedRestorePoint{Name: req.Name, LSN: "0/3000060"}}, nil
+		Point: &entity.ManagedRestorePoint{Name: req.Name, Position: "0/3000060"}}, nil
 }
 
 type namedApps struct {

@@ -107,10 +107,10 @@ func TestOnlyAReadyRestoredDatabaseSwitches(t *testing.T) {
 	loaded.app = &entity.App{ID: "target-1", Name: "shop-db-restored"}
 	assert.ErrorIs(t, checkSwitchable(loaded), hperrors.ErrAppManagedSwitchNotRestored)
 
-	loaded.managed.Postgres.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src-1"}}
+	loaded.managed.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: "src-1"}}
 	assert.ErrorIs(t, checkSwitchable(loaded), hperrors.ErrAppManagedSwitchNotReady)
 
-	loaded.managed.Postgres.Restore.ReadyAt = time.Now()
+	loaded.managed.Database.Restore.ReadyAt = time.Now()
 	assert.NoError(t, checkSwitchable(loaded))
 }
 

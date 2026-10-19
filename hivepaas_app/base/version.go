@@ -23,10 +23,14 @@ const (
 	// VersionCodeV2 lets a template be managed by an engine, carry artifacts and
 	// require license features.
 	VersionCodeV2 = "v000002" // Date: 2026-10-18
+	// VersionCodeV3 names a managed database's state apart from its engine: the
+	// app-managed settings move to version 2. Those rows are also read in the
+	// new shape where data migration has not rewritten them.
+	VersionCodeV3 = "v000003" // Date: 2026-10-19
 )
 
 // CurrentVersion is the version code this binary is.
-const CurrentVersion = VersionCodeV2
+const CurrentVersion = VersionCodeV3
 
 // The repositories the app's and the agent's images are released to.
 const (

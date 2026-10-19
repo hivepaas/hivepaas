@@ -34,7 +34,7 @@ func (uc *UC) DeleteApp(
 		if err = entity.CheckAppDeletion(app.Project, app); err != nil {
 			return hperrors.Wrap(err)
 		}
-		if err = refuseClusterDeletion(app); err != nil {
+		if err = refuseClusterDeletion(app, req.DeleteCluster); err != nil {
 			return err
 		}
 
@@ -50,7 +50,8 @@ func (uc *UC) DeleteApp(
 				Set("envId", app.ProjectEnvID).
 				Set("status", app.Status).
 				Set("serviceId", app.ServiceID).
-				Set("removeStorage", req.RemoveStorage))
+				Set("removeStorage", req.RemoveStorage).
+				Set("deleteCluster", req.DeleteCluster))
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -73,8 +74,9 @@ func (uc *UC) DeleteApp(
 // refuseClusterDeletion keeps a managed cluster whole: a member is removed from
 // its primary's Database tab, which keeps the members it lists true; and the
 // app a replica was promoted over still holds the cluster - its setting, its
-// jobs and its members - so deleting it would delete the primary with it.
-func refuseClusterDeletion(app *entity.App) error {
+// jobs and its members - so it is deleted only when the whole cluster is asked
+// for: deleting it deletes the primary with it.
+func refuseClusterDeletion(app *entity.App, deleteCluster bool) error {
 	setting := app.GetSettingByType(base.SettingTypeAppManaged)
 	if setting == nil {
 		return nil
@@ -86,7 +88,7 @@ func refuseClusterDeletion(app *entity.App) error {
 	if managed.MemberOf != nil {
 		return hperrors.Wrap(hperrors.ErrAppManagedIsMember).WithParam("App", app.Name).ExposeParams("App")
 	}
-	if managed.Postgres != nil && managed.Postgres.Writer.ID != "" {
+	if managed.Postgres != nil && managed.Postgres.Writer.ID != "" && !deleteCluster {
 		return hperrors.Wrap(hperrors.ErrAppManagedClusterHeld).WithParam("App", app.Name).ExposeParams("App")
 	}
 	return nil

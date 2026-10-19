@@ -12,6 +12,9 @@ type DeleteAppReq struct {
 	ProjectEnvID  string `json:"-"`
 	AppID         string `json:"-"`
 	RemoveStorage bool   `json:"-" mapstructure:"removeStorage"`
+	// DeleteCluster deletes the app a managed database's replica was promoted
+	// over, which holds its cluster, with every member: the primary among them.
+	DeleteCluster bool `json:"-" mapstructure:"deleteCluster"`
 }
 
 func NewDeleteAppReq() *DeleteAppReq {

@@ -21,6 +21,7 @@ import (
 // @Param   appID path string true "app ID"
 // @Param   body body appdto.DeleteAppReq true "request data"
 // @Param   removeStorage query bool false "`removeStorage=true` also deletes the data the app keeps on volumes"
+// @Param   deleteCluster query bool false "`deleteCluster=true` deletes a promoted-over database with its cluster"
 // @Success 200 {object} appdto.DeleteAppResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

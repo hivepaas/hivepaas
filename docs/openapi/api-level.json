@@ -33,7 +33,7 @@
     "DELETE /projects/{projectID}/{projectEnv}": "47f2eeb379b5874005f93632d6cc60465b3eec085516bb3b168a64be60488297",
     "DELETE /projects/{projectID}/{projectEnv}/access-tokens/{itemID}": "42108413314cedf820e7f90d39137e32679522514638f5b369bdd236470cd203",
     "DELETE /projects/{projectID}/{projectEnv}/acme-dns-providers/{itemID}": "42108413314cedf820e7f90d39137e32679522514638f5b369bdd236470cd203",
-    "DELETE /projects/{projectID}/{projectEnv}/apps/{appID}": "0a7b15b855ea0d9368e3a618e8bacf1122f2ea9efcbf05f124e07e97d1ca021a",
+    "DELETE /projects/{projectID}/{projectEnv}/apps/{appID}": "0195888afa5b334540a7d0d41346fc2967c2ac136f6c31bc61de3c6d63b61e53",
     "DELETE /projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}": "3461c1f4a5a6927264717e7af08105a0dd05ac4cce6c8e269b1d2b2b115a7373",
     "DELETE /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}": "3461c1f4a5a6927264717e7af08105a0dd05ac4cce6c8e269b1d2b2b115a7373",
     "DELETE /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}": "4737a07ee8bb1eb81c312bd540c2ba25bc9221ccd95c1313eb080c7b95951d46",

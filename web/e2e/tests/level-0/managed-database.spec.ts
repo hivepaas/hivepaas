@@ -688,3 +688,77 @@ test("a fenced managed database says which member is the primary", async ({ page
     await expect(row.getByRole("button", { name: "Promote e2e-db-r1" })).toHaveCount(0);
     await expect(row.getByRole("button", { name: "Remove e2e-db-r1" })).toBeDisabled();
 });
+
+const WALG_SHA = "965a7147852435bc4b54f272799b63df826b54ef65cf7c4fc688c82b96c0c4eb";
+
+// counts is a severity summary with only HIGH findings, all fixable.
+function counts(high: number) {
+    const none = { total: 0, fixable: 0 };
+    return { critical: none, high: { total: high, fixable: high }, medium: none, low: none, unknown: none, ignored: 0 };
+}
+
+// A managed database's Security tab lists the WAL-G binary its tasks bind beside
+// its image: a managed artifact, read from the artifacts cache, its modules'
+// findings among the image's.
+test("a managed database's artifact is shown on its Security tab", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const scanned = { status: "done", scannedAt: at(-HOUR), updatedAt: at(-HOUR), trivyVersion: "0.75.0" };
+    await page.route(
+        url => url.pathname === `/api/projects/${project.id}/${app.env}/apps/${app.id}/image-scan`,
+        route =>
+            route.fulfill({
+                json: {
+                    meta: {},
+                    data: {
+                        enabled: true,
+                        scannedAt: at(-HOUR),
+                        summary: counts(1),
+                        images: [
+                            {
+                                ...scanned,
+                                imageId: `sha256:${"1".repeat(64)}`,
+                                imageRef: "postgres:18.6-trixie",
+                                platform: "linux/amd64",
+                                osFamily: "debian",
+                                osName: "13.1",
+                                osEosl: false,
+                                source: "node",
+                                summary: counts(0),
+                            },
+                            {
+                                ...scanned,
+                                imageId: `sha256:${WALG_SHA}`,
+                                imageRef: "wal-g v3.0.8",
+                                platform: "linux/amd64",
+                                osEosl: false,
+                                source: "artifact",
+                                summary: counts(1),
+                            },
+                        ],
+                        findings: [
+                            {
+                                imageId: `sha256:${WALG_SHA}`,
+                                vulnId: "CVE-2026-78669",
+                                pkgName: "golang.org/x/net",
+                                pkgType: "gobinary",
+                                installedVersion: "v0.58.0",
+                                fixedVersion: "0.60.0",
+                                severity: "HIGH",
+                            },
+                        ],
+                        ignored: [],
+                    },
+                },
+            }),
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/security/`);
+    const images = page.getByTestId("scanned-image");
+    await expect(images).toHaveCount(2);
+    await expect(images.nth(0)).not.toContainText("Managed artifact");
+    await expect(images.nth(1)).toContainText("wal-g v3.0.8");
+    await expect(images.nth(1)).toContainText("Managed artifact");
+    await expect(images.nth(1)).toContainText("read from the node's artifacts cache");
+    await expect(page.getByText("golang.org/x/net")).toBeVisible();
+});

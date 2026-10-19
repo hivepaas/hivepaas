@@ -493,7 +493,70 @@ read.
 - the restored app's first nightly backs up into its own prefix;
 - the switch moves a consumer to it.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend b9dcaeb9; app-templates 286f507; API unchanged, at level 4; no CLI
+or dashboard change):
+- **walgkit has the shared restore** (`walgkit/restore.go`):
+  - `PrepareRestore` sets the source archive's `HIVEPAAS_RESTORE_`-prefixed variables
+    and its keys as `RESTORE_` secret files of the engine's user. A volume source is
+    mounted read-only.
+  - `RecoveryCheck` runs `walg-entrypoint status`.
+  - `FirstBackupJob` is the nightly job.
+  - `FinishRestore` drops the restore's variables, secrets, their mounts and the
+    source mount, and marks the restore ready.
+
+  `Profile.RestoreTarget` is the engine's part. Postgres keeps its
+  `HIVEPAAS_RESTORE_RECOVERY` settings. Its tests pass, renamed.
+- **MariaDB's targets:**
+
+  | Target | Variables |
+  |---|---|
+  | latest | `TARGET_BACKUP=LATEST` |
+  | time | `TARGET_BEFORE` and `STOP_TIME`, both RFC 3339 |
+  | point | `TARGET_BEFORE=<point at>` and `STOP_POSITION=<file:offset>`, matched against `^[A-Za-z0-9_-]+\.[0-9]{6,}:[0-9]+$` |
+  | backup | `TARGET_BACKUP=<stream_…>` and `REPLAY=none` |
+
+  Anything else is `ERR_APP_MANAGED_RESTORE_TARGET_INVALID`, a Postgres LSN or base
+  name included.
+- **The restore task** is unchanged apart from its wording: "Recovered: the server is
+  up, and serving".
+- **Found here, fixed for MariaDB, open for Postgres:**
+  - **Two servers on one volume.** The restore's finish updates the service twice
+    within a second: the variables taken off, then the secret mounts refreshed. Swarm
+    started the third task before the first had stopped, so two `mariadbd` ran on one
+    data directory for about 0.7 s (`ddl_recovery.log not found` on the new one). A
+    plain `service update --force` orders them correctly.
+    - `walg-entrypoint` now takes an `flock` on `<volume>/hivepaas-server.lock`
+      before anything else. It holds it in a process of its own
+      (`hivepaas-data-lock`), because `mariadbd` closes the files it inherits. A
+      second container waits up to `HIVEPAAS_DATA_LOCK_TIMEOUT` (300 s), then exits
+      1.
+    - Postgres was hit too: `pg18b-restored` logged "performing immediate shutdown
+      because data directory lock file is invalid". Its own check caught it a minute
+      later. Its `walg-entrypoint` has no such lock yet.
+  - **A restore's state on a reused volume.** `hivepaas-restore.state` now records an
+    id: a hash of the `HIVEPAAS_RESTORE_` variables and the app's own archive prefix.
+    A volume restored before, into another app or to another target, is fetched again
+    and not served as it was. Postgres's `walg-entrypoint` serves a "done" state or an
+    existing `PG_VERSION` as it is.
+- **Harness:**
+  - 108 checks on 11.8: a second server waits or gives up, and the lock is held by its
+    own process; latest restored into a volume restored to a time before holds the 40
+    rows.
+  - 11.4 passed the same, bar the lock-holder check, whose `pgrep` was fixed after.
+- **Live on dind** (`lc/check20.sh`):
+  - `lc-maria` held 10 rows, a base backup, then 20 rows, a moment, then 30 rows. It
+    was restored into new apps:
+    - latest: 30 rows;
+    - the time: 20 rows;
+    - the backup: 10 rows.
+  - Each finished its task, served and took writes. Each had its first base backup
+    in its own `walg/<key>/<id>`, and no `HIVEPAAS_RESTORE_` variable left on the
+    service.
+  - `lc-web`, with `DB_HOST=${lc-maria.HIVEPAAS_HOST}`, was listed as a consumer and
+    switched to `${lc-maria-latest-0003.HIVEPAAS_HOST}`. `lc-maria` is switched, its
+    jobs paused. `lc-maria-latest-0003` is the live MariaDB from here on.
 
 ## Task 5 (backend, app-templates): restore points and deploy points
 

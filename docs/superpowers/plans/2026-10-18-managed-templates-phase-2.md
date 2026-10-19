@@ -1087,7 +1087,70 @@ e4ea929d; no template change, and the API is unchanged, at level 4, so no CLI ch
 - The app's image list includes the artifact.
 - Live: the WAL-G binary is scanned, and its findings are shown.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend 67c29677, merged as dfcb47e6; dashboard 6489604b, merged as
+f8639fdf; CLI 09157b5, merged as dd7fa4c; no template change):
+- **The runner (`imagescanrun`):**
+  - `RunReq.Mode` is `""` for an image and `ModeRootfs` for an artifact's file. The
+    script then runs `trivy rootfs … /scan/artifact`, and an SBOM is
+    `trivy rootfs --format cyclonedx`.
+  - The source is `base.ImageScanSourceArtifact` (`"artifact"`). The node's Docker is
+    not asked for the image, no socket is mounted, and no credentials are copied.
+  - **Changed from the plan: `RunReq` takes no host path.** The runner binds
+    `CacheHostDir()/<hex of ImageID>` read-only. The agent then never mounts a path a
+    call names, only a file of its cache by a validated `sha256:<64 hex>`, which
+    `imageIDPattern` already checks.
+  - `validate` refuses another mode, a `RemoteRef` in rootfs mode, and a node with no
+    host directory.
+  - The proto gains `mode = 15`. It was regenerated with protoc 35.1, and the agent's
+    client and server copy it.
+- **The service (`imagescanserviceimpl`):**
+  - `scanApp` adds `appArtifacts` to `appImages`. For each node the app's tasks run
+    on, the node's architecture comes from `NodeInspect`, and each artifact gives the
+    file for that build: once per sha256, ID `sha256:<hex>`, Ref `<name> <version>`,
+    Platform `linux/<arch>`. Failing to read the artifacts is a warning, and the
+    images are scanned all the same.
+  - Before the scan, `ensureArtifact` has the file on the scan node.
+    `EnsureOnNodeReq.Arch` is new: it picks the task's build whatever that node's
+    architecture. A file of another sha256 is refused.
+  - `runReqOf` builds an image's or a file's request, shared with the SBOM. The SBOM
+    finds artifacts as the scan does.
+  - The scan is kept as an image's: `image_scans` by the sha256, with source
+    `artifact` and the build's platform (a failed first scan too).
+    `app_image_scans.image_ids` lists it. The hour's freshness, ignores, counts,
+    notifications and the daily scan treat it as an image.
+- **The API:** `ImageScanSource` gains `"artifact"`, in responses only, so the level
+  stays 4. The CLI client was regenerated for the swagger change.
+- **Dashboard:**
+  - `ScannedImages` shows an artifact with a file icon, a "Managed artifact" badge and
+    "read from the node's artifacts cache".
+  - Its SBOM button says "the artifact's modules".
+- **Found on WAL-G 3.0.9:**
+  - 35 findings in its Go modules, 15 of them HIGH.
+  - One is a false positive: CVE-2021-38599 (fixed in 1.1) on WAL-G's own module,
+    because the binary carries the pseudo-version `v0.0.0-…+dirty`. An ignore sets it
+    aside.
+- **Tests:**
+  - the script and the request's validation in rootfs mode;
+  - the run binds the file and nothing of Docker;
+  - parsing a Go binary's report (`testdata/walg-gobinary.json`, trimmed from WAL-G's
+    real one);
+  - `artifactTargets`, `appArtifacts`, `runReqOf`;
+  - `readScan`'s platform;
+  - `ensureArtifact` (the build asked for; another sha256 refused);
+  - `EnsureOnNode` with `Arch`;
+  - an app's scan lists the artifact among its image IDs;
+  - e2e level-0: 14, all pass. The new test is the Security tab naming the artifact.
+- **Live check, on the e2e stack (`lc/check15.sh`):**
+  - Scanning was switched on with a pinned volume, then off again after the check.
+  - pg18's scan task was done. It scanned `postgres:18.6-trixie`, then
+    `wal-g 3.0.9 (965a71478524)`: 0 CRITICAL, 15 HIGH, 34 with a fix.
+  - The image list has it as `source: artifact`, `linux/amd64`, `done`, with 35
+    `gobinary` findings.
+  - Its SBOM is CycloneDX with 126 components, `golang.org/x/net` among them.
+  - `image_scans` keeps it by its sha256, and the app's `image_ids` lists it.
+  - The real Security tab shows the badge (screenshot checked).
 
 ## After the plan
 

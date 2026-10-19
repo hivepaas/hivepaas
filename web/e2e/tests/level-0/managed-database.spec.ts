@@ -67,22 +67,42 @@ const DETAIL = {
     parameters: [],
 };
 
+// The managed template of engine mariadb, as the store lists it.
+const MARIADB_SUMMARY = {
+    ...SUMMARY,
+    name: "mariadb-managed",
+    title: "MariaDB (managed)",
+    tagline: "MariaDB that HivePaaS archives continuously and restores to any moment",
+    versions: [{ name: "11.8", release: "11.8.9", default: true, deprecated: false, variants: [] }],
+    managed: "mariadb",
+};
+
+const MARIADB_DETAIL = { ...DETAIL, ...MARIADB_SUMMARY, license: "GPL-2.0" };
+
 // answerTemplates answers the store's list and the managed template, and the
 // lists its create form chooses an archive from: one S3 repository.
-async function answerTemplates(page: Page, projectId: string): Promise<void> {
+async function answerTemplates(page: Page, projectId: string, summary = SUMMARY, detail = DETAIL): Promise<void> {
     await page.route(
         url => url.pathname === "/api/app-templates",
-        route => route.fulfill({ json: { meta: { page: { offset: 0, limit: 50, total: 1 } }, data: [SUMMARY] } }),
+        route => route.fulfill({ json: { meta: { page: { offset: 0, limit: 50, total: 1 } }, data: [summary] } }),
     );
     await page.route(
-        url => url.pathname === `/api/app-templates/${TEMPLATE}`,
-        route => route.fulfill({ json: { meta: {}, data: DETAIL } }),
+        url => url.pathname === `/api/app-templates/${summary.name}`,
+        route => route.fulfill({ json: { meta: {}, data: detail } }),
     );
     await page.route(
-        url => url.pathname === `/api/app-templates/${TEMPLATE}/image-tags`,
+        url => url.pathname === `/api/app-templates/${summary.name}/image-tags`,
         route =>
             route.fulfill({
-                json: { meta: {}, data: { repository: "postgres", currentTag: "18.6", truncated: false, tags: [] } },
+                json: {
+                    meta: {},
+                    data: {
+                        repository: summary.managed,
+                        currentTag: summary.versions[0]?.release ?? "",
+                        truncated: false,
+                        tags: [],
+                    },
+                },
             }),
     );
     // The environment's list: what the environment chosen can archive to.
@@ -388,6 +408,59 @@ test("a managed template is created with the archive chosen", async ({ page, api
         managed: { storage: { backupRepo: { id: REPO.id } }, dump: { repo: { id: REPO.id } } },
     });
     await expect(page).toHaveURL(/\/apps\/e2emanagedapp001\/deployments\/?$/);
+});
+
+// A MariaDB template is a managed template like Postgres's: the store marks
+// it, and its create form speaks of the engine's binary logs and dump tool.
+test("a MariaDB managed template is created with its engine's words", async ({ page, api }) => {
+    const project = await systemProject(api);
+    await answerTemplates(page, project.id, MARIADB_SUMMARY, MARIADB_DETAIL);
+    let created: Record<string, unknown> | undefined;
+    await page.route(
+        url => url.pathname.endsWith("/apps/from-template/preflight"),
+        route => route.fulfill({ json: { meta: {}, data: { storage: [], issues: [] } } }),
+    );
+    await page.route(
+        url => url.pathname.endsWith("/apps/from-template"),
+        route => {
+            created = route.request().postDataJSON() as Record<string, unknown>;
+            return route.fulfill({
+                json: {
+                    meta: {},
+                    data: {
+                        app: { id: "e2emanagedapp002" },
+                        deployment: { id: "e2edeployment003" },
+                        managed: { placement: "off-site" },
+                    },
+                },
+            });
+        },
+    );
+
+    await page.goto(`/projects/${project.id}/app-templates/`);
+    const card = page.getByRole("group", { name: MARIADB_SUMMARY.title });
+    const badge = card.getByText("Managed", { exact: true });
+    await expect(badge).toBeVisible();
+    await badge.hover();
+    await expect(page.getByRole("tooltip")).toContainText("HivePaaS looks after this MariaDB");
+    await card.getByRole("button", { name: "Deploy" }).click();
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Archive and backups")).toBeVisible();
+    await expect(dialog.getByText("a quiet database's binary logs are archived at least this often")).toBeVisible();
+    await expect(dialog.getByText("A mariadb-dump into a backup repository")).toBeVisible();
+    await expect(dialog.getByPlaceholder("SELECT COUNT(*) FROM orders")).toBeVisible();
+    await dialog.getByPlaceholder("e.g. my-app").fill("e2e-mariadb");
+    await dialog.getByRole("combobox", { name: "Archive to" }).click();
+    await page.getByRole("option", { name: `${REPO.name} (S3)` }).click();
+    await dialog.getByRole("button", { name: "Deploy Template", exact: true }).click();
+
+    await expect.poll(() => created, { message: "the create request was sent" }).toBeDefined();
+    expect(created).toMatchObject({
+        name: "e2e-mariadb",
+        template: MARIADB_SUMMARY.name,
+        managed: { storage: { backupRepo: { id: REPO.id } }, dump: { repo: { id: REPO.id } } },
+    });
 });
 
 // A managed database's Database tab says how its archive is doing, how far

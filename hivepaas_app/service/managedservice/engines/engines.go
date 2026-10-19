@@ -6,6 +6,7 @@ package engines
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/mariadb"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/postgres"
 )
 
@@ -13,6 +14,7 @@ import (
 // engines templates may name. Engines keep no state, so one of each serves all.
 var all = []managedmodel.Engine{
 	postgres.New(),
+	mariadb.New(),
 }
 
 // Lookup is the engine of that name, and false when this HivePaaS has none.

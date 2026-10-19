@@ -112,7 +112,7 @@ its `index -check` would fail on `main` until Task 2 teaches the backend engine
     `mysql@unix(/run/mysqld/mysqld.sock)/mysql`). No password is used anywhere.
   - The account comes from the image's own `MARIADB_MYSQL_LOCALHOST_USER=1` and
     `MARIADB_MYSQL_LOCALHOST_GRANTS=ALL`, in the template's env, not an initdb file.
-    A restored database brings the source's. Task 2's `PrepareDoc` locks both
+    A restored database brings the source's. Task 3's `PrepareDoc` locks both
     variables.
   - Replaying arbitrary events needs ALL: DDL, `SET gtid_*`, and the privilege to
     replay binary logs.
@@ -331,7 +331,47 @@ a dind live check are rerun.
 - the registry against the table;
 - the index lint passes.
 
-- [ ] Commit per repository.
+- [x] Commit per repository.
+
+**As built** (backend 953fffc3; app-templates aa288f4, on Task 0's branch, merged with
+it; dashboard 049a992c; the API is unchanged, at level 4, so no CLI change):
+- **Contract version codes.** `EngineContract.VersionCode` is the first code that has
+  the engine: postgres v000002, mariadb v000003. A template naming an engine must
+  require it ("managed: engine mariadb needs requires.versionCode v000003 or later"),
+  besides v000002 for `managed` itself.
+- **Defaults.** `Managed.MariaDB` (`yaml:"mariadb"`) sits beside `Postgres`.
+  `Defaults()` picks the template's engine's. Each key is refused for another engine,
+  and checked as `managed.<engine>.…`, in a stable order.
+- **`VersionCodeV3`** came with Task 1. Its comment now also says that a managed
+  template may name engine mariadb.
+- **The engine skeleton** (`service/managedservice/mariadb`):
+  - `Capabilities{Replicas: false, VerifierApp: true}` and `PointNameMax` 63, as
+    planned.
+  - Every method with an error refuses with `ERR_APP_MANAGED_UNSUPPORTED_BY_ENGINE`,
+    worded as what a MariaDB database does not have yet: archiving, a status,
+    settings, restores, nightly backups, restore points, replicas.
+  - The others return their zero value. No app reaches them, since none can be made.
+  - It is registered in `engines.Lookup`, and the test holds the registry to the
+    table.
+- **The index.** `apptemplate lint` passes on 393 templates and `index -check` on the
+  new index. The v000002 subset keeps 392: `mariadb-managed` is left out of the
+  releases that cannot read it.
+- **Dashboard.** No code change, since Task 1 made the store and the create form read
+  the engine table. A level-0 e2e test now covers a mocked `mariadb-managed`:
+  - the badge's tooltip names MariaDB;
+  - the form speaks of binary logs and `mariadb-dump`;
+  - the check-query placeholder is MariaDB's;
+  - the create request names the template.
+
+  The spec passes 16/16.
+- **Live on dind:**
+  - The store lists `mariadb-managed` as managed by mariadb and compatible, with its
+    defaults. `postgres-managed` keeps its own.
+  - Creating one answers 412 "MariaDB databases do not have archiving yet", and leaves
+    no app.
+- **Shipping.** The template reaches installs only with a new release.json pin to an
+  app-templates commit that has it, re-signed. That waits until the engine creates
+  databases (Task 3) at least.
 
 ## Task 3 (backend): create, archive, nightly, health, status
 

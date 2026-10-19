@@ -47,3 +47,14 @@ func TestPostgresCanDoWhatItDid(t *testing.T) {
 	assert.True(t, caps.VerifierApp)
 	assert.Equal(t, 63, engine.PointNameMax())
 }
+
+// MariaDB has no replicas, and runs its restore test in a verifier app too.
+func TestMariaDBCanDoWhatItCan(t *testing.T) {
+	engine, found := Lookup(templatemodel.ManagedEngineMariaDB)
+	assert.True(t, found)
+
+	caps := engine.Capabilities()
+	assert.False(t, caps.Replicas)
+	assert.True(t, caps.VerifierApp)
+	assert.Equal(t, 63, engine.PointNameMax())
+}

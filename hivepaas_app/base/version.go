@@ -25,7 +25,8 @@ const (
 	VersionCodeV2 = "v000002" // Date: 2026-10-18
 	// VersionCodeV3 names a managed database's state apart from its engine: the
 	// app-managed settings move to version 2. Those rows are also read in the
-	// new shape where data migration has not rewritten them.
+	// new shape where data migration has not rewritten them. A managed template
+	// may name engine mariadb.
 	VersionCodeV3 = "v000003" // Date: 2026-10-19
 )
 

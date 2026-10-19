@@ -56,6 +56,19 @@ func (s *service) RemoveVolumeInCluster(
 		}
 	}
 
+	if clusterVol.NodeID != "" {
+		gone, err := s.nodeIsGone(ctx, clusterVol.NodeID)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if gone {
+			// The node left the cluster - removed, or the swarm made anew - and its
+			// volumes went with it: there is nothing to remove, and the setting goes.
+			// A node that is there but down still refuses the removal.
+			return nil
+		}
+	}
+
 	pins := []placementservice.VolumePin{{
 		VolumeName: setting.Name,
 		NodeID:     clusterVol.NodeID,
@@ -190,4 +203,19 @@ func (s *service) anyNodeCarries(ctx context.Context, label string) (bool, error
 		}
 	}
 	return false, nil
+}
+
+// nodeIsGone says whether the cluster has no node of that id: listed, not
+// inspected, so that a node that is down still counts as there.
+func (s *service) nodeIsGone(ctx context.Context, nodeID string) (bool, error) {
+	listed, err := s.dockerManager.NodeList(ctx)
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	for i := range listed.Items {
+		if listed.Items[i].ID == nodeID {
+			return false, nil
+		}
+	}
+	return true, nil
 }

@@ -16175,6 +16175,13 @@
           "schema" : {
             "type" : "boolean"
           }
+        }, {
+          "description" : "`deleteCluster=true` deletes a promoted-over database with its cluster",
+          "in" : "query",
+          "name" : "deleteCluster",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "requestBody" : {
           "content" : {

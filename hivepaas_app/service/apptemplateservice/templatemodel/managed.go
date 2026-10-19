@@ -24,7 +24,10 @@ import (
 
 type ManagedEngine string
 
-const ManagedEnginePostgres ManagedEngine = "postgres"
+const (
+	ManagedEnginePostgres ManagedEngine = "postgres"
+	ManagedEngineMariaDB  ManagedEngine = "mariadb"
+)
 
 // EngineContract is what a template may expect of an engine this HivePaaS has,
 // and what the engine expects of the template: the engine API versions it
@@ -32,17 +35,23 @@ const ManagedEnginePostgres ManagedEngine = "postgres"
 // one this HivePaaS cannot look after.
 type EngineContract struct {
 	// Title is how the engine is named to a person: PostgreSQL.
-	Title     string
-	MinAPI    int
-	MaxAPI    int
-	Artifacts []string
+	Title string
+	// VersionCode is the first HivePaaS that has the engine: a template naming it
+	// requires that code, so that an older one is not offered it.
+	VersionCode string
+	MinAPI      int
+	MaxAPI      int
+	Artifacts   []string
 }
 
 // ManagedEngines is every engine a template may name. The engines themselves are
 // managedservice's; its registry is tested against this table, as the spec
 // builders are against BuildableBlocks.
 var ManagedEngines = map[ManagedEngine]EngineContract{
-	ManagedEnginePostgres: {Title: "PostgreSQL", MinAPI: 1, MaxAPI: 1, Artifacts: []string{"wal-g"}},
+	ManagedEnginePostgres: {Title: "PostgreSQL", VersionCode: base.VersionCodeV2, MinAPI: 1, MaxAPI: 1,
+		Artifacts: []string{"wal-g"}},
+	ManagedEngineMariaDB: {Title: "MariaDB", VersionCode: base.VersionCodeV3, MinAPI: 1, MaxAPI: 1,
+		Artifacts: []string{"wal-g"}},
 }
 
 // Managed binds a template to its engine.
@@ -51,9 +60,10 @@ type Managed struct {
 	// EngineAPI is the contract between this template and the engine: which
 	// scripts it ships, their arguments and exit codes, the environment they read.
 	EngineAPI int `yaml:"engineApi"`
-	// Postgres holds the defaults of the create form, for engine postgres. Any of
-	// them may be left out, and the engine's own default applies.
+	// Postgres and MariaDB hold the defaults of the create form, each for its
+	// engine. Any of them may be left out, and the engine's own default applies.
 	Postgres *ManagedDefaults `yaml:"postgres,omitempty"`
+	MariaDB  *ManagedDefaults `yaml:"mariadb,omitempty"`
 }
 
 // ManagedDefaults are the create form's defaults, the same for every engine.
@@ -72,7 +82,16 @@ func (m *Managed) Defaults() *ManagedDefaults {
 	if m == nil {
 		return nil
 	}
-	return m.Postgres
+	return m.defaultsByEngine()[m.Engine]
+}
+
+// defaultsByEngine are the defaults under each engine's key, whichever the
+// template's engine is.
+func (m *Managed) defaultsByEngine() map[ManagedEngine]*ManagedDefaults {
+	return map[ManagedEngine]*ManagedDefaults{
+		ManagedEnginePostgres: m.Postgres,
+		ManagedEngineMariaDB:  m.MariaDB,
+	}
 }
 
 const (
@@ -188,15 +207,22 @@ func validateManaged(t *Template, p *problems) {
 		p.add("managed.engineApi %d is outside what engine %s speaks (%d to %d)",
 			managed.EngineAPI, managed.Engine, contract.MinAPI, contract.MaxAPI)
 	}
+	if known && t.Metadata.Requires.VersionCode < contract.VersionCode {
+		p.add("managed: engine %s needs requires.versionCode %s or later", managed.Engine, contract.VersionCode)
+	}
 	for _, name := range contract.Artifacts {
 		if t.FindArtifact(name) == nil {
 			p.add("managed: engine %s needs the artifact %q", managed.Engine, name)
 		}
 	}
-	if managed.Postgres != nil && managed.Engine != ManagedEnginePostgres {
-		p.add("managed.postgres is for engine postgres")
+	byEngine := managed.defaultsByEngine()
+	for _, engine := range slices.Sorted(maps.Keys(byEngine)) {
+		defaults := byEngine[engine]
+		if defaults != nil && managed.Engine != engine {
+			p.add("managed.%s is for engine %s", engine, engine)
+		}
+		validateDefaults(string(engine), defaults, p)
 	}
-	validatePostgresDefaults(managed.Postgres, p)
 
 	// An engine looks after one app. A template of components is several, and
 	// which of them is the database would be one more thing to declare.
@@ -226,13 +252,14 @@ func validateManaged(t *Template, p *problems) {
 	}
 }
 
-func validatePostgresDefaults(defaults *ManagedDefaults, p *problems) {
+// validateDefaults checks the defaults under managed.<key>.
+func validateDefaults(key string, defaults *ManagedDefaults, p *problems) {
 	if defaults == nil {
 		return
 	}
 	if timeout := defaults.ArchiveTimeout.Duration; timeout != 0 &&
 		(timeout < minArchiveTimeout || timeout > maxArchiveTimeout) {
-		p.add("managed.postgres.archiveTimeout must be from %s to %s", minArchiveTimeout, maxArchiveTimeout)
+		p.add("managed.%s.archiveTimeout must be from %s to %s", key, minArchiveTimeout, maxArchiveTimeout)
 	}
 	for _, schedule := range [][2]string{
 		{"baseBackupSchedule", defaults.BaseBackupSchedule}, {"restoreTestSchedule", defaults.RestoreTestSchedule},
@@ -241,11 +268,11 @@ func validatePostgresDefaults(defaults *ManagedDefaults, p *problems) {
 			continue
 		}
 		if _, err := cronParser.Parse(schedule[1]); err != nil {
-			p.add("managed.postgres.%s %q is not a cron expression", schedule[0], schedule[1])
+			p.add("managed.%s.%s %q is not a cron expression", key, schedule[0], schedule[1])
 		}
 	}
 	if defaults.RetainFull < 0 || defaults.RetainFull > maxRetainFull {
-		p.add("managed.postgres.retainFull must be from 1 to %d", maxRetainFull)
+		p.add("managed.%s.retainFull must be from 1 to %d", key, maxRetainFull)
 	}
 }
 

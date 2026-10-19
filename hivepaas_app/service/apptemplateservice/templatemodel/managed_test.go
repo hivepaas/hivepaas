@@ -194,8 +194,87 @@ func TestAnAlpineVariantNameIsRefusedToo(t *testing.T) {
 func TestEveryEngineContractNamesItsArtifacts(t *testing.T) {
 	for engine, contract := range ManagedEngines {
 		assert.NotEmpty(t, contract.Title, engine)
+		assert.GreaterOrEqual(t, contract.VersionCode, base.VersionCodeV2, engine)
 		assert.LessOrEqual(t, 1, contract.MinAPI, engine)
 		assert.LessOrEqual(t, contract.MinAPI, contract.MaxAPI, engine)
 		assert.NotEmpty(t, contract.Artifacts, engine)
+	}
+}
+
+// mariadbTemplateYAML is the smallest managed template of engine mariadb, which
+// templates may name from VersionCodeV3 on.
+func mariadbTemplateYAML() string {
+	return strings.NewReplacer(
+		"versionCode: v000002", "versionCode: v000003",
+		"engine: postgres", "engine: mariadb",
+		"\n  postgres:\n", "\n  mariadb:\n",
+		"postgres:18.0-trixie", "mariadb:11.8.9-noble",
+		"postgres:17.6-trixie", "mariadb:11.4.13-noble",
+	).Replace(managedTemplateYAML)
+}
+
+func mustDecodeMariaDB(t *testing.T) *Template {
+	t.Helper()
+	tmpl, err := DecodeTemplate([]byte(mariadbTemplateYAML()))
+	assert.NoError(t, err)
+	return tmpl
+}
+
+func TestDecodeManagedMariaDBTemplate(t *testing.T) {
+	tmpl := mustDecodeMariaDB(t)
+	assert.NoError(t, tmpl.Validate("pgm"))
+
+	assert.Equal(t, ManagedEngineMariaDB, tmpl.Managed.Engine)
+	assert.Nil(t, tmpl.Managed.Postgres)
+	assert.Equal(t, 60*time.Second, tmpl.Managed.MariaDB.ArchiveTimeout.Duration)
+	assert.Same(t, tmpl.Managed.MariaDB, tmpl.Managed.Defaults(), "the engine's defaults")
+}
+
+// A HivePaaS of VersionCodeV2 decodes templates strictly, and would refuse
+// managed.mariadb: a template naming the engine says it needs a newer one.
+func TestAMariaDBTemplateNeedsVersionCodeV3(t *testing.T) {
+	tmpl := mustDecodeMariaDB(t)
+	tmpl.Metadata.Requires.VersionCode = base.VersionCodeV2
+
+	err := tmpl.Validate("pgm")
+
+	assert.Error(t, err)
+	assert.Contains(t, errorDetail(t, err), "engine mariadb needs requires.versionCode v000003 or later")
+}
+
+// The defaults are under the key of the template's engine, and only there.
+func TestEngineDefaultsAreUnderTheirEnginesKey(t *testing.T) {
+	postgres := mustDecodeManaged(t)
+	postgres.Managed.MariaDB = &ManagedDefaults{RetainFull: 3}
+	err := postgres.Validate("pgm")
+	assert.Error(t, err)
+	assert.Contains(t, errorDetail(t, err), "managed.mariadb is for engine mariadb")
+
+	mariadb := mustDecodeMariaDB(t)
+	mariadb.Managed.Postgres = &ManagedDefaults{RetainFull: 3}
+	err = mariadb.Validate("pgm")
+	assert.Error(t, err)
+	assert.Contains(t, errorDetail(t, err), "managed.postgres is for engine postgres")
+}
+
+func TestMariaDBDefaultsAreChecked(t *testing.T) {
+	cases := map[string]struct {
+		mutate func(defaults *ManagedDefaults)
+		want   string
+	}{
+		"a short archive": {func(d *ManagedDefaults) { d.ArchiveTimeout.Duration = time.Second },
+			"managed.mariadb.archiveTimeout"},
+		"a bad schedule": {func(d *ManagedDefaults) { d.BaseBackupSchedule = "nightly" },
+			"managed.mariadb.baseBackupSchedule"},
+		"no retention": {func(d *ManagedDefaults) { d.RetainFull = -1 }, "managed.mariadb.retainFull"},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			tmpl := mustDecodeMariaDB(t)
+			c.mutate(tmpl.Managed.MariaDB)
+			err := tmpl.Validate("pgm")
+			assert.Error(t, err)
+			assert.Contains(t, errorDetail(t, err), c.want)
+		})
 	}
 }

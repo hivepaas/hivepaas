@@ -218,12 +218,17 @@ is mounted at the same path on every node (phase 2, Task 8).
   placed on a node that lacks the file fails, and Swarm retries elsewhere, until the
   reconcile has run.
 - **A volume that claims to be shared but is not** gives an empty directory on another
-  node. That database initializes afresh and archives into the same prefix.
-  - `WALG_PREVENT_WAL_OVERWRITE` refuses the segments the archive already has, so
-    archiving fails where status shows it.
-  - Nothing else stops it yet: its nightly base backup would join the archive's.
-  - Refusing an empty data directory over an archive that has backups is a
-    follow-up.
+  node. `walg-entrypoint` initializes an empty data directory only over an archive
+  that holds nothing (`wal-g st ls` lists no `basebackups_005/` or `wal_005/`). Over
+  one with history, which is this database's lost data, it:
+  - idles without starting its server;
+  - writes why beside the data, so that the container's health passes and
+    `walg-health` fails, saying why;
+  - leaves the database to be restored into a new app, or given its volume back.
+
+  An archive it cannot read within `HIVEPAAS_ARCHIVE_CHECK_TIMEOUT` (60s) fails the
+  start, for Swarm to try again: it never initializes what it cannot tell is new.
+  The same guard covers a volume whose data was lost.
 
 ### When
 

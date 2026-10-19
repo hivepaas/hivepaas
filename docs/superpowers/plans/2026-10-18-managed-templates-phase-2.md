@@ -1157,3 +1157,29 @@ f8639fdf; CLI 09157b5, merged as dd7fa4c; no template change):
 - Release the CLI for the API level this phase ends at, as phase 1 left it: a hivepaas
   tag, then `make update-spec REF=<tag>`.
 - Live checks for each task are in the task. Task 8 needs two nodes.
+
+**Done after the plan** (2026-10-19):
+- **The archive prefix carries the app's ID** (backend 2bf6b640, merged as 9a692ca0).
+  - Found while writing the guard below: an app key is unique within its environment
+    only, and HivePaaS deletes no archive. So `walg/<app key>` was shared:
+    - by two environments' or projects' databases of one name on one storage;
+    - by a database made again by the name of a deleted one.
+  - A new database archives under `walg/<app key>/<app ID>`, as the user chose.
+    Databases made before keep the prefix they recorded.
+- **`walg-entrypoint` never starts afresh over an archive with history**
+  (app-templates 2440068, merged as 1f6be93; spec ac5196f9).
+  - An empty data directory is initialized only when `wal-g st ls` lists no
+    `basebackups_005/` or `wal_005/`.
+  - Over history it idles. It writes why to `hivepaas-refused` beside the data:
+    `health` passes, so Swarm leaves it, and `walg-health` fails, saying why.
+  - An archive it cannot read within `HIVEPAAS_ARCHIVE_CHECK_TIMEOUT` (60s) fails the
+    start. WAL-G retries an unreachable S3 for minutes, so the check is bounded.
+  - Harness: 12 checks a major (222 in all, 17 and 18): history refused, the archive
+    untouched, unreadable fails, empty starts.
+  - Live (`lc/check16.sh`): pg18g archived under `walg/pg18g/<ID>` and took a base
+    backup. Its `PGDATA` was removed and its service forced. It then idled with the
+    refusal, its container healthy, its health job failing with why, and its backup
+    kept.
+- **`release.json` pins app-templates at 1f6be93** (6aa3e30b, merged as 647a6060). Its
+  `indexSha256` was checked against `index.json` there. It needs app-templates main
+  pushed, then `release.signed.json` signed again.

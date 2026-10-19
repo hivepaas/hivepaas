@@ -37,6 +37,9 @@ type Profile struct {
 	PendingBytesOutput string
 	// Dump is the engine's logical dump.
 	Dump DumpCommands
+	// RestoreTarget is a restore's target as the variables walg-entrypoint
+	// recovers to: which base backup it fetches, and where it stops.
+	RestoreTarget func(source *managedmodel.RestoreSource) ([][2]string, error)
 	// Members are the database's members as its last health check saw them;
 	// nil for an engine without replicas.
 	Members func(members []*entity.ManagedMember, health *managedmodel.JobRun) []*managedmodel.MemberStatus

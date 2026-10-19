@@ -23,7 +23,7 @@ import (
 
 const (
 	// waitSlice is how long one run waits on a step before it continues the
-	// task: a recovery takes as long as the WAL it replays, hours for a large
+	// task: a recovery takes as long as the log it replays, hours for a large
 	// one, and no run holds its transaction that long.
 	waitSlice = 3 * time.Minute
 	pollEvery = 10 * time.Second
@@ -54,7 +54,7 @@ func (e *Executor) waitRecovery(ctx context.Context, db database.Tx, run *restor
 		if resp != nil && resp.ExitCode != nil {
 			switch *resp.ExitCode {
 			case 0:
-				e.log(ctx, run, "Recovered: the server is up, and promoted.")
+				e.log(ctx, run, "Recovered: the server is up, and serving.")
 				run.state.Step = entity.ManagedRestoreStepBackup
 				run.data.Continue()
 				return nil

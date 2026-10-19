@@ -40,6 +40,7 @@ var profile = &walgkit.Profile{
 	BackupPattern:      backupPattern,
 	PendingBytesOutput: outPendingBytes,
 	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".sql"},
+	RestoreTarget:      targetEnv,
 }
 
 // apiScripts are the scripts engine API 1 runs, which the template ships as
@@ -89,18 +90,6 @@ func unsupported(what string) error {
 
 func (e *Engine) Verifier() managedmodel.VerifierSpec {
 	return managedmodel.VerifierSpec{}
-}
-
-func (e *Engine) RecoveryCheck() managedmodel.RecoveryCheck {
-	return managedmodel.RecoveryCheck{}
-}
-
-func (e *Engine) FirstBackupJob(*entity.AppManagedSettings) string {
-	return ""
-}
-
-func (e *Engine) FinishRestore(*managedmodel.FinishRestoreReq) (*managedmodel.FinishRestoreResp, error) {
-	return nil, unsupported("restores")
 }
 
 func (e *Engine) MarkRestorePoint(*entity.AppManagedSettings, string) (managedmodel.MarkCommand, error) {

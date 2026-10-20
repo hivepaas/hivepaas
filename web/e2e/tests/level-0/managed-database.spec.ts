@@ -464,7 +464,7 @@ test("a MariaDB managed template is created with its engine's words", async ({ p
 });
 
 // A MariaDB's Database tab speaks of its binary logs and its dump tool, and
-// offers no replicas: its engine has none.
+// offers no replicas when its engine has none.
 test("a MariaDB's Database tab uses its engine's words, and has no replicas", async ({ page, api }) => {
     const project = await systemProject(api);
     const app = await systemApp(api, project, "traefik");
@@ -757,6 +757,32 @@ test("a managed database's replica is promoted", async ({ page, api }) => {
     await expect(section).toContainText(".HIVEPAAS_DATABASE_URL_RW}");
     await section.getByRole("button", { name: "Promote e2e-db-r1" }).click();
     await expect(page.getByText("is stopped, and kept from starting its server")).toBeVisible();
+    await page.getByRole("button", { name: "Promote", exact: true }).last().click();
+
+    await expect.poll(() => replicas.length, { message: "the promotion was asked for" }).toBe(1);
+    expect(new URL(replicas[0]?.url() ?? "").pathname).toMatch(/\/managed\/promote$/);
+    expect(replicas[0]?.postDataJSON()).toEqual({ member: { id: "e2ereplicaapp01" } });
+});
+
+// A MariaDB cluster's replicas name the host its clients reach the writer by:
+// the cluster's alias, not a multi-host URL; and its replica is promoted.
+test("a MariaDB's replicas name its writer's host, and one is promoted", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { replicas } = await answerManaged(
+        page,
+        app,
+        { engine: "mariadb", capabilities: { replicas: true, verifierApp: true } },
+        { members: [REPLICA_STATUS] },
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Replicas" });
+    await expect(section).toContainText(".HIVEPAAS_DATABASE_HOST_RW}");
+    await expect(section).toContainText(".HIVEPAAS_DATABASE_HOSTS_RO}");
+    await expect(section).not.toContainText("HIVEPAAS_DATABASE_URL_RW");
+    await section.getByRole("button", { name: "Promote e2e-db-r1" }).click();
+    await expect(page.getByText("Apps reach it through HIVEPAAS_DATABASE_HOST_RW")).toBeVisible();
     await page.getByRole("button", { name: "Promote", exact: true }).last().click();
 
     await expect.poll(() => replicas.length, { message: "the promotion was asked for" }).toBe(1);

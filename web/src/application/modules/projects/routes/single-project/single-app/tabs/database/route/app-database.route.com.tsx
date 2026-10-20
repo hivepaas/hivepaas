@@ -198,6 +198,7 @@ export function AppDatabaseRoute() {
                             env={env}
                             appId={appID}
                             appKey={app?.data.key ?? ""}
+                            engine={settings.engine}
                             writerName={writerKeyOf(settings) ?? appName}
                             members={status.members}
                             placement={status.placement}

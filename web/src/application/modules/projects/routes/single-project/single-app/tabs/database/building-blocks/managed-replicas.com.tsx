@@ -4,7 +4,7 @@ import { ArrowUpCircle, CopyPlus, Loader2, PauseCircle, Trash2 } from "lucide-re
 import { toast } from "sonner";
 import { AppManagedCommands, ProjectClusterVolumesQueries } from "~/projects/data";
 import type { AppManagedMemberStatus, ManagedPlacement } from "~/projects/domain";
-import { formatManagedTime, isVolumeInMemory, volumePlaceOf } from "~/projects/module-shared/utils";
+import { formatManagedTime, isVolumeInMemory, managedEngineOf, volumePlaceOf } from "~/projects/module-shared/utils";
 
 import { AppLink, PopConfirm } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -22,6 +22,8 @@ interface Props {
     appId: string;
     /** The cluster's app's key, whose variables are the cluster's addresses. */
     appKey: string;
+    /** The database's engine, whose clients reach the cluster as its copy says. */
+    engine: string;
     /** What writes now: this database, or the member promoted. */
     writerName: string;
     members: AppManagedMemberStatus[];
@@ -34,8 +36,19 @@ interface Props {
  * is, as the database's last health check saw it; adding one on a pinned
  * volume, and removing one.
  */
-export function ManagedReplicas({ projectId, env, appId, appKey, writerName, members, placement, canWrite }: Props) {
+export function ManagedReplicas({
+    projectId,
+    env,
+    appId,
+    appKey,
+    engine,
+    writerName,
+    members,
+    placement,
+    canWrite,
+}: Props) {
     const scope = { projectID: projectId, env, appID: appId };
+    const address = managedEngineOf(engine).clusterAddress;
     const [volume, setVolume] = useState("");
     const offSite = placement === "off-site";
     const { data: volumesData } = ProjectClusterVolumesQueries.useFindManyPaginated(
@@ -80,8 +93,8 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                 </p>
                 <p className="text-xs text-muted-foreground">
                     Apps reach whichever member is the primary, through a promotion, at{" "}
-                    <code className="font-mono">{`\${${appKey}.HIVEPAAS_DATABASE_URL_RW}`}</code>, and a replica for
-                    reads at <code className="font-mono">{`\${${appKey}.HIVEPAAS_DATABASE_URL_RO}`}</code>.
+                    <code className="font-mono">{`\${${appKey}.${address.write}}`}</code>, and a replica for reads at{" "}
+                    <code className="font-mono">{`\${${appKey}.${address.read}}`}</code>: {address.holds}.
                 </p>
             </div>
             <div className="flex flex-col divide-y rounded-md border">
@@ -120,7 +133,7 @@ export function ManagedReplicas({ projectId, env, appId, appKey, writerName, mem
                                         description={
                                             `${writerName} is stopped, and kept from starting its server; ${member.key} ` +
                                             "writes, and the other replicas restart to follow it. Apps reach it through " +
-                                            "HIVEPAAS_DATABASE_URL_RW; those that use the host of " +
+                                            `${address.write}; those that use the host of ` +
                                             `${writerName} lose the database.`
                                         }
                                         confirmText="Promote"

@@ -25,6 +25,50 @@ as-built notes here.
     with their changes;
   - a database made from the current revision shows `up-to-date`.
 
+**As built** (2026-10-21, backend `3a4663c1`, merged `7b110abb`; API level 4; the
+CLI is regenerated in Task 3):
+- **`templaterender.VersionTree(tmpl, version)`** is the app tree with the version's
+  override applied and nothing substituted. A deprecated version is read; a
+  template with components is refused.
+- **`templaterender.Static(node)`** undoes the escapes and refuses any `${{ … }}`.
+  Scripts use bash's `${VAR}`, which is no placeholder.
+- **Render: no full render.** The design said "render with the app's parameters,
+  secrets as placeholders". As built there is no render: only the
+  `settings.configFiles` subtree of the version's tree is read, through `Static`.
+  The scripts need no parameters, so neither the stored parameters nor generated
+  secrets are involved. A placeholder in a script makes the revision
+  `incompatible`.
+- **Package `service/managedservice/managedscripts`:**
+  - `FromTemplate` and `FromSettings` give the `Set`: the scripts by path (name,
+    path, mode, decoded content, sha256) and the artifacts.
+  - `Fingerprint` hashes one line per script (path, octal mode, sha256), then one
+    per artifact by name (version, mount path, each build's sha256 by arch).
+  - `Diff` lists the scripts by path (added, changed, removed), then the artifacts
+    (added, changed with from and to, removed).
+  - `Evaluate` checks the managed engine, then the engine API, then the version,
+    then the scripts.
+- **No `walgkit.CheckScripts` on the revision.** The design said the engine's own
+  check runs on the render. As built it is not run: the release pins a revision
+  this backend's lint passed. A revision that ships no script at all is
+  `incompatible`.
+- **`GET .../managed/scripts`:** `ManagedScriptsResp{state, reason,
+  current{revision, fingerprint}, available{revision, fingerprint} or null,
+  changes, outOfStep}`.
+  - The current revision is the binding's `Base.Revision` until Task 2 records
+    its own.
+  - A member is refused (`ERR_APP_MANAGED_IS_MEMBER`, 412).
+  - An app with no template binding is `unavailable`, and so is one whose template
+    is gone from the store.
+  - Members and the verifier are compared by fingerprint (`clusterMembers`).
+- **Live (dind, `lc/check28.sh`; the dind source's revision reads `local`):**
+  - lc-maria-latest-0003, with phase 1's scripts, shows `update-available`: 9
+    changed and `walg-replication` added.
+  - pg18s shows `update-available`: walg-entrypoint, walg-health and walg-lib
+    changed.
+  - A new lc-maria5 shows `up-to-date`, and its replica is not out of step.
+  - The replica's own GET is refused with 412.
+  - lc-maria5 and its replica are kept for Task 3.
+
 ## Task 2 (backend): applying
 
 - **`POST .../managed/scripts/upgrade`** with `{fingerprint}`, under the cluster's

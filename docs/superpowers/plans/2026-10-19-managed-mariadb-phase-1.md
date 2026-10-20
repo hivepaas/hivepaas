@@ -645,7 +645,40 @@ unchanged, at level 4):
     other node; and a MariaDB on NFS, moved.
 - **Release:** `release.json` pins the app-templates commit, for the user to sign.
 
-- [ ] Commit per repository.
+- [x] Commit per repository (all but the dev cluster's live check, which waits for a
+  deploy).
+
+**As built** (backend 0c03fa4c and 0e14a283; dashboard 03ce4ecb; API unchanged, at
+level 4):
+- **The verifier:** `Verifier()` is Postgres's spec (`sleep infinity`, the scratch at
+  `/var/lib/hivepaas-verify`). `Reconfigure` moves the restore test into a verifier
+  and back as walgkit does. The verifier copies the database's variables and kind
+  settings, so `walg-restore-test` reads `MARIADB_ROOT_PASSWORD` and reaches the live
+  database as root, through an option file in `/dev/shm`. Under `walg-entrypoint`,
+  `sleep infinity` starts no server, and the archive loop beside it finds none and
+  does nothing.
+- **The dump** came in Task 3. It is checked here again, live.
+- **e2e level-0:** a MariaDB's Database tab reads "MariaDB, archived continuously",
+  "Binary logs on the node" and "A mariadb-dump into a backup repository". It has no
+  Replicas section and no "Base backups taken on", and no PostgreSQL, pg_dump or WAL
+  anywhere. The spec passes 17/17.
+- **Live on dind** (`lc/check23.sh`, `lc-maria-latest-0003`):
+  - The restore test in the container passed, restoring to the point it marked, with
+    `select count(*) from p`. A check on a missing table failed it, and the status
+    said so.
+  - The dump was taken (4.4 KB).
+  - Moved into a verifier, the restore test passed there: 13 logs replayed to
+    `mariadb-bin.000014:389`, and the check answered 20. Moved back, the verifier was
+    deleted.
+  - The first run, started at once after the move, failed with "No container of the
+    app has been running for 10s": the verifier's first deployment had not finished.
+    A scheduled run never meets this. Postgres's verifier would meet it too.
+- **Release:** `release.json` pins app-templates 50f4289 (index sha256 `c9211a16…`).
+  `release.signed.json` is the user's to sign again.
+- **Not yet, waiting for a deploy to the dev cluster** (mains pushed, `make
+  dev-deploy`):
+  - a MariaDB on a volume pinned to the worker, restored to the other node;
+  - a MariaDB on NFS, moved.
 
 ## After the plan
 

@@ -645,8 +645,7 @@ unchanged, at level 4):
     other node; and a MariaDB on NFS, moved.
 - **Release:** `release.json` pins the app-templates commit, for the user to sign.
 
-- [x] Commit per repository (all but the dev cluster's live check, which waits for a
-  deploy).
+- [x] Commit per repository.
 
 **As built** (backend 0c03fa4c and 0e14a283; dashboard 03ce4ecb; API unchanged, at
 level 4):
@@ -675,10 +674,24 @@ level 4):
     A scheduled run never meets this. Postgres's verifier would meet it too.
 - **Release:** `release.json` pins app-templates 50f4289 (index sha256 `c9211a16…`).
   `release.signed.json` is the user's to sign again.
-- **Not yet, waiting for a deploy to the dev cluster** (mains pushed, `make
-  dev-deploy`):
-  - a MariaDB on a volume pinned to the worker, restored to the other node;
-  - a MariaDB on NFS, moved.
+- **On the dev cluster** (2026-10-20, after the user's deploy; appstack-1 the manager,
+  dev3 the worker; S3 was SeaweedFS on dev3; scripts `remote/t1m.sh` and `t2m.sh`):
+  - **T1:** `lc-mw` 11.8 ran on a volume pinned to dev3, archiving to S3, with 20
+    rows and two base backups. It was restored to the latest into a volume pinned to
+    appstack-1: it ran there with the 20 rows, its first base backup in its own
+    `walg/<key>/<id>`. That volume had held an earlier restore whose rows were
+    missing, a test-script fault. The new restore fetched afresh, as the restore id
+    should.
+  - **T2:** `lc-mn` 11.8 ran on an NFS volume (export on dev3, unpinned), first on
+    dev3. Moved to appstack-1 by a placement constraint, it kept its 10 rows and took
+    writes. Its `hivepaas-data-lock` held the lock on the NFS volume. Health passed
+    and archiving went on.
+  - **Cleaned:** the project, its apps and volumes, SeaweedFS, the NFS export and the
+    five packages installed for it on dev3, and the test images on both nodes.
+  - One slip, put right at once: a remote command piped the sudo password into
+    `tee -a /etc/exports`, which wrote it there. The line was removed within a
+    minute, and the purge later removed the file. The helpers now send the password
+    on ssh's stdin only.
 
 ## After the plan
 

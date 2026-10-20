@@ -592,6 +592,45 @@ unchanged, at level 4):
 - **Not run:** the CLI (`hivepaas db mark`). It posts the same endpoint, and its output
   names the position.
 
+**Follow-up after Task 5: the data lock for Postgres, and two more MariaDB fixes**
+(app-templates d515963 and 3ef7254, merged as 50f4289; no backend change):
+- **Postgres's `walg-entrypoint`** gets what Task 4 gave MariaDB:
+  - **The data lock:** an `flock` on `<volume>/hivepaas-server.lock`, held by a
+    `hivepaas-data-lock` process, taken before fencing, seeding, fetching or serving.
+    A second container waits up to `HIVEPAAS_DATA_LOCK_TIMEOUT`, then exits 1.
+  - **The restore state:** it records its id, a hash of the `HIVEPAAS_RESTORE_`
+    variables and the app's own prefix. A restore now fetches unless the state is its
+    own. Before, an existing `PG_VERSION` or a "done" state was served as it was,
+    whichever database's it was.
+  - A state written by an older script has no id. It reads as none, so a restore
+    still in progress at the upgrade fetches again. A finished restore has no restore
+    variables left and is not affected.
+- **Two more MariaDB fixes**, found by the harness's restore into a volume another app
+  used:
+  - The archive loop's state was the other database's. Its `FLUSHED_AT` offset was
+    higher than the new logs', so it never flushed.
+  - WAL-G's `.walg_mysql_binlogs_cache` names the last log the other database pushed,
+    so WAL-G skipped the new database's logs, numbered afresh. `gosu` sets `HOME` to
+    the mysql user's, the volume, so `walg-run`'s `HOME=/tmp` never applied; the
+    archive loop, already running as mysql, did use it, and so kept a second record.
+
+  `walg-entrypoint` now forgets both whenever the data directory is made afresh or
+  fetched. `walg-run` no longer sets `HOME`.
+- **Harnesses:**
+  - Postgres: 123 on each of 17 and 18. Main's harness gives 111 on 18 for
+    comparison.
+  - MariaDB: 108 on each of 11.8 and 11.4.
+
+  Both now restore "latest" into a volume another app restored to a time, with its
+  own archive (`DB_VOLUME`). The harness gives each app its own prefix, as HivePaaS
+  does: two restores on one prefix collide on WAL timelines.
+- **Live on dind:** `pg18s` was restored to the latest with the new template. Its
+  `hivepaas-data-lock` holds the lock. Its restarts did not overlap this time, so the
+  waiting itself is shown by the harness only.
+- **Shipping:** release.json must be pinned to app-templates 50f4289 or later, and
+  re-signed. Databases made before keep their scripts (locked config files) until
+  they are recreated or restored.
+
 ## Task 6 (backend, app-templates, dashboard): restore test, verifier, dump, e2e and the cluster
 
 - **Restore test:** `walg-restore-test` in the container, and in a verifier app (the

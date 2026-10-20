@@ -230,14 +230,18 @@ type ReplicaReq struct {
 
 // ReplicaSpec is what a replica is given beside the primary's settings, copied:
 // variables, the replication password as a file at PasswordFile from the secret
-// SecretName, and its data volume at DataTarget. Allow is the command that lets
-// replicas into the primary, run there with the password on its stdin.
+// SecretName, owned by FileOwner, and its data volume at DataTarget. Allow is
+// the command that lets replicas into the primary, run there with the password
+// on its stdin. ServerID is the member's server id, recorded on the member, for
+// an engine whose servers each have one; zero for none.
 type ReplicaSpec struct {
 	Env          [][2]string
 	SecretName   string
 	PasswordFile string
+	FileOwner    string
 	DataTarget   string
 	Allow        *entity.CommandTemplate
+	ServerID     int
 }
 
 // PromoteReq is a member about to be promoted to the cluster's primary: the

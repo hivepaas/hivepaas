@@ -96,6 +96,9 @@ type ManagedMember struct {
 	Volume ObjectID  `json:"volume"`
 	Node   string    `json:"node,omitempty"`
 	At     time.Time `json:"at"`
+	// ServerID is the member's server id, for an engine whose servers each have
+	// one (MariaDB's): unique in the cluster, the cluster's app's being 1.
+	ServerID int `json:"serverId,omitempty"`
 }
 
 // ManagedSwitch is a switch of a database's consumers to the database restored

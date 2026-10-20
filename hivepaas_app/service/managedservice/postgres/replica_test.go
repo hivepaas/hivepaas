@@ -33,11 +33,11 @@ func TestAReplicasSpec(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, [][2]string{
-		{envStandbyHost, "shop-db"},
-		{envStandbyName, "shop-db-r1"},
-		{envStandbyPasswordFile, replicaPasswordFile},
+		{walgkit.EnvStandbyHost, "shop-db"},
+		{walgkit.EnvStandbyName, "shop-db-r1"},
+		{walgkit.EnvStandbyPasswordFile, walgkit.ReplicaPasswordFile},
 	}, spec.Env)
-	assert.Equal(t, replicaPasswordFile, spec.PasswordFile)
+	assert.Equal(t, walgkit.ReplicaPasswordFile, spec.PasswordFile)
 	assert.True(t, strings.HasPrefix(spec.PasswordFile, "/run/secrets/"))
 	assert.NotEmpty(t, spec.SecretName)
 	assert.Equal(t, "/var/lib/postgresql", spec.DataTarget, "not the archive's volume")
@@ -77,7 +77,7 @@ func TestStatusOfTheMembers(t *testing.T) {
 		{App: entity.ObjectID{ID: "r2"}, Key: "db-r2", Role: entity.ManagedRoleReplica, Node: "n2", At: at},
 	}
 	runs := healthyRuns()
-	runs["health"].Outputs[outReplicas] = "db-r1@streaming@8192@0.4 other@catchup@1@"
+	runs["health"].Outputs[walgkit.OutReplicas] = "db-r1@streaming@8192@0.4 other@catchup@1@"
 
 	status, err := New().Status(&managedmodel.StatusReq{Managed: managed, Runs: runs, Now: statusNow})
 

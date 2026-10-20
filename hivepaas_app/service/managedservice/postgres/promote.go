@@ -46,9 +46,9 @@ func (e *Engine) Promote(req *managedmodel.PromoteReq) (*managedmodel.PromoteSpe
 	return &managedmodel.PromoteSpec{
 		FenceEnv:       [][2]string{{envFenced, req.Member.Key + " was promoted"}},
 		Promote:        &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + promoteScript},
-		Allow:          &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + replicationScript},
-		StandbyEnvKeys: []string{envStandbyHost, envStandbyName, envStandbyPasswordFile},
-		StandbyHostKey: envStandbyHost,
+		Allow:          &entity.CommandTemplate{Command: walgkit.ScriptDir + "/" + walgkit.ReplicationScript},
+		StandbyEnvKeys: []string{walgkit.EnvStandbyHost, walgkit.EnvStandbyName, walgkit.EnvStandbyPasswordFile},
+		StandbyHostKey: walgkit.EnvStandbyHost,
 	}, nil
 }
 

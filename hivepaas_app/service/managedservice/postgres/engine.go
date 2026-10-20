@@ -24,7 +24,7 @@ var profile = &walgkit.Profile{
 	PendingBytesOutput: outPgWalBytes,
 	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".dump"},
 	RestoreTarget:      targetEnv,
-	Members:            membersStatus,
+	Members:            walgkit.MembersStatus,
 }
 
 type Engine struct{}

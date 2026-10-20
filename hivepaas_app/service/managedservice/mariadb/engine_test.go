@@ -22,14 +22,12 @@ func TestTheEngineIsMariaDBs(t *testing.T) {
 // What the engine does not do yet, it refuses: an app is never made, nor a
 // job run, with half an engine.
 func TestWhatTheEngineDoesNotDoYetIsRefused(t *testing.T) {
-	engine := New()
+	_, err := New().Promote(&managedmodel.PromoteReq{})
 
-	for name, call := range map[string]func() error{
-		"replica": func() error { _, err := engine.Replica(&managedmodel.ReplicaReq{}); return err },
-		"promote": func() error { _, err := engine.Promote(&managedmodel.PromoteReq{}); return err },
-	} {
-		t.Run(name, func(t *testing.T) {
-			assert.ErrorIs(t, call(), hperrors.ErrAppManagedUnsupportedByEngine)
-		})
-	}
+	assert.ErrorIs(t, err, hperrors.ErrAppManagedUnsupportedByEngine)
+}
+
+// MariaDB has replicas, and runs its restore test in a verifier app too.
+func TestMariaDBsCapabilities(t *testing.T) {
+	assert.Equal(t, managedmodel.Capabilities{Replicas: true, VerifierApp: true}, New().Capabilities())
 }

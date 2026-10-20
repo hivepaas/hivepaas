@@ -40,6 +40,7 @@ var profile = &walgkit.Profile{
 	PendingBytesOutput: outPendingBytes,
 	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".sql"},
 	RestoreTarget:      targetEnv,
+	Members:            walgkit.MembersStatus,
 }
 
 // apiScripts are the scripts engine API 1 runs, which the template ships as
@@ -69,10 +70,10 @@ func (e *Engine) APIRange() (int, int) {
 	return minAPI, maxAPI
 }
 
-// Capabilities are MariaDB's: no replicas yet, and its restore test runs in a
+// Capabilities are MariaDB's: it has replicas, and runs its restore test in a
 // verifier app too.
 func (e *Engine) Capabilities() managedmodel.Capabilities {
-	return managedmodel.Capabilities{Replicas: false, VerifierApp: true}
+	return managedmodel.Capabilities{Replicas: true, VerifierApp: true}
 }
 
 func (e *Engine) PointNameMax() int {
@@ -95,10 +96,6 @@ func (e *Engine) Verifier() managedmodel.VerifierSpec {
 	return managedmodel.VerifierSpec{Command: "sleep infinity", ScratchDir: walgkit.VerifierScratchDir}
 }
 
-func (e *Engine) Replica(*managedmodel.ReplicaReq) (*managedmodel.ReplicaSpec, error) {
-	return nil, unsupported("replicas")
-}
-
 func (e *Engine) Promote(*managedmodel.PromoteReq) (*managedmodel.PromoteSpec, error) {
-	return nil, unsupported("replicas")
+	return nil, unsupported("promotion")
 }

@@ -114,6 +114,77 @@ descriptions only):
   - a backup on a replica, restored.
 - **Live (dind):** add and remove a replica; backup-from.
 
+**As built** (2026-10-20, app-templates `4d0446d`, merged `39c9720`; backend
+`f7794cb9`, merged `30a1047e`; API level 4, no CLI or dashboard change):
+- **The member's server arguments come by variable, not in its command.** This
+  differs from the design.
+  - The engine gives `HIVEPAAS_SERVER_ID` and `HIVEPAAS_LOG_BIN`
+    (`mariadb-bin-<member key>`) as locked variables.
+  - `walg-entrypoint` appends them to `mariadbd`'s arguments; the last option wins.
+  - A standby also gets `--read-only` and `--report-host=<member key>`.
+  - So the generic replica code keeps copying the primary's command unchanged.
+  - **Task 3 must not shed `HIVEPAAS_SERVER_ID` or `HIVEPAAS_LOG_BIN` at
+    promotion.** A promoted member keeps its name and id, and a new basename would
+    start an empty GTID state (Task 0).
+- **The server id** is the first one no member has, from 2, recorded on the member
+  (`ManagedMember.ServerID`, `ReplicaSpec.ServerID`).
+- **`ReplicaSpec.FileOwner`** replaces the use case's hard-coded postgres uid. Both
+  are 999.
+- **Shared code moved to walgkit:** `walgkit.Replica` and `walgkit.MembersStatus`
+  came from the Postgres engine, along with the constants (`EnvStandby*`,
+  `ReplicaPasswordFile`, `OutReplicas`).
+- **Seeding:**
+  - The latest backup is fetched, and the server started on its socket with the
+    member's arguments.
+  - `walg-replay --since <backup> --state-out` replays the logs since, into the
+    member's own logs with their GTIDs.
+  - When nothing was replayed, `gtid_binlog_state` is set to the backup's state,
+    so that the member's logs go on from the cluster's state.
+  - Then `gtid_slave_pos` is set to the state reached.
+  - The member reseeds at each start until a seed completes (state `standby`).
+- **The replica's archive loop:**
+  - It never pushes.
+  - It runs `CHANGE MASTER … MASTER_USE_GTID=slave_pos` when `Master_Host`
+    differs from `HIVEPAAS_STANDBY_HOST`. The password is read from its file into
+    the client's stdin.
+  - On `Last_IO_Errno=1236` it catches up: `walg-replay --since <oldest backup>
+    --from <gtid_slave_pos>`, then a new `gtid_slave_pos` and `START SLAVE`.
+    mysql@localhost replays into a read-only server.
+  - It purges its own logs older than `max(2 × archive timeout, 1h)`.
+- **Member status is read on the writer.** This differs from the design, where
+  each replica reported its own.
+  - `walg-replication` grants `REPLICATION SLAVE, SLAVE MONITOR` and keeps the
+    password in `/var/lib/mysql/hivepaas-replication.cnf`. The file is mode 600,
+    owned by mysql, and sits beside the data directory, so it is in no base backup.
+  - The writer's `walg-health` asks each host from `SHOW SLAVE HOSTS` for
+    `SHOW SLAVE STATUS`. It prints `name@state@bytes@seconds`, as Postgres does.
+  - A replica that is catching up is not connected, so it shows as disconnected.
+- **The multi-host `HIVEPAAS_DATABASE_URL_RW` and `_RO`** are now generated for
+  Postgres only.
+- **Promotion** is refused ("promotion") until Task 3. MariaDB's `Capabilities`
+  are `{Replicas: true}`, so the dashboard offers a promote button that the API
+  refuses until then.
+- **Harness:** 166/166 on each of 11.8 and 11.4. It covers:
+  - `walg-replication`;
+  - two replicas seeded under writes;
+  - read-only, logs of the member's own name with the primary's GTIDs, and none
+    pushed;
+  - `REPLICAS`;
+  - no password on any process's arguments;
+  - a stopped replica catching up from the archive after 1236;
+  - a backup taken on a replica, restored, then retain;
+  - a replica the archive cannot seed, which idles.
+
+  `ONLY=<test>` runs one standalone test.
+- **Live (dind, `lc/check25.sh`).** A new lc-maria2 (APP_MARIA2) got replica
+  lc-maria2-r1:
+  - read-only, server id 2, log `mariadb-bin-lc-maria2-r1`, password file 0400
+    owned by mysql;
+  - streaming per the health check, with 20/20 rows;
+  - `backupFrom` → nightly on the replica (WAL-G hostname `lc-maria2-r1`) →
+    restore latest held 25/25 rows;
+  - removed, with its service and volume gone.
+
 ## Task 3 (app-templates, backend): promotion
 
 - **Scripts:** `walg-promote` (design §3); the fenced idle as Postgres's.

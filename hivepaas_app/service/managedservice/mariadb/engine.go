@@ -41,6 +41,10 @@ var profile = &walgkit.Profile{
 	Dump:               walgkit.DumpCommands{Source: dumpCommand, Restore: dumpRestoreCommand, FileExt: ".sql"},
 	RestoreTarget:      targetEnv,
 	Members:            walgkit.MembersStatus,
+	// walg-entrypoint promotes: a template has at most ten config files. Every
+	// template whose scripts let replicas in has it.
+	Promotion: walgkit.Promotion{Command: walgkit.ScriptDir + "/walg-entrypoint promote",
+		Requires: walgkit.ReplicationScript},
 }
 
 // apiScripts are the scripts engine API 1 runs, which the template ships as
@@ -80,14 +84,6 @@ func (e *Engine) PointNameMax() int {
 	return pointNameMax
 }
 
-// unsupported refuses what the engine does not do (yet), named as what a MariaDB
-// database does not have.
-func unsupported(what string) error {
-	return hperrors.Wrap(hperrors.ErrAppManagedUnsupportedByEngine).
-		WithParam("Engine", templatemodel.ManagedEngines[templatemodel.ManagedEngineMariaDB].Title).
-		WithParam("What", what).ExposeParams("Engine", "What")
-}
-
 // Verifier idles: walg-entrypoint hands a command that is not mariadbd to the
 // image's entrypoint, which runs it as it is, and walg-restore-test starts the
 // server it restores into itself, with no binary log. It reaches the live
@@ -96,6 +92,10 @@ func (e *Engine) Verifier() managedmodel.VerifierSpec {
 	return managedmodel.VerifierSpec{Command: "sleep infinity", ScratchDir: walgkit.VerifierScratchDir}
 }
 
-func (e *Engine) Promote(*managedmodel.PromoteReq) (*managedmodel.PromoteSpec, error) {
-	return nil, unsupported("promotion")
+// Promote is every WAL-G engine's promotion (walgkit.Promote), by walg-entrypoint
+// promote. The member keeps its server id and log name, which are no standby's
+// variables.
+func (e *Engine) Promote(req *managedmodel.PromoteReq) (*managedmodel.PromoteSpec, error) {
+	spec, err := walgkit.Promote(profile, req)
+	return spec, hperrors.Wrap(err)
 }

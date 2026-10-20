@@ -29,7 +29,7 @@ func TestAPromotionsSpec(t *testing.T) {
 	spec, err := New().Promote(promoteReq())
 
 	assert.NoError(t, err)
-	assert.Equal(t, [][2]string{{envFenced, "shop-db-r1 was promoted"}}, spec.FenceEnv)
+	assert.Equal(t, [][2]string{{walgkit.EnvFenced, "shop-db-r1 was promoted"}}, spec.FenceEnv)
 	assert.Equal(t, walgkit.ScriptDir+"/walg-promote", spec.Promote.Command)
 	assert.Equal(t, walgkit.ScriptDir+"/walg-replication", spec.Allow.Command, "the replicas let into it")
 	assert.Equal(t, []string{walgkit.EnvStandbyHost, walgkit.EnvStandbyName, walgkit.EnvStandbyPasswordFile},

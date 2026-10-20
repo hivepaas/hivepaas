@@ -83,6 +83,9 @@ func Reconfigure(p *Profile, req *managedmodel.ReconfigureReq) (*managedmodel.Re
 	if err := moveBaseBackups(req, resp); err != nil {
 		return nil, err
 	}
+	if err := promoteWriter(req, resp); err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
 

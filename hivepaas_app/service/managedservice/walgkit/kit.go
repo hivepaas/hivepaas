@@ -43,6 +43,15 @@ type Profile struct {
 	// Members are the database's members as its last health check saw them;
 	// nil for an engine without replicas.
 	Members func(members []*entity.ManagedMember, health *managedmodel.JobRun) []*managedmodel.MemberStatus
+	// Promotion is how a member is promoted; empty, by PromoteScript.
+	Promotion Promotion
+}
+
+// Promotion is the command that promotes the member it runs in, and the script
+// whose mount says the template's scripts can.
+type Promotion struct {
+	Command  string
+	Requires string
 }
 
 // DumpCommands are an engine's logical dump: the command that writes it to

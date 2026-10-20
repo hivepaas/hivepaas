@@ -5,6 +5,7 @@ import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infr
 import type {
     AppManaged_AddReplica_Res,
     AppManaged_CreateRestorePoint_Res,
+    AppManaged_FindScripts_Res,
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Res,
     AppManaged_FindSwitch_Res,
@@ -12,6 +13,7 @@ import type {
     AppManaged_RefreshCredentials_Res,
     AppManaged_Restore_Res,
     AppManaged_Switch_Res,
+    AppManaged_UpgradeScripts_Res,
 } from "./app-managed.api.contracts";
 
 const ObjectRefSchema = z
@@ -251,6 +253,43 @@ const StatusSchema = z.object({
         .transform(value => value ?? []),
 });
 
+const ScriptsRevisionSchema = z.object({
+    revision: z.string().optional().default(""),
+    fingerprint: z.string().optional().default(""),
+});
+
+const ScriptsSchema = z.object({
+    state: z.enum(["up-to-date", "update-available", "incompatible", "unavailable"]).catch("unavailable"),
+    reason: z.string().optional().default(""),
+    current: ScriptsRevisionSchema,
+    available: ScriptsRevisionSchema.nullish().transform(value => value ?? undefined),
+    changes: z
+        .array(
+            z.object({
+                kind: z.enum(["script", "artifact"]).catch("script"),
+                name: z.string(),
+                change: z.enum(["added", "changed", "removed"]).catch("changed"),
+                from: z.string().optional().default(""),
+                to: z.string().optional().default(""),
+            }),
+        )
+        .nullish()
+        .transform(value => value ?? []),
+    outOfStep: z
+        .array(z.object({ app: ObjectRefSchema, key: z.string() }))
+        .nullish()
+        .transform(value => value ?? []),
+});
+
+const UpgradeScriptsSchema = z.object({
+    revision: z.string().optional().default(""),
+    fingerprint: z.string().optional().default(""),
+    deployments: z
+        .array(z.object({ app: IdSchema, deployment: IdSchema, task: IdSchema }))
+        .nullish()
+        .transform(value => value ?? []),
+});
+
 const withMeta = <T extends z.ZodTypeAny>(data: T) => z.object({ data, meta: BaseMetaApiSchema.nullish() });
 
 export class AppManagedApiValidator {
@@ -304,6 +343,14 @@ export class AppManagedApiValidator {
 
     switchConsumers = (response: ApiHttpResponse): AppManaged_Switch_Res => {
         return parseApiResponse({ response, schema: withMeta(SwitchResultSchema) });
+    };
+
+    findScripts = (response: ApiHttpResponse): AppManaged_FindScripts_Res => {
+        return parseApiResponse({ response, schema: withMeta(ScriptsSchema) });
+    };
+
+    upgradeScripts = (response: ApiHttpResponse): AppManaged_UpgradeScripts_Res => {
+        return parseApiResponse({ response, schema: withMeta(UpgradeScriptsSchema) });
     };
 
     createRestorePoint = (response: ApiHttpResponse): AppManaged_CreateRestorePoint_Res => {

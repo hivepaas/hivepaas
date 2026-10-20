@@ -16,6 +16,7 @@ import type {
     AppManaged_Unmanage_Req,
     AppManaged_UpdateRestorePoint_Req,
     AppManaged_UpdateSettings_Req,
+    AppManaged_UpgradeScripts_Req,
 } from "../../../api/services";
 import { ProjectsApiContext } from "../../api-context/projects.api.context";
 
@@ -42,6 +43,8 @@ function createHook() {
                     read(await managed.findStatus({ data: request }, signal)),
                 findSwitch: async (request: AppScope, signal?: AbortSignal) =>
                     read(await managed.findSwitch({ data: request }, signal)),
+                findScripts: async (request: AppScope, signal?: AbortSignal) =>
+                    read(await managed.findScripts({ data: request }, signal)),
             };
         }, [managed]);
 
@@ -79,6 +82,8 @@ function createHook() {
                     write("Failed to make the restore point")(await managed.createRestorePoint({ data: request })),
                 updateRestorePoint: async (request: AppManaged_UpdateRestorePoint_Req["data"]) =>
                     write("Failed to update the restore point")(await managed.updateRestorePoint({ data: request })),
+                upgradeScripts: async (request: AppManaged_UpgradeScripts_Req["data"]) =>
+                    write("Failed to update the database's scripts")(await managed.upgradeScripts({ data: request })),
                 deleteRestorePoint: async (request: AppManaged_DeleteRestorePoint_Req["data"]) =>
                     write("Failed to delete the restore point")(await managed.deleteRestorePoint({ data: request })),
             };

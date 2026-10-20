@@ -245,12 +245,46 @@ async function answerManaged(
     app: { projectId: string; env: string; id: string },
     settings: Record<string, unknown> = {},
     status: Record<string, unknown> = {},
-): Promise<{ restores: Request[]; updates: Request[]; switches: Request[]; replicas: Request[] }> {
+    scripts: Record<string, unknown> = {},
+): Promise<{
+    restores: Request[];
+    updates: Request[];
+    switches: Request[];
+    replicas: Request[];
+    upgrades: Request[];
+}> {
     const appPath = `/api/projects/${app.projectId}/${app.env}/apps/${app.id}`;
     const restores: Request[] = [];
     const updates: Request[] = [];
     const switches: Request[] = [];
     const replicas: Request[] = [];
+    const upgrades: Request[] = [];
+    await page.route(
+        url => url.pathname === `${appPath}/managed/scripts`,
+        route => route.fulfill({ json: { meta: {}, data: { ...managedScripts(), ...scripts } } }),
+    );
+    await page.route(
+        url => url.pathname === `${appPath}/managed/scripts/upgrade`,
+        route => {
+            upgrades.push(route.request());
+            return route.fulfill({
+                json: {
+                    meta: {},
+                    data: {
+                        revision: "65d2d5efe8d9",
+                        fingerprint: AVAILABLE_FINGERPRINT,
+                        deployments: [
+                            {
+                                app: { id: app.id },
+                                deployment: { id: "e2edeployment009" },
+                                task: { id: "e2edeploytask009" },
+                            },
+                        ],
+                    },
+                },
+            });
+        },
+    );
     await page.route(
         url => url.pathname === `${appPath}/managed/promote`,
         route => {
@@ -358,7 +392,22 @@ async function answerManaged(
                 ]),
             }),
     );
-    return { restores, updates, switches, replicas };
+    return { restores, updates, switches, replicas, upgrades };
+}
+
+const CURRENT_FINGERPRINT = "a".repeat(64);
+const AVAILABLE_FINGERPRINT = "b".repeat(64);
+
+// A managed database's scripts as GET .../managed/scripts answers: up to date.
+function managedScripts(): Record<string, unknown> {
+    return {
+        state: "up-to-date",
+        reason: "",
+        current: { revision: "50f42898eaf27ea4", fingerprint: CURRENT_FINGERPRINT },
+        available: { revision: "50f42898eaf27ea4", fingerprint: CURRENT_FINGERPRINT },
+        changes: [],
+        outOfStep: [],
+    };
 }
 
 // A managed template is deployed with the archive it is given: the store marks
@@ -788,6 +837,74 @@ test("a MariaDB's replicas name its writer's host, and one is promoted", async (
     await expect.poll(() => replicas.length, { message: "the promotion was asked for" }).toBe(1);
     expect(new URL(replicas[0]?.url() ?? "").pathname).toMatch(/\/managed\/promote$/);
     expect(replicas[0]?.postDataJSON()).toEqual({ member: { id: "e2ereplicaapp01" } });
+});
+
+// A database whose scripts a newer revision of the templates changes says what
+// changes, and which member runs other scripts; updating sends the fingerprint
+// reviewed.
+test("a managed database's scripts are updated to the templates' revision", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const { upgrades } = await answerManaged(
+        page,
+        app,
+        {},
+        {},
+        {
+            state: "update-available",
+            available: { revision: "65d2d5efe8d97a59", fingerprint: AVAILABLE_FINGERPRINT },
+            changes: [
+                { kind: "script", name: "/opt/hivepaas/bin/walg-entrypoint", change: "changed" },
+                { kind: "script", name: "/opt/hivepaas/bin/walg-replication", change: "added" },
+                { kind: "artifact", name: "wal-g", change: "changed", from: "3.0.8", to: "3.0.9" },
+            ],
+            outOfStep: [{ app: { id: "e2ereplicaapp01" }, key: "e2e-db-r1" }],
+        },
+    );
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Scripts" });
+    await expect(section).toContainText("Update available");
+    await expect(section).toContainText("Runs revision 50f42898eaf2; the templates offer 65d2d5efe8d9");
+    const changes = section.getByRole("list", { name: "Changes" });
+    await expect(changes).toContainText("/opt/hivepaas/bin/walg-entrypoint changed");
+    await expect(changes).toContainText("/opt/hivepaas/bin/walg-replication added");
+    await expect(changes).toContainText("wal-g 3.0.8 → 3.0.9");
+    await expect(section).toContainText("e2e-db-r1 runs other scripts than the database");
+
+    await section.getByRole("button", { name: "Update scripts" }).click();
+    await expect(page.getByText("Each member restarts once onto them")).toBeVisible();
+    await page.getByRole("button", { name: "Update", exact: true }).last().click();
+    await expect.poll(() => upgrades.length, { message: "the update was asked for" }).toBe(1);
+    expect(upgrades[0]?.method()).toBe("POST");
+    expect(upgrades[0]?.postDataJSON()).toEqual({ fingerprint: AVAILABLE_FINGERPRINT });
+});
+
+// Scripts up to date offer nothing to update; a revision that cannot be applied
+// says why.
+test("a managed database's scripts offer no update when there is none to apply", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    await answerManaged(page, app);
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Scripts" });
+    await expect(section).toContainText("Up to date");
+    await expect(section.getByRole("list", { name: "Changes" })).toHaveCount(0);
+    await expect(section.getByRole("button", { name: "Update scripts" })).toBeDisabled();
+});
+
+test("a managed database's scripts say why a revision cannot be applied", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const reason = "the template's scripts are for engine API 2, this database's are for 1";
+    await answerManaged(page, app, {}, {}, { state: "incompatible", reason, available: null });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    const section = page.getByRole("region", { name: "Scripts" });
+    await expect(section).toContainText("Incompatible");
+    await expect(section).toContainText(reason);
+    await expect(section.getByRole("button", { name: "Update scripts" })).toBeDisabled();
 });
 
 // A database a replica was promoted over says it is fenced and who writes; the

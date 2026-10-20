@@ -1,5 +1,6 @@
 import type {
     AppManagedRestorePoint,
+    AppManagedScripts,
     AppManagedSettings,
     AppManagedStatus,
     AppManagedSwitch,
@@ -95,4 +96,15 @@ export type AppManaged_Promote_Res = ApiResponseBase<{
     writer: { id: string };
     fenced: { id: string };
     restarted: { id: string }[];
+}>;
+
+export type AppManaged_FindScripts_Req = ApiRequestBase<AppScope>;
+export type AppManaged_FindScripts_Res = ApiResponseBase<AppManagedScripts>;
+
+/** The fingerprint is the one reviewed: another is refused. */
+export type AppManaged_UpgradeScripts_Req = ApiRequestBase<AppScope & { payload: { fingerprint: string } }>;
+export type AppManaged_UpgradeScripts_Res = ApiResponseBase<{
+    revision: string;
+    fingerprint: string;
+    deployments: { app: { id: string }; deployment: { id: string }; task: { id: string } }[];
 }>;

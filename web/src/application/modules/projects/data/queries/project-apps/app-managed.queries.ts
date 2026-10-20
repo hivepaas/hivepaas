@@ -2,6 +2,7 @@ import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/reac
 
 import { useAppManagedApi } from "../../../api/hooks/project-apps";
 import type {
+    AppManaged_FindScripts_Res,
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Res,
     AppManaged_FindSwitch_Res,
@@ -51,8 +52,22 @@ function useFindSwitch(
     });
 }
 
+function useFindScripts(
+    request: AppScope,
+    options: Omit<UseQueryOptions<AppManaged_FindScripts_Res>, "queryKey" | "queryFn"> = {},
+) {
+    const { queries } = useAppManagedApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.managed.$.find-scripts"], request],
+        queryFn: ({ signal }) => queries.findScripts(request, signal),
+        ...options,
+    });
+}
+
 export const AppManagedQueries = Object.freeze({
     useFindSettings,
     useFindStatus,
     useFindSwitch,
+    useFindScripts,
 });

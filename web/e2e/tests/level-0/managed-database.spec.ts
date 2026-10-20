@@ -463,6 +463,34 @@ test("a MariaDB managed template is created with its engine's words", async ({ p
     });
 });
 
+// A MariaDB's Database tab speaks of its binary logs and its dump tool, and
+// offers no replicas: its engine has none.
+test("a MariaDB's Database tab uses its engine's words, and has no replicas", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    await answerManaged(page, app, {
+        engine: "mariadb",
+        capabilities: { replicas: false, verifierApp: true },
+        locks: {
+            image: "mariadb:11.8.9-noble",
+            imageLine: "11.8",
+            command: "mariadbd --datadir=/var/lib/mysql/data --log-bin=mariadb-bin",
+            mounts: ["/var/lib/mysql"],
+            envKeys: ["HIVEPAAS_ARCHIVE_TIMEOUT"],
+            settings: [],
+        },
+    });
+
+    await page.goto(`/projects/${project.id}/${app.env}/apps/${app.id}/database/`);
+    await expect(page.getByText(/^MariaDB, archived continuously/)).toBeVisible();
+    const archiving = page.getByRole("region", { name: "Archiving" });
+    await expect(archiving.getByText("Binary logs on the node")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Replicas" })).toHaveCount(0);
+    await expect(page.getByText("Base backups taken on")).toHaveCount(0);
+    await expect(page.getByText(/A mariadb-dump into a backup repository/)).toBeVisible();
+    await expect(page.getByText(/PostgreSQL|pg_dump|\bWAL\b/)).toHaveCount(0);
+});
+
 // A managed database's Database tab says how its archive is doing, how far
 // back it can be restored, and its restore points.
 test("a managed database's Database tab shows its engine's status", async ({ page, api }) => {

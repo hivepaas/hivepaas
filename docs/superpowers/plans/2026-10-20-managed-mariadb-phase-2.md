@@ -197,6 +197,66 @@ descriptions only):
   - the other replica following.
 - **Live (dind):** promote; the cluster deleted whole.
 
+**As built** (2026-10-20, app-templates `4bb31fa`, merged `65d2d5e`; backend
+`724ade59`, merged `7835d0d3`; API level 4, no CLI or dashboard change):
+- **There is no `walg-promote`; promotion is `walg-entrypoint promote`.** The
+  backend allows at most 10 config files per app, and the MariaDB template already
+  ships 10 (walg-replication was the tenth).
+  - Raising the limit would fail the lint that older supported releases run on the
+    template, so the limit stays.
+  - **Engine:** `walgkit.Profile.Promotion{Command, Requires}`. MariaDB's is
+    `walg-entrypoint promote`, gated on `walg-replication`.
+    - The Task 2 template has walg-replication but no promote. It was never
+      released; only dind's lc-maria2 had it, and that is deleted.
+  - Postgres keeps `walg-promote` as the default.
+- **What promote does:**
+  - It stops and forgets replication (`STOP SLAVE; RESET SLAVE ALL`), runs
+    `read_only=0`, and leaves the marker.
+  - Then it runs `FLUSH BINARY LOGS` and `walg-archive once`, which pushes every
+    closed log of the member. WAL-G's cache on a replica is empty, so all are
+    pushed.
+  - **This differs from the design:** it pushes all of them, not only those past
+    the archive's last GTID by `BINLOG_GTID_POS`. The replay skips the overlap,
+    and the chain check covers each basename from its first log.
+  - Exit codes are those of Postgres (0, 3, 1). It runs again as it is.
+  - `walg-lib`'s `standby()` is false once the marker exists. So the running
+    archive loop turns into a primary's at once, and a restart serves as primary
+    without `--read-only`.
+- **`HIVEPAAS_FENCED`:** `walg-entrypoint` idles, healthy, with no server.
+- **Engine refactor:**
+  - `walgkit.Promote` and the writer's recording (`promoteWriter`,
+    `pointJobsAtWriter`) moved from the Postgres engine.
+  - `walgkit.Reconfigure` now promotes for every engine.
+  - `StandbyEnvKeys` are the three standby variables only. The member keeps
+    `HIVEPAAS_SERVER_ID` and `HIVEPAAS_LOG_BIN`.
+- **Not handled:** a replica ahead of the promoted member (one that got
+  transactions the promoted member did not) meets 1236 against it. It then catches
+  up from an archive that lacks its extra transactions, which the cluster has lost
+  anyway.
+- **Harness:** 192/192 on each of 11.8 and 11.4.
+  - **Promotion:** the primary's archive loop is stopped, rows are written and
+    reach both replicas but are never archived, and the primary is stopped.
+  - **The promoted member:** r1 is promoted, writes under `0-2-…`, and archives
+    its logs. Promoting again is idempotent.
+  - **After promotion:**
+    - r2 is recreated pointed at r1 and follows it without reseeding, and r1's
+      health lists it as streaming;
+    - a restore across the promotion holds all 40 rows;
+    - retain passes over both basenames;
+    - the fenced old primary idles, healthy, and promote there exits 3;
+    - r1, restarted, is still the primary.
+- **Live (dind, `lc/check26.sh` and `check26b.sh`):**
+  - **Setup:** lc-maria3 with replicas r1 and r2; r1 was promoted.
+  - **The cluster after:**
+    - the anchor's service is at 0/0;
+    - r1 writes and has its marker;
+    - r2 is restarted onto r1 (`Master_Host`) and holds r1's rows;
+    - members show primary and streaming;
+    - health and nightly ran on r1.
+  - **Restore:** latest held 36/36 rows.
+  - **Cluster delete:** `DELETE ?deleteCluster=true` removed every service, and
+    the volumes were removed.
+
 ## Task 4 (backend, dashboard): the cluster's address
 
 - **The `<anchor>-rw` alias:**

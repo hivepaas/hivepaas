@@ -267,6 +267,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		managedGroup.GET("", appManagedHandler.GetManagedSettings)
 		managedGroup.PUT("", appManagedHandler.UpdateManagedSettings)
 		managedGroup.GET("/status", appManagedHandler.GetManagedStatus)
+		managedGroup.GET("/scripts", appManagedHandler.GetManagedScripts)
 		managedGroup.POST("/refresh-credentials", appManagedHandler.RefreshManagedCredentials)
 		managedGroup.POST("/restore", appManagedHandler.RestoreManagedApp)
 		managedGroup.POST("/restore-points", appManagedHandler.CreateRestorePoint)

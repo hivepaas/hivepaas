@@ -125,7 +125,8 @@ type ManagedRestoreTargetResp struct {
 	Kind  string     `json:"kind"`
 	Time  *time.Time `json:"time"`
 	Point string     `json:"point"`
-	// Position is where the point is, as the engine wrote it: a Postgres LSN.
+	// Position is where the point is, as the engine wrote it: a Postgres LSN, or a
+	// MariaDB GTID list (FILE:OFFSET for a point made before points kept their GTID).
 	Position string `json:"position"`
 	Backup   string `json:"backup"`
 }

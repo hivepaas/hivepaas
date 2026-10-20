@@ -29,15 +29,24 @@ func TestMarkingARestorePoint(t *testing.T) {
 	}
 }
 
-// What walg-mark prints is read back as the point's position: the binary log
-// and the offset of its end, which a restore replays to.
+// What walg-mark prints is read back as the point's position: its GTID, which a
+// restore stops at whatever server's binary logs the archive holds by then.
 func TestTheMarkPrintsThePosition(t *testing.T) {
-	position, err := New().MarkResult("Flushed.\nPOSITION=mariadb-bin.000007:1234\nGTID=0-1-58\n")
-	assert.NoError(t, err)
-	assert.Equal(t, "mariadb-bin.000007:1234", position)
+	for stdout, want := range map[string]string{
+		"Flushed.\nPOSITION=mariadb-bin.000007:1234\nGTID=0-1-58\n": "0-1-58",
+		"POSITION=mariadb-bin.000007:1234\nGTID=0-1-58,7-2-1094\n":  "0-1-58,7-2-1094",
+		"GTID=0-2-9\nPOSITION=mariadb-bin-db-r1.000002:340\n":       "0-2-9",
+		// No transaction yet, or a GTID it cannot be: the file and offset.
+		"POSITION=mariadb-bin.000001:328\nGTID=\n":            "mariadb-bin.000001:328",
+		"POSITION=mariadb-bin.000001:328\nGTID=0-1-1; drop\n": "mariadb-bin.000001:328",
+	} {
+		position, err := New().MarkResult(stdout)
+		assert.NoError(t, err, "%q", stdout)
+		assert.Equal(t, want, position, "%q", stdout)
+	}
 
-	for _, stdout := range []string{"", "GTID=0-1-58\n", "POSITION=0/3000060\n", "POSITION=x.000001:1; drop\n"} {
-		_, err = New().MarkResult(stdout)
+	for _, stdout := range []string{"", "GTID=0-1-x\n", "POSITION=0/3000060\n", "POSITION=x.000001:1; drop\n"} {
+		_, err := New().MarkResult(stdout)
 		assert.Error(t, err, "%q", stdout)
 	}
 }

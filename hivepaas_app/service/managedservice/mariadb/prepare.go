@@ -49,6 +49,9 @@ func (e *Engine) PrepareDoc(req *managedmodel.PrepareReq) error {
 	secrets[walgkit.SecretSodiumKey] = req.EncryptionKey
 	walgkit.AddSecretFiles(doc, walgkit.SecretsDir, "", mysqlUID, secrets)
 	if req.Restore != nil {
+		if err := checkTarget(doc, req.Restore); err != nil {
+			return hperrors.Wrap(err)
+		}
 		restoreEnv, err := walgkit.PrepareRestore(profile, doc, req.Restore)
 		if err != nil {
 			return hperrors.Wrap(err)

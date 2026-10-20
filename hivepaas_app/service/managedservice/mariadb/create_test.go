@@ -350,3 +350,10 @@ func TestReconfigureChangesTheJobsItMade(t *testing.T) {
 		assert.Equal(t, "15 3 * * *", resp.Rescheduled[0].MustAsSchedJob().Schedule.CronExpr)
 	}
 }
+
+// setScript gives the template's script that content.
+func setScript(doc *specmodel.AppDoc, script, content string) {
+	files, _ := doc.Settings["configFiles"].(map[string]any)
+	entry, _ := files[script].(map[string]any)
+	entry["content"] = content
+}

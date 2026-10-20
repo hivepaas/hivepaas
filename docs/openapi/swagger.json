@@ -57163,7 +57163,7 @@
             "type" : "string"
           },
           "position" : {
-            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN.",
+            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN, or a\nMariaDB GTID list (FILE:OFFSET for a point made before points kept their GTID).",
             "type" : "string"
           },
           "restorableUntil" : {
@@ -57232,7 +57232,7 @@
             "type" : "string"
           },
           "position" : {
-            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN.",
+            "description" : "Position is where the point is, as the engine wrote it: a Postgres LSN, or a\nMariaDB GTID list (FILE:OFFSET for a point made before points kept their GTID).",
             "type" : "string"
           },
           "time" : {

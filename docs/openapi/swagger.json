@@ -22400,6 +22400,81 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/scripts" : {
+      "get" : {
+        "description" : "What the installation's revision of the database's template offers of what its engine owns -\nits scripts and artifacts - against what the database runs: up-to-date, update-available,\nincompatible or unavailable, the changes, and the members out of step. A cluster is read on its\napp; a member is refused.",
+        "operationId" : "appManagedScriptsGet",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.GetManagedScriptsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what a managed database's template offers its engine's scripts",
+        "tags" : [ "Managed apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
       "get" : {
         "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
@@ -56807,6 +56882,24 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "appmanageddto.GetManagedScriptsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedScriptsResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appmanageddto.GetManagedSettingsResp" : {
         "properties" : {
           "data" : {
@@ -57313,6 +57406,104 @@
           }
         },
         "required" : [ "durationSeconds", "endedAt", "passed", "restoredTo" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedScriptChangeResp" : {
+        "properties" : {
+          "change" : {
+            "description" : "Change is added, changed or removed.",
+            "type" : "string"
+          },
+          "from" : {
+            "description" : "From and To are an artifact's versions.",
+            "type" : "string"
+          },
+          "kind" : {
+            "description" : "Kind is script or artifact.",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Name is a script's path, or an artifact's name.",
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "change", "kind", "name" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedScriptsMemberResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "key" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "key" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedScriptsResp" : {
+        "properties" : {
+          "available" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedScriptsRevisionResp"
+            } ],
+            "description" : "Available is the installation's revision of the template and the fingerprint\nof what it offers: null when it offers nothing.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "changes" : {
+            "description" : "Changes are what applying it changes: each script by its path, then each\nartifact by its name.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedScriptChangeResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "current" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedScriptsRevisionResp"
+            } ],
+            "description" : "Current is what the database runs: the revision its scripts came from, empty\nwhen that is not known, and their fingerprint.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "outOfStep" : {
+            "description" : "OutOfStep are the database's members and verifier whose scripts differ from\nthe database's.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedScriptsMemberResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "reason" : {
+            "description" : "Reason says why the revision is incompatible or unavailable.",
+            "type" : "string"
+          },
+          "state" : {
+            "description" : "State is up-to-date, update-available, incompatible or unavailable.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "available", "changes", "current", "outOfStep", "reason", "state" ],
+        "type" : "object"
+      },
+      "appmanageddto.ManagedScriptsRevisionResp" : {
+        "properties" : {
+          "fingerprint" : {
+            "type" : "string"
+          },
+          "revision" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fingerprint", "revision" ],
         "type" : "object"
       },
       "appmanageddto.ManagedSettingsResp" : {

@@ -27,6 +27,42 @@ then write as-built notes here.
   - a point by GTID;
   - a gap named.
 
+**As built** (2026-10-20, app-templates `db74d7e`, merged `9c46124`):
+- **`walg-replay`:**
+  - the stop flag is `--gtid GTIDS`, not `--stop-gtid`;
+  - before the loop it runs `ensure_grant_option`;
+  - a stop GTID the archive never reaches fails the restore ("The archive does not
+    reach …");
+  - its last line names the logs replayed and skipped, and the state reached.
+- **`walg-restore-test`** stops at its mark's GTID when it has one, and at its
+  file:offset otherwise.
+- **The chain check goes per basename, not by GTID.** Each basename's logs must
+  follow one another by number. The oldest backup's basename is checked from after
+  its `binlog_start`; every other basename from its first log. The replay itself
+  still catches a GTID gap, and names the file.
+  - A backup taken before any log was archived has no `binlog_start`. The check used
+    to read that as "No base backup" and checked nothing. It now checks every
+    basename from its first log.
+- **No change for the basename.** The archive loop and the purge already read the
+  active log from `show master status`. At a rename, `FLUSHED_AT` compares offsets
+  across files, which costs at most one extra rotation.
+- **A new basename starts an empty GTID state.** The server keeps the state in
+  `<basename>.state`, so a database restarted under a new `--log-bin` numbers from
+  `0-1-1` again. The harness copies the state file to simulate a rename.
+  - Never rename the anchor's logs.
+  - A replica's state comes through replication (`--log-slave-updates`), so it
+    needs no copy (Task 2).
+- **WAL-G** pushed `mariadb-bin-b.*` after `mariadb-bin.*`, although `-b` sorts
+  before `.`.
+- **Harness:** 268/268 on 11.8 and 11.4. It adds:
+  - a point by GTID (30 rows);
+  - a restore of latest across two basenames (50 rows);
+  - the chain naming both basenames;
+  - a deleted middle log: retain fails naming it, and a restore fails with "binary
+    logs break at".
+- **Live:** none for this task, which changes the scripts only. The harness runs
+  them in the template's own images. The dind check comes with Task 2.
+
 ## Task 1 (backend): points by GTID
 
 - **`MarkResult`** stores the GTID (`GTID=`). A phase 1 point's file:offset still

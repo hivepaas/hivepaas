@@ -69,3 +69,22 @@ func TestDeploymentSettingsMigrationKeepsAppsDeployingOnPush(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, function.MustAsAppDeploymentSettings().FunctionSource.Code.Repo.AutoDeploy)
 }
+
+// Data migration did not run for a time, and the settings screens saved rows in
+// the current shape under the version they were made at. A row that says what
+// it deploys on push already says what its person chose: the migration keeps
+// it.
+func TestDeploymentSettingsMigrationKeepsAChoiceMadeSince(t *testing.T) {
+	stored := &entity.Setting{
+		ID: "s1", Type: base.SettingTypeAppDeployment, Version: 2,
+		Data: `{"activeMethod": "repo", "repoSource": {"repoType": "git", "repoRef": "main", "autoDeploy": false}}`,
+	}
+	data, err := stored.AsAppDeploymentSettings()
+	assert.NoError(t, err)
+
+	changed, err := data.Migrate(stored)
+	assert.NoError(t, err)
+	assert.True(t, changed, "the version moves on")
+	assert.Equal(t, entity.CurrentAppDeploymentSettingsVersion, stored.Version)
+	assert.False(t, stored.MustAsAppDeploymentSettings().RepoSource.AutoDeploy, "it stays off")
+}

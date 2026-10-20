@@ -20,8 +20,10 @@ func (s *AppDeploymentSettings) Migrate(setting *Setting) (hasChange bool, err e
 
 	// Version 3 added repoSource.autoDeploy. An app built from a repository
 	// deployed on every push its webhook received, and keeps doing so. A
-	// function's repository did not, and its flag stays off.
-	if setting.Version < 3 && s.RepoSource != nil { //nolint:mnd
+	// function's repository did not, and its flag stays off. A row that has the
+	// field was saved since, under the version it was made at: what it says is
+	// its person's choice.
+	if setting.Version < 3 && s.RepoSource != nil && !storedHas(setting.Data, "repoSource", "autoDeploy") { //nolint:mnd
 		s.RepoSource.AutoDeploy = true
 	}
 

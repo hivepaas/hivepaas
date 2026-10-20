@@ -91,6 +91,7 @@ export const QK = {
     "projects.apps.managed.$.find-settings": "projects.apps.managed.$.find-settings",
     "projects.apps.managed.$.find-status": "projects.apps.managed.$.find-status",
     "projects.apps.managed.$.find-switch": "projects.apps.managed.$.find-switch",
+    "projects.apps.managed.$.find-scripts": "projects.apps.managed.$.find-scripts",
     /*
      * Project App Service Settings
      */

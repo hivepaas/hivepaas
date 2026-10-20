@@ -11,6 +11,8 @@ import type {
     AppManaged_CreateRestorePoint_Res,
     AppManaged_DeleteRestorePoint_Req,
     AppManaged_DeleteRestorePoint_Res,
+    AppManaged_FindScripts_Req,
+    AppManaged_FindScripts_Res,
     AppManaged_FindSettings_Req,
     AppManaged_FindSettings_Res,
     AppManaged_FindStatus_Req,
@@ -33,6 +35,8 @@ import type {
     AppManaged_UpdateRestorePoint_Res,
     AppManaged_UpdateSettings_Req,
     AppManaged_UpdateSettings_Res,
+    AppManaged_UpgradeScripts_Req,
+    AppManaged_UpgradeScripts_Res,
 } from "./app-managed.api.contracts";
 import type { AppManagedApiValidator } from "./app-managed.api.validator";
 
@@ -112,6 +116,20 @@ export class AppManagedApi extends BaseApi {
         return this.run(
             this.client.v1.post(`${this.base(req.data)}/promote`, req.data.payload),
             this.validator.promote,
+        );
+    }
+
+    async findScripts(
+        req: AppManaged_FindScripts_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppManaged_FindScripts_Res, Error>> {
+        return this.run(this.client.v1.get(`${this.base(req.data)}/scripts`, { signal }), this.validator.findScripts);
+    }
+
+    async upgradeScripts(req: AppManaged_UpgradeScripts_Req): Promise<Result<AppManaged_UpgradeScripts_Res, Error>> {
+        return this.run(
+            this.client.v1.post(`${this.base(req.data)}/scripts/upgrade`, req.data.payload),
+            this.validator.upgradeScripts,
         );
     }
 

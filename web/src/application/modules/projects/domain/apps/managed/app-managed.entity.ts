@@ -223,3 +223,34 @@ export interface AppManagedStatus {
     heldBack?: { backups: number; bytes: number };
     members: AppManagedMemberStatus[];
 }
+
+/** What the templates' revision offers a database's engine-owned scripts: whether it can be applied. */
+export type ManagedScriptsState = "up-to-date" | "update-available" | "incompatible" | "unavailable";
+
+export interface AppManagedScriptsRevision {
+    /** The templates' revision; empty when it is not known. */
+    revision: string;
+    fingerprint: string;
+}
+
+export interface AppManagedScriptChange {
+    kind: "script" | "artifact";
+    /** A script's path, or an artifact's name. */
+    name: string;
+    change: "added" | "changed" | "removed";
+    /** An artifact's versions. */
+    from: string;
+    to: string;
+}
+
+/** A managed database's scripts against what the templates' revision offers. */
+export interface AppManagedScripts {
+    state: ManagedScriptsState;
+    /** Why the revision is incompatible or unavailable. */
+    reason: string;
+    current: AppManagedScriptsRevision;
+    available?: AppManagedScriptsRevision;
+    changes: AppManagedScriptChange[];
+    /** Members and the verifier whose scripts differ from the database's. */
+    outOfStep: { app?: { id: string }; key: string }[];
+}

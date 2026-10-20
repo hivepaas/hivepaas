@@ -24,6 +24,8 @@ import type {
     AppManaged_UpdateRestorePoint_Res,
     AppManaged_UpdateSettings_Req,
     AppManaged_UpdateSettings_Res,
+    AppManaged_UpgradeScripts_Req,
+    AppManaged_UpgradeScripts_Res,
 } from "../../../api/services";
 import { QK } from "../../constants/projects.query-keys";
 
@@ -232,7 +234,28 @@ function useDeleteRestorePoint({
     });
 }
 
+function useUpgradeScripts({
+    onSuccess,
+    ...options
+}: Options<AppManaged_UpgradeScripts_Res, AppManaged_UpgradeScripts_Req["data"]> = {}) {
+    const { mutations } = useAppManagedApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.upgradeScripts,
+        onSuccess: (response, request, ...rest) => {
+            // Its settings, its scripts' state and its deployments move.
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.managed.$.find-scripts"], request] });
+            invalidateManaged(queryClient, request);
+            invalidateSingleAppConfigurationQueries(queryClient, request);
+            onSuccess?.(response, request, ...rest);
+        },
+        ...options,
+    });
+}
+
 export const AppManagedCommands = Object.freeze({
+    useUpgradeScripts,
     usePromote,
     useAddReplica,
     useRemoveReplica,

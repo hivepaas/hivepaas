@@ -21,6 +21,7 @@ import {
     ManagedMemberBanner,
     ManagedReplicas,
     ManagedRestorePoints,
+    ManagedScripts,
     ManagedSettingsForm,
     ManagedStatusCards,
     ManagedSwitch,
@@ -205,6 +206,13 @@ export function AppDatabaseRoute() {
                             canWrite={canWrite && !restoring}
                         />
                     )}
+                    <ManagedScripts
+                        projectId={projectID}
+                        env={env}
+                        appId={appID}
+                        writerName={writerKeyOf(settings) ?? appName}
+                        canWrite={canWrite && !restoring}
+                    />
                     <ManagedRestorePoints
                         projectId={projectID}
                         env={env}

@@ -2,12 +2,14 @@ package dbserviceimpl
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 )
 
@@ -25,7 +27,7 @@ func (s *service) MigrateData(
 		if migration == nil {
 			return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("no data migration found")
 		}
-		if migration.ID >= base.CurrentVersion { // no need migration
+		if !needsMigration(migration.ID) {
 			return nil
 		}
 
@@ -36,7 +38,8 @@ func (s *service) MigrateData(
 
 		// Migration finishes
 		newMigration := &entity.DataMigration{
-			ID: base.CurrentVersion,
+			ID:        base.CurrentVersion,
+			AppliedAt: timeutil.NowUTC(),
 		}
 		err = s.dataMigrationRepo.Insert(ctx, db, newMigration)
 		if err != nil {
@@ -90,4 +93,22 @@ func (s *service) migrateSettings(
 	}
 
 	return nil
+}
+
+// versionCodePattern is a version code, which sorts as the versions do.
+var versionCodePattern = regexp.MustCompile(`^v[0-9]{6}$`)
+
+// appliedCode is the version code a recorded data migration stands for. The
+// table was made with a row named v1-20251019, which is v000001.
+func appliedCode(id string) string {
+	if versionCodePattern.MatchString(id) {
+		return id
+	}
+	return base.VersionCodeV1
+}
+
+// needsMigration says whether data last migrated to applied is behind this
+// HivePaaS's.
+func needsMigration(applied string) bool {
+	return appliedCode(applied) < base.CurrentVersion
 }

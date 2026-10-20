@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 
@@ -62,6 +63,22 @@ func CheckScripts(p *Profile, doc *specmodel.AppDoc) error {
 		}
 	}
 	return nil
+}
+
+// ScriptMentions says whether the template's script mentions text: what a
+// script takes that an older template's did not.
+func ScriptMentions(doc *specmodel.AppDoc, script, text string) bool {
+	files, _ := doc.Settings["configFiles"].(map[string]any)
+	for _, entry := range files {
+		fields, _ := entry.(map[string]any)
+		swarmRef, _ := fields["swarmRef"].(map[string]any)
+		file, _ := swarmRef["file"].(map[string]any)
+		if name, _ := file["name"].(string); name == ScriptDir+"/"+script {
+			content, _ := fields["content"].(string)
+			return strings.Contains(content, text)
+		}
+	}
+	return false
 }
 
 // AddEnv adds variables to the document's.

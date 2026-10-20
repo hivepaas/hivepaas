@@ -131,7 +131,8 @@ type DeleteRestorePointResp struct {
 
 type ManagedRestorePointResp struct {
 	Name string `json:"name"`
-	// Position is where the point is, as the engine wrote it: a Postgres LSN.
+	// Position is where the point is, as the engine wrote it: a Postgres LSN, or a
+	// MariaDB GTID list (FILE:OFFSET for a point made before points kept their GTID).
 	Position string    `json:"position"`
 	At       time.Time `json:"at"`
 	// By is the user who made it.

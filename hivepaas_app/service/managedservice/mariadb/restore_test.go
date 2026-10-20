@@ -62,6 +62,48 @@ func TestEachTargetIsWhereTheReplayStops(t *testing.T) {
 	}
 }
 
+// A point's position is its GTID, which the replay stops at, including it; a
+// point made before points kept their GTID is a file and offset, which it still
+// stops at.
+func TestAPointStopsAtItsGTID(t *testing.T) {
+	for position, want := range map[string][2]string{
+		"0-1-58":                 {envRestoreStopGTID, "0-1-58"},
+		"0-1-58,7-2-1094":        {envRestoreStopGTID, "0-1-58,7-2-1094"},
+		"mariadb-bin.000003:389": {envRestoreStopPosition, "mariadb-bin.000003:389"},
+	} {
+		req := restoreReq(t, entity.ManagedRestoreTarget{Kind: entity.ManagedRestoreToPoint, Point: "before-v42",
+			Position: position})
+		setScript(req.Doc, "walg-entrypoint", "#!/bin/bash\n# HIVEPAAS_RESTORE_STOP_GTID\n")
+
+		assert.NoError(t, New().PrepareDoc(req), position)
+
+		env := envOf(req.Doc)
+		assert.Equal(t, "2026-10-19T14:31:00Z", env[walgkit.EnvRestoreBefore], position)
+		assert.Equal(t, want[1], env[want[0]], position)
+		for _, key := range []string{envRestoreStopGTID, envRestoreStopPosition} {
+			if key != want[0] {
+				assert.Empty(t, env[key], "%s: %s", position, key)
+			}
+		}
+	}
+}
+
+// A template whose scripts predate GTID stops would replay past the point, to
+// the last log archived: the restore is refused instead.
+func TestAGTIDPointNeedsScriptsThatStopAtIt(t *testing.T) {
+	req := restoreReq(t, entity.ManagedRestoreTarget{Kind: entity.ManagedRestoreToPoint, Point: "before-v42",
+		Position: "0-1-58"})
+
+	err := New().PrepareDoc(req)
+
+	assert.ErrorIs(t, err, hperrors.ErrAppManagedRestoreTargetInvalid)
+	assert.Contains(t, hperrors.GetErrorDetail(err, ""), "template")
+
+	req = restoreReq(t, entity.ManagedRestoreTarget{Kind: entity.ManagedRestoreToPoint, Point: "before-v42",
+		Position: "mariadb-bin.000003:389"})
+	assert.NoError(t, New().PrepareDoc(req), "a file and offset, which every template's scripts stop at")
+}
+
 // What would reach walg-entrypoint's arguments or the replay is held to what it
 // may be.
 func TestATargetThatCannotBeRecoveredToIsRefused(t *testing.T) {
@@ -69,6 +111,8 @@ func TestATargetThatCannotBeRecoveredToIsRefused(t *testing.T) {
 		"no time":            {Kind: entity.ManagedRestoreToTime},
 		"a Postgres LSN":     {Kind: entity.ManagedRestoreToPoint, Position: "0/3000060"},
 		"a position and SQL": {Kind: entity.ManagedRestoreToPoint, Position: "mariadb-bin.000003:389; drop"},
+		"a GTID and SQL":     {Kind: entity.ManagedRestoreToPoint, Position: "0-1-58; drop"},
+		"half a GTID":        {Kind: entity.ManagedRestoreToPoint, Position: "0-1"},
 		"a Postgres backup":  {Kind: entity.ManagedRestoreToBackup, Backup: "base_000000010000000000000004"},
 		"an unknown kind":    {Kind: "yesterday"},
 	} {

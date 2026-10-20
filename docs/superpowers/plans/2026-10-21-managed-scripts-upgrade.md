@@ -154,3 +154,40 @@ CLI is regenerated in Task 3):
 - **e2e level-0:** each state, and the upgrade asked for.
 - **CLI:** the client regenerated.
 - **Live (dind):** the section on lc-maria-latest-0003 before and after.
+
+**As built** (2026-10-21; dashboard `1c52b84f`, merged `a713e42d`; CLI `6197bb3`,
+merged `a528f17`; no backend change):
+- **Dashboard data layer:**
+  - the domain types `AppManagedScripts` and `ManagedScriptsState`;
+  - the contracts, the zod schemas and the `findScripts` and `upgradeScripts`
+    calls;
+  - `AppManagedQueries.useFindScripts` and `AppManagedCommands.useUpgradeScripts`.
+    The command invalidates the scripts, the engine's settings and status, and the
+    app's configuration queries.
+- **`ManagedScripts` section,** below Replicas in the Database tab. A member's tab
+  returns earlier and never shows it.
+  - A badge: Up to date, Update available, Incompatible or Unavailable.
+  - "Runs revision X; the templates offer Y", each shortened to 12 characters, and
+    the reason if there is one.
+  - The changes as a list (a script with its path and its change; an artifact
+    `from → to`), and the members out of step.
+  - "Update scripts" is enabled on update-available, or on up-to-date with a member
+    out of step. It confirms that each member restarts once, the writer last, then
+    sends `{fingerprint: available.fingerprint}`.
+  - While the query loads, or if it fails, the section is not shown.
+- **e2e level-0:** 21/21. `answerManaged` takes a fifth argument and serves
+  `GET .../managed/scripts`, up to date by default, so the other tests stay as they
+  were. It records `POST .../scripts/upgrade`. Added: an update (its changes, a
+  member out of step, the fingerprint sent), nothing to apply (disabled), and an
+  incompatible revision (its reason).
+- **CLI:** the client is regenerated, with the spec pinned `local 2026-10-20` (UTC);
+  no command uses it yet.
+- **Live (dind):** a temporary Playwright spec, not committed, ran on the real
+  backend.
+  - lc-maria (phase 1's scripts) showed Update available with its 10 changes,
+    `walg-replication added` among them.
+  - "Update scripts" toasted "1 app restarts", and the section read Up to date on
+    reload: the state is read from the settings at once, while the deployment
+    runs.
+
+The scripts upgrade phase is complete.

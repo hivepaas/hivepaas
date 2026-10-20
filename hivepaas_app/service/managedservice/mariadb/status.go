@@ -32,12 +32,9 @@ func (e *Engine) StaleDeployPoints(managed *entity.AppManagedSettings, outputs m
 	return walgkit.StaleDeployPoints(profile, managed, outputs)
 }
 
-// Reconfigure applies what every engine's settings share. The restore test
-// stays in the database's container until the verifier runs MariaDB's.
+// Reconfigure applies what every engine's settings share, the restore test's
+// verifier app included.
 func (e *Engine) Reconfigure(req *managedmodel.ReconfigureReq) (*managedmodel.ReconfigureResp, error) {
-	if req.Change != nil && req.Change.RestoreTest != nil {
-		return nil, unsupported("verifier apps")
-	}
 	resp, err := walgkit.Reconfigure(profile, req)
 	return resp, hperrors.Wrap(err)
 }

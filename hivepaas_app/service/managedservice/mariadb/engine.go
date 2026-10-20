@@ -87,8 +87,12 @@ func unsupported(what string) error {
 		WithParam("What", what).ExposeParams("Engine", "What")
 }
 
+// Verifier idles: walg-entrypoint hands a command that is not mariadbd to the
+// image's entrypoint, which runs it as it is, and walg-restore-test starts the
+// server it restores into itself, with no binary log. It reaches the live
+// database as root, its password the database's, in an option file in memory.
 func (e *Engine) Verifier() managedmodel.VerifierSpec {
-	return managedmodel.VerifierSpec{}
+	return managedmodel.VerifierSpec{Command: "sleep infinity", ScratchDir: walgkit.VerifierScratchDir}
 }
 
 func (e *Engine) Replica(*managedmodel.ReplicaReq) (*managedmodel.ReplicaSpec, error) {

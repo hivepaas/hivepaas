@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
@@ -26,13 +25,6 @@ func TestWhatTheEngineDoesNotDoYetIsRefused(t *testing.T) {
 	engine := New()
 
 	for name, call := range map[string]func() error{
-		"a verifier": func() error {
-			managed, jobs := reconfigureSetup(t)
-			_, err := engine.Reconfigure(&managedmodel.ReconfigureReq{App: &entity.App{ID: "app-1"}, Managed: managed,
-				Jobs: jobs, Change: &managedmodel.SettingsChange{
-					RestoreTest: &managedmodel.RestoreTestChange{Verifier: &entity.App{ID: "app-v"}}}})
-			return err
-		},
 		"replica": func() error { _, err := engine.Replica(&managedmodel.ReplicaReq{}); return err },
 		"promote": func() error { _, err := engine.Promote(&managedmodel.PromoteReq{}); return err },
 	} {

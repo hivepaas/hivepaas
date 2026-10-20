@@ -271,6 +271,60 @@ descriptions only):
 - **Live (dind):** a consumer on `${db.HIVEPAAS_DATABASE_HOST_RW}` writes before and
   after a promotion.
 
+**As built** (2026-10-21, backend `3bbfb582`, merged `73b82424`; dashboard
+`3439de9b`, merged `b534baca`; no template change; the API level stays 4, so there
+is no CLI change):
+- **No app network setting holds the alias.** Network attachments live on the Swarm
+  service alone, so the alias is recorded and enforced this way:
+  - `ManagedDatabase.Alias` is the cluster's `<anchor key>-rw`.
+  - `ManagedLocks.Aliases` is on whichever app carries the alias.
+  - `walgkit.Profile.WriterAlias` turns it on; it is MariaDB's only.
+  - `walgkit.Configure` records both.
+  - The creation step (`apptemplateuc` `managedPlan.configure`) gives the new
+    service each locked alias, on the network it is reached by its key on
+    (`appservice.AddNetworkAlias`).
+  - Restores into a new app go through the same step, so a restored database has
+    its own `-rw`.
+  - Replicas and verifiers copy no alias.
+- **The lock:** the network settings update refuses a locked alias missing from
+  the final attachments (`checkManagedAliases`, ERR_APP_MANAGED_FIELD_LOCKED
+  "networks").
+- **At promotion:** `PromoteSpec.Alias` drives a new step `moveAlias`, which runs
+  after `record` and before `restart`:
+  - the locks move first (`lockAliases` on the fenced app and the promoted app);
+  - then `managedService.MoveAlias` updates the fenced service, removing the
+    alias, and the promoted one, adding it. The promoted member restarts once.
+  - A failure only warns, naming the alias to add by hand.
+- **A deployment keeps the alias.** `applyNetworks` rewrites attachments only when
+  the document names some; a managed template names none.
+- **System variables:**
+  - `HIVEPAAS_DATABASE_HOST_RW` is `Database.WriterHost`: the alias, or the
+    writer's key for a database made before it.
+  - `HIVEPAAS_DATABASE_HOSTS_RO` is the replicas' keys, or the writer's host when
+    there is none.
+  - They are shared, are not secrets, and are MariaDB's only. Postgres keeps its
+    multi-host URLs.
+- **envlink:** `Facts.HasClusterHost` and `clusterHostGroup`, recommended for a
+  MySQL-family target. It suggests DATABASE_URL over HOST_RW, DB_HOST,
+  DB_READ_HOSTS, and the individual parts.
+- **Dashboard:**
+  - `ManagedEngineCopy.clusterAddress` holds `{write, read, holds}`: the URL
+    variables for Postgres and unknown engines, the HOST variables for MariaDB.
+  - The Replicas section and the promotion's confirmation read it.
+  - e2e level-0 18/18, with "a MariaDB's replicas name its writer's host, and one
+    is promoted".
+- **Live (dind, `lc/check27.sh`).** A new lc-maria4 with replica r1, and a consumer
+  lc-mclient (the mariadb image, `sleep infinity`) whose env names
+  `${lc-maria4.HIVEPAAS_DATABASE_HOST_RW}`, which resolved to `lc-maria4-rw`:
+  - **Lock:** the service carried `lc-maria4-rw`, and removing it from the
+    network settings was refused (locked).
+  - **Promotion:** the consumer wrote through the alias. After r1 was promoted,
+    the alias was on r1 and gone from the anchor. The consumer wrote again 9s
+    later, its configuration unchanged.
+  - **After:** the lock held on r1, and a redeploy of r1 kept the alias, with the
+    consumer still writing.
+  - **Cleanup:** the cluster, the consumer and the volumes were deleted.
+
 ## Task 5: the dev cluster and the release
 
 - **On the dev cluster:**

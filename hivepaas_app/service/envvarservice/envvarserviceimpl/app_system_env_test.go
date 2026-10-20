@@ -356,10 +356,9 @@ func TestClusterEnvVars_ThreeMembers(t *testing.T) {
 	assert.Empty(t, vars)
 }
 
-// The cluster's addresses are an engine's with replicas: a database whose
-// engine has none, or that this HivePaaS does not know, has no cluster to
-// address.
-func TestClusterEnvVars_OnlyForAnEngineWithReplicas(t *testing.T) {
+// The multi-host addresses are Postgres's: MariaDB's clients have no such
+// form, and an engine this HivePaaS does not know has no cluster to address.
+func TestClusterEnvVars_OnlyForPostgres(t *testing.T) {
 	for _, engine := range []string{"mariadb", "oracle"} {
 		managed := &entity.AppManagedSettings{Engine: engine, Database: &entity.ManagedDatabase{}}
 

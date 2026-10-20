@@ -39,9 +39,9 @@ const (
 	replicationPasswordLen = 40
 	// replicaSecretMountName names the setting that mounts the password's file.
 	replicaSecretMountName = "hp-replication-pass" //nolint:gosec // G101: a setting's name
-	// replicaSecretMode is the password file's: the postgres user's, read-only.
+	// replicaSecretMode is the password file's: the engine's file owner's,
+	// read-only.
 	replicaSecretMode = "0400"
-	postgresFileOwner = "999"
 )
 
 // replicaSourceTypes are the primary's settings a replica is given: the
@@ -190,7 +190,8 @@ func (uc *UC) addReplica(
 	now := timeutil.NowUTC()
 	replica := made.Apps[0].App
 	state.Members = append(state.Members, &entity.ManagedMember{App: entity.ObjectID{ID: replica.ID}, Key: replica.Key,
-		Role: entity.ManagedRoleReplica, Volume: entity.ObjectID{ID: plan.volumeID}, Node: plan.node, At: now})
+		Role: entity.ManagedRoleReplica, Volume: entity.ObjectID{ID: plan.volumeID}, Node: plan.node, At: now,
+		ServerID: spec.ServerID})
 	if err = uc.saveManagedSetting(ctx, db, loaded.setting, loaded.managed, now); err != nil {
 		return made, err
 	}
@@ -446,7 +447,7 @@ func replicaSettings(
 	secretMount := newSetting(base.SettingTypeAppSettingMount, replicaSecretMountName,
 		&entity.AppSettingMount{Source: entity.ObjectID{ID: secret.ID},
 			Files: []*entity.AppSettingMountFile{{Part: "value", Path: spec.PasswordFile,
-				UID: postgresFileOwner, GID: postgresFileOwner, Mode: mode}}})
+				UID: spec.FileOwner, GID: spec.FileOwner, Mode: mode}}})
 	out = append(out, secret, secretMount)
 
 	locks := primary.managed.Locks

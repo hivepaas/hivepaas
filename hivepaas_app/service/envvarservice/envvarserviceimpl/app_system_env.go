@@ -21,7 +21,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/engines"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 )
 
@@ -345,18 +344,16 @@ const clusterPort = "5432"
 // first, in a multi-host connection string. libpq tries them in turn and keeps
 // the first whose session is read-write, for RW, or a standby if there is one,
 // for RO; connect_timeout keeps a stopped member from holding a client up. A
-// replica of the cluster has none: its primary's app has them. Neither has a
-// database whose engine has no replicas, and so no cluster.
+// replica of the cluster has none: its primary's app has them. They are
+// Postgres's alone: libpq's multi-host form has no counterpart in MariaDB's
+// clients, whose cluster has an address of its own.
 func clusterEnvVars(kind *entity.AppKindSettings, managed *entity.AppManagedSettings, app *entity.App,
 	port string) ([]*envvarservice.EnvVar, error) {
 	state := managed.Database
 	if state == nil || managed.MemberOf != nil || kind == nil || kind.Database == nil {
 		return nil, nil
 	}
-	// The engine is looked up here, not asked of the managed service: that
-	// service depends on this one.
-	if engine, found := engines.Lookup(templatemodel.ManagedEngine(managed.Engine)); !found ||
-		!engine.Capabilities().Replicas {
+	if templatemodel.ManagedEngine(managed.Engine) != templatemodel.ManagedEnginePostgres {
 		return nil, nil
 	}
 	if err := kind.Decrypt(); err != nil {

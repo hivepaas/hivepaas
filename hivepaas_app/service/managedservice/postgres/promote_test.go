@@ -32,8 +32,9 @@ func TestAPromotionsSpec(t *testing.T) {
 	assert.Equal(t, [][2]string{{envFenced, "shop-db-r1 was promoted"}}, spec.FenceEnv)
 	assert.Equal(t, walgkit.ScriptDir+"/walg-promote", spec.Promote.Command)
 	assert.Equal(t, walgkit.ScriptDir+"/walg-replication", spec.Allow.Command, "the replicas let into it")
-	assert.Equal(t, []string{envStandbyHost, envStandbyName, envStandbyPasswordFile}, spec.StandbyEnvKeys)
-	assert.Equal(t, envStandbyHost, spec.StandbyHostKey)
+	assert.Equal(t, []string{walgkit.EnvStandbyHost, walgkit.EnvStandbyName, walgkit.EnvStandbyPasswordFile},
+		spec.StandbyEnvKeys)
+	assert.Equal(t, walgkit.EnvStandbyHost, spec.StandbyHostKey)
 }
 
 func TestAPromotionIsRefused(t *testing.T) {
@@ -137,7 +138,7 @@ func TestTheWriterIsWhereTheDatabaseIs(t *testing.T) {
 	req.Writer = &entity.App{ID: "r1", Key: "shop-db-r1"}
 	spec, err := New().Replica(req)
 	assert.NoError(t, err)
-	assert.Contains(t, spec.Env, [2]string{envStandbyHost, "shop-db-r1"})
+	assert.Contains(t, spec.Env, [2]string{walgkit.EnvStandbyHost, "shop-db-r1"})
 }
 
 func TestStatusOfAPromotedCluster(t *testing.T) {
@@ -148,7 +149,7 @@ func TestStatusOfAPromotedCluster(t *testing.T) {
 		{App: entity.ObjectID{ID: "r3"}, Key: "db-r3", Role: entity.ManagedRoleFenced},
 	}
 	runs := healthyRuns()
-	runs["health"].Outputs[outReplicas] = "db-r2@streaming@0@"
+	runs["health"].Outputs[walgkit.OutReplicas] = "db-r2@streaming@0@"
 
 	status, err := New().Status(&managedmodel.StatusReq{Managed: managed, Runs: runs, Now: statusNow})
 

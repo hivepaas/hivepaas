@@ -44,6 +44,7 @@ func replicaSpec() *managedmodel.ReplicaSpec {
 			{"HIVEPAAS_STANDBY_PASSWORD_FILE", "/run/secrets/hivepaas-replication/password"}},
 		SecretName:   "HIVEPAAS_REPLICATION_PASSWORD",
 		PasswordFile: "/run/secrets/hivepaas-replication/password",
+		FileOwner:    "999",
 		DataTarget:   "/var/lib/postgresql",
 	}
 }

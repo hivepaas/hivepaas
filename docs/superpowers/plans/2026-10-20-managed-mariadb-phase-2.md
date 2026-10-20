@@ -332,3 +332,43 @@ is no CLI change):
   - promoted;
   - the consumer follows the alias.
 - **The release:** `release.json` pins app-templates, for the user to sign.
+
+**As built** (2026-10-21):
+- **The release:** `release.json` pins app-templates `65d2d5e` (`3edea974`, merged
+  `92278b34`). The pinned commit was checked before pinning: `apptemplate lint`
+  and `index -check` passed (393 templates), and so did the release tests. The
+  user signed it, pushed, and ran `make dev-deploy`.
+- **On the dev cluster** (scratchpad `remote/setup3.sh` and `t5m.sh`):
+  - **Setup:** SeaweedFS on dev3. The cloud storage and its key must be
+    `inheritable:true`; without that, creation answers "Setting not found".
+  - **lc-p2 on a volume pinned to dev3:**
+    - the container ships `walg-replication`;
+    - the service carries `lc-p2-rw`;
+    - the first nightly was done.
+  - **Its replica lc-p2-r1 on a volume pinned to appstack-1:**
+    - it streamed from dev3 (20/20 rows), with `read_only=ON`, `server_id=2` and
+      `report_host=lc-p2-r1`;
+    - the health check showed it streaming, with no lag.
+  - **The consumer lc-p2c** (the mariadb image, on dev3) got
+    `DB_HOST=lc-p2-rw` and `DB_READ_HOSTS=lc-p2-r1`. It wrote row 1001 at
+    18:42:49 to dev3's primary.
+  - **The promotion over lc-p2:**
+    - **On the cluster:** the anchor was fenced at 18:42:55, its service at 0/0,
+      and the alias moved to lc-p2-r1.
+    - **The consumer:** it wrote row 1002 at 18:43:08 to appstack-1's member, 2s
+      after the call returned, with its configuration unchanged.
+    - **On r1:** `read_only=OFF`, GTID `0-2-15`.
+    - **Jobs:** health and nightly ran on the writer, and archiving was ok.
+  - The check's failed "write before" line was the script's own container lookup
+    (`lc-p2.` matched `lc-p2c`). The row was there, timestamped before the fence.
+- **Cleaned up on the cluster:**
+  - in HivePaaS: the consumer, the cluster (`deleteCluster`), both volumes, the
+    cloud storage, its key and the project;
+  - on dev3: the lc-s3 container, its image and anonymous volume, `/root/lc-s3`,
+    and yesterday's leftover `lc-m-nfs` docker volume;
+  - the mariadb image on both nodes.
+
+  The `chrislusf/seaweedfs:4.47` image on appstack-1 predates this check and is
+  kept.
+
+MariaDB phase 2 is complete.

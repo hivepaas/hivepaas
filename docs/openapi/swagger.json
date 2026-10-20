@@ -22475,6 +22475,103 @@
         "tags" : [ "Managed apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/scripts/upgrade" : {
+      "post" : {
+        "description" : "Replaces the scripts and artifacts of the database, its members and its verifier with what the\ninstallation's revision of its template offers, in one transaction, then deploys each, the member\nthat writes last: each restarts once. The fingerprint is the one reviewed (GET .../managed/scripts);\nanother is refused. A member, a database still restoring, and scripts with nothing to apply are\nrefused.",
+        "operationId" : "appManagedScriptsUpgrade",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appmanageddto.UpgradeManagedScriptsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appmanageddto.UpgradeManagedScriptsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Conflict"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Upgrades a managed database's engine scripts",
+        "tags" : [ "Managed apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/managed/status" : {
       "get" : {
         "description" : "Archiving, the restore window, the last base backup and restore test, where the archive is,\nand suggestions, read from the last run of each of the engine's jobs.",
@@ -57031,6 +57128,30 @@
         "required" : [ "replicas", "verifierApp" ],
         "type" : "object"
       },
+      "appmanageddto.ManagedDeploymentResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "deployment" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          },
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "app", "deployment", "task" ],
+        "type" : "object"
+      },
       "appmanageddto.ManagedDumpCfgResp" : {
         "properties" : {
           "repo" : {
@@ -58172,6 +58293,53 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpgradeManagedScriptsDataResp" : {
+        "properties" : {
+          "deployments" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appmanageddto.ManagedDeploymentResp"
+            },
+            "nullable" : true,
+            "type" : "array"
+          },
+          "fingerprint" : {
+            "type" : "string"
+          },
+          "revision" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "deployments", "fingerprint", "revision" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpgradeManagedScriptsReq" : {
+        "properties" : {
+          "fingerprint" : {
+            "description" : "Fingerprint is the available fingerprint the person reviewed: the upgrade is\nrefused when the revision offers another since.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "fingerprint" ],
+        "type" : "object"
+      },
+      "appmanageddto.UpgradeManagedScriptsResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmanageddto.UpgradeManagedScriptsDataResp"
+            } ],
+            "nullable" : true
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appmetricsdto.AppDependencyAppResp" : {

@@ -85,6 +85,68 @@ CLI is regenerated in Task 3):
     it archives, a restore to a point works, and a replica is then added.
   - **Postgres:** an old database upgraded, still archiving.
 
+**As built** (2026-10-21, backend `0affc1e7`, merged `ef0335b8`; app-templates fix
+`5c57bd0`, merged `aeff621`; API level 4, with the POST's fingerprint added to
+`api-level.json`):
+- **`managedscripts.Plan(app, settings, available, now)`** returns a `Patch`:
+  - created, updated and deleted settings, stamped with their update versions
+    moved;
+  - the lock ids gained and lost.
+
+  A script is known by its config file's name:
+  - **Changed:** its content changes in place, and so do its mount's path and mode.
+  - **New:** it gets a config file and a mount named `EntryKeyFor(name)`, as a
+    template makes them.
+  - **No longer shipped:** both are soft-deleted (`DeletedAt`).
+  - **Name taken:** a new script whose name one of the app's own config files has
+    is refused.
+
+  The artifacts setting is changed, created or deleted. It is not locked, as at
+  creation.
+- **`AppManagedSettings.Scripts{Revision, Fingerprint, UpdatedAt}`** is recorded
+  on each engine setting: the cluster's app and its members. The verifier has no
+  engine setting, so its scripts change alone. GET reads the current revision
+  from this record.
+- **`POST .../managed/scripts/upgrade` with `{fingerprint}`**, under `FOR UPDATE OF
+  app`. It refuses:
+  - a member;
+  - a database still restoring (`ERR_APP_MANAGED_SWITCH_NOT_READY`);
+  - nothing to apply (`ERR_ARGUMENT_INVALID`, 400). Up-to-date with a member out of
+    step is allowed, which re-applies.
+  - another fingerprint (`ERR_UPDATE_VER_MISMATCHED`, 412).
+
+  Then it audits on the cluster's app, deploys every app with the writer last
+  (`deployOrder`), and queues the tasks after the commit.
+- **Stopped apps are deployed too.** A fenced member or a verifier between runs is
+  deployed: a deployment keeps the service at its replicas, 0, and only updates its
+  spec, so it takes the new files and starts with them. This differs from the
+  design's "not deployed".
+- **A bug found live in the handler:** it parsed the request with
+  `ParseAndValidateRequest` and not `ParseAndValidateJSONBody`, so the
+  fingerprint never arrived. Fixed before the merge.
+- **A script bug found by the upgrade:** a phase 1 MariaDB, upgraded, refused a
+  replica, because `walg-replication`'s GRANT failed: mysql@localhost had no GRANT
+  OPTION. Its script now runs `ensure_grant_option` first (app-templates
+  `5c57bd0`). The harness revokes the grant before `walg-replication`: replicas and
+  promotion passed on 11.8 and 11.4. One run's timing-dependent
+  `caught_up` check failed once on 11.4, and passed in two more runs.
+  - **Release:** the release pin must move to app-templates `aeff621` or later.
+- **Live (dind, `lc/check29.sh`, `check29b.sh` and `check29c.sh`):**
+  - **lc-maria-latest-0003, phase 1's scripts:**
+    - 10 changes offered; another fingerprint was refused with 412.
+    - Upgraded: one deployment done, then up-to-date; applying again was refused
+      with 400.
+    - Its container has `walg-replication` and the new `walg-entrypoint`, and the
+      archive loop runs.
+    - Nightly ran, and a point marked at GTID `0-1-26` restored with 10/10 rows.
+  - **Second upgrade, with the fixed `walg-replication`:** 1 change. The replica
+    was then let in and streamed 25/25 rows, and was removed afterwards.
+  - **lc-maria5 with its replica:** the replica was deployed first and the writer
+    last. Nothing was out of step afterwards, the replica runs the new script and
+    still streams.
+  - **pg18s:** upgraded, up-to-date, its `walg-entrypoint` has the data lock, and
+    its health check is done.
+
 ## Task 3 (dashboard, CLI)
 
 - **Dashboard:** the Database tab's Scripts section, with the state, the changes,

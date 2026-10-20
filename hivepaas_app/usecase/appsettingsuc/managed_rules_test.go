@@ -179,3 +179,17 @@ func TestAManagedAppRunsOneTaskAtMost(t *testing.T) {
 		"mode")
 	assert.NoError(t, checkManagedMode(nil, replicated(3)), "an ordinary app scales")
 }
+
+// The alias a cluster's writer is reached by stays on the member that writes;
+// others may be added and removed.
+func TestAManagedAppsAliasesStay(t *testing.T) {
+	locks := &entity.ManagedLocks{Aliases: []string{"shop-db-rw"}}
+	on := func(aliases ...string) []swarm.NetworkAttachmentConfig {
+		return []swarm.NetworkAttachmentConfig{{Target: "app-net"}, {Target: "project-net", Aliases: aliases}}
+	}
+
+	assert.NoError(t, checkManagedAliases(locks, on("shop-db", "shop-db-rw", "extra")))
+	assertLocked(t, checkManagedAliases(locks, on("shop-db")), "networks")
+	assert.NoError(t, checkManagedAliases(nil, on()), "an app no engine looks after")
+	assert.NoError(t, checkManagedAliases(testLocks(), on()), "a database without one")
+}

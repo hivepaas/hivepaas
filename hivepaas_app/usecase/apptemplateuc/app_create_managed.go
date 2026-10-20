@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/artifactservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/managedservice/managedmodel"
@@ -360,7 +361,7 @@ func (p *managedPlan) attach(apps []*appToProvision) {
 
 // configure runs inside the transaction, on the settings the document was built
 // into: the engine finishes them and adds its own, and the app is given its
-// artifacts' setting and mounts.
+// artifacts' setting and mounts, and the network aliases the engine locks.
 func (p *managedPlan) configure(
 	app *entity.App,
 	spec *swarm.ServiceSpec,
@@ -378,6 +379,18 @@ func (p *managedPlan) configure(
 		return nil, hperrors.Wrap(err)
 	}
 	out := configured.Settings
+	for _, setting := range out {
+		if setting.Type != base.SettingTypeAppManaged {
+			continue
+		}
+		managed, err := setting.AsAppManagedSettings()
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		for _, alias := range managed.Locks.Aliases {
+			appservice.AddNetworkAlias(spec, app.Key, alias)
+		}
+	}
 	if p.artifacts != nil {
 		artifacts := &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),

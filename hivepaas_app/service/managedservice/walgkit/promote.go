@@ -53,6 +53,7 @@ func Promote(p *Profile, req *managedmodel.PromoteReq) (*managedmodel.PromoteSpe
 		Allow:          &entity.CommandTemplate{Command: ScriptDir + "/" + ReplicationScript},
 		StandbyEnvKeys: []string{EnvStandbyHost, EnvStandbyName, EnvStandbyPasswordFile},
 		StandbyHostKey: EnvStandbyHost,
+		Alias:          db.Alias,
 	}, nil
 }
 

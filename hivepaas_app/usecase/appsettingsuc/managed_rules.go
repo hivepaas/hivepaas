@@ -154,6 +154,23 @@ func checkManagedContainer(locks *entity.ManagedLocks, current *swarm.ContainerS
 	return checkManagedCommand(locks, command)
 }
 
+// checkManagedAliases keeps the network aliases the engine gives the app - the
+// cluster's writer alias - on one of its networks. Others may be added and
+// removed.
+func checkManagedAliases(locks *entity.ManagedLocks, networks []swarm.NetworkAttachmentConfig) error {
+	if locks == nil {
+		return nil
+	}
+	for _, alias := range locks.Aliases {
+		if !slices.ContainsFunc(networks, func(n swarm.NetworkAttachmentConfig) bool {
+			return slices.Contains(n.Aliases, alias)
+		}) {
+			return managedFieldLocked("networks")
+		}
+	}
+	return nil
+}
+
 // checkManagedMounts keeps every mount the engine relies on as it is: its source,
 // its options, writable. Mounts may be added.
 func checkManagedMounts(locks *entity.ManagedLocks, current, final []mount.Mount) error {

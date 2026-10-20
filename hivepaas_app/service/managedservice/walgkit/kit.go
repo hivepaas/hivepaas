@@ -45,6 +45,17 @@ type Profile struct {
 	Members func(members []*entity.ManagedMember, health *managedmodel.JobRun) []*managedmodel.MemberStatus
 	// Promotion is how a member is promoted; empty, by PromoteScript.
 	Promotion Promotion
+	// WriterAlias gives the cluster a network alias that reaches its writer,
+	// moved at each promotion: for an engine whose clients know one host.
+	WriterAlias bool
+}
+
+// writerAliasSuffix makes the cluster's app's key its writer alias.
+const writerAliasSuffix = "-rw"
+
+// WriterAlias is the writer alias of the cluster whose app is app.
+func WriterAlias(app *entity.App) string {
+	return app.Key + writerAliasSuffix
 }
 
 // Promotion is the command that promotes the member it runs in, and the script

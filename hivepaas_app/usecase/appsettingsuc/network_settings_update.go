@@ -36,6 +36,14 @@ func (uc *UC) UpdateAppNetworkSettings(
 			return hperrors.Wrap(err)
 		}
 
+		locks, err := uc.loadManagedLocks(ctx, db, data.App.ID)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = checkManagedAliases(locks, data.FinalNetworks); err != nil {
+			return err
+		}
+
 		err = uc.verifyAppPublishedPorts(ctx, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)

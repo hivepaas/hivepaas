@@ -27,9 +27,10 @@ type Target struct {
 type Facts struct {
 	HasPort     bool
 	HasPassword bool
-	// HasClusterURL says the target shares a managed cluster's stable addresses,
-	// which only a database whose engine has replicas does.
-	HasClusterURL bool
+	// HasClusterURL says the target shares a managed PostgreSQL cluster's stable
+	// addresses, and HasClusterHost a managed MariaDB cluster's writer host.
+	HasClusterURL  bool
+	HasClusterHost bool
 	// SharedVars are the keys of the variables the target's own settings share,
 	// not its system variables.
 	SharedVars []string
@@ -81,6 +82,8 @@ func FactsOf(shared []*envvarservice.EnvVar) *Facts {
 			facts.HasPassword = env.Value != ""
 		case env.IsSystem && env.Key == base.AppSystemEnvVarDatabaseURLRW:
 			facts.HasClusterURL = env.Value != ""
+		case env.IsSystem && env.Key == base.AppSystemEnvVarDatabaseHostRW:
+			facts.HasClusterHost = env.Value != ""
 		case !env.IsSystem:
 			facts.SharedVars = append(facts.SharedVars, env.Key)
 		}

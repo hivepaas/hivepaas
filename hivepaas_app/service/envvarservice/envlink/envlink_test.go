@@ -197,3 +197,31 @@ func TestAPostgresClusterGetsItsStableAddressesFirst(t *testing.T) {
 	plain := Suggest(pg, &Facts{HasPort: true, HasPassword: true})
 	assert.Equal(t, "connection-url", plain[0].ID, "a database of its own keeps its URL first")
 }
+
+// A managed MariaDB cluster's writer host comes first, recommended: the alias
+// that moves to whichever member writes.
+func TestAMariaDBClusterGetsItsWriterHostFirst(t *testing.T) {
+	maria := &Target{Key: "db", Name: "DB", Category: base.AppCategoryDatabase, Engine: "mariadb"}
+	groups := Suggest(maria, &Facts{HasPort: true, HasPassword: true, HasClusterHost: true})
+
+	if assert.NotEmpty(t, groups) {
+		assert.Equal(t, "cluster", groups[0].ID)
+		assert.True(t, groups[0].Recommended)
+		vars := map[string]string{}
+		for _, v := range groups[0].Vars {
+			vars[v.Key] = v.Value
+		}
+		assert.Equal(t, "mysql://${db.HIVEPAAS_USER}:${db.HIVEPAAS_PASSWORD_URLENCODED}@${db.HIVEPAAS_DATABASE_HOST_RW}:"+
+			"${db.HIVEPAAS_PORT}/${db.HIVEPAAS_DATABASE_NAME}", vars["DATABASE_URL"])
+		assert.Equal(t, "${db.HIVEPAAS_DATABASE_HOST_RW}", vars["DB_HOST"])
+		assert.Equal(t, "${db.HIVEPAAS_DATABASE_HOSTS_RO}", vars["DB_READ_HOSTS"])
+	}
+	for _, g := range groups[1:] {
+		assert.False(t, g.Recommended, g.ID)
+	}
+	plain := Suggest(maria, &Facts{HasPort: true, HasPassword: true})
+	assert.Equal(t, "connection-url", plain[0].ID)
+	host := &envvarservice.EnvVar{EnvVar: &entity.EnvVar{Key: base.AppSystemEnvVarDatabaseHostRW, Value: "db-rw",
+		IsShared: true, IsSystem: true}}
+	assert.True(t, FactsOf([]*envvarservice.EnvVar{host}).HasClusterHost)
+}

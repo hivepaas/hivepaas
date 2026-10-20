@@ -53,6 +53,8 @@ type fakeEngine struct {
 	prepared   *managedmodel.PrepareReq
 	configured *managedmodel.ConfigureReq
 	err        error
+	// aliases are the network aliases its setting locks.
+	aliases []string
 }
 
 func (e *fakeEngine) Name() templatemodel.ManagedEngine { return templatemodel.ManagedEnginePostgres }
@@ -66,6 +68,7 @@ func (e *fakeEngine) PrepareDoc(req *managedmodel.PrepareReq) error {
 func (e *fakeEngine) Configure(req *managedmodel.ConfigureReq) (*managedmodel.ConfigureResp, error) {
 	e.configured = req
 	managed := &entity.Setting{ID: "managed-1", Type: base.SettingTypeAppManaged, ObjectID: req.App.ID}
+	managed.MustSetData(&entity.AppManagedSettings{Engine: "postgres", Locks: entity.ManagedLocks{Aliases: e.aliases}})
 	return &managedmodel.ConfigureResp{Settings: []*entity.Setting{managed}}, nil
 }
 
@@ -413,4 +416,17 @@ func TestADumpRepositoryMustBeUsable(t *testing.T) {
 		Schedule: "at three"}
 	_, err := plan(t, uc, fakes, req)
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
+}
+
+// The aliases the engine locks are given to the new app's service, on the
+// project's network it is reached by its key on.
+func TestANewManagedAppIsGivenTheAliasesItsEngineLocks(t *testing.T) {
+	plan := &managedPlan{engine: &fakeEngine{aliases: []string{"shop-db-rw"}}}
+	spec := &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{Networks: []swarm.NetworkAttachmentConfig{
+		{Target: "project-net", Aliases: []string{"shop-db"}}}}}
+
+	_, err := plan.configure(&entity.App{ID: "app-1", Key: "shop-db"}, spec, nil, time.Now())
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"shop-db", "shop-db-rw"}, spec.TaskTemplate.Networks[0].Aliases)
 }

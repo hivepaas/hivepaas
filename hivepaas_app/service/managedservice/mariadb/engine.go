@@ -45,6 +45,8 @@ var profile = &walgkit.Profile{
 	// template whose scripts let replicas in has it.
 	Promotion: walgkit.Promotion{Command: walgkit.ScriptDir + "/walg-entrypoint promote",
 		Requires: walgkit.ReplicationScript},
+	// MariaDB's clients know one host: the cluster's alias reaches its writer.
+	WriterAlias: true,
 }
 
 // apiScripts are the scripts engine API 1 runs, which the template ships as

@@ -73,6 +73,12 @@ func Configure(p *Profile, req *managedmodel.ConfigureReq, options managedmodel.
 			},
 		})
 	managed.ID = managedID
+	if p.WriterAlias {
+		data := managed.MustAsAppManagedSettings()
+		data.Database.Alias = WriterAlias(req.App)
+		data.Locks.Aliases = []string{data.Database.Alias}
+		managed.MustSetData(data)
+	}
 	if restore := req.Prepared.Restore; restore != nil {
 		data := managed.MustAsAppManagedSettings()
 		data.Database.Restore = &entity.ManagedRestore{SourceApp: entity.ObjectID{ID: restore.SourceAppID},

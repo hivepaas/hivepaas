@@ -269,6 +269,9 @@ type PromoteSpec struct {
 	StandbyEnvKeys []string
 	// StandbyHostKey is the variable that names the primary a standby follows.
 	StandbyHostKey string
+	// Alias is the cluster's writer alias, which moves from the member fenced to
+	// the member promoted: empty for a cluster without one.
+	Alias string
 }
 
 // PromoteExitNotPromoted is the promote command's exit when nothing was

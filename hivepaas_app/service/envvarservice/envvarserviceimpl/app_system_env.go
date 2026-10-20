@@ -339,23 +339,31 @@ func managedEnvVars(setting *entity.Setting, kind *entity.AppKindSettings, app *
 // clusterPort is a cluster's members' port when the app sets none.
 const clusterPort = "5432"
 
-// clusterEnvVars are a managed PostgreSQL database's stable addresses (design
-// §9, "The stable address"): every member that may serve, the one that writes
-// first, in a multi-host connection string. libpq tries them in turn and keeps
-// the first whose session is read-write, for RW, or a standby if there is one,
-// for RO; connect_timeout keeps a stopped member from holding a client up. A
-// replica of the cluster has none: its primary's app has them. They are
-// Postgres's alone: libpq's multi-host form has no counterpart in MariaDB's
-// clients, whose cluster has an address of its own.
+// clusterEnvVars are a managed database's cluster addresses, as its engine's
+// clients know them: none for an engine this HivePaaS does not know. A replica of
+// the cluster has none: its primary's app has them.
 func clusterEnvVars(kind *entity.AppKindSettings, managed *entity.AppManagedSettings, app *entity.App,
 	port string) ([]*envvarservice.EnvVar, error) {
 	state := managed.Database
 	if state == nil || managed.MemberOf != nil || kind == nil || kind.Database == nil {
 		return nil, nil
 	}
-	if templatemodel.ManagedEngine(managed.Engine) != templatemodel.ManagedEnginePostgres {
-		return nil, nil
+	switch templatemodel.ManagedEngine(managed.Engine) { //nolint:exhaustive // two engines have clusters
+	case templatemodel.ManagedEnginePostgres:
+		return postgresClusterEnvVars(kind, state, app, port)
+	case templatemodel.ManagedEngineMariaDB:
+		return mariadbClusterEnvVars(state, app), nil
 	}
+	return nil, nil
+}
+
+// postgresClusterEnvVars are a managed PostgreSQL database's stable addresses
+// (design §9, "The stable address"): every member that may serve, the one that
+// writes first, in a multi-host connection string. libpq tries them in turn and
+// keeps the first whose session is read-write, for RW, or a standby if there is
+// one, for RO; connect_timeout keeps a stopped member from holding a client up.
+func postgresClusterEnvVars(kind *entity.AppKindSettings, state *entity.ManagedDatabase, app *entity.App,
+	port string) ([]*envvarservice.EnvVar, error) {
 	if err := kind.Decrypt(); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -378,6 +386,27 @@ func clusterEnvVars(kind *entity.AppKindSettings, managed *entity.AppManagedSett
 		sharedEnv(base.AppSystemEnvVarDatabaseURLRW, url+"read-write"),
 		sharedEnv(base.AppSystemEnvVarDatabaseURLRO, url+"prefer-standby"),
 	}, nil
+}
+
+// mariadbClusterEnvVars are a managed MariaDB database's addresses (MariaDB
+// phase 2 design §4): its clients know one host, so the writer's is the
+// cluster's alias, which the member that writes carries; and the replicas', for
+// reads, the writer's when there is none.
+func mariadbClusterEnvVars(state *entity.ManagedDatabase, app *entity.App) []*envvarservice.EnvVar {
+	writer := state.WriterHost(app)
+	var replicas []string
+	for _, member := range state.Members {
+		if member.Role == entity.ManagedRoleReplica {
+			replicas = append(replicas, member.Key)
+		}
+	}
+	if len(replicas) == 0 {
+		replicas = []string{writer}
+	}
+	return []*envvarservice.EnvVar{
+		sharedEnv(base.AppSystemEnvVarDatabaseHostRW, writer),
+		sharedEnv(base.AppSystemEnvVarDatabaseHostsRO, strings.Join(replicas, ",")),
+	}
 }
 
 func percentEncode(s string) string {

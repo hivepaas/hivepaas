@@ -52,6 +52,10 @@ type Service interface {
 	StopAndWait(ctx context.Context, app *entity.App, wait time.Duration) (bool, error)
 	// Start starts the app's service again, at the replicas it was stopped at.
 	Start(ctx context.Context, app *entity.App) error
+	// MoveAlias moves a network alias from one app's service to another's: off
+	// from's every network, onto the network to is reached by its key on. A
+	// service that changes is updated, and restarts if it runs.
+	MoveAlias(ctx context.Context, from, to *entity.App, alias string) error
 }
 
 // MarkPointReq asks for a restore point on a managed database.

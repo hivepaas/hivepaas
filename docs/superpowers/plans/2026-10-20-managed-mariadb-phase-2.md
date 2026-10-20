@@ -71,6 +71,30 @@ then write as-built notes here.
   is a GTID list.
 - **Tests:** parsing, and a target of each form.
 
+**As built** (2026-10-20, backend `8529f16f`, merged `63e03446`; CLI `75e0f75`, spec
+descriptions only):
+- **`MarkResult`** returns the `GTID=` list. It falls back to `POSITION=` when the
+  GTID is empty: a database with no transaction yet.
+- **The point target:** a GTID list gives `HIVEPAAS_RESTORE_STOP_GTID`, and
+  FILE:OFFSET gives `HIVEPAAS_RESTORE_STOP_POSITION`. Anything else is refused.
+- **A guard against old scripts.** A template whose `walg-entrypoint` does not
+  mention `HIVEPAAS_RESTORE_STOP_GTID` would ignore the stop and replay to the last
+  log archived. So a restore to a GTID point with such a template is refused
+  (`ErrAppManagedRestoreTargetInvalid`, "update the template, or restore to the
+  point's time"). The check is `walgkit.ScriptMentions`.
+  - Points already made before this deploy are FILE:OFFSET, and keep restoring
+    with any template.
+  - **Release:** pin app-templates to `9c46124` or later in the same release as this
+    backend. Otherwise new points are made by GTID and refused until the template
+    ships.
+- **The API level stays 4.** The DTO descriptions of `position` name the GTID list.
+- **Dashboard:** nothing to change; it never shows a point's position.
+- **Live (dind, `lc/check24.sh`):** run with app-templates `9c46124` loaded.
+  - A point marked on lc-maria-latest-0003 got `0-1-23`. Its restore replayed 14
+    logs, skipped 1, stopped at `0-1-23`, and held 10/10 rows.
+  - The earlier point `before-x-0223` (`mariadb-bin.000007:971`) restored with the
+    new scripts by STOP_POSITION, 10/10 rows.
+
 ## Task 2 (app-templates, backend): replicas
 
 - **Scripts:**

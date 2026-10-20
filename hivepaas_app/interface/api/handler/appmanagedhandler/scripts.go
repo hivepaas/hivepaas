@@ -51,3 +51,49 @@ func (h *Handler) GetManagedScripts(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// UpgradeManagedScripts Upgrades a managed database's engine scripts
+// @Summary Upgrades a managed database's engine scripts
+// @Description Replaces the scripts and artifacts of the database, its members and its verifier with what the
+// @Description installation's revision of its template offers, in one transaction, then deploys each, the member
+// @Description that writes last: each restarts once. The fingerprint is the one reviewed (GET .../managed/scripts);
+// @Description another is refused. A member, a database still restoring, and scripts with nothing to apply are
+// @Description refused.
+// @Tags    Managed apps
+// @Accept  json
+// @Produce json
+// @Id      appManagedScriptsUpgrade
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   body body appmanageddto.UpgradeManagedScriptsReq true "request data"
+// @Success 200 {object} appmanageddto.UpgradeManagedScriptsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 409 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/managed/scripts/upgrade [post]
+func (h *Handler) UpgradeManagedScripts(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appmanageddto.NewUpgradeManagedScriptsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appManagedUC.UpgradeManagedScripts(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

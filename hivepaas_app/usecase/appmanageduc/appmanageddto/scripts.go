@@ -106,3 +106,51 @@ func TransformManagedScripts(view *ManagedScriptsView) *ManagedScriptsResp {
 	}
 	return resp
 }
+
+type UpgradeManagedScriptsReq struct {
+	ProjectID    string `json:"-"`
+	ProjectEnvID string `json:"-"`
+	AppID        string `json:"-"`
+
+	// Fingerprint is the available fingerprint the person reviewed: the upgrade is
+	// refused when the revision offers another since.
+	Fingerprint string `json:"fingerprint"`
+}
+
+func NewUpgradeManagedScriptsReq() *UpgradeManagedScriptsReq {
+	return &UpgradeManagedScriptsReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *UpgradeManagedScriptsReq) Validate() hperrors.ValidationErrors {
+	validators := make([]vld.Validator, 0, 4) //nolint:mnd
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
+	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
+	validators = append(validators, basedto.ValidateStr(&req.Fingerprint, true, fingerprintLen, fingerprintLen,
+		"fingerprint")...)
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+// fingerprintLen is a fingerprint's length: a sha256, in hex.
+const fingerprintLen = 64
+
+type UpgradeManagedScriptsResp struct {
+	Meta *basedto.Meta                  `json:"meta"`
+	Data *UpgradeManagedScriptsDataResp `json:"data"`
+}
+
+// UpgradeManagedScriptsDataResp is the revision applied, and the deployments
+// that bring it to the database, its members and verifier: the member that
+// writes last.
+type UpgradeManagedScriptsDataResp struct {
+	Revision    string                   `json:"revision"`
+	Fingerprint string                   `json:"fingerprint"`
+	Deployments []*ManagedDeploymentResp `json:"deployments"`
+}
+
+type ManagedDeploymentResp struct {
+	App        *basedto.ObjectIDResp `json:"app"`
+	Deployment *basedto.ObjectIDResp `json:"deployment"`
+	Task       *basedto.ObjectIDResp `json:"task"`
+}

@@ -65,6 +65,17 @@ type AppManagedSettings struct {
 	// database of its own. A member's setting holds its locks, and no engine
 	// state: that is its primary's.
 	MemberOf *ManagedMemberOf `json:"memberOf,omitempty"`
+	// Scripts is the last upgrade of the app's scripts and artifacts, nil while
+	// they are those it was made with.
+	Scripts *ManagedScripts `json:"scripts,omitempty"`
+}
+
+// ManagedScripts is an upgrade of an app's scripts and artifacts: the
+// templates' revision they came from, and their fingerprint.
+type ManagedScripts struct {
+	Revision    string    `json:"revision"`
+	Fingerprint string    `json:"fingerprint"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // ManagedMemberOf is the primary a member belongs to, and its role there.

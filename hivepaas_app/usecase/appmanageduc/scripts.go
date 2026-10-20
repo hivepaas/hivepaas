@@ -86,13 +86,17 @@ func (uc *UC) scriptsOffer(ctx context.Context, loaded *loadedManaged, current *
 	tmpl, err := uc.appTemplateService.Template(ctx, binding.Template)
 	if errors.Is(err, hperrors.ErrAppTemplateNotFound) {
 		return &managedscripts.Offer{State: managedscripts.StateUnavailable,
-			Reason: "the templates no longer have " + binding.Template}, binding.Base.Revision, "", nil
+			Reason: "the templates no longer have " + binding.Template}, "", "", nil
 	}
 	if err != nil {
 		return nil, "", "", hperrors.Wrap(err)
 	}
+	currentRevision = binding.Base.Revision
+	if loaded.managed.Scripts != nil {
+		currentRevision = loaded.managed.Scripts.Revision
+	}
 	return managedscripts.Evaluate(loaded.managed, tmpl.Template, binding.Version, current),
-		binding.Base.Revision, tmpl.Revision, nil
+		currentRevision, tmpl.Revision, nil
 }
 
 // scriptSetOf is an app's scripts and artifacts.

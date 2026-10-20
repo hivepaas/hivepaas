@@ -43,8 +43,11 @@ func Suggest(target *Target, facts *Facts) []*Group {
 	switch target.Category {
 	case base.AppCategoryDatabase:
 		groups = databaseGroups(r, EngineFamily(target.Engine))
-		if facts.HasClusterURL && EngineFamily(target.Engine) == FamilyPostgres {
+		switch family := EngineFamily(target.Engine); {
+		case facts.HasClusterURL && family == FamilyPostgres:
 			groups = append([]*Group{clusterGroup(r)}, unrecommended(groups)...)
+		case facts.HasClusterHost && family == FamilyMySQL:
+			groups = append([]*Group{clusterHostGroup(r)}, unrecommended(groups)...)
 		}
 	case base.AppCategoryCache:
 		groups = cacheGroups(r, EngineFamily(target.Engine), facts.HasPassword)
@@ -88,6 +91,29 @@ func clusterGroup(r refs) *Group {
 				Description: "Reads and writes, on the primary"},
 			{Key: "DATABASE_READ_URL", Value: r.of(base.AppSystemEnvVarDatabaseURLRO),
 				Description: "Reads, on a replica when there is one"},
+		},
+	}
+}
+
+// clusterHostGroup is a managed MariaDB cluster's addresses: the writer's host is
+// the cluster's alias, which moves to whichever member writes through a
+// promotion, where its own host would not.
+func clusterHostGroup(r refs) *Group {
+	hostRW, port := r.of(base.AppSystemEnvVarDatabaseHostRW), r.of(base.AppSystemEnvVarPort)
+	user, password := r.of(base.AppSystemEnvVarUser), r.of(base.AppSystemEnvVarPassword)
+	name := r.of(base.AppSystemEnvVarDatabaseName)
+	return &Group{
+		ID: "cluster", Title: "Cluster address", Recommended: true,
+		Description: "The host that reaches whichever member writes, through a promotion; and the replicas, " +
+			"for reads. A connection open at a promotion breaks, and reconnecting reaches the new primary.",
+		Vars: []*Var{
+			{Key: "DATABASE_URL", Value: "mysql://" + user + ":" + r.of(base.AppSystemEnvVarPasswordURLEncoded) +
+				"@" + hostRW + ":" + port + "/" + name, Description: "Reads and writes, on the primary"},
+			{Key: "DB_HOST", Value: hostRW, Description: "The primary's host"},
+			{Key: "DB_READ_HOSTS", Value: r.of(base.AppSystemEnvVarDatabaseHostsRO),
+				Description: "The replicas' hosts, comma-separated: the primary's when there is none"},
+			{Key: "DB_PORT", Value: port}, {Key: "DB_USER", Value: user}, {Key: "DB_PASSWORD", Value: password},
+			{Key: "DB_NAME", Value: name},
 		},
 	}
 }

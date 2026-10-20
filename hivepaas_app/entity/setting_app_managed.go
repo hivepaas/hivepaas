@@ -129,6 +129,9 @@ type ManagedLocks struct {
 	// Settings are the ids of the secrets, config files and setting mounts the app
 	// was built with: the engine's credentials and scripts.
 	Settings []string `json:"settings,omitempty"`
+	// Aliases are the network aliases the engine gives the app's service on the
+	// project's network: the cluster's writer alias, on whichever member writes.
+	Aliases []string `json:"aliases,omitempty"`
 }
 
 // ManagedDatabase is what the engine keeps of a database: its archive, its
@@ -165,6 +168,19 @@ type ManagedDatabase struct {
 	// ReplicationPassword is what the replicas stream with, made with the first
 	// one.
 	ReplicationPassword EncryptedField `json:"replicationPassword,omitzero"`
+	// Alias is the cluster's writer alias, for an engine whose clients reach the
+	// writer by one name (MariaDB's): the network alias the member that writes
+	// carries, moved at each promotion. Empty for a database made without one.
+	Alias string `json:"alias,omitempty"`
+}
+
+// WriterHost is the host that reaches the cluster's writer: its alias, or the
+// writer's key for a database that has none.
+func (s *ManagedDatabase) WriterHost(app *App) string {
+	if s.Alias != "" {
+		return s.Alias
+	}
+	return s.WriterKey(app)
 }
 
 // WriterKey is the key of the cluster's primary: the writer member's, or app's

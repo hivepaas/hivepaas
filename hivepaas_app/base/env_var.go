@@ -88,6 +88,12 @@ const (
 	// promotion.
 	AppSystemEnvVarDatabaseURLRW = "HIVEPAAS_DATABASE_URL_RW" //nolint:gosec // G101: env name
 	AppSystemEnvVarDatabaseURLRO = "HIVEPAAS_DATABASE_URL_RO" //nolint:gosec // G101: env name
+	// AppSystemEnvVarDatabaseHostRW and AppSystemEnvVarDatabaseHostsRO are a
+	// managed MariaDB cluster's: the host that reaches whichever member writes,
+	// through a promotion, and the replicas' hosts, comma-separated - the
+	// writer's when there is none.
+	AppSystemEnvVarDatabaseHostRW  = "HIVEPAAS_DATABASE_HOST_RW"
+	AppSystemEnvVarDatabaseHostsRO = "HIVEPAAS_DATABASE_HOSTS_RO"
 
 	AppSystemEnvVarKeyID  = "HIVEPAAS_KEY_ID"
 	AppSystemEnvVarSecret = "HIVEPAAS_SECRET" //nolint:gosec // G101: env name

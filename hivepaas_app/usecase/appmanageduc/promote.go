@@ -83,6 +83,8 @@ type promotionSteps interface {
 	// record makes the member the cluster's primary in the settings, and points
 	// the other replicas at it.
 	record(ctx context.Context) error
+	// moveAlias moves the cluster's writer alias to it: its service restarts once.
+	moveAlias(ctx context.Context)
 	// restart restarts the other replicas, to follow it.
 	restart(ctx context.Context)
 }
@@ -125,6 +127,7 @@ func runPromotion(ctx context.Context, steps promotionSteps, member, fenced stri
 		return promoteFailed(fmt.Sprintf("%s is the primary, but recording it failed: %s; %s stays fenced, and "+
 			"promoting %s again finishes the promotion", member, hperrors.GetErrorDetail(err, ""), fenced, member))
 	}
+	steps.moveAlias(ctx)
 	steps.restart(ctx)
 	return nil
 }
@@ -281,6 +284,31 @@ func (r *promotionRun) record(ctx context.Context) error {
 		r.restarted, r.replicasEnv, err = r.uc.recordPromotion(ctx, db, r.auth, r.req, r.p)
 		return err
 	}))
+}
+
+// moveAlias moves the cluster's writer alias from what was fenced to the member
+// promoted, in their locks and on their services: the promoted member's restarts
+// once. It fails no promotion: the member writes, and a client that names the
+// alias reaches it once it is moved.
+func (r *promotionRun) moveAlias(ctx context.Context) {
+	p, alias := r.p, r.p.spec.Alias
+	if alias == "" {
+		return
+	}
+	err := transaction.Execute(ctx, r.uc.db, func(db database.Tx) error {
+		if err := r.uc.lockAliases(ctx, db, p.fenced, nil, []string{alias}); err != nil {
+			return err
+		}
+		return r.uc.lockAliases(ctx, db, p.promoted, []string{alias}, nil)
+	})
+	if err == nil {
+		err = r.uc.managedService.MoveAlias(ctx, p.fenced, p.promoted, alias)
+	}
+	if err != nil {
+		r.meta.Warning += fmt.Sprintf("The cluster's address %v could not be moved to '%v', which clients that "+
+			"name it do not reach until it is: add it to its network aliases. %v\n", alias, p.promoted.Name,
+			hperrors.GetErrorDetail(err, ""))
+	}
 }
 
 // restart restarts the other replicas with the new primary to follow. The
@@ -467,6 +495,37 @@ func (uc *UC) lockEnvKeys(ctx context.Context, db database.Tx, app *entity.App, 
 		return nil
 	}
 	managed.Locks.EnvKeys = keys
+	return uc.saveManagedSetting(ctx, db, setting, managed, timeutil.NowUTC())
+}
+
+// lockAliases adds aliases to, and removes aliases from, the network aliases an
+// app's engine setting keeps on its service.
+func (uc *UC) lockAliases(ctx context.Context, db database.Tx, app *entity.App, add, remove []string) error {
+	settings, _, err := uc.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.object_id = ?", app.ID),
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppManaged),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+	)
+	if err != nil || len(settings) == 0 {
+		return hperrors.Wrap(err)
+	}
+	setting := settings[0]
+	managed, err := setting.AsAppManagedSettings()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	aliases := slices.DeleteFunc(slices.Clone(managed.Locks.Aliases), func(alias string) bool {
+		return slices.Contains(remove, alias)
+	})
+	for _, alias := range add {
+		if !slices.Contains(aliases, alias) {
+			aliases = append(aliases, alias)
+		}
+	}
+	if slices.Equal(aliases, managed.Locks.Aliases) {
+		return nil
+	}
+	managed.Locks.Aliases = aliases
 	return uc.saveManagedSetting(ctx, db, setting, managed, timeutil.NowUTC())
 }
 

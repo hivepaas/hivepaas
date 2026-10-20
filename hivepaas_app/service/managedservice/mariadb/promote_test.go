@@ -93,3 +93,25 @@ func TestReconfigurePromotesAWriter(t *testing.T) {
 		assert.Equal(t, "r1", jobs[id].MustAsSchedJob().App.ID, name)
 	}
 }
+
+// A cluster made with a writer alias has it moved at the promotion.
+func TestAPromotionMovesTheWriterAlias(t *testing.T) {
+	req := promoteReq()
+	req.Managed.Database.Alias = "shop-db-rw"
+
+	spec, err := New().Promote(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "shop-db-rw", spec.Alias)
+}
+
+// The cluster's app is given its writer alias when it is made, locked on it.
+func TestConfigureGivesTheWriterAlias(t *testing.T) {
+	resp, err := New().Configure(configureReq(t, deploymentSetting()))
+
+	assert.NoError(t, err)
+	managed := resp.Settings[0].MustAsAppManagedSettings()
+	assert.Equal(t, "shop-db-rw", managed.Database.Alias)
+	assert.Equal(t, []string{"shop-db-rw"}, managed.Locks.Aliases)
+	assert.Equal(t, "shop-db-rw", managed.Database.WriterHost(&entity.App{Key: "shop-db"}))
+}

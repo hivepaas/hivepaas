@@ -365,8 +365,55 @@ func TestClusterEnvVars_OnlyForPostgres(t *testing.T) {
 		vars, err := clusterEnvVars(clusterKind(), managed, &entity.App{Key: "shop-db"}, "")
 
 		assert.NoError(t, err)
-		assert.Empty(t, vars, engine)
+		got := envMap(vars)
+		assert.NotContains(t, got, base.AppSystemEnvVarDatabaseURLRW, engine)
+		assert.NotContains(t, got, base.AppSystemEnvVarDatabaseURLRO, engine)
 	}
+	vars, err := clusterEnvVars(clusterKind(), &entity.AppManagedSettings{Engine: "oracle",
+		Database: &entity.ManagedDatabase{}}, &entity.App{Key: "shop-db"}, "")
+	assert.NoError(t, err)
+	assert.Empty(t, vars, "an engine this HivePaaS does not know")
+}
+
+// A MariaDB cluster's writer is reached by its alias, which moves at each
+// promotion; its replicas for reads, or the writer when there is none. A
+// database made before the alias is reached by its own key.
+func TestClusterEnvVars_MariaDB(t *testing.T) {
+	app := &entity.App{Key: "shop-db"}
+	alone := &entity.AppManagedSettings{Engine: "mariadb", Database: &entity.ManagedDatabase{Alias: "shop-db-rw"}}
+	vars, err := clusterEnvVars(clusterKind(), alone, app, "")
+	assert.NoError(t, err)
+	got := envMap(vars)
+	assert.Equal(t, "shop-db-rw", got[base.AppSystemEnvVarDatabaseHostRW])
+	assert.Equal(t, "shop-db-rw", got[base.AppSystemEnvVarDatabaseHostsRO])
+	assert.False(t, base.IsAppSecretEnv(base.AppSystemEnvVarDatabaseHostRW), "no secret in it")
+	for _, env := range vars {
+		assert.True(t, env.IsShared)
+	}
+
+	promoted := &entity.AppManagedSettings{Engine: "mariadb", Database: &entity.ManagedDatabase{
+		Alias: "shop-db-rw", Writer: entity.ObjectID{ID: "r1"}, FencedAt: time.Now(),
+		Members: []*entity.ManagedMember{
+			{App: entity.ObjectID{ID: "r1"}, Key: "shop-db-r1", Role: entity.ManagedRolePrimary},
+			{App: entity.ObjectID{ID: "r2"}, Key: "shop-db-r2", Role: entity.ManagedRoleReplica},
+			{App: entity.ObjectID{ID: "r3"}, Key: "shop-db-r3", Role: entity.ManagedRoleReplica},
+		}}}
+	vars, err = clusterEnvVars(clusterKind(), promoted, app, "")
+	assert.NoError(t, err)
+	got = envMap(vars)
+	assert.Equal(t, "shop-db-rw", got[base.AppSystemEnvVarDatabaseHostRW])
+	assert.Equal(t, "shop-db-r2,shop-db-r3", got[base.AppSystemEnvVarDatabaseHostsRO])
+
+	old := &entity.AppManagedSettings{Engine: "mariadb", Database: &entity.ManagedDatabase{}}
+	vars, err = clusterEnvVars(clusterKind(), old, app, "")
+	assert.NoError(t, err)
+	assert.Equal(t, "shop-db", envMap(vars)[base.AppSystemEnvVarDatabaseHostRW])
+
+	member := &entity.AppManagedSettings{Engine: "mariadb", Database: &entity.ManagedDatabase{Alias: "x-rw"},
+		MemberOf: &entity.ManagedMemberOf{App: entity.ObjectID{ID: "p"}}}
+	vars, err = clusterEnvVars(clusterKind(), member, &entity.App{Key: "shop-db-r1"}, "")
+	assert.NoError(t, err)
+	assert.Empty(t, vars, "a member has none")
 }
 
 func envMap(vars []*envvarservice.EnvVar) map[string]string {

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -12,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -51,6 +53,29 @@ func (s *service) StopAndWait(ctx context.Context, app *entity.App, wait time.Du
 
 func (s *service) Start(ctx context.Context, app *entity.App) error {
 	return hperrors.Wrap(s.appService.SetAppRunning(ctx, app, true))
+}
+
+// aliasUpdateRetries is how many times a service update that meets a newer
+// version of the service is tried again.
+const aliasUpdateRetries = 3
+
+func (s *service) MoveAlias(ctx context.Context, from, to *entity.App, alias string) error {
+	if from != nil && from.ServiceID != "" {
+		err := s.dockerManager.ServiceUpdateFunc(ctx, from.ServiceID, nil,
+			func(_ int, service *swarm.Service) (bool, error) {
+				return appservice.RemoveNetworkAlias(&service.Spec, alias), nil
+			}, aliasUpdateRetries, 0)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	if to.ServiceID == "" {
+		return nil
+	}
+	return hperrors.Wrap(s.dockerManager.ServiceUpdateFunc(ctx, to.ServiceID, nil,
+		func(_ int, service *swarm.Service) (bool, error) {
+			return appservice.AddNetworkAlias(&service.Spec, to.Key, alias), nil
+		}, aliasUpdateRetries, 0))
 }
 
 func (s *service) AllowReplicas(ctx context.Context, db database.Tx, app *entity.App, allow *entity.CommandTemplate,

@@ -160,3 +160,16 @@ func TestStatusOfAPromotedCluster(t *testing.T) {
 	}
 	assert.Equal(t, map[string]string{"db-r1": "primary", "db-r2": "streaming", "db-r3": "fenced"}, states)
 }
+
+// Postgres's clients know several hosts: its cluster has no writer alias, and
+// its writer's host is the writer's key.
+func TestPostgresHasNoWriterAlias(t *testing.T) {
+	_, managed, _ := configured(t, nil)
+
+	assert.Empty(t, managed.Database.Alias)
+	assert.Empty(t, managed.Locks.Aliases)
+	assert.Equal(t, "shop-db", managed.Database.WriterHost(&entity.App{Key: "shop-db"}))
+	spec, err := New().Promote(promoteReq())
+	assert.NoError(t, err)
+	assert.Empty(t, spec.Alias)
+}

@@ -53,6 +53,8 @@ func (f *fakeSteps) record(context.Context) error {
 
 func (f *fakeSteps) restart(context.Context) { f.ran = append(f.ran, "restart") }
 
+func (f *fakeSteps) moveAlias(context.Context) { f.ran = append(f.ran, "moveAlias") }
+
 func exitCode(code int) *int { return &code }
 
 func runSteps(steps *fakeSteps) error {
@@ -65,7 +67,8 @@ func TestAPromotionRunsItsStepsInOrder(t *testing.T) {
 	err := runSteps(steps)
 
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"fence", "stop", "applyFence", "promote", "allow", "record", "restart"}, steps.ran)
+	assert.Equal(t, []string{"fence", "stop", "applyFence", "promote", "allow", "record", "moveAlias", "restart"},
+		steps.ran)
 }
 
 // Before the member is promoted, a failure lifts the fence; once whether it was

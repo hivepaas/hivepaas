@@ -212,7 +212,7 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
    - The docs give `curl -fsSL https://get.hivepaas.com -o install.sh` then
      `sudo bash install.sh`: piped into a sudo-rs before 0.2.14 (Ubuntu's sudo
      from 25.10 on), `curl … | sudo bash` stops as it starts, and the installer
-     refuses it. The landing page gives `curl -fsSL https://get.hivepaas.com | sudo bash`.
+     refuses it. The landing page gives the two on one line, joined by `&&`.
    - The docs' silent install (`hivepaas-website`,
      `docs/docs/installation/silent-install.md`) downloads `install.env` from
      this release's assets: point it at the new tag. `releases/latest` skips a

@@ -12,11 +12,15 @@ GO_MOD_ENV=GOPRIVATE=github.com/hivepaas/*
 mod:
 	@$(GO_MOD_ENV) go mod tidy && go mod vendor && go mod verify
 
+# LINT_TIMEOUT bounds golangci-lint: a CI runner with a cold build cache takes
+# minutes to type-check the repository, where a warm one takes seconds.
+LINT_TIMEOUT ?= 15m
+
 lint:
 	$(DEVTOOLS_CMD) go run ./tools/goroutinelint .
 	$(DEVTOOLS_CMD) go run ./tools/errcodelint
 	$(DEVTOOLS_CMD) go run ./tools/openapi lint
-	$(DEVTOOLS_CMD) golangci-lint --timeout=5m run -v ./...
+	$(DEVTOOLS_CMD) golangci-lint --timeout=$(LINT_TIMEOUT) run -v ./...
 
 lint-local:
 	@go run ./tools/goroutinelint .
@@ -24,8 +28,8 @@ lint-local:
 	@go run ./tools/openapi lint
 	# Run this cmd locally once to install golangci-lint binary
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.14.0
-	# FASTER golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
-	golangci-lint --timeout=5m run -v ./...
+	# FASTER golangci-lint --timeout=$(LINT_TIMEOUT) run -v --new-from-rev=HEAD~1
+	golangci-lint --timeout=$(LINT_TIMEOUT) run -v ./...
 
 # The everyday one. Cached: a package nothing touched is not run again.
 test:

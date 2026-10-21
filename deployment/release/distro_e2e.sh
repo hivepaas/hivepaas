@@ -44,23 +44,44 @@ SUDO_PASSWORD=tester-password-123
 CPUS=${HIVEPAAS_DISTRO_CPUS:-2}
 MEMORY_MB=${HIVEPAAS_DISTRO_MEMORY_MB:-6144}
 
+DISTROS='ubuntu-24.04 ubuntu-26.04 debian-12 debian-13 rocky-9 rocky-10 almalinux-9 almalinux-10 fedora-44
+amazonlinux-2023 opensuse-leap-16.0 arch'
+
 # image_url DISTRO: its cloud image, which comes with cloud-init.
 image_url() {
+  local al2023
   case "$1" in
     ubuntu-24.04) echo https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img ;;
     ubuntu-26.04) echo https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img ;;
+    debian-12) echo https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2 ;;
     debian-13) echo https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2 ;;
     rocky-9) echo https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2 ;;
     rocky-10) echo https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2 ;;
+    almalinux-9) echo https://repo.almalinux.org/almalinux/9/cloud/x86_64/images/AlmaLinux-9-GenericCloud-latest.x86_64.qcow2 ;;
+    almalinux-10) echo https://repo.almalinux.org/almalinux/10/cloud/x86_64/images/AlmaLinux-10-GenericCloud-latest.x86_64.qcow2 ;;
+    fedora-44)
+      echo https://dl.fedoraproject.org/pub/fedora/linux/releases/44/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-44-1.7.x86_64.qcow2
+      ;;
+    # The file is named after the release, which `latest` redirects to.
+    amazonlinux-2023)
+      al2023=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://cdn.amazonlinux.com/al2023/os-images/latest/kvm/) &&
+        printf '%s%s\n' "$al2023" "$(curl -fsSL "$al2023" | grep -oE 'al2023-kvm-[A-Za-z0-9._-]+-x86_64[A-Za-z0-9._-]*\.qcow2' | head -n 1)"
+      ;;
+    opensuse-leap-16.0)
+      echo https://download.opensuse.org/distribution/leap/16.0/appliances/Leap-16.0-Minimal-VM.x86_64-Cloud.qcow2
+      ;;
+    arch) echo https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2 ;;
     *) return 1 ;;
   esac
 }
 
 DISTRO=${1:-}
-IMAGE_URL=$(image_url "$DISTRO") || {
-  printf 'usage: %s DISTRO, one of: ubuntu-24.04 ubuntu-26.04 debian-13 rocky-9 rocky-10\n' "$0" >&2
+IMAGE_URL=$(image_url "$DISTRO") || IMAGE_URL=''
+# Empty, or a directory: a name it does not know, or an image it did not find.
+if [ -z "${IMAGE_URL##*/}" ]; then
+  printf 'usage: %s DISTRO, one of: %s\n' "$0" "$(printf '%s' "$DISTROS" | tr '\n' ' ')" >&2
   exit 2
-}
+fi
 INSTALLER=${HIVEPAAS_DISTRO_INSTALLER:-checkout}
 CACHE=${HIVEPAAS_DISTRO_CACHE:-$HOME/.cache/hivepaas-distro}
 OUT=${HIVEPAAS_DISTRO_OUT:-$(mktemp -d -t "hivepaas-distro-$DISTRO.XXXXXX")}
@@ -103,15 +124,23 @@ as_root() {
 }
 
 # drive NAME CMD: CMD at a terminal in the machine, as `tester`, answered and
-# timed by distro_e2e_drive.py; its output in $OUT/NAME.log.
+# timed by distro_e2e_drive.py; its output in $OUT/NAME.log. An install may
+# say nothing for long - a package manager told to be quiet, on a slow mirror -
+# so it may be silent for DRIVE_IDLE_SECONDS, 20 minutes unless set.
 drive() {
-  DRIVE_SUDO_PASSWORD=$SUDO_PASSWORD DRIVE_ADMIN_EMAIL=$ADMIN_EMAIL DRIVE_ADMIN_PASSWORD=$ADMIN_PASSWORD \
-    DRIVE_APP_DOMAIN=$DOMAIN python3 "$HERE/distro_e2e_drive.py" "$OUT/$1.log" -- \
-    "${SSH[@]}" -tt tester@127.0.0.1 "$2"
+  local status=0
+  DRIVE_IDLE_SECONDS=${DRIVE_IDLE_SECONDS:-1200} DRIVE_SUDO_PASSWORD=$SUDO_PASSWORD \
+    DRIVE_ADMIN_EMAIL=$ADMIN_EMAIL DRIVE_ADMIN_PASSWORD=$ADMIN_PASSWORD DRIVE_APP_DOMAIN=$DOMAIN \
+    python3 "$HERE/distro_e2e_drive.py" "$OUT/$1.log" -- "${SSH[@]}" -tt tester@127.0.0.1 "$2" || status=$?
+  # The terminal's last line can be left open, by its output or a shell's
+  # escape sequence.
+  printf '\n'
+  return "$status"
 }
 
 collect() {
   as_root '
+    echo "== processes"; ps -eo pid,etime,stat,args --forest 2>/dev/null || ps
     echo "== install.log"; cat /var/lib/hivepaas/install.log
     echo "== docker service ls"; docker service ls
     echo "== docker service ps"; docker service ps --no-trunc $(docker service ls -q)
@@ -161,10 +190,16 @@ qemu-img create -q -f qcow2 -F qcow2 -b "$CACHE/$DISTRO.img" "$WORK/disk.qcow2" 
 ssh-keygen -q -t ed25519 -N '' -C hivepaas-distro-e2e -f "$WORK/key"
 key=$(cat "$WORK/key.pub")
 mkdir -p "$WORK/seed"
-# tester is a person's account: sudo asks for its password. probe is the test's.
+# tester is a person's account: sudo asks for its password - or root's, which
+# is the same, where sudo asks for the target's (openSUSE's targetpw). probe is
+# the test's, with the shell every distribution has.
 cat >"$WORK/seed/user-data" <<EOF
 #cloud-config
 ssh_pwauth: false
+chpasswd:
+  expire: false
+  users:
+    - {name: root, password: '$SUDO_PASSWORD', type: text}
 users:
   - name: tester
     shell: /bin/bash
@@ -173,7 +208,7 @@ users:
     sudo: 'ALL=(ALL) ALL'
     ssh_authorized_keys: ['$key']
   - name: probe
-    shell: /bin/bash
+    shell: /bin/sh
     sudo: 'ALL=(ALL) NOPASSWD:ALL'
     ssh_authorized_keys: ['$key']
 EOF
@@ -263,10 +298,29 @@ check_running() {
   expect "$1: every service runs" '' "$(wait_until 180 services_down '')"
 }
 
+# reboot_machine: until it runs again, after a boot of its own.
+reboot_machine() {
+  local boot_id start=$SECONDS
+  boot_id=$(probe 'cat /proc/sys/kernel/random/boot_id')
+  as_root 'reboot' >/dev/null 2>&1 || true
+  until [ "$(probe 'cat /proc/sys/kernel/random/boot_id' 2>/dev/null || true)" != "$boot_id" ] &&
+    probe true 2>/dev/null; do
+    if [ $((SECONDS - start)) -ge 600 ]; then return 1; fi
+    sleep 5
+  done
+}
+
 # ---------------------------------------------------------------- Scenarios
 
 status=0
 drive 1-install "curl -fsSL $INSTALLER_URL -o install.sh && $SUDO bash install.sh" || status=$?
+# A kernel upgraded with Docker - Arch's - needs a reboot first, and says so.
+if [ "$status" = 1 ] && grep -q 'Reboot, then run the installer again' "$OUT/1-install.log"; then
+  pass "1. the install asks for a reboot: the kernel was upgraded with Docker"
+  reboot_machine || fail "1. the machine did not come back from its reboot"
+  status=0
+  drive 1-install-after-reboot "$SUDO bash install.sh" || status=$?
+fi
 expect "1. curl -o install.sh && sudo bash install.sh, answered" 0 "$status"
 check_running "after the install"
 
@@ -289,14 +343,7 @@ drive 3-again "$SUDO bash install.sh --yes" || status=$?
 expect "3. sudo bash install.sh --yes, again" 0 "$status"
 check_running "after running it again"
 
-boot_id=$(probe 'cat /proc/sys/kernel/random/boot_id')
-as_root 'reboot' >/dev/null 2>&1 || true
-start=$SECONDS
-until [ "$(probe 'cat /proc/sys/kernel/random/boot_id' 2>/dev/null || true)" != "$boot_id" ] &&
-  probe true 2>/dev/null; do
-  if [ $((SECONDS - start)) -ge 600 ]; then fail "4. the machine did not come back from its reboot"; fi
-  sleep 5
-done
+reboot_machine || fail "4. the machine did not come back from its reboot"
 pass "4. the machine rebooted"
 check_running "after the reboot"
 

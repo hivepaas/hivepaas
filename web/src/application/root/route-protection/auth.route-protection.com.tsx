@@ -63,7 +63,10 @@ function getAuthHandoff(path: string | null, pageParams: URLSearchParams) {
 
     const pathname = normalizePathname(url.pathname);
 
+    // The sign-in page too: a provider's failed sign-in comes back to it with the
+    // error's code (?ssoError=), which the server's redirect puts inside next.
     const authRouteMap: Record<string, string> = {
+        "auth/sign-in": ROUTE.auth.signIn.$route,
         "auth/sign-up": ROUTE.auth.signUp.$route,
         "auth/reset-password": ROUTE.auth.resetPassword.$route,
         "auth/forgot-password": ROUTE.auth.forgotPassword.$route,

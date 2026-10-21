@@ -8,6 +8,7 @@ import {
     ChevronRight,
     Cpu,
     Database,
+    DatabaseBackup,
     ExternalLink,
     Globe,
     HardDrive,
@@ -38,8 +39,18 @@ interface AppTemplatesSidebarProps {
     selectedCategory?: string;
     onSelectCategory: (categoryId?: string) => void;
     totalCount?: number;
+    /** How many managed templates there are: none hides their entry. */
+    managedCount?: number;
+    /** Whether the list shows the managed templates alone. */
+    isManagedSelected?: boolean;
+    onSelectManaged?: () => void;
     className?: string;
 }
+
+/** The managed templates' entry, below All Templates: apps HivePaaS goes on looking after. */
+const MANAGED_TITLE = "Managed apps";
+const MANAGED_HINT = "Databases HivePaaS backs up, restores and keeps healthy";
+const MANAGED_VALUE = "__managed__";
 
 const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
     "databases": Database,
@@ -66,8 +77,12 @@ export function AppTemplatesSidebar({
     selectedCategory,
     onSelectCategory,
     totalCount,
+    managedCount = 0,
+    isManagedSelected = false,
+    onSelectManaged,
     className,
 }: AppTemplatesSidebarProps) {
+    const showManaged = managedCount > 0 && onSelectManaged !== undefined;
     // Single expanded category ID: at most one category expanded at any time
     const [expandedCategoryId, setExpandedCategoryId] = useState<string | undefined>(() => {
         return selectedCategory ? selectedCategory.split("/")[0] : undefined;
@@ -96,7 +111,7 @@ export function AppTemplatesSidebar({
         setExpandedCategoryId(prev => (prev === categoryId ? undefined : categoryId));
     };
 
-    const isAllSelected = !selectedCategory;
+    const isAllSelected = !selectedCategory && !isManagedSelected;
 
     // Calculate total count by summing categories if BE doesn't provide a total count
     const calculatedCategoriesCount = React.useMemo(() => {
@@ -115,6 +130,7 @@ export function AppTemplatesSidebar({
               : undefined;
 
     const activeSelectValue = useMemo<string>(() => {
+        if (isManagedSelected) return MANAGED_VALUE;
         if (!selectedCategory) return "__all__";
         for (const cat of categories) {
             if (cat.id === selectedCategory) return cat.id;
@@ -128,7 +144,7 @@ export function AppTemplatesSidebar({
             }
         }
         return selectedCategory;
-    }, [selectedCategory, categories]);
+    }, [selectedCategory, categories, isManagedSelected]);
 
     return (
         <>
@@ -139,6 +155,9 @@ export function AppTemplatesSidebar({
                     onValueChange={val => {
                         if (val === "__all__") {
                             onSelectCategory(undefined);
+                            setExpandedCategoryId(undefined);
+                        } else if (val === MANAGED_VALUE) {
+                            onSelectManaged?.();
                             setExpandedCategoryId(undefined);
                         } else {
                             onSelectCategory(val);
@@ -165,6 +184,20 @@ export function AppTemplatesSidebar({
                                 )}
                             </div>
                         </SelectItem>
+                        {showManaged && (
+                            <SelectItem
+                                value={MANAGED_VALUE}
+                                className="cursor-pointer font-medium"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <DatabaseBackup className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                    <span>{MANAGED_TITLE}</span>
+                                    <span className="text-[11px] text-muted-foreground tabular-nums ml-1">
+                                        ({managedCount})
+                                    </span>
+                                </div>
+                            </SelectItem>
+                        )}
                         <SelectSeparator />
                         {categories.map((category, index) => {
                             const Icon = getCategoryIcon(category.id);
@@ -275,6 +308,44 @@ export function AppTemplatesSidebar({
                         </Badge>
                     )}
                 </button>
+
+                {/* The managed templates, apart from every category */}
+                {showManaged && (
+                    <button
+                        type="button"
+                        title={MANAGED_HINT}
+                        aria-pressed={isManagedSelected}
+                        onClick={() => {
+                            onSelectManaged();
+                            setExpandedCategoryId(undefined);
+                        }}
+                        className={cn(
+                            "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors text-left",
+                            isManagedSelected
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
+                                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                        )}
+                    >
+                        <DatabaseBackup
+                            className={cn(
+                                "size-4 shrink-0",
+                                isManagedSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+                            )}
+                        />
+                        <span className="truncate">{MANAGED_TITLE}</span>
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                "px-1.5 py-0 text-[11px] font-semibold tabular-nums shrink-0 h-4.5 rounded-md border",
+                                isManagedSelected
+                                    ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                    : "bg-muted/70 text-muted-foreground border-border/60",
+                            )}
+                        >
+                            {managedCount}
+                        </Badge>
+                    </button>
+                )}
 
                 <div className="my-1 border-t border-border/40" />
 

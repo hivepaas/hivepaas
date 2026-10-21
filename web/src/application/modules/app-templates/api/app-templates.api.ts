@@ -19,6 +19,8 @@ export interface AppTemplateCatalog {
     revision: string;
     categories: AppTemplateCategory[];
     tags: AppTemplateTag[];
+    /** How many managed templates the store shows: databases HivePaaS backs up, restores and keeps healthy. */
+    managedCount?: number;
 }
 
 export interface AppTemplateVariantSummary {
@@ -74,6 +76,8 @@ export type AppTemplateSort = "name" | "-stars" | "-trending" | "-added";
 
 export interface ListAppTemplatesFilter {
     category?: string;
+    /** Only the managed templates. */
+    managed?: boolean;
     tag?: string;
     search?: string;
     sort?: AppTemplateSort;
@@ -428,6 +432,7 @@ export class AppTemplatesApi extends BaseApi {
                     category: params.category ?? undefined,
                     tag: params.tag ?? undefined,
                     search: params.search?.trim() ?? undefined,
+                    managed: params.managed ? true : undefined,
                     // By name is the API's own default: no parameter for it.
                     sort: params.sort === "name" ? undefined : params.sort,
                     pageOffset: params.pageOffset ?? 0,

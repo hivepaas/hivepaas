@@ -54,6 +54,9 @@ func filterTemplates(
 		if entry.Internal {
 			continue
 		}
+		if req.Managed && entry.Managed == "" {
+			continue
+		}
 		if matchesCategories(entry, req.Categories) && matchesTags(entry, req.Tags) &&
 			matchesSearch(entry, search) {
 			out = append(out, entry)

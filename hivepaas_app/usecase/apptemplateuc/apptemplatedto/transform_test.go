@@ -61,6 +61,20 @@ func TestTransformAppTemplateCatalog(t *testing.T) {
 	}, resp, "the catalog carries no templates: those are listed a page at a time")
 }
 
+// The catalog counts the managed templates the store would list: an internal
+// one is not offered.
+func TestTheCatalogCountsTheManagedTemplates(t *testing.T) {
+	managed := testEntry("v000001")
+	managed.Name, managed.Managed = "postgres-managed", "postgres"
+	internal := testEntry("v000001")
+	internal.Name, internal.Managed, internal.Internal = "managed-internal", "postgres", true
+
+	resp := TransformAppTemplateCatalog(&apptemplateservice.IndexResp{Source: "official", Revision: "abc",
+		Index: &templatemodel.Index{Templates: []*templatemodel.IndexEntry{testEntry("v000001"), managed, internal}}})
+
+	assert.Equal(t, 1, resp.ManagedCount)
+}
+
 func TestTransformAppTemplateSummaries(t *testing.T) {
 	useBasePath(t)
 

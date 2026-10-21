@@ -21,6 +21,7 @@ import (
 // @Param   category query string false "categories, comma separated; a parent matches every child"
 // @Param   tag query string false "tags, comma separated; a template carrying any of them matches"
 // @Param   search query string false "matches name, title, tagline, tags and aliases, ignoring case"
+// @Param   managed query bool false "true keeps the managed templates: databases HivePaaS backs up and restores"
 // @Param   sort query string false "name (the default), stars, trending or added; a leading minus reverses it"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"

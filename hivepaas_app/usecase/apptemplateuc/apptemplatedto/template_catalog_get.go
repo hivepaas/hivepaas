@@ -34,6 +34,9 @@ type AppTemplateCatalogResp struct {
 	Revision   string                     `json:"revision"`
 	Categories []*AppTemplateCategoryResp `json:"categories"`
 	Tags       []*AppTemplateTagResp      `json:"tags"`
+	// ManagedCount is how many managed templates the store would show: what
+	// listing with managed=true returns.
+	ManagedCount int `json:"managedCount"`
 }
 
 type AppTemplateCategoryResp struct {
@@ -60,7 +63,8 @@ func TransformAppTemplateCatalog(index *apptemplateservice.IndexResp) *AppTempla
 		Revision: index.Revision,
 		Categories: transformCategories(index.Index.Categories, "",
 			countTemplatesPerCategory(index.Index.Templates)),
-		Tags: make([]*AppTemplateTagResp, 0, len(index.Index.Tags)),
+		Tags:         make([]*AppTemplateTagResp, 0, len(index.Index.Tags)),
+		ManagedCount: countManagedTemplates(index.Index.Templates),
 	}
 	for _, tag := range index.Index.Tags {
 		resp.Tags = append(resp.Tags, &AppTemplateTagResp{ID: tag.ID, Title: tag.Title})
@@ -115,4 +119,16 @@ func countTemplatesPerCategory(entries []*templatemodel.IndexEntry) map[string]i
 		}
 	}
 	return counts
+}
+
+// countManagedTemplates counts the managed templates listing would show: an
+// internal one is offered by none.
+func countManagedTemplates(entries []*templatemodel.IndexEntry) int {
+	count := 0
+	for _, entry := range entries {
+		if entry.Managed != "" && !entry.Internal {
+			count++
+		}
+	}
+	return count
 }

@@ -85,6 +85,22 @@ func TestFilterTemplates(t *testing.T) {
 	}
 }
 
+// managed=true keeps the templates a managed engine looks after, and an
+// internal one stays out as it does of any listing.
+func TestFilterTemplatesManaged(t *testing.T) {
+	entries := append(filterTestEntries(),
+		&templatemodel.IndexEntry{Name: "postgres-managed", Categories: []string{"databases/sql"}, Managed: "postgres"},
+		&templatemodel.IndexEntry{Name: "mariadb-managed", Categories: []string{"databases/sql"}, Managed: "mariadb"},
+		&templatemodel.IndexEntry{Name: "managed-internal", Managed: "postgres", Internal: true},
+	)
+
+	assert.Equal(t, []string{"postgres-managed", "mariadb-managed"},
+		names(filterTemplates(entries, &apptemplatedto.ListAppTemplatesReq{Managed: true})))
+	assert.Equal(t, []string{"mariadb-managed"}, names(filterTemplates(entries,
+		&apptemplatedto.ListAppTemplatesReq{Managed: true, Search: "maria"})), "with the other filters")
+	assert.Len(t, filterTemplates(entries, &apptemplatedto.ListAppTemplatesReq{}), 6, "without it, every one")
+}
+
 func TestPageTemplates(t *testing.T) {
 	entries := filterTestEntries()
 

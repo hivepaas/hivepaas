@@ -19,21 +19,26 @@ jobs:
             latest: true
 
     steps:
+      # The checkout first: setup-go caches the module and build caches by go.sum,
+      # which it finds only in a checked-out tree. Without the build cache the lint
+      # type-checks the whole repository cold, which outgrew its timeout.
+      - name: Checkout code
+        uses: actions/checkout@v7
+
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Load cached dependencies
+      # golangci-lint's own cache: a package nothing touched is not analyzed again.
+      - name: Load the lint cache
         uses: actions/cache@v6
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: ~/.cache/golangci-lint
+          key: ${{ runner.os }}-golangci-${{ hashFiles('go.sum', '.golangci.yaml') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-golangci-${{ hashFiles('go.sum', '.golangci.yaml') }}-
+            ${{ runner.os }}-golangci-
 
       - name: Setup Dependencies
         run: |

@@ -1394,8 +1394,9 @@ setup_earlyoom() {
 
 # ------------------------------------------------------------------- Docker
 
-MIN_DOCKER_VERSION=29.5
-MIN_DOCKER_API=1.54
+# Docker 29.0, and its API, 1.52.
+MIN_DOCKER_VERSION=29.0
+MIN_DOCKER_API=1.52
 DOCKER_VERSION='' DOCKER_API=''
 WORK_DIR=''
 

@@ -40,6 +40,8 @@ jobs:
           - almalinux-9
           - almalinux-10
           - fedora-44
+          - amazonlinux-2023
+          - opensuse-leap-16.0
           - arch
     steps:
       - name: Checkout

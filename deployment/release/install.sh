@@ -1175,12 +1175,12 @@ package_manager_of() {
 #   apt-repo   Docker's apt repository, for derivatives of Ubuntu and Debian
 #   dnf-rhel   Docker's RHEL repository, for the RHEL rebuilds it leaves out -
 #              and Rocky, whose repository the script uses holds containerd.io
-#              alone, no docker-ce
+#              alone, no docker-ce; and Amazon Linux, whose own Docker is too old
 #   dnf, zypper, pacman, apk   the distribution's own package
 docker_install_method() {
   case "$1" in
     ubuntu | debian | raspbian | centos | fedora | rhel) printf 'getdocker' && return 0 ;;
-    amzn) printf 'dnf' && return 0 ;;
+    amzn) printf 'dnf-rhel' && return 0 ;;
   esac
   case " $2 " in
     *" ubuntu "* | *" debian "*) printf 'apt-repo' && return 0 ;;
@@ -1448,12 +1448,22 @@ install_docker_apt_repo() {
       docker-buildx-plugin docker-compose-plugin </dev/null
 }
 
+# Amazon Linux 2023 is none of the releases the repository has, and its own
+# Docker is too old for HivePaaS: it takes RHEL 9's, in place of its own.
 install_docker_rhel_repo() {
   local repo=https://download.docker.com/linux/rhel/docker-ce.repo
+  local erase=()
   dnf install -y -q dnf-plugins-core </dev/null &&
     { dnf config-manager --add-repo "$repo" >/dev/null 2>&1 ||
-      dnf config-manager addrepo --overwrite --from-repofile="$repo" >/dev/null; } &&
-    dnf install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin </dev/null
+      dnf config-manager addrepo --overwrite --from-repofile="$repo" >/dev/null; } || return 1
+  if [ "$OS_ID" = amzn ]; then
+    # dnf's $releasever, in the repository's URLs.
+    # shellcheck disable=SC2016
+    sed -i 's/\$releasever/9/g' /etc/yum.repos.d/docker-ce.repo || return 1
+    erase=(--allowerasing)
+  fi
+  dnf install -y -q ${erase[@]+"${erase[@]}"} docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
+    docker-compose-plugin </dev/null
 }
 
 # install_docker: installs Docker, or upgrades it to the latest release, the
@@ -1540,7 +1550,53 @@ ensure_docker() {
       install_docker
     fi
   fi
+  ensure_docker_selinux_off
   ok "Docker $DOCKER_VERSION (API $DOCKER_API)"
+}
+
+# Where Docker reads its settings; the tests point it elsewhere.
+DOCKER_DAEMON_JSON=/etc/docker/daemon.json
+
+# docker_selinux: Docker labels its containers for SELinux, as openSUSE's does;
+# Docker's own packages leave that off.
+docker_selinux() {
+  docker info --format '{{json .SecurityOptions}}' 2>/dev/null | grep -q 'name=selinux'
+}
+
+# daemon_json_without_selinux FILE: FILE's settings, or none, with
+# "selinux-enabled": false.
+daemon_json_without_selinux() {
+  if [ -s "$1" ]; then
+    jq '."selinux-enabled" = false' "$1"
+  else
+    jq -n '{"selinux-enabled": false}'
+  fi
+}
+
+# ensure_docker_selinux_off: HivePaaS's services cannot run in containers
+# Docker labels for SELinux: they read their data on the host and talk to
+# Docker's socket, which such a container may not, and a swarm service cannot be
+# told otherwise. So Docker stops labelling its containers, as Docker's own
+# packages have it; SELinux still guards the rest of the server.
+ensure_docker_selinux_off() {
+  local tmp="$DOCKER_DAEMON_JSON.hivepaas"
+  docker_selinux || return 0
+  warn "Docker labels its containers for SELinux here, which HivePaaS's services cannot run in. Turning that"
+  info "  off: \"selinux-enabled\": false in $DOCKER_DAEMON_JSON, as Docker's own packages have it. SELinux"
+  info "  still guards the rest of the server. Docker restarts, and the containers it runs with it."
+  if ! { mkdir -p "${DOCKER_DAEMON_JSON%/*}" &&
+    daemon_json_without_selinux "$DOCKER_DAEMON_JSON" >"$tmp" && mv -f "$tmp" "$DOCKER_DAEMON_JSON"; }; then
+    rm -f "$tmp"
+    die "Could not write $DOCKER_DAEMON_JSON; is it JSON? Set \"selinux-enabled\": false in it, then run the" \
+      "installer again."
+  fi
+  service_restart docker || true
+  wait_for_docker || die "Docker does not answer since its SELinux setting changed. Look at 'systemctl status docker'."
+  if docker_selinux; then
+    die "Docker still labels its containers for SELinux: an option of its own turns it on, such as" \
+      "--selinux-enabled in /etc/sysconfig/docker. Remove it, then run the installer again."
+  fi
+  ok "Docker no longer labels its containers for SELinux."
 }
 
 # ---------------------------------------------------------- Swarm and files

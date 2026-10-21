@@ -1173,11 +1173,13 @@ package_manager_of() {
 # docker_install_method ID ID_LIKE: how Docker is installed on a distribution.
 #   getdocker  Docker's convenience script, for the distributions it supports
 #   apt-repo   Docker's apt repository, for derivatives of Ubuntu and Debian
-#   dnf-rhel   Docker's RHEL repository, for the RHEL rebuilds it leaves out
+#   dnf-rhel   Docker's RHEL repository, for the RHEL rebuilds it leaves out -
+#              and Rocky, whose repository the script uses holds containerd.io
+#              alone, no docker-ce
 #   dnf, zypper, pacman, apk   the distribution's own package
 docker_install_method() {
   case "$1" in
-    ubuntu | debian | raspbian | centos | fedora | rhel | rocky) printf 'getdocker' && return 0 ;;
+    ubuntu | debian | raspbian | centos | fedora | rhel) printf 'getdocker' && return 0 ;;
     amzn) printf 'dnf' && return 0 ;;
   esac
   case " $2 " in

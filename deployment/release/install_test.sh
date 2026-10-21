@@ -1023,9 +1023,10 @@ test_package_manager_of() {
 
 test_docker_install_method() {
   local id
-  for id in ubuntu debian raspbian fedora centos rhel rocky; do
+  for id in ubuntu debian raspbian fedora centos rhel; do
     check "$id" getdocker "$(docker_install_method "$id" '')"
   done
+  check "rocky" dnf-rhel "$(docker_install_method rocky 'rhel centos fedora')"
   check "alma" dnf-rhel "$(docker_install_method almalinux 'rhel centos fedora')"
   check "oracle" dnf-rhel "$(docker_install_method ol fedora)"
   check "amazon" dnf "$(docker_install_method amzn fedora)"

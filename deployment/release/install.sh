@@ -1488,8 +1488,24 @@ install_docker() {
     apk) apk add --no-cache --upgrade docker </dev/null ;;
   esac || die "Installing Docker failed; see the output above."
   service_start docker || true
-  wait_for_docker || die "Docker is installed but does not answer. Look at 'systemctl status docker', then run the installer again."
+  if ! wait_for_docker; then
+    if kernel_modules_gone; then
+      die "Installing Docker upgraded the kernel, and took the running kernel's modules away: Docker cannot" \
+        "start until the server runs the new one. Reboot, then run the installer again."
+    fi
+    die "Docker is installed but does not answer. Look at 'systemctl status docker', then run the installer again."
+  fi
   read_docker_versions
+}
+
+# Where kernels keep their modules; the tests point it elsewhere.
+MODULES_DIR=/lib/modules
+
+# kernel_modules_gone: the running kernel's modules are not there - an upgrade
+# of the kernel removed them, as Arch's does, and Docker cannot load the ones
+# it needs until a reboot.
+kernel_modules_gone() {
+  [ ! -d "$MODULES_DIR/$(uname -r)" ]
 }
 
 ensure_docker() {

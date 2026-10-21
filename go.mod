@@ -44,7 +44,7 @@ require (
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/jinzhu/configor v1.2.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/klauspost/compress v1.20.1
+	github.com/klauspost/compress v1.20.3
 	github.com/markbates/goth v1.82.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/moby/moby/api v1.56.1

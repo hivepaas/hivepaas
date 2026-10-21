@@ -1457,12 +1457,26 @@ install_docker_rhel_repo() {
 
 # install_docker: installs Docker, or upgrades it to the latest release, the
 # way the distribution takes it; then starts it at boot and now.
+# install_running_kernel_modules: where dnf installs, the running kernel's
+# kernel-modules-extra, which holds xt_addrtype, the module Docker's iptables
+# rules need. Docker's iptables-nft requires the package; without the running
+# kernel's, dnf takes the newest kernel's, with that kernel, and Docker does not
+# start until a reboot - as on Rocky 10's cloud image. A distribution with no
+# such package is left as it is.
+install_running_kernel_modules() {
+  local release
+  release=$(uname -r)
+  if rpm -q "kernel-modules-extra-$release" >/dev/null 2>&1; then return 0; fi
+  dnf install -y -q "kernel-modules-extra-$release" </dev/null >/dev/null 2>&1 || true
+}
+
 install_docker() {
   local method
   method=$(docker_install_method "$OS_ID" "$OS_ID_LIKE") ||
     die "The installer cannot install Docker on $OS_NAME. Install Docker $MIN_DOCKER_VERSION or newer" \
       "(https://docs.docker.com/engine/install/), then run it again."
   info "Installing Docker ($method)..."
+  if [ "$PKG_MANAGER" = dnf ]; then install_running_kernel_modules; fi
   case "$method" in
     getdocker)
       curl -fsSL https://get.docker.com -o "$WORK_DIR/get-docker.sh" && sh "$WORK_DIR/get-docker.sh" </dev/null

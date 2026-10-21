@@ -1040,6 +1040,26 @@ test_docker_install_method() {
   check_fails "gentoo" docker_install_method gentoo ''
 }
 
+test_install_running_kernel_modules() {
+  local calls=$TMP/kernel-modules-calls installed=0 dnf_status=0
+  uname() { printf '6.12.0-211.16.1.el10_2.x86_64'; }
+  rpm() { [ "$installed" = 1 ]; }
+  dnf() {
+    printf 'dnf %s\n' "$*" >>"$calls"
+    return "$dnf_status"
+  }
+  : >"$calls"
+  install_running_kernel_modules
+  check "the running kernel's, when missing" \
+    "dnf install -y -q kernel-modules-extra-6.12.0-211.16.1.el10_2.x86_64" "$(cat "$calls")"
+  installed=1
+  : >"$calls"
+  install_running_kernel_modules
+  check "nothing, when there" "" "$(cat "$calls")"
+  installed=0 dnf_status=1
+  check_ok "a distribution without the package goes on" install_running_kernel_modules
+}
+
 test_earlyoom_config() {
   local conf
   check "apt" /etc/default/earlyoom "$(earlyoom_config_file apt)"

@@ -34,6 +34,8 @@ export function AppTemplatesView() {
 
     // Active filters
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+    // The managed templates alone, apart from every category.
+    const [managedOnly, setManagedOnly] = useState(false);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
@@ -74,6 +76,7 @@ export function AppTemplatesView() {
         fetchNextPage,
     } = useListAppTemplatesInfinite({
         category: selectedCategory,
+        managed: managedOnly,
         search: debouncedSearch,
         tag: selectedTag,
         sort,
@@ -96,6 +99,7 @@ export function AppTemplatesView() {
         const firstPageTotal = firstPageMeta?.page?.total ?? firstPageMeta?.total;
         if (
             !selectedCategory &&
+            !managedOnly &&
             !debouncedSearch &&
             !selectedTag &&
             firstPageTotal !== undefined &&
@@ -103,7 +107,7 @@ export function AppTemplatesView() {
         ) {
             setAllTemplatesTotal(firstPageTotal);
         }
-    }, [selectedCategory, debouncedSearch, selectedTag, templatesData]);
+    }, [selectedCategory, managedOnly, debouncedSearch, selectedTag, templatesData]);
 
     // Calculate sum of categories from catalog as fallback when BE does not return a total
     const categoriesSum = useMemo(() => {
@@ -118,7 +122,7 @@ export function AppTemplatesView() {
     const allTemplatesCount =
         allTemplatesTotal && allTemplatesTotal > 0
             ? allTemplatesTotal
-            : !selectedCategory && !debouncedSearch && !selectedTag && totalTemplates > 0
+            : !selectedCategory && !managedOnly && !debouncedSearch && !selectedTag && totalTemplates > 0
               ? totalTemplates
               : categoriesSum;
 
@@ -146,6 +150,7 @@ export function AppTemplatesView() {
     const handleSelectTagFromDetails = (tag: string) => {
         setSelectedTag(tag);
         setSelectedCategory(undefined);
+        setManagedOnly(false);
         if (id) {
             void navigate(ROUTE.projects.single.appTemplates.$route(id));
         }
@@ -159,12 +164,24 @@ export function AppTemplatesView() {
             // Selecting tag: Option 1 -> Reset category so BE API filters globally by tag
             setSelectedTag(tag);
             setSelectedCategory(undefined);
+            setManagedOnly(false);
         }
     };
 
     // Handler when changing category from sidebar
     const handleCategorySelect = (categoryId?: string) => {
         setSelectedCategory(categoryId);
+        setManagedOnly(false);
+        setSelectedTag(undefined);
+        if (id && templateName) {
+            void navigate(ROUTE.projects.single.appTemplates.$route(id));
+        }
+    };
+
+    // The managed templates alone: no category, no tag.
+    const handleManagedSelect = () => {
+        setManagedOnly(true);
+        setSelectedCategory(undefined);
         setSelectedTag(undefined);
         if (id && templateName) {
             void navigate(ROUTE.projects.single.appTemplates.$route(id));
@@ -188,6 +205,9 @@ export function AppTemplatesView() {
                     selectedCategory={selectedCategory}
                     onSelectCategory={handleCategorySelect}
                     totalCount={allTemplatesCount}
+                    managedCount={catalog?.managedCount}
+                    isManagedSelected={managedOnly}
+                    onSelectManaged={handleManagedSelect}
                 />
 
                 {/* Right Content Area */}
@@ -353,6 +373,7 @@ export function AppTemplatesView() {
                                     </p>
                                     {(Boolean(debouncedSearch) ||
                                         Boolean(searchQuery) ||
+                                        managedOnly ||
                                         Boolean(selectedCategory) ||
                                         Boolean(selectedTag)) && (
                                         <Button
@@ -362,6 +383,7 @@ export function AppTemplatesView() {
                                                 setSearchQuery("");
                                                 setDebouncedSearch("");
                                                 setSelectedCategory(undefined);
+                                                setManagedOnly(false);
                                                 setSelectedTag(undefined);
                                             }}
                                             className="mt-4 text-xs"

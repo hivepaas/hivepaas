@@ -410,6 +410,58 @@ function managedScripts(): Record<string, unknown> {
     };
 }
 
+// The store shows the managed templates in an entry of their own, below All
+// Templates: choosing it lists them alone, by the API's managed filter.
+test("the store lists the managed templates in an entry of their own", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const ordinary = { ...SUMMARY, name: "e2e-ordinary", title: "Ordinary", managed: undefined, requiresFeatures: [] };
+    const listed: URL[] = [];
+    await page.route(
+        url => url.pathname === "/api/app-templates/catalog",
+        route =>
+            route.fulfill({
+                json: {
+                    meta: {},
+                    data: {
+                        source: "e2e",
+                        revision: "e2e",
+                        categories: [{ id: "databases", title: "Databases", count: 3 }],
+                        tags: [],
+                        managedCount: 2,
+                    },
+                },
+            }),
+    );
+    await page.route(
+        url => url.pathname === "/api/app-templates",
+        route => {
+            const url = new URL(route.request().url());
+            listed.push(url);
+            const data = url.searchParams.get("managed") === "true" ? [SUMMARY, MARIADB_SUMMARY] : [ordinary, SUMMARY];
+            return route.fulfill({ json: { meta: { page: { offset: 0, limit: 50, total: data.length } }, data } });
+        },
+    );
+
+    await page.goto(`/projects/${project.id}/app-templates/`);
+    await expect(page.getByRole("group", { name: "Ordinary" })).toBeVisible();
+    const entry = page.getByRole("button", { name: /^Managed apps/ });
+    await expect(entry).toContainText("2");
+    await expect(entry).toHaveAttribute("aria-pressed", "false");
+
+    await entry.click();
+    await expect(entry).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("group", { name: MARIADB_SUMMARY.title })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Ordinary" })).toHaveCount(0);
+    expect(listed.at(-1)?.searchParams.get("managed")).toBe("true");
+    expect(listed.at(-1)?.searchParams.get("category")).toBeNull();
+
+    // A category is the other way to look: the managed filter goes.
+    await page.getByRole("button", { name: /^Databases/ }).click();
+    await expect(entry).toHaveAttribute("aria-pressed", "false");
+    await expect.poll(() => listed.at(-1)?.searchParams.get("category")).toBe("databases");
+    expect(listed.at(-1)?.searchParams.get("managed")).toBeNull();
+});
+
 // A managed template is deployed with the archive it is given: the store marks
 // it managed, its form asks where it archives, and the request carries it.
 test("a managed template is created with the archive chosen", async ({ page, api }) => {

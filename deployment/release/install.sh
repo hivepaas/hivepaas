@@ -139,10 +139,22 @@ valid_domain() {
   valid_hostname "$(lowercase "$1")"
 }
 
+# local_domain DOMAIN: a name under localhost, which reaches this machine with
+# no DNS and which no certificate authority issues for (RFC 6761): HivePaaS
+# installed to try it out locally.
+local_domain() {
+  case "$(lowercase "$1")" in *.localhost) return 0 ;; esac
+  return 1
+}
+
 # root_domain_of: the registrable part of a domain - its last two labels, or
-# three under a known two-level suffix.
+# three under a known two-level suffix; localhost for a name under it.
 root_domain_of() {
   local domain="$1" last2 suffix
+  if local_domain "$domain"; then
+    printf 'localhost\n'
+    return 0
+  fi
   last2=$(printf '%s' "$domain" | awk -F. 'NF >= 2 {print $(NF-1) "." $NF}')
   for suffix in $TWO_LEVEL_SUFFIXES; do
     if [ "$last2" = "$suffix" ]; then
@@ -153,11 +165,12 @@ root_domain_of() {
   printf '%s\n' "${last2:-$domain}"
 }
 
-# valid_root_domain ROOT: a hostname the app domain is, or is under.
+# valid_root_domain ROOT: a hostname the app domain is, or is under; or
+# localhost, for an app domain under it.
 valid_root_domain() {
   local root
   root=$(lowercase "$1")
-  valid_hostname "$root" || return 1
+  if [ "$root" != localhost ]; then valid_hostname "$root" || return 1; fi
   case "$(lowercase "${HIVEPAAS_APP_DOMAIN:-}")" in
     "$root" | *".$root") return 0 ;;
   esac
@@ -1043,7 +1056,8 @@ ask_questions() {
     answer HIVEPAAS_ADMIN_EMAIL "Admin email" valid_email "Enter an email address, like you@example.com."
     answer_password
   fi
-  answer HIVEPAAS_APP_DOMAIN "App domain, the dashboard's address (e.g. hivepaas.example.com)" valid_domain \
+  answer HIVEPAAS_APP_DOMAIN "App domain, the dashboard's address (e.g. hivepaas.example.com or hivepaas.localhost)" \
+    valid_domain \
     "Enter a domain name of two labels or more, like hivepaas.example.com."
   normalize_settings
   if [ -n "${HIVEPAAS_APP_DOMAIN:-}" ]; then
@@ -2248,17 +2262,24 @@ print_done() {
   print_logo
   printf '\n  %s%sHivePaaS is running.%s\n\n' "$C_BOLD" "$C_GREEN" "$C_RESET"
   info "Dashboard   https://$HIVEPAAS_APP_DOMAIN"
-  info "            once DNS points $HIVEPAAS_APP_DOMAIN at this server; point *.$HIVEPAAS_ROOT_DOMAIN"
-  info "            at it too, for your apps."
-  if [ -n "$PUBLIC_IP" ]; then ips=" https://$PUBLIC_IP"; fi
-  if [ -n "$HOST_IP" ] && [ "$HOST_IP" != "$PUBLIC_IP" ]; then ips="$ips https://$HOST_IP"; fi
-  if [ -n "$ips" ]; then info "            Until then:$ips"; fi
+  if local_domain "$HIVEPAAS_APP_DOMAIN"; then
+    info "            on this machine: a browser sends a name under localhost here, with no DNS."
+  else
+    info "            once DNS points $HIVEPAAS_APP_DOMAIN at this server; point *.$HIVEPAAS_ROOT_DOMAIN"
+    info "            at it too, for your apps."
+    if [ -n "$PUBLIC_IP" ]; then ips=" https://$PUBLIC_IP"; fi
+    if [ -n "$HOST_IP" ] && [ "$HOST_IP" != "$PUBLIC_IP" ]; then ips="$ips https://$HOST_IP"; fi
+    if [ -n "$ips" ]; then info "            Until then:$ips"; fi
+  fi
   if [ "$1" = 1 ]; then
     info "Sign in     as $ADMIN_USERNAME ($HIVEPAAS_ADMIN_EMAIL), with the password you chose."
   fi
   printf '\n'
   if [ "$CERT_TRUSTED" = 1 ]; then
     ok "The dashboard has its certificate from Let's Encrypt."
+  elif local_domain "$HIVEPAAS_APP_DOMAIN"; then
+    warn "The dashboard's certificate is self-signed: no certificate authority issues one for a name"
+    info "  under localhost, so the browser warns about it."
   else
     warn "The dashboard's certificate is self-signed until Let's Encrypt issues one, so the browser"
     info "  warns about it. HivePaaS asks for it once $HIVEPAAS_APP_DOMAIN points at this server and"
@@ -2296,7 +2317,8 @@ Options:
 Settings, from the environment or --config (the environment wins):
   HIVEPAAS_ADMIN_EMAIL         the admin's email
   HIVEPAAS_ADMIN_PASSWORD      the admin's password, 10 characters or more
-  HIVEPAAS_APP_DOMAIN          the dashboard's domain, e.g. hivepaas.example.com
+  HIVEPAAS_APP_DOMAIN          the dashboard's domain, e.g. hivepaas.example.com or
+                               hivepaas.localhost, to try HivePaaS on this machine
   HIVEPAAS_ROOT_DOMAIN         the domain apps get subdomains of (default: from the app domain)
   HIVEPAAS_APP_SECRET          the key stored secrets are encrypted with, 32 characters or
                                more, no spaces, quotes or backslashes (default: generated)
@@ -2440,6 +2462,10 @@ main() {
   if [ "$INSTALLED" != 1 ]; then
     finish_install
     just_installed=1
+  fi
+  if local_domain "$HIVEPAAS_APP_DOMAIN"; then
+    CERT_TRUSTED=0
+  elif [ "$just_installed" = 1 ]; then
     info "Waiting up to $(cert_wait_seconds)s for the dashboard's certificate from Let's Encrypt..."
     wait_for_trusted_cert "$(cert_wait_seconds)"
   else

@@ -1023,9 +1023,10 @@ test_package_manager_of() {
 
 test_docker_install_method() {
   local id
-  for id in ubuntu debian raspbian fedora centos rhel rocky; do
+  for id in ubuntu debian raspbian fedora centos rhel; do
     check "$id" getdocker "$(docker_install_method "$id" '')"
   done
+  check "rocky" dnf-rhel "$(docker_install_method rocky 'rhel centos fedora')"
   check "alma" dnf-rhel "$(docker_install_method almalinux 'rhel centos fedora')"
   check "oracle" dnf-rhel "$(docker_install_method ol fedora)"
   check "amazon" dnf "$(docker_install_method amzn fedora)"
@@ -1037,6 +1038,26 @@ test_docker_install_method() {
   check "manjaro" pacman "$(docker_install_method manjaro arch)"
   check "alpine" apk "$(docker_install_method alpine '')"
   check_fails "gentoo" docker_install_method gentoo ''
+}
+
+test_install_running_kernel_modules() {
+  local calls=$TMP/kernel-modules-calls installed=0 dnf_status=0
+  uname() { printf '6.12.0-211.16.1.el10_2.x86_64'; }
+  rpm() { [ "$installed" = 1 ]; }
+  dnf() {
+    printf 'dnf %s\n' "$*" >>"$calls"
+    return "$dnf_status"
+  }
+  : >"$calls"
+  install_running_kernel_modules
+  check "the running kernel's, when missing" \
+    "dnf install -y -q kernel-modules-extra-6.12.0-211.16.1.el10_2.x86_64" "$(cat "$calls")"
+  installed=1
+  : >"$calls"
+  install_running_kernel_modules
+  check "nothing, when there" "" "$(cat "$calls")"
+  installed=0 dnf_status=1
+  check_ok "a distribution without the package goes on" install_running_kernel_modules
 }
 
 test_earlyoom_config() {

@@ -137,6 +137,19 @@ test_root_domain_of() {
   check "co.uk itself" example.co.uk "$(root_domain_of example.co.uk)"
   check "com.vn" example.com.vn "$(root_domain_of a.b.example.com.vn)"
   check "a bare suffix" co.uk "$(root_domain_of co.uk)"
+  check "under localhost" localhost "$(root_domain_of hivepaas.localhost)"
+  check "deeper under localhost" localhost "$(root_domain_of a.hivepaas.localhost)"
+}
+
+test_local_domain() {
+  local d
+  for d in hivepaas.localhost a.b.localhost HivePaaS.LocalHost; do
+    check_ok "local $d" local_domain "$d"
+  done
+  for d in localhost hivepaas.example.com localhost.example.com hivepaas.localhostx ""; do
+    check_fails "not local '$d'" local_domain "$d"
+  done
+  check_ok "a typed local app domain" valid_domain hivepaas.localhost
 }
 
 test_valid_root_domain() {
@@ -145,8 +158,19 @@ test_valid_root_domain() {
   for r in mydomain.com dev.mydomain.com hivepaas.dev.mydomain.com MyDomain.com; do
     check_ok "root $r" valid_root_domain "$r"
   done
-  for r in other.com ydomain.com com ""; do
+  for r in other.com ydomain.com com localhost ""; do
     check_fails "root '$r'" valid_root_domain "$r"
+  done
+}
+
+test_valid_root_domain_localhost() {
+  HIVEPAAS_APP_DOMAIN=hivepaas.localhost
+  local r
+  for r in localhost LocalHost hivepaas.localhost; do
+    check_ok "root $r of hivepaas.localhost" valid_root_domain "$r"
+  done
+  for r in example.com host ""; do
+    check_fails "root '$r' of hivepaas.localhost" valid_root_domain "$r"
   done
 }
 

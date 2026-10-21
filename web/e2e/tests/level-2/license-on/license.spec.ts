@@ -139,7 +139,7 @@ test("a key past its paid period holds through its grace: the banner counts the 
     await expect(plan.getByText("Comb", { exact: true })).toBeVisible();
     await expect(plan.getByText("Grace period", { exact: true })).toBeVisible();
     await expect(plan).toContainText("The paid period ended on");
-    await expect(plan).toContainText("(13 days left), then this installation is on Bee.");
+    await expect(plan).toContainText("(29 days left), then this installation is on Bee.");
     await expect(plan.getByRole("group", { name: "Grace ends" })).toBeVisible();
 });
 

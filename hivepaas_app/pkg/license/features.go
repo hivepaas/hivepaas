@@ -27,7 +27,8 @@ func (s *State) Grants(feature string) bool {
 
 // WithFeatures puts these features in force besides the state's own: those of
 // them this binary knows, in base.AllLicenseFeatures order. They are a
-// development installation's (HP_DEV_MODE_LICENSE_FEATURES), never a key's.
+// development installation's (HP_DEV_MODE_LICENSE_FEATURES) or a beta one's
+// (base.BetaLicenseFeatures), never a key's.
 func (s *State) WithFeatures(features []string) *State {
 	if s == nil || len(features) == 0 {
 		return s

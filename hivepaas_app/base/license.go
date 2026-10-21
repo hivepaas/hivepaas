@@ -114,6 +114,11 @@ const (
 
 var (
 	AllLicenseFeatures = []LicenseFeature{LicenseFeatureManagedDatabases}
+
+	// BetaLicenseFeatures are what a beta installation has whatever its license:
+	// free while HivePaaS is in beta. A stable installation has them from its key
+	// alone.
+	BetaLicenseFeatures = []LicenseFeature{LicenseFeatureManagedDatabases}
 )
 
 // LicenseRefreshResult is how a check with the portal for a newer key went.

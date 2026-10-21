@@ -1029,7 +1029,7 @@ test_docker_install_method() {
   check "rocky" dnf-rhel "$(docker_install_method rocky 'rhel centos fedora')"
   check "alma" dnf-rhel "$(docker_install_method almalinux 'rhel centos fedora')"
   check "oracle" dnf-rhel "$(docker_install_method ol fedora)"
-  check "amazon" dnf "$(docker_install_method amzn fedora)"
+  check "amazon" dnf-rhel "$(docker_install_method amzn fedora)"
   check "mint" apt-repo "$(docker_install_method linuxmint 'ubuntu debian')"
   check "kali" apt-repo "$(docker_install_method kali debian)"
   check "tumbleweed" zypper "$(docker_install_method opensuse-tumbleweed 'opensuse suse')"
@@ -1038,6 +1038,53 @@ test_docker_install_method() {
   check "manjaro" pacman "$(docker_install_method manjaro arch)"
   check "alpine" apk "$(docker_install_method alpine '')"
   check_fails "gentoo" docker_install_method gentoo ''
+}
+
+test_daemon_json_without_selinux() {
+  local f=$TMP/daemon.json
+  printf '{"log-driver": "json-file", "selinux-enabled": true}\n' >"$f"
+  check "its settings kept, SELinux off" '{"log-driver":"json-file","selinux-enabled":false}' \
+    "$(daemon_json_without_selinux "$f" | jq -c .)"
+  : >"$f"
+  check "an empty file" '{"selinux-enabled":false}' "$(daemon_json_without_selinux "$f" | jq -c .)"
+  check "no file" '{"selinux-enabled":false}' "$(daemon_json_without_selinux "$TMP/none.json" | jq -c .)"
+  printf 'not json' >"$f"
+  check_fails "a file that is no JSON" daemon_json_without_selinux "$f"
+}
+
+test_ensure_docker_selinux_off() {
+  local labels=1 restarts=0 out
+  DOCKER_DAEMON_JSON=$TMP/docker/daemon.json
+  docker() {
+    if [ "$labels" = 1 ]; then printf '["name=seccomp","name=selinux"]'; else printf '["name=seccomp"]'; fi
+  }
+  service_restart() {
+    restarts=$((restarts + 1))
+    labels=0
+  }
+  wait_for_docker() { :; }
+  out=$(ensure_docker_selinux_off 2>&1)
+  ensure_docker_selinux_off >/dev/null 2>&1
+  check "turned off in daemon.json" '{"selinux-enabled":false}' "$(jq -c . "$DOCKER_DAEMON_JSON")"
+  check "and Docker restarted" 1 "$restarts"
+  check_contains "with a warning" "$out" "which HivePaaS's services cannot run in"
+  restarts=0
+  ensure_docker_selinux_off >/dev/null 2>&1
+  check "nothing to do the next time" 0 "$restarts"
+}
+
+test_kernel_modules_gone() {
+  local gone
+  uname() { printf '6.17.1-arch1-1'; }
+  MODULES_DIR=$TMP/modules
+  mkdir -p "$MODULES_DIR/6.17.2-arch1-1"
+  gone=no
+  if kernel_modules_gone; then gone=yes; fi
+  check "an upgrade took the running kernel's away" yes "$gone"
+  mkdir -p "$MODULES_DIR/6.17.1-arch1-1"
+  gone=no
+  if kernel_modules_gone; then gone=yes; fi
+  check "the running kernel's are there" no "$gone"
 }
 
 test_install_running_kernel_modules() {

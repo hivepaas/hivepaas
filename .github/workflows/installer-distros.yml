@@ -28,7 +28,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [ubuntu-26.04, debian-13, rocky-10]
+        # One of each Docker the installer installs - Docker's script, its RHEL
+        # repository, the distribution's own package - and each sudo.
+        distro:
+          - ubuntu-24.04
+          - ubuntu-26.04
+          - debian-12
+          - debian-13
+          - rocky-9
+          - rocky-10
+          - almalinux-9
+          - almalinux-10
+          - fedora-44
+          - amazonlinux-2023
+          - opensuse-leap-16.0
+          - arch
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

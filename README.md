@@ -97,10 +97,10 @@ HivePaaS uses a clean two-tier network and node topology for maximum security an
 
 ### Prerequisites
 
-* A Linux server with root access: Debian, Ubuntu, Fedora, RHEL, Rocky, AlmaLinux, Amazon Linux, SLES, openSUSE, Arch or Alpine.
+* A Linux server with root access: Debian, Ubuntu, Fedora, RHEL, Rocky, AlmaLinux, Amazon Linux, SLES, openSUSE or Arch.
 * 4 CPUs, 8 GB of memory and 100 GB of disk recommended; HivePaaS runs on less.
 * Ports `80` and `443` free and open to the internet.
-* Docker 29.5 or newer - the installer installs or upgrades it if needed.
+* Docker 29 or newer - the installer installs or upgrades it if needed.
 
 ### 1. Install
 
@@ -136,7 +136,7 @@ To work on HivePaaS itself, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 | **Agent** | Go, [gRPC](https://grpc.io/) | Required | Runs on every node: builds images, runs commands and backups, reads the node |
 | **Database** | [PostgreSQL 18](https://www.postgresql.org/) | Required | HivePaaS's state: projects, apps, settings, tasks |
 | **Cache & queue** | [Redis 8](https://redis.io/) | Required | Sessions, locks, the task queue and rate limiting |
-| **Orchestration** | [Docker Swarm](https://docs.docker.com/engine/swarm/) (Docker 29.5+) | Required | Runs and schedules every container, on one node or many |
+| **Orchestration** | [Docker Swarm](https://docs.docker.com/engine/swarm/) (Docker 29+) | Required | Runs and schedules every container, on one node or many |
 | **Ingress** | [Traefik v3](https://traefik.io/) | Required | Routing, TLS and the per-app rules |
 | **Image builds** | [BuildKit](https://docs.docker.com/build/buildkit/) (docker buildx) | Required to build from Git and functions | Builds images from repositories and functions' code |
 | **Backups** | [Kopia](https://kopia.io/) | Optional - when you back up | Encrypted, deduplicated backups and restores |

@@ -209,7 +209,10 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
        tag and the redirect moves with every beta;
      - a stable release: `https://github.com/hivepaas/hivepaas/releases/latest/download/install.sh`,
        set once.
-   - The landing page and the docs give `curl -fsSL https://get.hivepaas.com | sudo bash`.
+   - The docs give `curl -fsSL https://get.hivepaas.com -o install.sh` then
+     `sudo bash install.sh`: piped into a sudo-rs before 0.2.14 (Ubuntu's sudo
+     from 25.10 on), `curl … | sudo bash` stops as it starts, and the installer
+     refuses it. The landing page gives `curl -fsSL https://get.hivepaas.com | sudo bash`.
    - The docs' silent install (`hivepaas-website`,
      `docs/docs/installation/silent-install.md`) downloads `install.env` from
      this release's assets: point it at the new tag. `releases/latest` skips a

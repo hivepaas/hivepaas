@@ -2,6 +2,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+import { avatarAbbreviation } from "./avatar-abbreviation";
+
 function getColorFromName(name: string) {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -10,16 +12,6 @@ function getColorFromName(name: string) {
     const hue = Math.abs(hash) % 360;
     // Use HSL to avoid external deps; visually similar to chroma.hsl(hue, 0.65, 0.55)
     return `hsl(${hue} 65% 55%)`;
-}
-
-function createAbbreviation(name: string) {
-    return name
-        .trim()
-        .split(" ")
-        .map(word => word[0]?.toUpperCase())
-        .filter(Boolean)
-        .slice(0, 2)
-        .join("");
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -56,7 +48,7 @@ export function Avatar({ name, borderless = false, className, style, src, ...pro
                     className={cn("aspect-square size-full object-cover")}
                 />
             ) : name ? (
-                <span className="select-none font-medium text-white">{createAbbreviation(name ?? "")}</span>
+                <span className="select-none font-medium text-white">{avatarAbbreviation(name ?? "")}</span>
             ) : null}
         </div>
     );

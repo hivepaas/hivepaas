@@ -10,11 +10,19 @@ import { ROUTE } from "@application/shared/constants";
 
 import { ProjectEnvFilter, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
+import { avatarAbbreviation } from "@/components/ui/avatar-abbreviation";
 import { Separator } from "@/components/ui/separator";
 
 import { SingleProjectBreadcrumbs } from "../buidling-blocks";
 
 import { SingleProjectHeaderSkeleton } from "./single-project-header.skeleton.com";
+
+/** A person with access, as the header's avatar button is read: the letters it shows, then the name. */
+function accessUserLabel(user: { fullName?: string; email?: string; username?: string }): string {
+    // The first that is not empty, as the avatar's name is.
+    const name = [user.fullName, user.email, user.username].find(Boolean) ?? "";
+    return `${avatarAbbreviation(name)} ${name}`.trim();
+}
 
 function View({ projectId }: Props) {
     const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
@@ -144,7 +152,8 @@ function View({ projectId }: Props) {
                                     <button
                                         key={user.id}
                                         type="button"
-                                        aria-label="Configure project access"
+                                        // The name a button is read by holds what it shows: the avatar's letters.
+                                        aria-label={`${accessUserLabel(user)}: configure project access`}
                                         title="Configure project access"
                                         className="rounded-full cursor-pointer bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                         onClick={openProjectUserAccessesDialog}
@@ -159,7 +168,7 @@ function View({ projectId }: Props) {
                                 {extraAccessUsers > 0 && (
                                     <button
                                         type="button"
-                                        aria-label="Configure project access"
+                                        aria-label={`+${extraAccessUsers} more: configure project access`}
                                         title="Configure project access"
                                         className="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary/10 p-0 text-[10px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                         onClick={openProjectUserAccessesDialog}

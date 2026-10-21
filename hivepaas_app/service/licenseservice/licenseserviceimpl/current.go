@@ -43,7 +43,7 @@ func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings
 	}
 	if settings.Key == "" {
 		// No key is Bee whatever the installation, so docker is not asked.
-		return s.withDevFeatures(license.Evaluate(&license.EvalInput{Now: now})), nil
+		return s.withFreeFeatures(license.Evaluate(&license.EvalInput{Now: now})), nil
 	}
 
 	installationID, err := s.InstallationID(ctx)
@@ -51,7 +51,7 @@ func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings
 		return nil, err
 	}
 	verified, verifyErr := s.verifyStored(settings.Key)
-	return s.withDevFeatures(license.Evaluate(&license.EvalInput{
+	return s.withFreeFeatures(license.Evaluate(&license.EvalInput{
 		KeyText:        settings.Key,
 		Verified:       verified,
 		VerifyErr:      verifyErr,
@@ -61,15 +61,21 @@ func (s *service) evaluate(ctx context.Context, settings *entity.LicenseSettings
 	})), nil
 }
 
-// withDevFeatures adds the features a development installation is given
-// whatever its license, HP_DEV_MODE_LICENSE_FEATURES. Where dev mode is off, as
-// in production and beta, there are none.
-func (s *service) withDevFeatures(state *license.State) *license.State {
+// withFreeFeatures adds the features an installation is given whatever its
+// license: a development one's, HP_DEV_MODE_LICENSE_FEATURES, and a beta one's,
+// base.BetaLicenseFeatures. In production there are none.
+func (s *service) withFreeFeatures(state *license.State) *license.State {
 	cfg := s.cfg()
 	if cfg == nil {
 		return state
 	}
-	return state.WithFeatures(cfg.DevMode.LicenseFeatureList())
+	features := cfg.DevMode.LicenseFeatureList()
+	if cfg.IsBetaEnv() {
+		for _, feature := range base.BetaLicenseFeatures {
+			features = append(features, string(feature))
+		}
+	}
+	return state.WithFeatures(features)
 }
 
 // loadSettings is the stored license, empty when there is none.

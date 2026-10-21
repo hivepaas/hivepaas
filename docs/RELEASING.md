@@ -387,3 +387,8 @@ four Dockerfiles, through a pull request, and release as usual.
   it is, and the new app then runs against the old agent.
 - **Images other than app and agent** are compiled in as release.json pins
   them, by digest; the app's and the agent's by their version's tag.
+- **Managed databases are free on beta.** A beta installation has
+  `base.BetaLicenseFeatures` whatever its license, so on beta only the plan's
+  limits apply; a stable one has them from its key. An installation stays on its
+  channel, so an installation on the beta channel keeps them free after 1.0.0
+  too. Decide before 1.0.0 whether to empty that list.

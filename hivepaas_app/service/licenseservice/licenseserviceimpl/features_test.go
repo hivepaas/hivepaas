@@ -80,3 +80,26 @@ func TestDevFeaturesAreIgnoredOutsideDevMode(t *testing.T) {
 	assert.ErrorIs(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}),
 		hperrors.ErrPlanFeatureRequired)
 }
+
+// A beta installation has managed databases on Bee and on a key without them:
+// they are free while HivePaaS is in beta.
+func TestABetaInstallationHasTheBetaFeatures(t *testing.T) {
+	h := newHarness(t)
+	h.config.Env = config.EnvBeta
+
+	assert.NoError(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}), "on Bee")
+	state, err := h.Current(context.Background())
+	assert.NoError(t, err)
+	assert.True(t, state.Grants("managed-databases"), "the template store sees it too")
+
+	h.storeKey(t, payload(func(p *license.Payload) { p.Features = nil }))
+	assert.NoError(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}), "with a key")
+}
+
+// A stable installation has them only from its key.
+func TestAStableInstallationHasNoBetaFeatures(t *testing.T) {
+	h := newHarness(t)
+
+	assert.ErrorIs(t, h.CheckFeatures(context.Background(), []string{"managed-databases"}),
+		hperrors.ErrPlanFeatureRequired)
+}

@@ -107,7 +107,8 @@ HivePaaS uses a clean two-tier network and node topology for maximum security an
 On the server:
 
 ```bash
-curl -fsSL https://get.hivepaas.com | sudo bash
+curl -fsSL https://get.hivepaas.com -o install.sh
+sudo bash install.sh
 ```
 
 The installer asks for the admin's email and password and the dashboard's domain, sets up Docker Swarm, and deploys HivePaaS. To install without questions, see [Silent install](https://docs.hivepaas.com/docs/installation/silent-install).

@@ -2,7 +2,12 @@
 #
 # Installs HivePaaS on this server.
 #
-#   curl -fsSL https://get.hivepaas.com | sudo bash
+#   curl -fsSL https://get.hivepaas.com -o install.sh
+#   sudo bash install.sh
+#
+# `curl -fsSL https://get.hivepaas.com | sudo bash` works too, but not where
+# sudo is a sudo-rs before 0.2.14, such as Ubuntu's from 25.10 on: see
+# sudo_rs_stuck.
 #
 # It installs Docker when it is missing, makes the server a single-node swarm
 # and deploys the HivePaaS stack of a release channel, beta for now. The
@@ -582,6 +587,53 @@ INSTALLED=0
 CERT_TRUSTED=0
 # EXISTING_DB: keep or reset, for the database an earlier HivePaaS left here.
 EXISTING_DB=''
+
+# PROC_DIR: where processes are read from; the tests point it elsewhere.
+PROC_DIR=/proc
+
+# sudo_rs_stuck PID: whether PID, the installer, runs where a sudo-rs before
+# 0.2.14 - Ubuntu's sudo from 25.10 on - leaves it stopped for good; prints
+# that sudo-rs's version. `curl | sudo bash` makes stdin a pipe, so sudo starts
+# the command in a terminal of its own, outside its foreground. The first
+# command to touch that terminal - stty, in print_logo - is stopped with its
+# process group, and sudo-rs hands the terminal over but continued the shell
+# alone, not the group (sudo-rs #1527): the stopped command never ends, and the
+# shell waits for it. The sudo of sudo.ws continues the group.
+sudo_rs_stuck() {
+  local stat ppid pgrp tty tpgid exe out version
+  [ -r "$PROC_DIR/$1/stat" ] || return 1
+  IFS= read -r stat <"$PROC_DIR/$1/stat" || return 1
+  # After the command's name, which may hold spaces and parentheses:
+  # state ppid pgrp session tty_nr tpgid.
+  read -r _ ppid pgrp _ tty tpgid _ <<<"${stat##*) }"
+  # On a terminal, outside its foreground.
+  [ "${tty:-0}" != 0 ] || return 1
+  [ "${tpgid:--1}" -gt 0 ] || return 1
+  [ "$tpgid" != "$pgrp" ] || return 1
+  exe=$(readlink "$PROC_DIR/$ppid/exe" 2>/dev/null) || return 1
+  case "${exe##*/}" in *sudo*) ;; *) return 1 ;; esac
+  # Away from the terminal: touching it is what stops a command here.
+  out=$("$exe" --version </dev/null 2>/dev/null | head -n 1) || true
+  case "$out" in "sudo-rs "*) ;; *) return 1 ;; esac
+  version=${out#sudo-rs }
+  version=${version%%[[:space:]]*}
+  if [ -n "$version" ] && version_ge "$version" 0.2.14; then return 1; fi
+  printf '%s' "${version:-unknown}"
+}
+
+# refuse_sudo_rs VERSION ARGS...: stop before anything touches the terminal,
+# with the two lines that run the installer all the same.
+refuse_sudo_rs() {
+  local version=$1 args=''
+  shift
+  if [ $# -gt 0 ]; then args=$(printf ' %q' "$@"); fi
+  printf '\n%s✘ This sudo is sudo-rs %s, which leaves a script piped into it (curl | sudo bash)\n' \
+    "$C_RED" "$version" >&2
+  printf '  stopped as it starts; sudo-rs 0.2.14 fixed it. Download the installer, then run it:%s\n\n' \
+    "$C_RESET" >&2
+  printf '    curl -fsSL https://get.hivepaas.com -o install.sh\n    sudo bash install.sh%s\n\n' "$args" >&2
+  exit 1
+}
 
 # open_tty: questions are read from the terminal, not from stdin, which
 # `curl | bash` makes the script itself. fd 3 reads answers, fd 4 shows the
@@ -2319,12 +2371,13 @@ cleanup() {
 }
 
 main() {
-  local just_installed=0
+  local just_installed=0 sudo_rs
   set -Eeuo pipefail
   trap 'on_error $? $LINENO' ERR
   trap cleanup EXIT
   parse_args "$@"
   setup_colors
+  if sudo_rs=$(sudo_rs_stuck "$$"); then refuse_sudo_rs "$sudo_rs" "$@"; fi
   print_logo
   open_tty
   WORK_DIR=$(mktemp -d)

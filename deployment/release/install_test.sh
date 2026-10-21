@@ -1282,6 +1282,43 @@ test_a_swarm_on_another_pool_does_not_clash() {
   check_fails "a swarm on 172.30.0.0/16" local_pool_clash 172.30.0.0/16
 }
 
+# fake_proc TTY TPGID PARENT VERSION [COMM]: process 100, of process group 100,
+# on terminal TTY whose foreground group is TPGID; its parent, 99, runs the
+# program PARENT, which answers --version with VERSION.
+fake_proc() {
+  PROC_DIR=$TMP/proc
+  rm -rf "$PROC_DIR" "${TMP:?}/bin"
+  mkdir -p "$PROC_DIR/100" "$PROC_DIR/99" "$TMP/bin"
+  printf '100 (%s) S 99 100 100 %s %s 4194560 0 0\n' "${5:-bash}" "$1" "$2" >"$PROC_DIR/100/stat"
+  printf '%s\n' "$4" >"$TMP/bin/version"
+  printf '#!/bin/sh\ncat "%s"\n' "$TMP/bin/version" >"$TMP/bin/$3"
+  chmod +x "$TMP/bin/$3"
+  ln -s "$TMP/bin/$3" "$PROC_DIR/99/exe"
+}
+
+test_sudo_rs_stuck() {
+  fake_proc 34823 262739 sudo 'sudo-rs 0.2.13-0ubuntu1.2'
+  check "curl | sudo bash, Ubuntu 26.04's sudo-rs" 0.2.13-0ubuntu1.2 "$(sudo_rs_stuck 100)"
+  fake_proc 34823 262739 sudo-rs 'sudo-rs 0.2.12'
+  check "a sudo-rs installed as sudo-rs" 0.2.12 "$(sudo_rs_stuck 100)"
+  fake_proc 34823 262739 sudo 'sudo-rs 0.2.13' 'ba) sh'
+  check "a command's name with a parenthesis" 0.2.13 "$(sudo_rs_stuck 100)"
+}
+
+test_sudo_rs_not_stuck() {
+  fake_proc 34823 100 sudo 'sudo-rs 0.2.13'
+  check_fails "in the terminal's foreground: sudo bash install.sh" sudo_rs_stuck 100
+  fake_proc 0 -1 sudo 'sudo-rs 0.2.13'
+  check_fails "no terminal" sudo_rs_stuck 100
+  fake_proc 34823 262739 sudo 'sudo-rs 0.2.14'
+  check_fails "sudo-rs 0.2.14 continues the group" sudo_rs_stuck 100
+  fake_proc 34823 262739 sudo 'Sudo version 1.9.17p2'
+  check_fails "the sudo of sudo.ws" sudo_rs_stuck 100
+  fake_proc 34823 262739 bash 'sudo-rs 0.2.13'
+  check_fails "a parent that is not sudo" sudo_rs_stuck 100
+  check_fails "a process that is gone" sudo_rs_stuck 101
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

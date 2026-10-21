@@ -89,7 +89,7 @@ jobs:
       - name: Test the installer
         working-directory: deployment/release
         run: |
-          shellcheck -x install.sh install_test.sh install_e2e.sh
+          shellcheck -x install.sh install_test.sh install_e2e.sh distro_e2e.sh
           shellcheck ../../scripts/release/bake-install-ref.sh
           bash install_test.sh
 

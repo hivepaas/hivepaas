@@ -1,0 +1,72 @@
+name: 'Installer on distributions'
+
+# install.sh on each distribution as people get it: a virtual machine from its
+# cloud image, a user with sudo and a password, and the installer run the way
+# the docs say, at a terminal (deployment/release/distro_e2e.sh). By hand, on
+# this checkout or on the installer of a URL; and weekly on the one people get,
+# https://get.hivepaas.com, since a distribution can break it with no change
+# here - as Ubuntu's sudo-rs did.
+
+on:
+  workflow_dispatch:
+    inputs:
+      installer:
+        description: 'checkout, or the URL of an install.sh, such as https://get.hivepaas.com'
+        required: true
+        default: checkout
+  schedule:
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  distro:
+    name: ${{ matrix.distro }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu-26.04, debian-13, rocky-10]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The runner has /dev/kvm, root's until a udev rule opens it.
+      - name: KVM and QEMU
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' |
+            sudo tee /etc/udev/rules.d/99-kvm.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils genisoimage >/dev/null
+
+      - name: The week
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      # A cloud image changes under the same URL: a week's copy is recent enough.
+      - name: The distribution's image
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/hivepaas-distro/${{ matrix.distro }}.img
+          key: distro-image-${{ matrix.distro }}-${{ steps.week.outputs.week }}
+
+      - name: Test
+        env:
+          DISTRO: ${{ matrix.distro }}
+          HIVEPAAS_DISTRO_INSTALLER: ${{ github.event_name == 'schedule' && 'https://get.hivepaas.com' || inputs.installer }}
+          HIVEPAAS_DISTRO_OUT: ${{ runner.temp }}/distro-e2e
+          HIVEPAAS_DISTRO_CPUS: '3'
+        run: bash deployment/release/distro_e2e.sh "$DISTRO"
+
+      - name: Logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: distro-e2e-${{ matrix.distro }}
+          path: ${{ runner.temp }}/distro-e2e

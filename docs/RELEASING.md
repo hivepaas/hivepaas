@@ -188,6 +188,12 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
    - `make test-installer-e2e` runs a whole install in a docker:dind container
      with this checkout's `release.signed.json`, which now names the pushed
      images.
+   - The **Installer on distributions** workflow (Actions › Run workflow, on the
+     commit with the signed file, installer `checkout`) installs it on Ubuntu
+     26.04, Debian 13 and Rocky 10 the way the docs say: at a terminal, through
+     each one's own sudo, piped, again, and after a reboot
+     (`deployment/release/distro_e2e.sh`; `make test-installer-distro
+     DISTRO=...` runs one here). A red one stops the release.
    - Then on a real VM, with the draft's installer:
      ```bash
      gh release download v1.0.0-beta1 -p install.sh   # a draft needs gh, signed in

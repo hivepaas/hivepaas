@@ -159,6 +159,13 @@
             "type" : "string"
           }
         }, {
+          "description" : "true keeps the managed templates: databases HivePaaS backs up and restores",
+          "in" : "query",
+          "name" : "managed",
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
           "description" : "name (the default), stars, trending or added; a leading minus reverses it",
           "in" : "query",
           "name" : "sort",
@@ -63679,6 +63686,10 @@
             "nullable" : true,
             "type" : "array"
           },
+          "managedCount" : {
+            "description" : "ManagedCount is how many managed templates the store would show: what\nlisting with managed=true returns.",
+            "type" : "integer"
+          },
           "revision" : {
             "type" : "string"
           },
@@ -63693,7 +63704,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "categories", "revision", "source", "tags" ],
+        "required" : [ "categories", "managedCount", "revision", "source", "tags" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateCategoryResp" : {

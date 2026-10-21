@@ -353,7 +353,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				paramSearch: "text in a template's name, title, tagline, tags or aliases, ignoring case",
 				"category": "only templates in any of these categories, such as databases or databases/sql; a " +
 					"parent matches every category under it. get_template_catalog lists them",
-				"tag":           "only templates carrying any of these tags; get_template_catalog lists them",
+				"tag": "only templates carrying any of these tags; get_template_catalog lists them",
+				"managed": "true for only the managed templates: databases whose backups, restores and health " +
+					"HivePaaS runs",
 				paramPageOffset: descPageOffset, paramPageLimit: descPageLimit,
 			},
 			answer: func() any { return &apptemplatedto.ListAppTemplatesResp{} },

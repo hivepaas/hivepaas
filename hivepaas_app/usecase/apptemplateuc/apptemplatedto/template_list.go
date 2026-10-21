@@ -48,6 +48,9 @@ type ListAppTemplatesReq struct {
 	Tags []string `json:"-" mapstructure:"tag"`
 	// Search matches name, title, tagline, tags and aliases, ignoring case.
 	Search string `json:"-" mapstructure:"search"`
+	// Managed keeps the templates a managed engine looks after: databases whose
+	// backups, restores and health HivePaaS runs.
+	Managed bool `json:"-" mapstructure:"managed"`
 
 	Paging basedto.Paging `json:"-"`
 }

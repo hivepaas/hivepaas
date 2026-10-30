@@ -86,3 +86,22 @@ func TestRemoveFirstBootEnv(t *testing.T) {
 	assert.True(t, errors.Is(err, os.ErrNotExist))
 	assert.NoError(t, RemoveFirstBootEnv(), "nothing to remove is not an error")
 }
+
+// The first boot removes the file after the load has cleared HP_APP_PATH from
+// the process. Left behind, it would keep the admin's password on disk.
+func TestRemoveFirstBootEnvAfterALoad(t *testing.T) {
+	resetLoadState()
+	t.Cleanup(resetLoadState)
+	appPath := t.TempDir()
+	t.Setenv("HP_APP_PATH", appPath)
+	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+	writeFirstBootEnv(t, appPath, "HP_USER_ADMIN_PASSWORD=secret\n", 0o600)
+
+	_, err := LoadConfig()
+	assert.NoError(t, err)
+	assert.Empty(t, os.Getenv("HP_APP_PATH"))
+
+	assert.NoError(t, RemoveFirstBootEnv())
+	_, err = os.Stat(FirstBootEnvPath(appPath))
+	assert.True(t, errors.Is(err, os.ErrNotExist))
+}

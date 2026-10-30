@@ -171,9 +171,13 @@ func LoadConfig() (*Config, error) {
 
 // resolveAppPath returns the app directory, where both the config file and the
 // managed settings live. It has to read the environment directly: the value is
-// needed to find the very file the config is loaded from.
+// needed to find the very file the config is loaded from. A load clears it from
+// the process, so a reload, or anything after the load, finds it in the snapshot.
 func resolveAppPath() string {
 	if appPath := os.Getenv("HP_APP_PATH"); appPath != "" {
+		return appPath
+	}
+	if appPath := envSnapshot["HP_APP_PATH"]; appPath != "" {
 		return appPath
 	}
 	return defaultAppPath

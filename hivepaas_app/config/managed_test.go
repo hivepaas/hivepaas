@@ -208,6 +208,25 @@ func TestReloadConfigKeepsEnvValues(t *testing.T) {
 		"a reload must still see the environment the process started with")
 }
 
+// A load clears HP_APP_PATH from the process: a reload must still read the
+// managed settings from where it pointed, not from the default path.
+func TestReloadConfigKeepsTheAppPath(t *testing.T) {
+	resetLoadState()
+	t.Cleanup(resetLoadState)
+	appPath := writeManagedSettings(t, "secret = \"managed-app-secret\"\n", 0o600)
+	t.Setenv("HP_APP_PATH", appPath)
+	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+
+	_, err := LoadConfig()
+	assert.NoError(t, err)
+	assert.Empty(t, os.Getenv("HP_APP_PATH"))
+
+	reloaded, err := ReloadConfig()
+	if assert.NoError(t, err) {
+		assert.Equal(t, "managed-app-secret", reloaded.Secret)
+	}
+}
+
 func TestEnsureAppSecret(t *testing.T) {
 	t.Run("keeps a configured secret", func(t *testing.T) {
 		config := &Config{Env: EnvDev, Secret: "already-set"}

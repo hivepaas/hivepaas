@@ -12,10 +12,11 @@ func TestLicenseDefaults(t *testing.T) {
 	t.Cleanup(func() { SetCurrent(nil) })
 	load := func(env map[string]string) (*Config, error) {
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		for name, value := range env {
 			t.Setenv(name, value)
 		}
-		SetCurrent(nil)
+		resetLoadState()
 		return LoadConfig()
 	}
 

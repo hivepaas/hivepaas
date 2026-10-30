@@ -18,8 +18,9 @@ func TestSsoAuthPath(t *testing.T) {
 // The API is under /api unless the configuration says otherwise.
 func TestAPIBasePathDefault(t *testing.T) {
 	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+	t.Setenv("HP_APP_PATH", t.TempDir())
 
-	SetCurrent(nil)
+	resetLoadState()
 	t.Cleanup(func() { SetCurrent(nil) })
 	cfg, err := LoadConfig()
 

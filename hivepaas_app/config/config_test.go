@@ -12,9 +12,10 @@ import (
 
 func Test_LoadConfig(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		_ = os.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 
-		SetCurrent(nil)
+		resetLoadState()
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -24,10 +25,11 @@ func Test_LoadConfig(t *testing.T) {
 	// The env tag must win over the value in the config file, including for a
 	// setting inside a nested section.
 	t.Run("success with override a key with ENV", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 		t.Setenv("HP_DB_HOST", "db-from-env")
 
-		SetCurrent(nil)
+		resetLoadState()
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -41,10 +43,11 @@ func Test_LoadConfig(t *testing.T) {
 	// The prefix configor derives names with is ours, not the library default, so
 	// a section can be fed as a whole. Guards against the prefix silently changing.
 	t.Run("success with override a whole section with the prefixed ENV", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 		t.Setenv("HP_DB", "host: db-from-section\nport: 25432")
 
-		SetCurrent(nil)
+		resetLoadState()
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "db-from-section", cfg.DB.Host)
@@ -52,28 +55,31 @@ func Test_LoadConfig(t *testing.T) {
 	})
 
 	t.Run("failure: no ENV to find config", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Unsetenv("HP_CONFIG_FILE")
 
-		SetCurrent(nil)
+		resetLoadState()
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileUnset)
 	})
 
 	t.Run("failure: config not found", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Setenv("HP_CONFIG_FILE", "notexist/config.myenv.toml")
 
-		SetCurrent(nil)
+		resetLoadState()
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileNotFound)
 	})
 
 	t.Run("failure: malformed TOML data", func(t *testing.T) {
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Setenv("HP_CONFIG_FILE", "testdata/config-malformed.toml")
 
-		SetCurrent(nil)
+		resetLoadState()
 		_, err := LoadConfig()
 		assert.NotNil(t, err)
 	})
@@ -83,8 +89,9 @@ func Test_LoadConfig(t *testing.T) {
 // job without a timeout of its own 30 minutes.
 func TestTaskTriggersDefaults(t *testing.T) {
 	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+	t.Setenv("HP_APP_PATH", t.TempDir())
 
-	SetCurrent(nil)
+	resetLoadState()
 	t.Cleanup(func() { SetCurrent(nil) })
 	cfg, err := LoadConfig()
 
@@ -96,8 +103,9 @@ func TestTaskTriggersDefaults(t *testing.T) {
 // The agent's repository server keeps under 256 MiB and has 30 seconds to listen.
 func TestAgentRepoServerDefaults(t *testing.T) {
 	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+	t.Setenv("HP_APP_PATH", t.TempDir())
 
-	SetCurrent(nil)
+	resetLoadState()
 	t.Cleanup(func() { SetCurrent(nil) })
 	cfg, err := LoadConfig()
 
@@ -116,10 +124,11 @@ func TestTimezone(t *testing.T) {
 	// A load takes the HP_ variables out of the process: each is given again.
 	load := func(timezone string) (*Config, error) {
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+		t.Setenv("HP_APP_PATH", t.TempDir())
 		if timezone != "" {
 			t.Setenv("HP_TIMEZONE", timezone)
 		}
-		SetCurrent(nil)
+		resetLoadState()
 		return LoadConfig()
 	}
 

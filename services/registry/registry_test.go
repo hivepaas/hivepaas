@@ -132,3 +132,48 @@ func TestListTagsReportsAnUnreachableRegistry(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrRegistryUnavailable)
 }
+
+// digestServer answers a manifest request the way a V2 registry does: a challenge
+// first, and with the token only a HEAD that accepts an image index gets the digest.
+func digestServer(t *testing.T, digest string) *Client {
+	t.Helper()
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/token":
+			_, _ = fmt.Fprint(w, `{"token":"test-token"}`)
+		case r.Header.Get("Authorization") == "":
+			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer realm="%s/token",service="fake"`, server.URL))
+			w.WriteHeader(http.StatusUnauthorized)
+		case r.URL.Path != "/v2/library/postgres/manifests/18.7":
+			w.WriteHeader(http.StatusNotFound)
+		case r.Method != http.MethodHead || !strings.Contains(r.Header.Get("Accept"), "image.index"):
+			w.WriteHeader(http.StatusBadRequest)
+		default:
+			w.Header().Set("Docker-Content-Digest", digest)
+		}
+	}))
+	t.Cleanup(server.Close)
+	client := New()
+	client.endpoint = func(string) string { return server.URL }
+	return client
+}
+
+func TestTagDigestFollowsTheTokenChallenge(t *testing.T) {
+	digest, err := digestServer(t, "sha256:abc").TagDigest(context.Background(), testRef(), "18.7")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "sha256:abc", digest)
+}
+
+func TestTagDigestReportsAMissingTag(t *testing.T) {
+	_, err := digestServer(t, "sha256:abc").TagDigest(context.Background(), testRef(), "18.8")
+
+	assert.Error(t, err)
+}
+
+func TestTagDigestRefusesAnAnswerWithoutASha256(t *testing.T) {
+	_, err := digestServer(t, "").TagDigest(context.Background(), testRef(), "18.7")
+
+	assert.ErrorIs(t, err, hperrors.ErrRegistryUnavailable)
+}

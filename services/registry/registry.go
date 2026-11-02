@@ -21,6 +21,14 @@ const (
 	pageSize    = 1000
 	maxPages    = 10
 	maxBodySize = 4 << 20
+
+	// manifestAccept is every kind of manifest a tag can name. A registry answers
+	// with the digest of the one it serves, so a multi-arch image has to be asked
+	// for its index: that is the digest `docker pull` resolves on every platform.
+	manifestAccept = "application/vnd.oci.image.index.v1+json," +
+		"application/vnd.docker.distribution.manifest.list.v2+json," +
+		"application/vnd.oci.image.manifest.v1+json," +
+		"application/vnd.docker.distribution.manifest.v2+json"
 )
 
 // challengeParamPattern reads key="value" out of a WWW-Authenticate header.
@@ -85,6 +93,39 @@ func (c *Client) ListTags(ctx context.Context, ref Reference, maxTags int) (*Lis
 	return result, nil
 }
 
+// TagDigest reads the digest a tag names right now, following the same token
+// challenge as ListTags. It asks with HEAD, which Docker Hub does not count against
+// the pull limit.
+func (c *Client) TagDigest(ctx context.Context, ref Reference, tag string) (string, error) {
+	url := fmt.Sprintf("%s/v2/%s/manifests/%s", c.endpoint(ref.Host), ref.Name, tag)
+	res, err := c.head(ctx, url, "")
+	if err != nil {
+		return "", err
+	}
+	if res.StatusCode == http.StatusUnauthorized {
+		challenge := res.Header.Get("WWW-Authenticate")
+		_ = res.Body.Close()
+		token, tokenErr := c.fetchToken(ctx, challenge, ref)
+		if tokenErr != nil {
+			return "", tokenErr
+		}
+		if res, err = c.head(ctx, url, token); err != nil {
+			return "", err
+		}
+	}
+	defer func() { _ = res.Body.Close() }()
+
+	if err = statusError(res, ref); err != nil {
+		return "", err
+	}
+	digest := res.Header.Get("Docker-Content-Digest")
+	if !strings.HasPrefix(digest, "sha256:") {
+		return "", hperrors.Wrap(hperrors.ErrRegistryUnavailable).
+			WithExtraDetail("%s:%s: the registry named no sha256 digest", ref, tag)
+	}
+	return digest, nil
+}
+
 // readPage fetches one page, answering a 401 challenge once. The token it returns
 // is reused for the next page, so a repository costs one token, not one per page.
 func (c *Client) readPage(
@@ -121,9 +162,20 @@ func (c *Client) readPage(
 }
 
 func (c *Client) get(ctx context.Context, url, token string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	return c.send(ctx, http.MethodGet, url, token, "")
+}
+
+func (c *Client) head(ctx context.Context, url, token string) (*http.Response, error) {
+	return c.send(ctx, http.MethodHead, url, token, manifestAccept)
+}
+
+func (c *Client) send(ctx context.Context, method, url, token, accept string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	if accept != "" {
+		req.Header.Set("Accept", accept)
 	}
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)

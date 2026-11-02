@@ -30,6 +30,7 @@ var errAmbiguousBump = errors.New("the image to replace appears more than once i
 // tests answer without a network.
 type tagLister interface {
 	ListTags(ctx context.Context, ref registry.Reference, maxTags int) (*registry.ListTagsResult, error)
+	TagDigest(ctx context.Context, ref registry.Reference, tag string) (string, error)
 }
 
 var newTagLister = func() tagLister { return registry.New() }
@@ -172,9 +173,30 @@ func planTemplateBumps(
 		}
 		plan.Template, plan.Version, plan.CurrentRelease = tmpl.Metadata.Name, version.Name, version.Release
 		plan.Release = releaseInStyleOf(version.Release, plan.Release)
+		if err := pinDigests(ctx, lister, plan); err != nil {
+			return nil, fmt.Errorf("%s: %w", file.Path, err)
+		}
 		plans = append(plans, plan)
 	}
 	return plans, nil
+}
+
+// pinDigests keeps a pinned image pinned: an image that named a digest names the
+// digest of its new tag. A digest that cannot be read fails the template's bump,
+// because moving on without it would quietly trade a fixed image for a tag.
+func pinDigests(ctx context.Context, lister tagLister, plan *bumpPlan) error {
+	for variant, image := range plan.CurrentImages {
+		if imageref.Parse(image).Digest == "" {
+			continue
+		}
+		next := plan.Images[variant]
+		digest, err := lister.TagDigest(ctx, registry.ParseRepository(next), imageref.Parse(next).Tag)
+		if err != nil {
+			return err
+		}
+		plan.Images[variant] = next + "@" + digest
+	}
+	return nil
 }
 
 // planVersionBump picks the newest release every variant of one version line
@@ -224,7 +246,7 @@ func planVersionBump(line string, current map[string]string, tagsByRepo map[stri
 
 	best := ""
 	for _, release := range slices.Sorted(maps.Keys(shared)) {
-		if best == "" || isNewerTag(best, release) {
+		if best == "" || isBetterRelease(best, release) {
 			best = release
 		}
 	}
@@ -277,6 +299,14 @@ func releaseOfTag(tag string) string {
 		return tag[:i]
 	}
 	return tag
+}
+
+// isBetterRelease also settles the releases that compare equal. 15.5 and 15.5.0
+// are the same version today, but the shorter one is the tag a publisher moves on
+// to 15.5.1, and a template pins the exact release.
+func isBetterRelease(current, candidate string) bool {
+	order, ok := imageref.CompareTags(current, candidate)
+	return ok && (order < 0 || order == 0 && len(candidate) > len(current))
 }
 
 func isNewerTag(current, candidate string) bool {

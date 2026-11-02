@@ -18,7 +18,9 @@ import (
 type stubTags struct {
 	byRepo map[string][]string
 	failed map[string]error
-	calls  int
+	// digests answers by repository:tag; a tag missing here has no digest to read.
+	digests map[string]string
+	calls   int
 }
 
 func (s *stubTags) ListTags(
@@ -29,6 +31,14 @@ func (s *stubTags) ListTags(
 		return nil, err
 	}
 	return &registry.ListTagsResult{Tags: s.byRepo[ref.String()]}, nil
+}
+
+func (s *stubTags) TagDigest(_ context.Context, ref registry.Reference, tag string) (string, error) {
+	digest, found := s.digests[ref.String()+":"+tag]
+	if !found {
+		return "", errors.New("no digest")
+	}
+	return digest, nil
 }
 
 func useStubTags(t *testing.T, tags map[string][]string) *stubTags {
@@ -65,6 +75,18 @@ func TestPlanVersionBumpStaysInItsMajorLine(t *testing.T) {
 	)
 
 	assert.False(t, ok, "11.9 and 12.0 are other lines: a new line is a template change, not a bump")
+}
+
+// wg-easy publishes 15, 15.5 and 15.5.0 as one image. Only the last stays that image.
+func TestPlanVersionBumpPrefersTheExactTagOfARelease(t *testing.T) {
+	plan, ok := planVersionBump("15",
+		map[string]string{"": "demo:15.4.0"},
+		map[string][]string{"registry-1.docker.io/library/demo": {"15", "15.4.0", "15.5", "15.5.0"}},
+	)
+
+	assert.True(t, ok)
+	assert.Equal(t, "15.5.0", plan.Release)
+	assert.Equal(t, map[string]string{"": "demo:15.5.0"}, plan.Images)
 }
 
 func TestPlanVersionBumpDoesNothingWhenCurrent(t *testing.T) {
@@ -153,6 +175,51 @@ func TestRunBumpRewritesTheRepositoryAndTheIndex(t *testing.T) {
 	assert.Contains(t, string(template), `release: "2.2.0"`)
 	assert.Contains(t, out.String(), "demo 2: 2.1 -> 2.2.0")
 	assert.NoError(t, runIndex([]string{"-check", dir}, &out), "bump leaves index.json current")
+}
+
+// pinTemplateImage makes the fixture's demo template name a digest.
+func pinTemplateImage(t *testing.T, dir string) string {
+	t.Helper()
+	path := filepath.Join(dir, "templates", "demo.yaml")
+	content, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	pinned := strings.Replace(string(content), "demo:2.1.0", "demo:2.1.0@sha256:old", 1)
+	assert.NotEqual(t, string(content), pinned)
+	assert.NoError(t, os.WriteFile(path, []byte(pinned), 0o644))
+	return path
+}
+
+func TestRunBumpKeepsADigestPinned(t *testing.T) {
+	dir := copyRepo(t)
+	path := pinTemplateImage(t, dir)
+	stub := useStubTags(t, map[string][]string{"registry-1.docker.io/library/demo": {"2.2.0", "2.1.0"}})
+	stub.digests = map[string]string{"registry-1.docker.io/library/demo:2.2.0": "sha256:new"}
+	var out bytes.Buffer
+
+	assert.NoError(t, runBump([]string{dir}, &out))
+
+	template, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	assert.Contains(t, string(template), `image: "demo:2.2.0@sha256:new"`)
+	assert.NotContains(t, string(template), "sha256:old")
+}
+
+// Moving on without the digest would trade a fixed image for a tag, so the
+// template stays as it was.
+func TestRunBumpSkipsAPinnedImageWhoseDigestItCannotRead(t *testing.T) {
+	dir := copyRepo(t)
+	path := pinTemplateImage(t, dir)
+	before, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	useStubTags(t, map[string][]string{"registry-1.docker.io/library/demo": {"2.2.0", "2.1.0"}})
+	var out bytes.Buffer
+
+	assert.NoError(t, runBump([]string{dir}, &out))
+
+	after, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	assert.Equal(t, before, after)
+	assert.Contains(t, out.String(), "::warning::templates/demo.yaml: not bumped: ")
 }
 
 func TestRunBumpDryRunChangesNothing(t *testing.T) {

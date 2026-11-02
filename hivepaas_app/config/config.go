@@ -219,12 +219,16 @@ func loadConfig(configFile string) (*Config, error) {
 	}
 
 	// Applied last so a setting the app rotates for itself wins over a stale value
-	// still present in the environment or the base config file.
-	managed, err := loadManagedSettings(appPath)
-	if err != nil {
-		return config, tracerr.Wrap(err)
+	// still present in the environment or the base config file. The agent uses
+	// none of them, and an agent run on the app's own host must not depend on
+	// reading a file that is root's alone.
+	if config.RunMode != RunModeAgent {
+		managed, err := loadManagedSettings(appPath)
+		if err != nil {
+			return config, tracerr.Wrap(err)
+		}
+		managed.applyTo(config)
 	}
-	managed.applyTo(config)
 
 	// Turn on dev mode for dev/local env
 	config.DevMode.Enabled = config.IsDevEnv() || config.IsLocalEnv()

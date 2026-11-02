@@ -32,7 +32,7 @@ app)
 agent)
   # No HP_APP_PATH here, on purpose. Nothing on the agent side decrypts anything:
   # the app decrypts and sends plaintext over gRPC.
-  HP_CONFIG_FILE="$LOCAL_CONFIG" exec go run ./hivepaas_app/cmd/agent/...
+  HP_CONFIG_FILE="$LOCAL_CONFIG" HP_RUN_MODE=agent exec go run ./hivepaas_app/cmd/agent/...
   ;;
 *)
   echo "usage: $0 app|agent" >&2

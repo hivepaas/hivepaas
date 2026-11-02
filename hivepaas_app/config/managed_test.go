@@ -155,6 +155,24 @@ func TestLoadConfigAppliesManagedSettingsOverEnv(t *testing.T) {
 	assert.Equal(t, "rotated-by-the-app", cfg.Secret)
 }
 
+// The agent uses no managed setting: a file it could not accept, as one it cannot
+// read on the app's own host, does not stop it, and nothing in it is applied.
+func TestLoadConfigAgentIgnoresManagedSettings(t *testing.T) {
+	resetLoadState()
+	t.Cleanup(resetLoadState)
+	appPath := writeManagedSettings(t, `secret = "managed-app-secret"`, 0o644)
+	assert.NoError(t, os.WriteFile(filepath.Join(appPath, configFileName),
+		[]byte("env = \"myenv\"\n"), 0o600))
+
+	t.Setenv("HP_APP_PATH", appPath)
+	t.Setenv("HP_RUN_MODE", RunModeAgent)
+
+	cfg, err := LoadConfig()
+	if assert.NoError(t, err) {
+		assert.Empty(t, cfg.Secret)
+	}
+}
+
 // The refresh switched off in hivepaas.toml is off once loaded, with nothing in
 // the environment: an installer that deploys the stack again cannot turn it on.
 func TestLoadConfigAppliesTheManagedRefreshOptOut(t *testing.T) {

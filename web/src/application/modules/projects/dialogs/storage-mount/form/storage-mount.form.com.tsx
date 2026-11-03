@@ -1,0 +1,346 @@
+import React, { useMemo, useState } from "react";
+
+import { Checkbox, Input } from "@components/ui";
+import { Button } from "@components/ui/button";
+import { Field, FieldError, FieldGroup } from "@components/ui/field";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { TriangleAlert } from "lucide-react";
+import { FormProvider, useController, useForm } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
+import { ProjectAppsQueries, ProjectClusterVolumesQueries } from "~/projects/data/queries";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { EMountConsistency } from "~/projects/module-shared/enums";
+
+import { AppLink, Combobox, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+
+import type { StorageMountFormInput, StorageMountFormOutput } from "../schemas";
+import { StorageMountFormSchema } from "../schemas";
+
+import { emptyStorageMountFormDefaults } from "./storage-mount.form-mappers";
+
+type Props = {
+    projectId: string;
+    env?: string;
+    /** The app being configured, left out of the list of apps to borrow from. */
+    appId?: string;
+    isPending: boolean;
+    isEditMode?: boolean;
+    defaultValues?: StorageMountFormInput;
+    onSubmit: (values: StorageMountFormOutput) => void;
+    readOnly?: boolean;
+    onClose?: () => void;
+    children?: React.ReactNode;
+};
+
+export function StorageMountForm({
+    projectId,
+    env,
+    appId,
+    isPending,
+    isEditMode = false,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    onClose,
+    children,
+}: Props) {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const {
+        data: { data: volumes } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = ProjectClusterVolumesQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+        search: searchQuery,
+    });
+
+    const { data: { data: envApps } = DEFAULT_PAGINATED_DATA } = ProjectAppsQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+    });
+
+    const methods = useForm<StorageMountFormInput, unknown, StorageMountFormOutput>({
+        defaultValues: defaultValues ?? emptyStorageMountFormDefaults,
+        resolver: zodResolver(StorageMountFormSchema),
+        mode: "onSubmit",
+    });
+
+    const { handleSubmit, control, reset } = methods;
+
+    useUpdateEffect(() => {
+        reset(defaultValues ?? emptyStorageMountFormDefaults);
+    }, [defaultValues, reset]);
+
+    const {
+        field: sourceField,
+        fieldState: { invalid: sourceInvalid, error: sourceError },
+    } = useController({ name: "source", control });
+    const {
+        field: subpathField,
+        fieldState: { invalid: subpathInvalid, error: subpathError },
+    } = useController({ name: "subpath", control });
+    const { field: readOnlyField } = useController({ name: "readOnly", control });
+    const { field: noCopyField } = useController({ name: "noCopy", control });
+    const {
+        field: targetField,
+        fieldState: { invalid: targetInvalid, error: targetError },
+    } = useController({ name: "target", control });
+    const { field: consistencyField } = useController({ name: "consistency", control });
+    const { field: sourceAppIdField } = useController({ name: "sourceAppId", control });
+    const { field: sourceAppWriteField } = useController({ name: "sourceAppWrite", control });
+
+    const volumeOptions = useMemo(() => {
+        return volumes.map(volume => ({
+            value: { id: volume.id },
+            label: volume.name,
+        }));
+    }, [volumes]);
+
+    // An app cannot borrow from itself: that is the ordinary mount, and it is
+    // what leaving this empty means.
+    const sourceAppOptions = useMemo(() => {
+        return envApps.filter(app => app.id !== appId).map(app => ({ value: { id: app.id }, label: app.name }));
+    }, [envApps, appId]);
+
+    const borrowedFrom = useMemo(() => {
+        return envApps.find(app => app.id === sourceAppIdField.value);
+    }, [envApps, sourceAppIdField.value]);
+    const isBorrowed = Boolean(sourceAppIdField.value);
+
+    return (
+        <FormProvider {...methods}>
+            <form
+                onSubmit={event => {
+                    void handleSubmit(onSubmit)(event);
+                }}
+                className="min-h-0 flex flex-1 flex-col"
+            >
+                <fieldset
+                    disabled={readOnly}
+                    className="contents"
+                >
+                    {children}
+
+                    <FieldGroup>
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Volume"
+                                    isRequired
+                                />
+                            }
+                            titleWidth={180}
+                        >
+                            <Field>
+                                <Combobox
+                                    options={volumeOptions}
+                                    value={sourceField.value || null}
+                                    onChange={value => {
+                                        sourceField.onChange(value ?? "");
+                                    }}
+                                    onSearch={setSearchQuery}
+                                    placeholder="select volume"
+                                    searchable
+                                    closeOnSelect
+                                    emptyText="No volumes available"
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                    valueKey="id"
+                                    aria-invalid={sourceInvalid}
+                                    loading={isFetching}
+                                    onRefresh={() => void refetch()}
+                                    isRefreshing={isRefetching}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[sourceError]} />
+                                <div className="text-xs ">
+                                    Need to add new volumes?{" "}
+                                    <AppLink.Basic
+                                        to={ROUTE.projects.single.clusterResources.volumes.$route(projectId)}
+                                        className="text-link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Click here
+                                    </AppLink.Basic>
+                                </div>
+                            </Field>
+                        </InfoBlock>
+
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Subpath" />}
+                                titleWidth={180}
+                            >
+                                <Input
+                                    {...subpathField}
+                                    id="subpath"
+                                    placeholder="subpath"
+                                    aria-invalid={subpathInvalid}
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                />
+                                <FieldError errors={[subpathError]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Data of"
+                                        content="Leave empty for this app's own directory. Choosing another app mounts that app's data instead - what a file manager or a backup tool is for."
+                                    />
+                                }
+                                titleWidth={180}
+                            >
+                                <Combobox
+                                    options={sourceAppOptions}
+                                    value={sourceAppIdField.value ?? null}
+                                    onChange={value => {
+                                        sourceAppIdField.onChange(value ?? "");
+                                        if (!value) {
+                                            sourceAppWriteField.onChange(false);
+                                        }
+                                    }}
+                                    placeholder="This app"
+                                    searchable
+                                    closeOnSelect
+                                    emptyText="No other apps in this environment"
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                    valueKey="id"
+                                    disabled={readOnly}
+                                />
+                                {isBorrowed && (
+                                    <div className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                        <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                                        <span>
+                                            This app will be able to{" "}
+                                            {sourceAppWriteField.value ? "read and change" : "read"} the files of{" "}
+                                            <span className="font-medium">{borrowedFrom?.name ?? "that app"}</span>.
+                                            Writing into the data directory of a running database can corrupt it.
+                                        </span>
+                                    </div>
+                                )}
+                            </InfoBlock>
+                        </Field>
+
+                        {isBorrowed ? (
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Allow writing" />}
+                                    titleWidth={180}
+                                >
+                                    <Checkbox
+                                        id="source-app-write"
+                                        checked={sourceAppWriteField.value ?? false}
+                                        onCheckedChange={checked => {
+                                            sourceAppWriteField.onChange(checked === true);
+                                        }}
+                                    />
+                                </InfoBlock>
+                            </Field>
+                        ) : (
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Read-only" />}
+                                    titleWidth={180}
+                                >
+                                    <Checkbox
+                                        id="read-only"
+                                        checked={readOnlyField.value ?? false}
+                                        onCheckedChange={checked => {
+                                            readOnlyField.onChange(checked === true);
+                                        }}
+                                    />
+                                </InfoBlock>
+                            </Field>
+                        )}
+
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="No Copy" />}
+                                titleWidth={180}
+                            >
+                                <Checkbox
+                                    id="no-copy"
+                                    checked={noCopyField.value ?? false}
+                                    onCheckedChange={checked => {
+                                        noCopyField.onChange(checked === true);
+                                    }}
+                                />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Target"
+                                        isRequired
+                                    />
+                                }
+                                titleWidth={180}
+                            >
+                                <Input
+                                    {...targetField}
+                                    id="target"
+                                    placeholder="/path/in/container"
+                                    aria-invalid={targetInvalid}
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                />
+                                <FieldError errors={[targetError]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Consistency" />}
+                                titleWidth={180}
+                            >
+                                <Select
+                                    value={consistencyField.value ?? EMountConsistency.Default}
+                                    onValueChange={consistencyField.onChange}
+                                >
+                                    <SelectTrigger className="w-[220px]">
+                                        <SelectValue placeholder="Consistency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={EMountConsistency.Default}>default</SelectItem>
+                                        <SelectItem value={EMountConsistency.Consistent}>consistent</SelectItem>
+                                        <SelectItem value={EMountConsistency.Cached}>cached</SelectItem>
+                                        <SelectItem value={EMountConsistency.Delegated}>delegated</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </InfoBlock>
+                        </Field>
+                    </FieldGroup>
+
+                    {!readOnly && (
+                        <FormActionBar>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-w-[100px]"
+                                disabled={isPending}
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="min-w-[100px]"
+                                isLoading={isPending}
+                            >
+                                {isEditMode ? "Update" : "Save"}
+                            </Button>
+                        </FormActionBar>
+                    )}
+                </fieldset>
+            </form>
+        </FormProvider>
+    );
+}

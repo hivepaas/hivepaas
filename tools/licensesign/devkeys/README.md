@@ -1,7 +1,7 @@
 # Development license signing keys
 
 These private keys are public, on purpose. They sign license keys for local
-development and for the e2e environment (`hivepaas-dashboard/e2e/env/up.sh`),
+development and for the e2e environment (`web/e2e/env/up.sh`),
 which makes far more apps than the free plan allows:
 
 ```

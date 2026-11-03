@@ -1,0 +1,329 @@
+import { useMemo, useState } from "react";
+
+import { FieldError, Input, Tabs, TabsList, TabsTrigger } from "@components/ui";
+import { Textarea } from "@components/ui/textarea";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { useParams } from "react-router";
+import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { useAppDeploymentSettingsApi } from "~/projects/api/hooks/project-apps";
+import { QK } from "~/projects/data/constants";
+import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { EDockerfileSource } from "~/projects/module-shared/enums";
+
+import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+
+import { DOCKERFILE_TEMPLATE_OPTIONS } from "../constants/dockerfile-template-options.constants";
+import { PushToRegistrySelect } from "../form-components";
+import {
+    type AppConfigDeploymentSettingsFormSchemaInput,
+    type AppConfigDeploymentSettingsFormSchemaOutput,
+} from "../schemas";
+
+import { DockerfileContentEditor } from "./dockerfile-content-editor.com";
+import { RegistryRepoNote } from "./registry-repo-note.com";
+
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 1000 };
+
+export function BuildConfigurationFields({ readOnly = false, image }: Props) {
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+    invariant(appId, "appId must be defined");
+
+    const queryClient = useQueryClient();
+    const { queries } = useAppDeploymentSettingsApi();
+    const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
+    const [templateSearch, setTemplateSearch] = useState("");
+    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+
+    const { control } = useFormContext<
+        AppConfigDeploymentSettingsFormSchemaInput,
+        unknown,
+        AppConfigDeploymentSettingsFormSchemaOutput
+    >();
+
+    const dockerfileSource = useWatch({ control, name: "repoSource.dockerfile.source" });
+    const isAutoSource = dockerfileSource === EDockerfileSource.Auto;
+    const isManualSource = !isAutoSource;
+
+    const { field: sourceField } = useController({
+        control,
+        name: "repoSource.dockerfile.source",
+        defaultValue: EDockerfileSource.Manual,
+    });
+
+    const {
+        field: dockerfilePath,
+        fieldState: { invalid: isDockerfilePathInvalid, error: dockerfilePathError },
+    } = useController({ control, name: "repoSource.dockerfile.path" });
+
+    const {
+        field: dockerfileContent,
+        fieldState: { invalid: isDockerfileContentInvalid, error: dockerfileContentError },
+    } = useController({ control, name: "repoSource.dockerfile.content" });
+
+    const {
+        field: dockerfileScanPath,
+        fieldState: { invalid: isDockerfileScanPathInvalid, error: dockerfileScanPathError },
+    } = useController({ control, name: "repoSource.dockerfile.scanPath" });
+
+    // The reference follows what the form has selected, not what was saved: the
+    // note is there to be read before saving, not after a build has failed.
+    const pushToRegistry = useWatch({ control, name: "repoSource.pushToRegistry" });
+    const { data: { data: registryAuths } = DEFAULT_PAGINATED_DATA } = ProjectRegistryAuthQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+        pagination: LIST_ALL_PAGE,
+    });
+    const selectedRegistry = registryAuths.find(auth => auth.id === pushToRegistry?.id);
+    const reference =
+        selectedRegistry && image ? `${selectedRegistry.address}/${selectedRegistry.username}/${image.repoName}` : "";
+
+    const templateComboboxOptions = useMemo(() => {
+        const normalizedSearch = templateSearch.trim().toLowerCase();
+
+        return DOCKERFILE_TEMPLATE_OPTIONS.filter(option => {
+            if (!normalizedSearch) {
+                return true;
+            }
+
+            return option.label.toLowerCase().includes(normalizedSearch);
+        }).map(option => ({
+            value: { type: option.type },
+            label: option.label,
+        }));
+    }, [templateSearch]);
+
+    async function handleLoadTemplate(type: string) {
+        if (readOnly || !projectId || !env || !appId) {
+            return;
+        }
+
+        setIsLoadingTemplate(true);
+
+        try {
+            const response = await queryClient.query({
+                queryKey: [
+                    QK["projects.apps.deployment-settings.$.dockerfile-template"],
+                    { projectID: projectId, env, appID: appId, type },
+                ],
+                queryFn: ({ signal }) =>
+                    queries.getDockerfileTemplate({ projectID: projectId, env, appID: appId, type }, signal),
+            });
+
+            dockerfileContent.onChange(response.data.template);
+        } catch (error) {
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("Failed to load Dockerfile template");
+            }
+        } finally {
+            setIsLoadingTemplate(false);
+        }
+    }
+
+    return (
+        <>
+            <InfoBlock
+                titleWidth={220}
+                title="Dockerfile Source"
+            >
+                <Tabs
+                    value={
+                        sourceField.value === EDockerfileSource.Auto ? EDockerfileSource.Auto : EDockerfileSource.Manual
+                    }
+                    onValueChange={value => {
+                        if (readOnly) {
+                            return;
+                        }
+
+                        sourceField.onChange(value);
+                    }}
+                >
+                    <TabsList>
+                        <TabsTrigger
+                            value={EDockerfileSource.Manual}
+                            disabled={readOnly}
+                        >
+                            Manual
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value={EDockerfileSource.Auto}
+                            disabled={readOnly}
+                        >
+                            Auto-Generate
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title="Dockerfile Path"
+            >
+                <Input
+                    {...dockerfilePath}
+                    value={dockerfilePath.value ?? ""}
+                    onChange={dockerfilePath.onChange}
+                    placeholder="path/to/Dockerfile"
+                    aria-invalid={isDockerfilePathInvalid}
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                    disabled={readOnly}
+                />
+                <FieldError errors={[dockerfilePathError]} />
+            </InfoBlock>
+
+            {isManualSource && (
+                <InfoBlock
+                    titleWidth={220}
+                    title="Dockerfile Content"
+                >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+                        <Textarea
+                            {...dockerfileContent}
+                            value={dockerfileContent.value ?? ""}
+                            onChange={dockerfileContent.onChange}
+                            placeholder="override Dockerfile content..."
+                            aria-invalid={isDockerfileContentInvalid}
+                            className={cn(PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS, "min-h-0 flex-1")}
+                            minRows={4}
+                            maxRows={12}
+                            disabled={readOnly}
+                        />
+                        <div className="flex shrink-0 flex-col gap-2">
+                            <Combobox
+                                options={templateComboboxOptions}
+                                value={selectedTemplate}
+                                onChange={value => {
+                                    if (!value) {
+                                        setSelectedTemplate(null);
+                                        return;
+                                    }
+
+                                    setSelectedTemplate(value);
+                                    void handleLoadTemplate(value).finally(() => {
+                                        setSelectedTemplate(null);
+                                    });
+                                }}
+                                onSearch={setTemplateSearch}
+                                placeholder="Load Template"
+                                searchable
+                                closeOnSelect
+                                loading={isLoadingTemplate}
+                                disabled={readOnly || isLoadingTemplate}
+                                valueKey="type"
+                                emptyText="No templates found"
+                                className="w-[180px]"
+                            />
+                            <DockerfileContentEditor
+                                value={dockerfileContent.value ?? ""}
+                                onChange={dockerfileContent.onChange}
+                                invalid={isDockerfileContentInvalid}
+                                error={dockerfileContentError}
+                                readOnly={readOnly}
+                            />
+                        </div>
+                    </div>
+                    <FieldError errors={[dockerfileContentError]} />
+                </InfoBlock>
+            )}
+
+            {isAutoSource && (
+                <InfoBlock
+                    titleWidth={220}
+                    title="Dockerfile Gen Scan Path"
+                >
+                    <Input
+                        {...dockerfileScanPath}
+                        value={dockerfileScanPath.value ?? ""}
+                        onChange={dockerfileScanPath.onChange}
+                        placeholder="scan/path/to/generate/Dockerfile"
+                        aria-invalid={isDockerfileScanPathInvalid}
+                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                        disabled={readOnly}
+                    />
+                    <FieldError errors={[dockerfileScanPathError]} />
+                </InfoBlock>
+            )}
+
+            <InfoBlock
+                titleWidth={220}
+                title="Registry Credentials"
+            >
+                <p className="text-sm">
+                    Need to add private registries for this building?{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.providerConfiguration.registryAuth.$route(projectId)}
+                        className="text-link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Click here
+                    </AppLink.Basic>
+                </p>
+            </InfoBlock>
+
+            <div className={cn(dashedBorderBox)}>
+                <span className="font-semibold text-orange-500">Important:</span> If your cluster has multiple nodes, a
+                container registry must be configured. Without pushing to a registry, other worker nodes won&apos;t be
+                able to access the image to run your application.
+            </div>
+
+            <PushToRegistrySelect readOnly={readOnly} />
+
+            <InfoBlock
+                titleWidth={220}
+                title="Image Repository"
+            >
+                <div className="flex flex-col gap-1">
+                    <span className="font-mono text-sm">{image?.repoName ?? "—"}</span>
+                    {reference && (
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs text-muted-foreground">{reference}</span>
+                            <button
+                                type="button"
+                                className="text-blue-500 cursor-pointer hover:underline select-none"
+                                onClick={() => {
+                                    void navigator.clipboard
+                                        .writeText(reference)
+                                        .then(() => {
+                                            toast.success("Image reference copied to clipboard");
+                                        })
+                                        .catch(() => {
+                                            toast.error("Failed to copy the image reference");
+                                        });
+                                }}
+                            >
+                                Copy
+                            </button>
+                        </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        One repository for this app, named after its project and its key. Tagged{" "}
+                        <span className="font-mono">{image?.tagPrefix ?? "<env>"}-&lt;commit&gt;</span> for this
+                        environment.
+                    </p>
+                </div>
+            </InfoBlock>
+
+            <RegistryRepoNote
+                reference={reference}
+                address={selectedRegistry?.address ?? ""}
+            />
+        </>
+    );
+}
+
+type Props = {
+    readOnly?: boolean;
+    /** What a build is called, as the server computes it. Null before it is loaded. */
+    image?: { repoName: string; tagPrefix: string } | null;
+};

@@ -1,0 +1,211 @@
+import React, { type PropsWithChildren, forwardRef } from "react";
+
+import { DialogBody, Field, FieldError, FieldGroup, Input } from "@components/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { useController } from "react-hook-form";
+import { UserInput } from "~/user-management/module-shared/form/user-input";
+
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ESecuritySettings, EUserRole } from "@application/shared/enums";
+
+import { mapModuleAccesses } from "@application/modules/user-management/module-shared/utils";
+
+import { type InviteUserFormInput, type InviteUserFormOutput, InviteUserFormSchema } from "../schemas";
+
+const DEFAULTS: InviteUserFormInput = {
+    email: "",
+    role: EUserRole.Member,
+    accessExpireAt: null,
+    securityOption: ESecuritySettings.PasswordOnly,
+    projectAccesses: [],
+    moduleAccesses: [],
+    capabilities: [],
+};
+
+export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
+    ({ defaultValues = {}, readOnly = false, onSubmit, onHasChanges, children, footer }, ref) => {
+        const methods = useForm<InviteUserFormInput, unknown, InviteUserFormOutput>({
+            defaultValues: {
+                ...DEFAULTS,
+                ...defaultValues,
+                capabilities: defaultValues.capabilities ?? [],
+                moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
+            },
+            resolver: zodResolver(InviteUserFormSchema),
+            mode: "onSubmit",
+        });
+
+        const {
+            control,
+            formState: { errors, isDirty },
+            handleSubmit,
+        } = methods;
+
+        React.useEffect(() => {
+            onHasChanges?.(readOnly ? false : isDirty);
+        }, [isDirty, onHasChanges, readOnly]);
+
+        function onValid(values: InviteUserFormOutput) {
+            if (readOnly) {
+                return;
+            }
+
+            onSubmit(values);
+            methods.reset(values);
+        }
+
+        function onInvalid(_errors: FieldErrors<InviteUserFormInput>) {
+            // Optional: log errors or show notification
+        }
+
+        const {
+            field: email,
+            fieldState: { invalid: isEmailInvalid },
+        } = useController({
+            control,
+            name: "email",
+        });
+
+        const isAdmin = methods.watch("role") === EUserRole.Admin;
+
+        return (
+            <FormProvider {...methods}>
+                <form
+                    ref={ref}
+                    onSubmit={event => {
+                        event.preventDefault();
+                        void handleSubmit(onValid, onInvalid)(event);
+                    }}
+                    className="min-h-0 flex flex-1 flex-col"
+                >
+                    <DialogBody className="flex flex-col gap-6 overflow-x-hidden">
+                        <fieldset
+                            disabled={readOnly}
+                            className="m-0 flex min-w-0 max-w-full flex-col gap-6 border-0 p-0"
+                        >
+                            {/* Email */}
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Email"
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <Input
+                                            id="email"
+                                            {...email}
+                                            placeholder="abc@domain.com"
+                                            className="max-w-[400px]"
+                                            aria-invalid={isEmailInvalid}
+                                            disabled={readOnly}
+                                        />
+                                        <FieldError errors={[errors.email]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+
+                            {/* Role */}
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Role"
+                            >
+                                <UserInput.Role<InviteUserFormInput>
+                                    name="role"
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Access Expiration */}
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Access Expiration"
+                            >
+                                <UserInput.AccessExpiration<InviteUserFormInput>
+                                    name="accessExpireAt"
+                                    className="md:min-w-[400px] w-fit"
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Security Option */}
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Security Option"
+                            >
+                                <UserInput.SecurityOption<InviteUserFormInput>
+                                    name="securityOption"
+                                    role={methods.watch("role")}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Project Access */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Project Access"
+                                        content="Project access description"
+                                    />
+                                }
+                                titleWidth={220}
+                            >
+                                <UserInput.ProjectAccess<InviteUserFormInput>
+                                    name="projectAccesses"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Module Access */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Module Access"
+                                        content="Module access description"
+                                    />
+                                }
+                                titleWidth={220}
+                            >
+                                <UserInput.ModuleAccess<InviteUserFormInput>
+                                    name="moduleAccesses"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Capabilities */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Capabilities"
+                                        content="Capabilities description"
+                                    />
+                                }
+                                titleWidth={220}
+                            >
+                                <UserInput.Capabilities<InviteUserFormInput>
+                                    name="capabilities"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+                        </fieldset>
+
+                        {children}
+                    </DialogBody>
+                    {footer}
+                </form>
+            </FormProvider>
+        );
+    },
+);
+
+InviteUserForm.displayName = "InviteUserForm";
+
+interface Props extends PropsWithChildren {
+    defaultValues?: Partial<InviteUserFormInput>;
+    readOnly?: boolean;
+    onSubmit: (values: InviteUserFormOutput) => void;
+    onHasChanges?: (dirty: boolean) => void;
+    footer?: React.ReactNode;
+}

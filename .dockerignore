@@ -1,1 +1,11 @@
 README.*
+# The dashboard's dependencies, builds and local env files: its stage installs
+# and builds them from web/ as a clean checkout holds it.
+web/node_modules
+web/dist
+web/**/*.local
+web/e2e/node_modules
+web/e2e/env/.build
+web/e2e/playwright-report
+web/e2e/test-results
+web/e2e/.auth

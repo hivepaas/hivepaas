@@ -1,7 +1,7 @@
 # Working in this repo
 
-The HivePaaS Go backend. The dashboard is a separate repo at `../hivepaas-dashboard`,
-and the two are changed together whenever the wire format moves.
+The HivePaaS Go backend, and its dashboard in [web/](web/docs/DEVELOPMENT_GUIDELINES.md).
+The two are changed together whenever the wire format moves.
 
 ## Read before changing code
 

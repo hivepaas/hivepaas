@@ -1,0 +1,88 @@
+import { z } from "zod";
+
+const appReplicasSchema = z.number().int().min(1).max(100);
+const workerReplicasSchema = z.number().int().min(0).max(100);
+const workerConcurrencySchema = z.number().int().min(1).max(100);
+const periodicBatchSizeSchema = z.number().int().min(1).max(10000);
+const durationSchema = z.string().trim().min(1);
+const proxyHopsSchema = z.number().int().min(0).max(10);
+
+export const HivePaaSGeneralFormSchema = z
+    .object({
+        appSettings: z.object({
+            replicas: appReplicasSchema,
+        }),
+        workerSettings: z.object({
+            replicas: workerReplicasSchema,
+            concurrency: workerConcurrencySchema,
+            runWorkerInMainApp: z.boolean(),
+        }),
+        taskSettings: z.object({
+            taskCheckInterval: durationSchema,
+            taskCreateInterval: durationSchema,
+        }),
+        periodicSettings: z.object({
+            baseInterval: durationSchema,
+            batchSize: periodicBatchSizeSchema,
+        }),
+        proxySettings: z.object({
+            proxyProvider: z.string(),
+            trustedIPsText: z.string(),
+            proxyHops: proxyHopsSchema,
+        }),
+    })
+    .superRefine((values, ctx) => {
+        if (values.workerSettings.replicas === 0 && !values.workerSettings.runWorkerInMainApp) {
+            ctx.addIssue({
+                code: "custom",
+                message: "Run Worker in Main App must be enabled when worker replicas is 0",
+                path: ["workerSettings", "runWorkerInMainApp"],
+            });
+        }
+
+        const proxyProvider = values.proxySettings.proxyProvider.trim();
+        if (proxyProvider !== "") {
+            if (values.proxySettings.trustedIPsText.trim() === "") {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Trusted IPs is required when a proxy provider is configured",
+                    path: ["proxySettings", "trustedIPsText"],
+                });
+            }
+
+            if (values.proxySettings.proxyHops <= 0) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Proxy Hops must be greater than 0 when a proxy provider is configured",
+                    path: ["proxySettings", "proxyHops"],
+                });
+            }
+        }
+    });
+
+export type HivePaaSGeneralFormInput = z.input<typeof HivePaaSGeneralFormSchema>;
+export type HivePaaSGeneralFormOutput = z.output<typeof HivePaaSGeneralFormSchema>;
+
+export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
+    appSettings: {
+        replicas: 1,
+    },
+    workerSettings: {
+        replicas: 1,
+        concurrency: 1,
+        runWorkerInMainApp: true,
+    },
+    taskSettings: {
+        taskCheckInterval: "10m",
+        taskCreateInterval: "10m",
+    },
+    periodicSettings: {
+        baseInterval: "15s",
+        batchSize: 100,
+    },
+    proxySettings: {
+        proxyProvider: "",
+        trustedIPsText: "",
+        proxyHops: 0,
+    },
+};

@@ -1,0 +1,192 @@
+import { useMemo } from "react";
+
+import { Plus } from "lucide-react";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
+import { AppScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
+import { AppScheduledJobsTableDefs } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
+import { isFunctionApp } from "~/projects/module-shared/utils";
+
+import { AppLink, TableActions } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
+import { isFeatureDisabledException } from "@infrastructure/api";
+
+import { Button, DataTable } from "@/components/ui";
+
+export function AppScheduledJobsRoute() {
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
+
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+    invariant(appId, "appId must be defined");
+
+    const { navigate } = useAppNavigate();
+    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
+
+    const {
+        data: { data: scheduledJobs, meta } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        error,
+    } = AppScheduledJobsQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+            env,
+            appID: appId,
+            pagination,
+            sorting,
+            search,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+
+    // The header asks for the same app: this reads it from the cache.
+    const { data: appResponse } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        env,
+        appID: appId,
+        getStats: true,
+    });
+    const isFunction = appResponse ? isFunctionApp(appResponse.data) : false;
+
+    const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
+    const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
+
+    if (isFeatureDisabled) {
+        return (
+            <div className="flex flex-col gap-6">
+                <p className="text-base">
+                    Scheduled Jobs feature is disabled, enable it in{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectId,
+                            env,
+                            appId,
+                        )}
+                        className="text-link underline-offset-4 hover:underline"
+                    >
+                        Feature Settings
+                    </AppLink.Basic>
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-6">
+            <TableActions
+                search={{ value: search, onChange: setSearch }}
+                renderActions={
+                    <div className="flex flex-wrap gap-3">
+                        {isFunction && (
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.Project}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            navigate.modules(
+                                                ROUTE.projects.single.apps.single.configuration.scheduledJobs.createFunctionInvoke.$route(
+                                                    projectId,
+                                                    env,
+                                                    appId,
+                                                ),
+                                            );
+                                        }}
+                                        disabled={isDenied}
+                                    >
+                                        <Plus className="size-4" /> New Function Call
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                        )}
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createSequence.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Job Sequence
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createDataBackup.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Data Backup
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Scheduled Job
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    </div>
+                }
+            />
+
+            <DataTable
+                columns={columns}
+                data={scheduledJobs}
+                isLoading={isFetching}
+                pageSize={pagination.size}
+                manualPagination
+                totalCount={meta.page.total}
+                onPaginationChange={setPagination}
+                manualSorting
+                onSortingChange={setSorting}
+                enablePagination
+            />
+        </div>
+    );
+}

@@ -1,0 +1,123 @@
+import { RefreshCw, Shield, ShieldOff } from "lucide-react";
+import invariant from "tiny-invariant";
+import type { UserBase } from "~/user-management/domain";
+
+import { InfoBlock } from "@application/shared/components";
+import { useProfileContext } from "@application/shared/context";
+import { useChangePasswordDialog, useF2aSetupDialog } from "@application/shared/dialogs";
+import { ESecuritySettings, EUserStatus } from "@application/shared/enums";
+
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+interface Props {
+    defaultValues: Pick<UserBase, "securityOption" | "status">;
+}
+
+export function Security({ defaultValues }: Props) {
+    const { profile } = useProfileContext();
+    invariant(profile, "Profile not found");
+
+    const changePasswordDialog = useChangePasswordDialog({
+        onClose: () => {
+            changePasswordDialog.actions.close();
+        },
+    });
+
+    const dialog = useF2aSetupDialog({
+        onClose: () => {
+            dialog.actions.close();
+        },
+    });
+
+    // Logic: If Enforce SSO or status=pending, don't show Security section
+    const shouldShowSecurity =
+        defaultValues.securityOption !== ESecuritySettings.EnforceSSO && defaultValues.status !== EUserStatus.Pending;
+
+    // Logic for MFA buttons
+    const hasMfaTotpActivated = profile.mfaTotpActivated === true;
+    const isPassword2FA = defaultValues.securityOption === ESecuritySettings.Password2FA;
+    const isPasswordOnly = defaultValues.securityOption === ESecuritySettings.PasswordOnly;
+
+    if (!shouldShowSecurity) {
+        return null;
+    }
+
+    return (
+        <>
+            <Separator className="opacity-50" />
+            <InfoBlock
+                titleWidth={220}
+                title="Security"
+            >
+                <div className="flex flex-col gap-4">
+                    {/* Password Set Row */}
+                    <div className="flex items-center flex-wrap gap-4">
+                        <div className="w-[250px]">Password Set</div>
+                        <Button
+                            variant="outline"
+                            size="default"
+                            type="button"
+                            onClick={() => {
+                                changePasswordDialog.actions.open();
+                            }}
+                        >
+                            <Shield className="size-4" />
+                            Change Password
+                        </Button>
+                    </div>
+
+                    {/* 2FA Row */}
+                    {hasMfaTotpActivated ? (
+                        <div className="flex items-center flex-wrap gap-4">
+                            <div className="w-[250px]">2-Factor Authentication Activated</div>
+                            <div className="flex gap-2">
+                                {isPassword2FA && (
+                                    <Button
+                                        variant="outline"
+                                        size="default"
+                                        type="button"
+                                        onClick={() => {
+                                            dialog.actions.openChange();
+                                        }}
+                                    >
+                                        <RefreshCw className="size-4" />
+                                        Reset 2FA
+                                    </Button>
+                                )}
+                                {isPasswordOnly && (
+                                    <Button
+                                        variant="outline"
+                                        size="default"
+                                        type="button"
+                                        onClick={() => {
+                                            dialog.actions.openDeactivate();
+                                        }}
+                                    >
+                                        <ShieldOff className="size-4" />
+                                        Deactivate 2FA
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center flex-wrap gap-4">
+                            <div className="w-[250px]">2-Factor Authentication Not Activated</div>
+                            <Button
+                                variant="outline"
+                                size="default"
+                                type="button"
+                                onClick={() => {
+                                    dialog.actions.open();
+                                }}
+                            >
+                                <Shield className="size-4" />
+                                Activate 2FA
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </InfoBlock>
+        </>
+    );
+}

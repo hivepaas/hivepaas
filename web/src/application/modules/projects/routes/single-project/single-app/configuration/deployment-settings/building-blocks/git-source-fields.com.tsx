@@ -1,0 +1,219 @@
+import { useMemo, useState } from "react";
+
+import { Button, Checkbox, Field, FieldError, Input } from "@components/ui";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { BranchesDialog } from "~/projects/module-shared/components";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { EDeploymentRepoOption } from "~/projects/module-shared/enums";
+import { canUseGitCredentialSelectors, parseGitRepository } from "~/projects/module-shared/utils";
+
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ESettingType } from "@application/shared/enums";
+
+import { GitCredentialSelect, GitRepositoryInput } from "../form-components";
+import {
+    type AppConfigDeploymentSettingsFormSchemaInput,
+    type AppConfigDeploymentSettingsFormSchemaOutput,
+} from "../schemas";
+
+export function GitSourceFields({ readOnly = false }: Props) {
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+
+    const gitSubmodulesOptionId = "repo-options-git-submodules";
+    const gitLfsOptionId = "repo-options-git-lfs";
+    const autoDeployId = "repo-auto-deploy";
+    const [isBranchesDialogOpen, setBranchesDialogOpen] = useState(false);
+
+    const { control } = useFormContext<
+        AppConfigDeploymentSettingsFormSchemaInput,
+        unknown,
+        AppConfigDeploymentSettingsFormSchemaOutput
+    >();
+
+    const {
+        field: repoRef,
+        fieldState: { invalid: isRepoRefInvalid, error: repoRefError },
+    } = useController({ control, name: "repoSource.repoRef" });
+
+    const credentials = useWatch({ control, name: "repoSource.credentials" });
+    const repoUrlValue = useWatch({ control, name: "repoSource.repoUrl" }) as string | undefined;
+    const credentialId = credentials?.id;
+    const normalizedRepoUrl = repoUrlValue?.trim() ?? "";
+    const repository = useMemo(() => parseGitRepository(normalizedRepoUrl), [normalizedRepoUrl]);
+    const canShowGitSelectors = !readOnly && Boolean(credentialId) && canUseGitCredentialSelectors(credentials?.type);
+    const canShowBranchesButton = canShowGitSelectors && Boolean(normalizedRepoUrl) && Boolean(repository);
+    const isGithubAppCredential = credentials?.type === ESettingType.GithubApp;
+
+    const {
+        field: commitHash,
+        fieldState: { invalid: isCommitHashInvalid, error: commitHashError },
+    } = useController({ control, name: "repoSource.commitHash" });
+
+    const { field: gitSubmodulesEnabled } = useController({
+        control,
+        name: `repoSource.repoOptions.${EDeploymentRepoOption.GitSubmodulesEnabled}`,
+        defaultValue: true,
+    });
+
+    const { field: gitLfsEnabled } = useController({
+        control,
+        name: `repoSource.repoOptions.${EDeploymentRepoOption.GitLfsEnabled}`,
+        defaultValue: true,
+    });
+
+    const { field: autoDeploy } = useController({
+        control,
+        name: "repoSource.autoDeploy",
+        defaultValue: true,
+    });
+
+    return (
+        <>
+            <GitCredentialSelect readOnly={readOnly} />
+
+            <GitRepositoryInput readOnly={readOnly} />
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Branch"
+                        isRequired
+                    />
+                }
+            >
+                <Field>
+                    <div className="flex flex-wrap items-start gap-3">
+                        <Input
+                            {...repoRef}
+                            value={repoRef.value}
+                            onChange={repoRef.onChange}
+                            placeholder="main, tags/v1.2.3"
+                            aria-invalid={isRepoRefInvalid}
+                            className="w-full min-w-[260px] max-w-[600px] flex-1"
+                            disabled={readOnly}
+                        />
+                        {canShowBranchesButton && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setBranchesDialogOpen(true);
+                                }}
+                            >
+                                Show Branches
+                            </Button>
+                        )}
+                    </div>
+                    <FieldError errors={[repoRefError]} />
+                </Field>
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title="Commit Hash"
+            >
+                <Input
+                    {...commitHash}
+                    value={commitHash.value ?? ""}
+                    onChange={commitHash.onChange}
+                    placeholder="commit sha"
+                    aria-invalid={isCommitHashInvalid}
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                    disabled={readOnly}
+                />
+                <FieldError errors={[commitHashError]} />
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title="Repository Options"
+            >
+                <div className="flex flex-wrap items-center gap-8">
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id={gitSubmodulesOptionId}
+                            checked={gitSubmodulesEnabled.value}
+                            onCheckedChange={checked => {
+                                gitSubmodulesEnabled.onChange(checked === true);
+                            }}
+                            disabled={readOnly}
+                        />
+                        <label
+                            htmlFor={gitSubmodulesOptionId}
+                            className="text-sm"
+                        >
+                            Git Submodules
+                        </label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Checkbox
+                            id={gitLfsOptionId}
+                            checked={gitLfsEnabled.value}
+                            onCheckedChange={checked => {
+                                gitLfsEnabled.onChange(checked === true);
+                            }}
+                            disabled={readOnly}
+                        />
+                        <label
+                            htmlFor={gitLfsOptionId}
+                            className="text-sm"
+                        >
+                            Git LFS
+                        </label>
+                    </div>
+                </div>
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Deploy on Push"
+                        content="A push to the branch deploys the app, once the repository's webhook or GitHub App tells HivePaaS of it. The deployment builds the pushed commit, and clears the commit hash above."
+                    />
+                }
+            >
+                <div className="flex items-center gap-3">
+                    <Checkbox
+                        id={autoDeployId}
+                        checked={autoDeploy.value}
+                        onCheckedChange={checked => {
+                            autoDeploy.onChange(checked === true);
+                        }}
+                        disabled={readOnly}
+                    />
+                    <label
+                        htmlFor={autoDeployId}
+                        className="text-sm"
+                    >
+                        Deploy when the branch is pushed
+                    </label>
+                </div>
+            </InfoBlock>
+
+            {canShowBranchesButton && credentialId && repository && (
+                <BranchesDialog
+                    open={isBranchesDialogOpen}
+                    onOpenChange={setBranchesDialogOpen}
+                    projectId={projectId}
+                    env={env}
+                    credentialId={credentialId}
+                    repository={repository}
+                    isGithubAppCredential={isGithubAppCredential}
+                    onSelect={ref => {
+                        repoRef.onChange(ref);
+                    }}
+                />
+            )}
+        </>
+    );
+}
+
+type Props = {
+    readOnly?: boolean;
+};

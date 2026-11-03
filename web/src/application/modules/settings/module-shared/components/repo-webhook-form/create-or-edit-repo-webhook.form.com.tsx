@@ -1,0 +1,383 @@
+import { useEffect, useState } from "react";
+
+import { PasswordInput } from "@components/ui/input-password";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { Clipboard } from "lucide-react";
+import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import type { RepoWebhookKindOption } from "~/settings/module-shared/constants";
+import {
+    REPO_WEBHOOK_KIND_LABELS,
+    REPO_WEBHOOK_KIND_OPTIONS,
+    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+    SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+} from "~/settings/module-shared/constants";
+import { ERepoWebhookKind } from "~/settings/module-shared/enums";
+
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+
+import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
+import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import { SettingsFormCancelAction } from "../settings-form-cancel-action";
+
+import type {
+    CreateOrEditRepoWebhookFormInput,
+    CreateOrEditRepoWebhookFormOutput,
+} from "./create-or-edit-repo-webhook.form.schema";
+import { CreateOrEditRepoWebhookFormSchema } from "./create-or-edit-repo-webhook.form.schema";
+
+const ANY_PROVIDER_SELECT_VALUE = "__any_provider__";
+
+const WEBHOOK_EVENT_TYPES = [
+    {
+        label: "GitHub events:",
+        details: "Issue comments, Pull requests, Pushes",
+    },
+    {
+        label: "GitLab events:",
+        details: "Comments, Merge request events, Push events",
+    },
+    {
+        label: "Gitea events:",
+        details: "Pull Request, Pull Request Comments, Pull Request Synchronized, Push",
+    },
+] as const;
+
+export function CreateOrEditRepoWebhookForm({
+    isPending,
+    onSubmit,
+    onHasChanges,
+    savedVersion = 0,
+    initialValues,
+    webhookURL,
+    showAvailableInProjects = true,
+    isProjectScope = false,
+    readOnlyInherited = false,
+    readOnly = false,
+    stickyActions = false,
+    onClose,
+}: Props) {
+    const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
+    const [showEventTypes, setShowEventTypes] = useState(false);
+
+    const {
+        handleSubmit,
+        control,
+        getValues,
+        reset,
+        formState: { errors, isDirty },
+    } = useForm<CreateOrEditRepoWebhookFormInput, unknown, CreateOrEditRepoWebhookFormOutput>({
+        defaultValues: {
+            name: initialValues?.name ?? "",
+            kind: initialValues?.kind ?? ERepoWebhookKind.Github,
+            secret: initialValues?.secret ?? "",
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
+            default: initialValues?.default ?? false,
+        },
+        resolver: zodResolver(CreateOrEditRepoWebhookFormSchema),
+        mode: "onSubmit",
+    });
+
+    useEffect(() => {
+        if (savedVersion === 0) {
+            return;
+        }
+
+        reset(getValues());
+        onHasChanges?.(false);
+    }, [getValues, onHasChanges, reset, savedVersion]);
+
+    useEffect(() => {
+        onHasChanges?.(isReadOnly ? false : isDirty);
+    }, [isDirty, isReadOnly, onHasChanges]);
+
+    const {
+        field: name,
+        fieldState: { invalid: isNameInvalid },
+    } = useController({ name: "name", control });
+    const {
+        field: kind,
+        fieldState: { invalid: isKindInvalid },
+    } = useController({ name: "kind", control });
+    const {
+        field: secret,
+        fieldState: { invalid: isSecretInvalid },
+    } = useController({ name: "secret", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
+    const { field: defaultField } = useController({ name: "default", control });
+    const isCustomKind =
+        typeof kind.value === "string" &&
+        kind.value.length > 0 &&
+        !REPO_WEBHOOK_KIND_OPTIONS.some(option => option.value === kind.value);
+
+    const resolvedKindOptions: readonly RepoWebhookKindOption[] = isCustomKind
+        ? [
+              ...REPO_WEBHOOK_KIND_OPTIONS.filter(option => option.value !== ""),
+              { value: kind.value, label: REPO_WEBHOOK_KIND_LABELS[kind.value] ?? kind.value },
+              { value: "", label: "Any Provider" },
+          ]
+        : REPO_WEBHOOK_KIND_OPTIONS;
+
+    function onValid(values: CreateOrEditRepoWebhookFormOutput) {
+        if (isReadOnly) {
+            return;
+        }
+
+        onSubmit(values);
+    }
+
+    function onInvalid(_errors: FieldErrors<CreateOrEditRepoWebhookFormOutput>) {
+        console.error(_errors);
+    }
+
+    function handleCopyWebhookURL() {
+        if (!webhookURL) {
+            return;
+        }
+
+        void navigator.clipboard
+            .writeText(webhookURL)
+            .then(() => {
+                toast.success("Webhook URL copied to clipboard");
+            })
+            .catch(() => {
+                toast.error("Failed to copy webhook URL");
+            });
+    }
+
+    return (
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <div className="flex flex-col gap-6">
+                {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
+                <div className={cn(dashedBorderBox, SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS)}>
+                    <p>
+                        <span className="font-semibold text-orange-500">Note:</span> Webhooks allow{" "}
+                        <span className="text-orange-500">HivePaaS</span> to receive events from your source code
+                        management systems (such as GitHub or GitLab). After creating a webhook here, you can use the
+                        generated URL and Secret to configure it on your GitHub or GitLab organization or repository
+                        settings.{" "}
+                        <button
+                            type="button"
+                            className="text-primary cursor-pointer"
+                            aria-expanded={showEventTypes}
+                            onClick={() => {
+                                setShowEventTypes(current => !current);
+                            }}
+                        >
+                            View required event types to configure
+                        </button>
+                    </p>
+                    {showEventTypes && (
+                        <ul className="mt-3 list-disc space-y-1 pl-5 text-left">
+                            {WEBHOOK_EVENT_TYPES.map(eventType => (
+                                <li key={eventType.label}>
+                                    <span className="font-semibold">{eventType.label}</span> {eventType.details}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <fieldset
+                    disabled={isReadOnly}
+                    className={cn(
+                        "flex flex-col gap-6 border-0 p-0 m-0 min-w-0",
+                        SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
+                    )}
+                >
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Name"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...name}
+                                    placeholder="webhook name"
+                                    aria-invalid={isNameInvalid}
+                                />
+                                <FieldError errors={[errors.name]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Type"
+                                isRequired
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Select
+                                    value={kind.value === "" ? ANY_PROVIDER_SELECT_VALUE : kind.value}
+                                    onValueChange={value => {
+                                        kind.onChange(value === ANY_PROVIDER_SELECT_VALUE ? "" : value);
+                                    }}
+                                >
+                                    <SelectTrigger aria-invalid={isKindInvalid}>
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {resolvedKindOptions.map(option => {
+                                            const selectValue =
+                                                option.value === "" ? ANY_PROVIDER_SELECT_VALUE : option.value;
+                                            return (
+                                                <SelectItem
+                                                    key={selectValue}
+                                                    value={selectValue}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            );
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.kind]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Secret" />}
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <PasswordInput
+                                    {...secret}
+                                    placeholder="auto-generate if empty"
+                                    aria-invalid={isSecretInvalid}
+                                />
+                                <FieldError errors={[errors.secret]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Webhook URL" />}
+                    >
+                        {webhookURL ? (
+                            <div
+                                className={cn(
+                                    dashedBorderBox,
+                                    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
+                                    "flex min-h-12 items-center justify-center gap-3 break-all",
+                                )}
+                            >
+                                <span>{webhookURL}</span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-link"
+                                    onClick={handleCopyWebhookURL}
+                                >
+                                    <Clipboard className="size-4" />
+                                    <span className="sr-only">Copy webhook URL</span>
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className={cn(dashedBorderBox, SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS, "p-2")}>
+                                please create a webhook first
+                            </div>
+                        )}
+                    </InfoBlock>
+
+                    {showAvailableInProjects && (
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label={inheritableLabel} />}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    disabled={isInheritableDisabled}
+                                    checked={inheritable.value}
+                                    onCheckedChange={checked => {
+                                        inheritable.onChange(Boolean(checked));
+                                    }}
+                                />
+                                {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            </div>
+                        </InfoBlock>
+                    )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Default" />}
+                    >
+                        <Checkbox
+                            checked={defaultField.value}
+                            onCheckedChange={checked => {
+                                defaultField.onChange(Boolean(checked));
+                            }}
+                        />
+                    </InfoBlock>
+                </fieldset>
+            </div>
+            {!isReadOnly && (
+                <FormActionBar sticky={stickyActions}>
+                    <SettingsFormCancelAction
+                        onCancel={onClose}
+                        disabled={isPending}
+                    />
+                    <Button
+                        type="submit"
+                        className="min-w-[100px]"
+                        isLoading={isPending}
+                    >
+                        Save
+                    </Button>
+                </FormActionBar>
+            )}
+            {isReadOnly && (
+                <FormActionBar sticky={stickyActions}>
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                        className="min-w-[100px]"
+                    >
+                        Close
+                    </Button>
+                </FormActionBar>
+            )}
+        </form>
+    );
+}
+
+interface Props {
+    isPending: boolean;
+    onSubmit: (values: CreateOrEditRepoWebhookFormOutput) => void;
+    onHasChanges?: (dirty: boolean) => void;
+    savedVersion?: number;
+    initialValues?: Partial<CreateOrEditRepoWebhookFormInput>;
+    webhookURL?: string;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
+    readOnlyInherited?: boolean;
+    readOnly?: boolean;
+    stickyActions?: boolean;
+    onClose?: () => void;
+}

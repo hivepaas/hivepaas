@@ -7,18 +7,22 @@ FROM ${KOPIA_IMAGE} AS kopia
 ############################################################
 # Build dashboard
 FROM node:26-alpine AS dashboard_builder
-RUN apk update && apk upgrade --no-cache && apk add --update --no-cache git yarn
+RUN apk update && apk upgrade --no-cache && apk add --update --no-cache yarn
 
-WORKDIR /build
+WORKDIR /web
 
+# The dependencies first, from the lockfile, so that a change of the sources
+# alone does not install them again.
+COPY web/package.json web/yarn.lock ./
 RUN --mount=type=cache,target=/tmp/yarn-cache \
-    git clone --depth=1 https://github.com/hivepaas/hivepaas-dashboard.git && \
-    cd hivepaas-dashboard && \
     yarn config set network-timeout 300000 && \
     yarn config set cache-folder /tmp/yarn-cache && \
-    yarn install --frozen-lockfile && \
-    yarn build && \
-    mv dist /dist-dashboard
+    yarn install --frozen-lockfile
+
+# A developer's checkout may hold its own build, modules and *.local env files
+# (git ignores them): only what a clean checkout holds is built.
+COPY --exclude=node_modules --exclude=dist --exclude=**/*.local web/ .
+RUN yarn build && mv dist /dist-dashboard
 
 ############################################################
 # Build backend
@@ -34,8 +38,8 @@ ENV CGO_ENABLED=0
 # Move to working directory /build
 WORKDIR /build
 
-# Copy the code into the container
-COPY . .
+# Copy the code into the container; the dashboard is the stage above's
+COPY --exclude=web . .
 
 # Copy and download dependency using go mod
 RUN make mod

@@ -1,0 +1,214 @@
+import { useRef } from "react";
+
+import { useParams } from "react-router";
+import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { type AppDeploymentSettings_UpdateOne_Req } from "~/projects/api/services";
+import { AppDeploymentSettingsCommands, AppDeploymentSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
+import { ManagedLockNotice, ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
+import { useAppManagedLocks, useManagedDatabases } from "~/projects/module-shared/hooks";
+import { imageRepositoryOf } from "~/projects/module-shared/utils";
+
+import { AppLoader, FormActionBar } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
+import { isValidationException } from "@infrastructure/api";
+
+import { ValidationException } from "@infrastructure/exceptions/validation";
+
+import { FunctionSettings } from "../../function-settings";
+import { AppConfigDeploymentSettingsForm } from "../form";
+import { type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
+import { type AppConfigDeploymentSettingsFormRef } from "../types";
+
+type DeploymentSettingsUpdatePayload = AppDeploymentSettings_UpdateOne_Req["data"]["payload"];
+
+function buildNotificationPayload(
+    notification: AppConfigDeploymentSettingsFormSchemaOutput["notification"],
+): DeploymentSettingsUpdatePayload["notification"] {
+    if (!notification) {
+        return {
+            successUseDefault: true,
+            failureUseDefault: true,
+        };
+    }
+
+    return {
+        successUseDefault: notification.successUseDefault,
+        ...(!notification.successUseDefault && notification.success?.id
+            ? { success: { id: notification.success.id } }
+            : {}),
+        failureUseDefault: notification.failureUseDefault,
+        ...(!notification.failureUseDefault && notification.failure?.id
+            ? { failure: { id: notification.failure.id } }
+            : {}),
+    };
+}
+
+function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOutput): DeploymentSettingsUpdatePayload {
+    const base = {
+        entrypoint: values.entrypoint ?? "",
+        command: values.command ?? "",
+        workingDir: values.workingDir ?? "",
+        preDeploymentCommand: values.preDeploymentCommand ?? "",
+        postDeploymentCommand: values.postDeploymentCommand ?? "",
+        restorePointBeforeDeploy: values.restorePointBeforeDeploy ? { id: values.restorePointBeforeDeploy } : null,
+        notification: buildNotificationPayload(values.notification),
+    };
+
+    if (values.activeMethod === EAppDeploymentMethod.Repo) {
+        return {
+            ...base,
+            activeMethod: values.activeMethod,
+            repoSource: {
+                buildTool: EBuildTool.Docker,
+                repoType: ERepoType.Git,
+                repoUrl: values.repoSource.repoUrl,
+                repoRef: values.repoSource.repoRef,
+                commitHash: values.repoSource.commitHash ?? "",
+                repoOptions: {
+                    gitSubmodulesEnabled: values.repoSource.repoOptions.gitSubmodulesEnabled,
+                    gitLfsEnabled: values.repoSource.repoOptions.gitLfsEnabled,
+                },
+                credentials: { id: values.repoSource.credentials?.id ?? "" },
+                dockerfile: {
+                    source: values.repoSource.dockerfile.source,
+                    path: values.repoSource.dockerfile.path ?? "",
+                    content: values.repoSource.dockerfile.content ?? "",
+                    scanPath: values.repoSource.dockerfile.scanPath ?? "",
+                },
+                pushToRegistry: { id: values.repoSource.pushToRegistry?.id ?? "" },
+                autoDeploy: values.repoSource.autoDeploy,
+            },
+        };
+    }
+
+    return {
+        ...base,
+        activeMethod: values.activeMethod,
+        imageSource: {
+            image: values.imageSource.image,
+            registryAuth: { id: values.imageSource.registryAuth?.id ?? "" },
+        },
+    };
+}
+
+export function AppConfigDeploymentSettingsRoute() {
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
+    const formRef = useRef<AppConfigDeploymentSettingsFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+    invariant(appId, "appId must be defined");
+
+    const managed = useAppManagedLocks({ projectID: projectId, env, appID: appId });
+    const { databases: managedDatabases } = useManagedDatabases({ projectID: projectId, env, appID: appId });
+
+    const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            env,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+
+    const { mutate: update, isPending } = AppDeploymentSettingsCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Deployment settings updated");
+        },
+        onError: err => {
+            if (isValidationException(err)) {
+                formRef.current?.onError(ValidationException.fromHttp(err));
+            } else if (err instanceof Error) {
+                toast.error(err.message);
+            } else {
+                toast.error("Failed to update deployment settings");
+            }
+        },
+    });
+
+    function handleSubmit(values: AppConfigDeploymentSettingsFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
+        invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
+        invariant(appId, "appId must be defined");
+
+        update({
+            projectID: projectId,
+            env,
+            appID: appId,
+            updateVer: data?.data.updateVer ?? 0,
+            payload: mapFormValuesToPayload(values),
+        });
+    }
+
+    if (isLoading) {
+        return <AppLoader />;
+    }
+
+    // A function's deployment settings are its runtime and its code's place.
+    if (data?.data.activeMethod === EAppDeploymentMethod.Function) {
+        return (
+            <FunctionSettings
+                projectId={projectId}
+                env={env}
+                appId={appId}
+                settings={data.data}
+            />
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-4">
+            <AppConfigDeploymentSettingsForm
+                ref={formRef}
+                defaultValues={data?.data}
+                onSubmit={handleSubmit}
+                readOnly={!canWrite}
+                managedDatabases={managedDatabases}
+                managedLock={
+                    managed
+                        ? {
+                              image: (
+                                  <ManagedLockNotice
+                                      projectId={projectId}
+                                      env={env}
+                                      appId={appId}
+                                  >
+                                      The app deploys an image, from {imageRepositoryOf(managed.locks.image)}: its tag
+                                      may move only within the {managed.locks.imageLine} line.
+                                  </ManagedLockNotice>
+                              ),
+                              run: (
+                                  <ManagedLockNotice
+                                      projectId={projectId}
+                                      env={env}
+                                      appId={appId}
+                                  >
+                                      The entrypoint stays as it is, and the command starts with{" "}
+                                      <code className="font-mono">{managed.locks.command}</code>: arguments after it are
+                                      yours.
+                                  </ManagedLockNotice>
+                              ),
+                          }
+                        : undefined
+                }
+            >
+                <FormActionBar>
+                    <ProjectPermissionSubmitButton
+                        isPending={isPending}
+                        label="Deploy"
+                    />
+                </FormActionBar>
+            </AppConfigDeploymentSettingsForm>
+        </div>
+    );
+}

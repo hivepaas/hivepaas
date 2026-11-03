@@ -1,0 +1,116 @@
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@components/ui/input-otp";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FieldErrors, useController, useForm } from "react-hook-form";
+import z from "zod";
+
+import { Button } from "@/components/ui/button";
+import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+
+const CODE_LENGTH = 6;
+
+export const CurrentPasscodeSchema = z.object({
+    currentPasscode: z.string().trim().min(1, "Passcode is required"),
+});
+
+export type CurrentPasscodeSchemaInput = z.input<typeof CurrentPasscodeSchema>;
+export type CurrentPasscodeSchemaOutput = z.output<typeof CurrentPasscodeSchema>;
+
+export function CurrentPasscodeForm({ isPending, onSubmit }: Props) {
+    const {
+        handleSubmit,
+        control,
+        formState: { errors },
+    } = useForm<CurrentPasscodeSchemaInput, unknown, CurrentPasscodeSchemaOutput>({
+        defaultValues: {
+            currentPasscode: "",
+        },
+        resolver: zodResolver(CurrentPasscodeSchema),
+        mode: "onSubmit",
+    });
+
+    const {
+        field: currentPasscode,
+        fieldState: { invalid: isCurrentPasscodeInvalid },
+    } = useController({
+        name: "currentPasscode",
+        control,
+    });
+
+    function onValid(values: CurrentPasscodeSchemaOutput) {
+        void onSubmit(values);
+    }
+
+    function onInvalid(_errors: FieldErrors<CurrentPasscodeSchemaOutput>) {
+        console.log(_errors);
+    }
+
+    return (
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+
+                void handleSubmit(onValid, onInvalid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <DialogBody className="flex flex-col gap-6">
+                <FieldGroup>
+                    <Field>
+                        <FieldLabel htmlFor="currentPasscode">Current Passcode</FieldLabel>
+                        <div className="flex justify-center">
+                            <InputOTP
+                                id="currentPasscode"
+                                value={currentPasscode.value}
+                                onChange={currentPasscode.onChange}
+                                maxLength={CODE_LENGTH}
+                                aria-invalid={isCurrentPasscodeInvalid}
+                            >
+                                <InputOTPGroup className="gap-2 sm:gap-2.5">
+                                    <InputOTPSlot
+                                        index={0}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={1}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={2}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={3}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={4}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={5}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                </InputOTPGroup>
+                            </InputOTP>
+                        </div>
+                        <FieldError errors={[errors.currentPasscode]} />
+                    </Field>
+                </FieldGroup>
+            </DialogBody>
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    isLoading={isPending}
+                >
+                    Continue
+                </Button>
+            </DialogActionFooter>
+        </form>
+    );
+}
+
+interface Props {
+    isPending: boolean;
+    onSubmit: (values: CurrentPasscodeSchemaOutput) => Promise<void> | void;
+}

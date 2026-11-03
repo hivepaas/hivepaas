@@ -1,0 +1,223 @@
+import { type PropsWithChildren, type ReactNode } from "react";
+
+import { Checkbox, FieldError, Input } from "@components/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
+import {
+    CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS,
+    CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
+} from "~/cluster/module-shared/constants/network-form-layout.constants";
+
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList } from "@application/shared/form";
+
+import { type CreateNetworkFormInput, type CreateNetworkFormOutput, CreateNetworkFormSchema } from "../schemas";
+
+export function CreateNetworkForm({
+    readOnly = false,
+    isPending = false,
+    showAvailableInProjects = true,
+    isProjectScope = false,
+    showProjectNamePrefixNote = false,
+    onSubmit,
+    children,
+}: Props) {
+    const methods = useForm<CreateNetworkFormInput, unknown, CreateNetworkFormOutput>({
+        defaultValues: {
+            name: "",
+            enableIPv4: true,
+            enableIPv6: false,
+            internal: false,
+            attachable: false,
+            ingress: false,
+            labels: [],
+            options: [],
+            inheritable: isProjectScope ? true : false,
+            default: false,
+        },
+        resolver: zodResolver(CreateNetworkFormSchema),
+        mode: "onSubmit",
+    });
+
+    const {
+        control,
+        handleSubmit,
+        formState: { errors },
+    } = methods;
+
+    const { field: name } = useController({ control, name: "name" });
+    const { field: enableIPv4 } = useController({ control, name: "enableIPv4" });
+    const { field: enableIPv6 } = useController({ control, name: "enableIPv6" });
+    const { field: internal } = useController({ control, name: "internal" });
+    const { field: attachable } = useController({ control, name: "attachable" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
+    const { field: defaultField } = useController({ control, name: "default" });
+
+    function onValid(values: CreateNetworkFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
+        onSubmit(values);
+    }
+
+    function onInvalid(_errors: FieldErrors<CreateNetworkFormInput>) {
+        console.log("Invalid", _errors);
+    }
+
+    return (
+        <FormProvider {...methods}>
+            <form
+                onSubmit={event => {
+                    event.preventDefault();
+                    void handleSubmit(onValid, onInvalid)(event);
+                }}
+                className="min-h-0 flex flex-1 flex-col"
+            >
+                <div>
+                    {showProjectNamePrefixNote ? (
+                        <div className={cn(dashedBorderBox, "mb-6")}>
+                            <span className="font-semibold text-orange-500">Note:</span> The name of the network in the
+                            project will be prefixed with the name of the project.
+                        </div>
+                    ) : null}
+
+                    <fieldset
+                        disabled={readOnly || isPending}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <InfoBlock
+                            title="Name"
+                            titleWidth={220}
+                        >
+                            <Input
+                                {...name}
+                                value={name.value}
+                                placeholder="my network"
+                                className={CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                aria-invalid={Boolean(errors.name)}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </InfoBlock>
+                        <CheckboxField
+                            title="Enable IPv4"
+                            checked={enableIPv4.value}
+                            onCheckedChange={value => {
+                                enableIPv4.onChange(value);
+                            }}
+                        />
+                        <CheckboxField
+                            title="Enable IPv6"
+                            checked={enableIPv6.value}
+                            onCheckedChange={value => {
+                                enableIPv6.onChange(value);
+                            }}
+                        />
+                        <CheckboxField
+                            title="Internal"
+                            checked={internal.value}
+                            onCheckedChange={value => {
+                                internal.onChange(value);
+                            }}
+                        />
+                        <CheckboxField
+                            title="Attachable"
+                            checked={attachable.value}
+                            onCheckedChange={value => {
+                                attachable.onChange(value);
+                            }}
+                        />
+                        <InfoBlock
+                            title="Labels"
+                            titleWidth={220}
+                        >
+                            <KeyValueList<CreateNetworkFormInput>
+                                name="labels"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
+                                disabled={readOnly || isPending}
+                                enableValueEditing
+                            />
+                            <FieldError errors={[errors.labels]} />
+                        </InfoBlock>
+                        <InfoBlock
+                            title="Options"
+                            titleWidth={220}
+                        >
+                            <KeyValueList<CreateNetworkFormInput>
+                                name="options"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className={CLUSTER_NETWORK_FORM_COMPOUND_CONTROL_MAX_WIDTH_CLASS}
+                                disabled={readOnly || isPending}
+                                enableValueEditing
+                            />
+                            <FieldError errors={[errors.options]} />
+                        </InfoBlock>
+                        {showAvailableInProjects ? (
+                            <CheckboxField
+                                title={isProjectScope ? "Available in Apps" : "Available in Projects"}
+                                checked={inheritable.value}
+                                disabled={readOnly || isPending}
+                                onCheckedChange={value => {
+                                    inheritable.onChange(value);
+                                }}
+                                extra={isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            />
+                        ) : null}
+                        <CheckboxField
+                            title={<LabelWithInfo label="Default" />}
+                            checked={defaultField.value}
+                            onCheckedChange={value => {
+                                defaultField.onChange(value);
+                            }}
+                        />
+                    </fieldset>
+                </div>
+                {children}
+            </form>
+        </FormProvider>
+    );
+}
+
+function CheckboxField({ title, checked, disabled, onCheckedChange, extra }: CheckboxFieldProps) {
+    return (
+        <InfoBlock
+            title={title}
+            titleWidth={220}
+        >
+            <div className="flex items-center gap-3">
+                <Checkbox
+                    disabled={disabled}
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                {extra}
+            </div>
+        </InfoBlock>
+    );
+}
+
+interface CheckboxFieldProps {
+    title: string | ReactNode;
+    checked: boolean;
+    disabled?: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    extra?: ReactNode;
+}
+
+interface Props extends PropsWithChildren {
+    readOnly?: boolean;
+    isPending?: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
+    showProjectNamePrefixNote?: boolean;
+    onSubmit: (values: CreateNetworkFormOutput) => void;
+}

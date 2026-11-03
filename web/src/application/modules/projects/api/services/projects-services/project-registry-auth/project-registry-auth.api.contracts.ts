@@ -1,0 +1,61 @@
+import type { PaginationState, SortingState } from "@infrastructure/data";
+import type {
+    RegistryAuth_CreateOne_Payload,
+    RegistryAuth_UpdateOne_Payload,
+    RegistryAuth_UpdateStatus_Payload,
+} from "~/settings/api/services/registry-auth-services";
+import type { SettingRegistryAuth } from "~/settings/domain";
+
+import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
+
+export type ProjectRegistryAuth_FindManyPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type ProjectRegistryAuth_FindManyPaginated_Res = ApiResponsePaginated<SettingRegistryAuth>;
+
+export type ProjectRegistryAuth_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectRegistryAuth_FindOneById_Res = ApiResponseBase<SettingRegistryAuth>;
+
+export type ProjectRegistryAuth_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    payload: RegistryAuth_CreateOne_Payload;
+}>;
+
+export type ProjectRegistryAuth_CreateOne_Res = ApiResponseBase<{ id: string }>;
+
+export type ProjectRegistryAuth_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: RegistryAuth_UpdateOne_Payload;
+}>;
+
+export type ProjectRegistryAuth_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectRegistryAuth_UpdateStatus_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: RegistryAuth_UpdateStatus_Payload;
+}>;
+
+export type ProjectRegistryAuth_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectRegistryAuth_DeleteOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectRegistryAuth_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;

@@ -1,0 +1,20 @@
+import { z } from "zod";
+
+export const SettingsBaseEntitySchema = z.object({
+    id: z.string(),
+    name: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    description: z.string().optional().default(""),
+    status: z.string(),
+    type: z.string(),
+    kind: z.string().optional(),
+    inherited: z.boolean().optional(),
+    inheritable: z.boolean().optional().default(false),
+    default: z.boolean().optional(),
+    updateVer: z.number(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullish(),
+    expireAt: z.coerce.date().nullish(),
+});

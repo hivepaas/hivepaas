@@ -1,0 +1,115 @@
+import { useEffect, useState } from "react";
+
+import { ProjectGithubAppCommands } from "~/projects/data/commands";
+import { GithubAppCommands } from "~/settings/data/commands";
+import { EGithubAppOwnerType } from "~/settings/module-shared/enums";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle, Separator } from "@/components/ui";
+
+import { ProvisionGithubAppForm } from "../form";
+import { useProvisionGithubAppDialogState } from "../hooks";
+import type { ProvisionGithubAppFormOutput } from "../schemas";
+
+export function ProvisionGithubAppDialog() {
+    const { state, props: dialogOptions, close: closeDialog, clear: clearDialog } = useProvisionGithubAppDialogState();
+    const [loginChecked, setLoginChecked] = useState(false);
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: beginSettingsManifestFlow, isPending: isBeginningSettings } =
+        GithubAppCommands.useBeginManifestFlow({
+            onSuccess: response => {
+                dialogOptions?.onSuccess?.();
+                window.location.assign(response.data.redirectURL);
+            },
+        });
+    const { mutate: beginProjectManifestFlow, isPending: isBeginningProject } =
+        ProjectGithubAppCommands.useBeginManifestFlow({
+            onSuccess: response => {
+                dialogOptions?.onSuccess?.();
+                window.location.assign(response.data.redirectURL);
+            },
+        });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setLoginChecked(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    function onLoginCheck() {
+        if (!canWrite) {
+            return;
+        }
+
+        window.open("https://github.com/login", "_blank", "noopener,noreferrer");
+        setLoginChecked(true);
+    }
+
+    function onSubmit(values: ProvisionGithubAppFormOutput) {
+        if (state.mode !== "open" || !canWrite) {
+            return;
+        }
+
+        const payload = {
+            name: values.name,
+            org: values.ownerType === EGithubAppOwnerType.Organization ? values.org : "",
+            ssoEnabled: values.ssoEnabled,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            beginProjectManifestFlow({
+                projectID: state.scope.projectId,
+                payload,
+            });
+            return;
+        }
+
+        beginSettingsManifestFlow({ payload });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const isPending = isBeginningSettings || isBeginningProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[750px]">
+                <DialogHeader>
+                    <DialogTitle>Provision Github app</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {state.mode === "open" && (
+                    <ProvisionGithubAppForm
+                        isPending={isPending}
+                        loginChecked={loginChecked}
+                        onLoginCheck={onLoginCheck}
+                        onSubmit={onSubmit}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

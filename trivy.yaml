@@ -4,4 +4,5 @@ scan:
     - ".temp"
     - "tmp"
     - "temp"
+    - "web"
 

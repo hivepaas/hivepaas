@@ -1,0 +1,146 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+
+import { BaseApi, parseApiError } from "@infrastructure/api";
+
+import type {
+    ProjectAccessToken_CreateOne_Req,
+    ProjectAccessToken_CreateOne_Res,
+    ProjectAccessToken_DeleteOne_Req,
+    ProjectAccessToken_DeleteOne_Res,
+    ProjectAccessToken_FindManyPaginated_Req,
+    ProjectAccessToken_FindManyPaginated_Res,
+    ProjectAccessToken_FindOneById_Req,
+    ProjectAccessToken_FindOneById_Res,
+    ProjectAccessToken_UpdateOne_Req,
+    ProjectAccessToken_UpdateOne_Res,
+    ProjectAccessToken_UpdateStatus_Req,
+    ProjectAccessToken_UpdateStatus_Res,
+} from "./project-access-token.api.contracts";
+import type { ProjectAccessTokenApiValidator } from "./project-access-token.api.validator";
+
+function getProjectAccessTokenBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/access-tokens`;
+    }
+
+    return `/projects/${projectID}/access-tokens`;
+}
+
+export class ProjectAccessTokenApi extends BaseApi {
+    public constructor(private readonly validator: ProjectAccessTokenApiValidator) {
+        super();
+    }
+
+    async findManyPaginated(
+        request: ProjectAccessToken_FindManyPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAccessToken_FindManyPaginated_Res, Error>> {
+        const { projectID, env, search, pagination, sorting } = request.data;
+        const query = this.queryBuilder.getInstance();
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(getProjectAccessTokenBasePath(projectID, env), {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findOneById(
+        request: ProjectAccessToken_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAccessToken_FindOneById_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`${getProjectAccessTokenBasePath(projectID, env)}/${id}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async createOne(
+        request: ProjectAccessToken_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAccessToken_CreateOne_Res, Error>> {
+        const { projectID, env, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(getProjectAccessTokenBasePath(projectID, env), payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: ProjectAccessToken_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAccessToken_UpdateOne_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectAccessTokenBasePath(projectID, env)}/${id}`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: ProjectAccessToken_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAccessToken_UpdateStatus_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectAccessTokenBasePath(projectID, env)}/${id}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateStatus),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async deleteOne(
+        request: ProjectAccessToken_DeleteOne_Req,
+    ): Promise<Result<ProjectAccessToken_DeleteOne_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`${getProjectAccessTokenBasePath(projectID, env)}/${id}`)).pipe(
+                map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}

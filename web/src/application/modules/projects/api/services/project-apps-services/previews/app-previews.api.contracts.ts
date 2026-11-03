@@ -1,0 +1,47 @@
+import type { PaginationState, SortingState } from "@infrastructure/data";
+import type { ProjectAppDetails } from "~/projects/domain";
+
+import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
+
+export type AppPreviews_FindManyPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+    getStats?: boolean;
+}>;
+
+export type AppPreviews_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;
+
+export type AppPreviews_PrepareCreate_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+}>;
+
+export type AppPreviews_PrepareCreate_Res = ApiResponseBase<{
+    repoURL: string;
+    repoCredentials: { id: string } | null;
+    canListBranches: boolean;
+    canListPullRequests: boolean;
+    canCloneDbApps: boolean;
+    canSkipCloningDbApps: boolean;
+    /** The app's secrets the preview goes without, not being inheritable, and the variables using them. */
+    withheldSecrets: { name: string; envVars: string[] }[];
+}>;
+
+export type AppPreviews_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    repoRef: string;
+    customSubdomain: string;
+    noStart: boolean;
+    cloneDbApps?: boolean;
+}>;
+
+export type AppPreviews_CreateOne_Res = ApiResponseBase<{
+    id: string;
+}>;

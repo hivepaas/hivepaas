@@ -1,0 +1,74 @@
+import { cn } from "@/lib/utils";
+import { dashedBorderBox } from "@lib/styles";
+import { CircleHelp } from "lucide-react";
+import { ProjectsQueries } from "~/projects/data";
+import { PROJECT_ENV_FILTER_ALL, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
+
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
+
+import { ProjectEnvScopeBadge } from "../project-env-scope-badge";
+
+const ENV_SETTING_NOTE = "For simplicity, we recommend creating this type of setting for every environment";
+
+function getScopeTooltip(selectedEnv: string): string {
+    return `These settings are scoped to env "${selectedEnv}". Switch environments in the top right to change scope.`;
+}
+
+export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = false, hideNote = false }: Props) {
+    const selectedEnv = useSelectedProjectEnv(projectId);
+    const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
+    const envs = projectData?.data.envs ?? [];
+    const scopedEnv = forceAllEnvs ? PROJECT_ENV_FILTER_ALL : selectedEnv;
+    const isAll = !scopedEnv || scopedEnv === PROJECT_ENV_FILTER_ALL;
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <ProjectEnvScopeBadge
+                selectedEnv={scopedEnv}
+                envs={envs}
+            />
+            {!isAll && (
+                <>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Provider settings scope help"
+                            >
+                                <CircleHelp className="size-4" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{getScopeTooltip(scopedEnv)}</TooltipContent>
+                    </Tooltip>
+
+                    {!hideNote && (
+                        <div
+                            className={cn(
+                                dashedBorderBox,
+                                "inline-flex min-h-7 h-auto w-fit items-center px-2.5 sm:px-3 py-1 sm:py-0.5",
+                            )}
+                        >
+                            <span>
+                                <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
+                            </span>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    );
+}
+
+interface Props {
+    projectId: string;
+    /**
+     * Always render the "All environments" scope, ignoring the header env filter.
+     * For settings that only exist at project scope (github apps, repo webhooks).
+     */
+    forceAllEnvs?: boolean;
+    /**
+     * Whether to hide the note recommending settings for every environment.
+     */
+    hideNote?: boolean;
+}

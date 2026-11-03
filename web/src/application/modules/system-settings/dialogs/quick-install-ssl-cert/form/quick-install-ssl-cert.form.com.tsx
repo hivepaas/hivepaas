@@ -1,0 +1,719 @@
+import React, { useEffect, useMemo } from "react";
+
+import { Button } from "@components/ui/button";
+import { Checkbox } from "@components/ui/checkbox";
+import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
+import { Field, FieldError, FieldGroup } from "@components/ui/field";
+import { Input } from "@components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
+import { Textarea } from "@components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useController, useForm } from "react-hook-form";
+import { AcmeDnsProviderQueries, SslProviderQueries } from "~/settings/data/queries";
+import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
+
+import { AppLink, Combobox, DatePicker, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+import { ESslCertType, ESslKeyType, ESslProviderKind } from "@application/shared/enums";
+
+import {
+    type QuickInstallSslCertFormInput,
+    type QuickInstallSslCertFormOutput,
+    QuickInstallSslCertFormSchema,
+} from "../schemas";
+
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 1000 };
+
+const ACME_KEY_TYPES: ESslKeyType[] = [
+    ESslKeyType.ECP256,
+    ESslKeyType.ECP384,
+    ESslKeyType.RSA2048,
+    ESslKeyType.RSA3072,
+    ESslKeyType.RSA4096,
+];
+
+const CUSTOM_KEY_TYPES: ESslKeyType[] = [
+    ESslKeyType.ECP256,
+    ESslKeyType.ECP384,
+    ESslKeyType.ECP521,
+    ESslKeyType.RSA2048,
+    ESslKeyType.RSA3072,
+    ESslKeyType.RSA4096,
+];
+
+type ProviderOption = Record<"id" | "name", string>;
+
+const EMPTY_PROVIDER_OPTIONS: ProviderOption[] = [];
+
+function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
+    switch (certType) {
+        case ESslCertType.LetsEncrypt:
+            return ESslProviderKind.LetsEncrypt;
+        case ESslCertType.ZeroSSL:
+            return ESslProviderKind.ZeroSSL;
+        case ESslCertType.GoogleTrust:
+            return ESslProviderKind.GoogleTrust;
+        default:
+            return undefined;
+    }
+}
+
+function toWildcardDomain(domain: string): string {
+    const trimmed = domain.trim();
+    const cleanDomain = trimmed.startsWith("*.") ? trimmed.slice(2) : trimmed;
+    const parts = cleanDomain.split(".");
+    return `*.${parts.length > 1 ? parts.slice(1).join(".") : cleanDomain}`;
+}
+
+function formatKeyTypeLabel(value: ESslKeyType): string {
+    switch (value) {
+        case ESslKeyType.ECP256:
+            return "ECDSA P256 (ec-p256)";
+        case ESslKeyType.ECP384:
+            return "ECDSA P384 (ec-p384)";
+        case ESslKeyType.ECP521:
+            return "ECDSA P521 (ec-p521)";
+        case ESslKeyType.RSA2048:
+            return "RSA 2048 (rsa-2048)";
+        case ESslKeyType.RSA3072:
+            return "RSA 3072 (rsa-3072)";
+        case ESslKeyType.RSA4096:
+            return "RSA 4096 (rsa-4096)";
+        default:
+            return value;
+    }
+}
+
+function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+export function QuickInstallSslCertForm({
+    domain,
+    isPending,
+    prefill,
+    readOnly = false,
+    onSubmit,
+    onHasChanges,
+}: Props) {
+    const defaultEmail = "";
+    const defaultKeyType = ESslKeyType.ECP256;
+    const defaultAutoRenew = true;
+    const defaultCertType = ESslCertType.LetsEncrypt;
+    const prefillCertType =
+        prefill?.certType && Object.values(ESslCertType).includes(prefill.certType)
+            ? prefill.certType
+            : defaultCertType;
+    const prefillEmail = prefill?.email ?? defaultEmail;
+    const prefillKeyType =
+        prefill?.keyType && Object.values(ESslKeyType).includes(prefill.keyType) ? prefill.keyType : defaultKeyType;
+    const prefillAutoRenew = prefill?.autoRenew ?? defaultAutoRenew;
+
+    const {
+        handleSubmit,
+        control,
+        formState: { errors, isDirty },
+        setValue,
+        reset,
+    } = useForm<QuickInstallSslCertFormInput, unknown, QuickInstallSslCertFormOutput>({
+        defaultValues: {
+            name: domain,
+            domain,
+            wildcardDomain: false,
+            certType: prefillCertType,
+            provider: undefined,
+            acmeProvider: undefined,
+            email: prefillEmail,
+            keyType: prefillKeyType,
+            autoRenew: prefillAutoRenew,
+            certificate: "",
+            privateKey: "",
+            caCertificate: "",
+            expireAt: null,
+            notifyFrom: null,
+        },
+        resolver: zodResolver(QuickInstallSslCertFormSchema),
+        mode: "onSubmit",
+    });
+
+    useEffect(() => {
+        reset({
+            name: domain,
+            domain,
+            wildcardDomain: false,
+            certType: prefillCertType,
+            provider: undefined,
+            acmeProvider: undefined,
+            email: prefillEmail,
+            keyType: prefillKeyType,
+            autoRenew: prefillAutoRenew,
+            certificate: "",
+            privateKey: "",
+            caCertificate: "",
+            expireAt: null,
+            notifyFrom: null,
+        });
+    }, [domain, prefillAutoRenew, prefillCertType, prefillEmail, prefillKeyType, reset]);
+
+    useEffect(() => {
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
+
+    const { field: certTypeField } = useController({ name: "certType", control });
+    const { field: wildcardDomain } = useController({ name: "wildcardDomain", control });
+    const {
+        field: provider,
+        fieldState: { invalid: isProviderInvalid },
+    } = useController({ name: "provider", control });
+    const {
+        field: acmeProvider,
+        fieldState: { invalid: isAcmeProviderInvalid },
+    } = useController({ name: "acmeProvider", control });
+    const {
+        field: email,
+        fieldState: { invalid: isEmailInvalid },
+    } = useController({ name: "email", control });
+    const { field: keyType } = useController({ name: "keyType", control });
+    const { field: autoRenew } = useController({ name: "autoRenew", control });
+    const {
+        field: certificate,
+        fieldState: { invalid: isCertificateInvalid },
+    } = useController({ name: "certificate", control });
+    const {
+        field: privateKey,
+        fieldState: { invalid: isPrivateKeyInvalid },
+    } = useController({ name: "privateKey", control });
+    const {
+        field: caCertificate,
+        fieldState: { invalid: isCaCertificateInvalid },
+    } = useController({ name: "caCertificate", control });
+    const {
+        field: expireAtField,
+        fieldState: { invalid: isExpireAtInvalid },
+    } = useController({ name: "expireAt", control });
+    const {
+        field: notifyFromField,
+        fieldState: { invalid: isNotifyFromInvalid },
+    } = useController({ name: "notifyFrom", control });
+
+    const certType = certTypeField.value;
+    const keyTypeValue = keyType.value;
+    const providerValue = provider.value;
+    const acmeProviderValue = acmeProvider.value;
+    const expireAt = expireAtField.value;
+    const notifyFrom = notifyFromField.value;
+    const effectiveDomain = wildcardDomain.value ? toWildcardDomain(domain) : domain;
+    // Only a wildcard is proven through DNS: a plain domain needs no DNS provider.
+    const isWildcard = wildcardDomain.value || effectiveDomain.includes("*");
+
+    const isCustom = certType === ESslCertType.Custom;
+    const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
+    const requiresProvider = certType === ESslCertType.ZeroSSL || certType === ESslCertType.GoogleTrust;
+    const providerKind = getProviderKind(certType);
+
+    const sslProvidersRoute = ROUTE.settings.sslProviders.$route;
+    const acmeDnsProvidersRoute = ROUTE.settings.acmeDnsProviders.$route;
+
+    const providerQuery = SslProviderQueries.useFindManyPaginated(
+        { kind: providerKind, pagination: LIST_ALL_PAGE },
+        { enabled: isAcme },
+    );
+    const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated(
+        { pagination: LIST_ALL_PAGE },
+        { enabled: isAcme && isWildcard },
+    );
+
+    const providerOptions = useMemo(
+        () => providerQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS,
+        [providerQuery.data?.data],
+    );
+    const providerComboboxOptions = useMemo(
+        () =>
+            providerOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies ProviderOption,
+                label: option.name,
+            })),
+        [providerOptions],
+    );
+
+    const acmeProviderOptions = useMemo(
+        () => acmeProviderQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS,
+        [acmeProviderQuery.data?.data],
+    );
+    const acmeProviderComboboxOptions = useMemo(
+        () =>
+            acmeProviderOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies ProviderOption,
+                label: option.name,
+            })),
+        [acmeProviderOptions],
+    );
+
+    useEffect(() => {
+        if (!isAcme || ACME_KEY_TYPES.includes(keyTypeValue)) {
+            return;
+        }
+
+        setValue("keyType", ESslKeyType.ECP256);
+    }, [isAcme, keyTypeValue, setValue]);
+
+    useEffect(() => {
+        if (providerKind !== undefined || !providerValue) {
+            return;
+        }
+        setValue("provider", undefined, { shouldDirty: true });
+    }, [providerKind, providerValue, setValue]);
+
+    useEffect(() => {
+        if (providerKind === undefined || !providerValue || providerQuery.isFetching || providerOptions.length === 0) {
+            return;
+        }
+        if (!providerOptions.some(o => o.id === providerValue.id)) {
+            setValue("provider", undefined, { shouldDirty: true });
+        }
+    }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
+
+    useEffect(() => {
+        if (isAcme || !acmeProviderValue) {
+            return;
+        }
+        setValue("acmeProvider", undefined, { shouldDirty: true });
+    }, [acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
+        if (!isAcme || !acmeProviderValue || acmeProviderQuery.isFetching || acmeProviderOptions.length === 0) {
+            return;
+        }
+        if (!acmeProviderOptions.some(o => o.id === acmeProviderValue.id)) {
+            setValue("acmeProvider", undefined, { shouldDirty: true });
+        }
+    }, [acmeProviderOptions, acmeProviderQuery.isFetching, acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
+        if (!expireAt || notifyFrom) {
+            return;
+        }
+        setValue("notifyFrom", addDays(expireAt, -30), { shouldDirty: true });
+    }, [expireAt, notifyFrom, setValue]);
+
+    const keyTypeOptions = useMemo(() => {
+        return (isCustom ? CUSTOM_KEY_TYPES : ACME_KEY_TYPES).map(value => ({
+            value,
+            label: formatKeyTypeLabel(value),
+        }));
+    }, [isCustom]);
+
+    function onValid(values: QuickInstallSslCertFormOutput) {
+        if (readOnly) {
+            return;
+        }
+
+        void onSubmit(values);
+    }
+
+    return (
+        <form
+            onSubmit={event => {
+                event.preventDefault();
+                if (readOnly) {
+                    return;
+                }
+
+                void handleSubmit(onValid)(event);
+            }}
+            className="min-h-0 flex flex-1 flex-col"
+        >
+            <fieldset
+                disabled={readOnly}
+                className="contents"
+            >
+                <DialogBody>
+                    <FieldGroup>
+                        <InfoBlock
+                            title="Domain"
+                            titleWidth={150}
+                        >
+                            <Input
+                                value={effectiveDomain}
+                                disabled
+                            />
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title={<LabelWithInfo label="Wildcard Domain" />}
+                            titleWidth={150}
+                        >
+                            <Checkbox
+                                checked={wildcardDomain.value}
+                                onCheckedChange={value => {
+                                    if (readOnly) {
+                                        return;
+                                    }
+
+                                    wildcardDomain.onChange(value === true);
+                                    // The DNS provider goes with the wildcard: hidden, it is not sent.
+                                    if (value !== true) {
+                                        acmeProvider.onChange(undefined);
+                                    }
+                                }}
+                                disabled={readOnly}
+                            />
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Certificate Type"
+                                    isRequired
+                                />
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
+                                <Select
+                                    value={certTypeField.value}
+                                    onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        certTypeField.onChange(value);
+                                    }}
+                                    disabled={readOnly}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="select certificate type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {SSL_CERT_TYPE_OPTIONS.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.certType]} />
+                            </Field>
+                        </InfoBlock>
+
+                        {isAcme && (
+                            <>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="SSL Provider"
+                                            isRequired={requiresProvider}
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <Combobox<ProviderOption>
+                                            options={providerComboboxOptions}
+                                            value={provider.value?.id ?? null}
+                                            onChange={(_, option) => {
+                                                provider.onChange(option ?? undefined);
+                                            }}
+                                            placeholder="select provider"
+                                            searchable
+                                            closeOnSelect
+                                            emptyText="No SSL providers available"
+                                            valueKey="id"
+                                            aria-invalid={isProviderInvalid}
+                                            loading={providerQuery.isFetching}
+                                            onRefresh={() => void providerQuery.refetch()}
+                                            isRefreshing={providerQuery.isRefetching}
+                                            disabled={readOnly}
+                                        />
+                                        <FieldError errors={[errors.provider]} />
+                                        <AppLink.Modules
+                                            to={sslProvidersRoute}
+                                            className="text-xs text-link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            ignorePrevPath
+                                        >
+                                            Configure SSL Providers
+                                        </AppLink.Modules>
+                                    </Field>
+                                </InfoBlock>
+
+                                {isWildcard && (
+                                    <InfoBlock
+                                        title={
+                                            <LabelWithInfo
+                                                label="ACME DNS Provider"
+                                                isRequired
+                                            />
+                                        }
+                                        titleWidth={150}
+                                    >
+                                        <Field>
+                                            <Combobox<ProviderOption>
+                                                options={acmeProviderComboboxOptions}
+                                                value={acmeProvider.value?.id ?? null}
+                                                onChange={(_, option) => {
+                                                    acmeProvider.onChange(option ?? undefined);
+                                                }}
+                                                placeholder="select ACME DNS provider"
+                                                searchable
+                                                closeOnSelect
+                                                emptyText="No ACME DNS providers available"
+                                                valueKey="id"
+                                                aria-invalid={isAcmeProviderInvalid}
+                                                loading={acmeProviderQuery.isFetching}
+                                                onRefresh={() => void acmeProviderQuery.refetch()}
+                                                isRefreshing={acmeProviderQuery.isRefetching}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.acmeProvider]} />
+                                            <AppLink.Modules
+                                                to={acmeDnsProvidersRoute}
+                                                className="text-xs text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                ignorePrevPath
+                                            >
+                                                Configure ACME DNS Providers
+                                            </AppLink.Modules>
+                                        </Field>
+                                    </InfoBlock>
+                                )}
+                            </>
+                        )}
+
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label={isAcme ? "Registration E-mail" : "E-mail"}
+                                    isRequired
+                                />
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
+                                <Input
+                                    {...email}
+                                    type="email"
+                                    aria-invalid={isEmailInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[errors.email]} />
+                            </Field>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Key Type"
+                                    isRequired
+                                />
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
+                                <Select
+                                    value={keyType.value}
+                                    onValueChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        keyType.onChange(value);
+                                    }}
+                                    disabled={readOnly}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select key type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {keyTypeOptions.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FieldError errors={[errors.keyType]} />
+                            </Field>
+                        </InfoBlock>
+
+                        {!isCustom && (
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Auto-renew"
+                                        isRequired
+                                    />
+                                }
+                                titleWidth={150}
+                            >
+                                <Checkbox
+                                    checked={autoRenew.value}
+                                    onCheckedChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        autoRenew.onChange(value === true);
+                                    }}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+                        )}
+
+                        {isCustom && (
+                            <>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Certificate"
+                                            isRequired
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <Textarea
+                                            {...certificate}
+                                            aria-invalid={isCertificateInvalid}
+                                            rows={4}
+                                            disabled={readOnly}
+                                            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                                        />
+                                        <FieldError errors={[errors.certificate]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Private Key"
+                                            isRequired
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <Textarea
+                                            {...privateKey}
+                                            aria-invalid={isPrivateKeyInvalid}
+                                            rows={4}
+                                            disabled={readOnly}
+                                            placeholder={"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"}
+                                        />
+                                        <FieldError errors={[errors.privateKey]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    title={<LabelWithInfo label="CA Certificate" />}
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <Textarea
+                                            {...caCertificate}
+                                            aria-invalid={isCaCertificateInvalid}
+                                            rows={4}
+                                            disabled={readOnly}
+                                            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                                        />
+                                        <FieldError errors={[errors.caCertificate]} />
+                                    </Field>
+                                </InfoBlock>
+                            </>
+                        )}
+
+                        {!isAcme && (
+                            <>
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Expire At"
+                                            isRequired={isCustom}
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <DatePicker
+                                            value={expireAtField.value ?? undefined}
+                                            onChange={date => {
+                                                if (readOnly) {
+                                                    return;
+                                                }
+
+                                                expireAtField.onChange(date ?? null);
+                                            }}
+                                            aria-invalid={isExpireAtInvalid}
+                                            placeholder="Select date"
+                                            disabled={readOnly}
+                                        />
+                                        <FieldError errors={[errors.expireAt]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Notify From" />}
+                                    titleWidth={150}
+                                >
+                                    <Field>
+                                        <DatePicker
+                                            value={notifyFromField.value ?? undefined}
+                                            onChange={date => {
+                                                if (readOnly) {
+                                                    return;
+                                                }
+
+                                                notifyFromField.onChange(date ?? null);
+                                            }}
+                                            aria-invalid={isNotifyFromInvalid}
+                                            placeholder="Select date"
+                                            disabled={readOnly}
+                                        />
+                                        <FieldError errors={[errors.notifyFrom]} />
+                                    </Field>
+                                </InfoBlock>
+                            </>
+                        )}
+                    </FieldGroup>
+                </DialogBody>
+
+                <DialogActionFooter>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                        className="min-w-[100px]"
+                    >
+                        Save
+                    </Button>
+                </DialogActionFooter>
+            </fieldset>
+        </form>
+    );
+}
+
+interface PrefillValues {
+    certType?: ESslCertType;
+    email?: string;
+    keyType?: ESslKeyType;
+    autoRenew?: boolean;
+}
+
+interface Props {
+    domain: string;
+    isPending: boolean;
+    prefill?: PrefillValues;
+    readOnly?: boolean;
+    onSubmit: (values: QuickInstallSslCertFormOutput) => Promise<void> | void;
+    onHasChanges?: (dirty: boolean) => void;
+}

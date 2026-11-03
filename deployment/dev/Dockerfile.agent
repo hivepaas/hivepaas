@@ -18,8 +18,8 @@ ENV CGO_ENABLED=0
 # Move to working directory /build
 WORKDIR /build
 
-# Copy the code into the container
-COPY . .
+# Copy the code into the container; the dashboard is the app's, not the agent's
+COPY --exclude=web . .
 
 # Copy and download dependency using go mod
 RUN make mod

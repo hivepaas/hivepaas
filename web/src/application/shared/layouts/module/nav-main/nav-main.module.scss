@@ -1,0 +1,142 @@
+.link {
+  display: block;
+  height: 36px;
+
+  .link-content {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    height: 100%;
+
+    padding: 0 16px;
+
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+
+    transition: background-color 0.1s ease-in-out;
+
+    .active-indicator {
+      position: absolute;
+      top: 50%;
+      left: 1px;
+
+      width: 2px;
+      height: 34px;
+
+      background-color: #f59e0b;
+
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      transform: translateY(-50%);
+
+      opacity: 0;
+
+      transition: opacity 0.1s ease-in-out;
+    }
+
+    .icon {
+      width: 16px;
+      height: 16px;
+      color: var(--muted-foreground);
+      flex-shrink: 0;
+
+      transition: color 0.1s ease-in-out;
+    }
+
+    .label {
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 400;
+
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      transition:
+        color 0.1s ease-in-out,
+        opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .loader {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+
+      width: 100%;
+    }
+
+    &:hover {
+      background-color: rgb(0 0 0 / 3%);
+    }
+
+    :global(.dark) &:hover {
+      background-color: rgb(255 255 255 / 5%);
+    }
+
+    &.is-top-level {
+      .label {
+        font-weight: 500;
+      }
+    }
+
+    &.is-active {
+      background-color: rgba(245, 158, 11, 0.08);
+
+      .label {
+        font-weight: 500;
+      }
+
+      .icon {
+        color: #f59e0b;
+      }
+
+      :global(.dark) & {
+        background-color: rgba(251, 191, 36, 0.1);
+
+        .icon {
+          color: #fbbf24;
+        }
+
+        .active-indicator {
+          background-color: #fbbf24;
+        }
+      }
+
+      .active-indicator {
+        opacity: 1;
+      }
+    }
+
+    &.is-pending {
+      background-color: rgba(245, 158, 11, 0.12);
+
+      .active-indicator {
+        opacity: 0.8;
+      }
+
+      &::after {
+        position: absolute;
+
+        background-image: linear-gradient(
+          90deg,
+          rgba(245, 158, 11, 0) 0,
+          rgba(245, 158, 11, 0.25) 40%,
+          rgba(255, 255, 255, 0.6) 50%,
+          rgba(245, 158, 11, 0) 100%
+        );
+        transform: translateX(-100%);
+
+        animation: shimmer 1s infinite;
+
+        content: "";
+        inset: 0;
+      }
+
+      @keyframes shimmer {
+        100% {
+          transform: translateX(100%);
+        }
+      }
+    }
+  }
+}

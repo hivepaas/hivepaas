@@ -1,0 +1,19 @@
+{
+  "name": "hivepaas-dashboard-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "env:up": "bash env/up.sh",
+    "env:down": "bash env/down.sh"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.64.0",
+    "@types/node": "^26.6.4",
+    "typescript": "~7.0.2"
+  }
+}

@@ -1,0 +1,68 @@
+import { memo } from "react";
+
+import { Badge } from "@components/ui/badge";
+import type { AppScheduledJob } from "~/projects/domain";
+import { formatJobTrigger } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
+import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+
+import { ESettingStatus } from "@application/shared/enums";
+
+/**
+ * A job's name; a managed database's job is tagged as its engine's, a sequence
+ * with its step count, a data backup with its repository, a function's call with
+ * its request.
+ */
+function View({ job }: Props) {
+    const steps = job.sequence?.steps.length ?? 0;
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <span>{job.name}</span>
+            {job.managedBy && (
+                <Badge
+                    tone="violet"
+                    title="The managed database's engine made it and runs it: it is not edited, paused or deleted"
+                >
+                    Managed
+                </Badge>
+            )}
+            {job.jobType === EAppScheduledJobType.JobSequence && (
+                <Badge variant="secondary">
+                    Sequence · {steps} {steps === 1 ? "step" : "steps"}
+                </Badge>
+            )}
+            {job.jobType === EAppScheduledJobType.DataBackup && job.dataBackup && (
+                <Badge variant="secondary">
+                    Backup ·{" "}
+                    {job.dataBackup.targetRepository.status === ESettingStatus.Missing
+                        ? "deleted repository"
+                        : job.dataBackup.targetRepository.name}
+                </Badge>
+            )}
+            {job.jobType === EAppScheduledJobType.FunctionInvoke && job.functionInvoke && (
+                <Badge
+                    variant="secondary"
+                    className="font-mono"
+                >
+                    Call · {job.functionInvoke.method} {job.functionInvoke.path}
+                </Badge>
+            )}
+            {job.triggers.map(trigger => (
+                <Badge
+                    key={`${trigger.event}-${trigger.apps.map(app => app.id).join(",")}`}
+                    variant="outline"
+                    className="font-mono text-[11px]"
+                    title={trigger.apps.length > 0 ? `of ${trigger.apps.map(app => app.name).join(", ")}` : undefined}
+                >
+                    {formatJobTrigger(trigger)}
+                </Badge>
+            ))}
+        </div>
+    );
+}
+
+interface Props {
+    job: AppScheduledJob;
+}
+
+export const ScheduledJobNameCell = memo(View);

@@ -1,0 +1,31 @@
+import type { EImServiceKind } from "@application/shared/enums";
+
+import type { SettingsBaseEntity } from "./settings.base.entity";
+
+export interface ImServiceSlack {
+    webhook: string;
+}
+
+export interface ImServiceDiscord {
+    webhook: string;
+}
+
+export interface ImServiceTelegram {
+    botToken: string;
+    chatId: string;
+}
+
+export interface ImServiceLark {
+    webhook: string;
+    secret?: string | null;
+}
+
+export interface SettingImService extends SettingsBaseEntity {
+    kind: EImServiceKind;
+    slack?: ImServiceSlack | null;
+    discord?: ImServiceDiscord | null;
+    telegram?: ImServiceTelegram | null;
+    lark?: ImServiceLark | null;
+    secretMasked?: boolean;
+    inherited?: boolean;
+}

@@ -1,0 +1,174 @@
+import React, { useEffect, useState } from "react";
+
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { useParams } from "react-router";
+import { toast } from "sonner";
+import { AppConfigFilesCommands } from "~/projects/data/commands";
+
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
+import { CreateOrEditAppConfigFileForm } from "../form";
+import { useCreateOrEditAppConfigFileDialogState } from "../hooks";
+import type { CreateOrEditAppConfigFileFormOutput } from "../schemas";
+
+function fileToBase64(file: File): Promise<string> {
+    return file.arrayBuffer().then(buffer => {
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        const chunkSize = 0x8000;
+
+        for (let index = 0; index < bytes.length; index += chunkSize) {
+            const chunk = bytes.subarray(index, index + chunkSize);
+            binary += String.fromCharCode(...chunk);
+        }
+
+        return window.btoa(binary);
+    });
+}
+
+async function getConfigFileContent(values: CreateOrEditAppConfigFileFormOutput): Promise<string | undefined> {
+    if (values.valueType === "text") {
+        return values.textValue.trim() ? values.textValue : undefined;
+    }
+
+    if (!values.binaryFile) {
+        return undefined;
+    }
+
+    return fileToBase64(values.binaryFile);
+}
+
+export function CreateOrEditAppConfigFileDialog() {
+    const { env } = useParams<{ env: string }>();
+    const { state, props: dialogOptions, ...actions } = useCreateOrEditAppConfigFileDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+
+    const { mode } = state;
+    const open = mode !== "closed";
+    const isEditMode = mode === "edit";
+    const projectId = mode !== "closed" ? state.projectId : null;
+    const appId = mode !== "closed" ? state.appId : null;
+
+    const { mutate: createAppConfigFile, isPending: isCreatingAppConfigFile } = AppConfigFilesCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("App config file created successfully");
+            actions.close();
+            dialogOptions?.onSuccess?.();
+        },
+        onError: error => {
+            dialogOptions?.onError?.(error);
+        },
+    });
+
+    const { mutate: updateAppConfigFile, isPending: isUpdatingAppConfigFile } = AppConfigFilesCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("App config file updated successfully");
+            actions.close();
+            dialogOptions?.onSuccess?.();
+        },
+        onError: error => {
+            dialogOptions?.onError?.(error);
+        },
+    });
+
+    useEffect(() => {
+        if (mode === "closed") {
+            setHasChanges(false);
+        }
+    }, [mode]);
+
+    async function onSubmit(values: CreateOrEditAppConfigFileFormOutput) {
+        if (!canWrite || !projectId || !appId) {
+            return;
+        }
+
+        const content = await getConfigFileContent(values);
+        const base64 = values.valueType === "binary";
+
+        if (state.mode === "edit") {
+            updateAppConfigFile({
+                projectID: projectId,
+                env: env ?? "",
+                appID: appId,
+                configFileID: state.configFile.id,
+                updateVer: state.configFile.updateVer,
+                name: values.name,
+                content,
+                base64,
+                inheritable: values.inheritable,
+            });
+            return;
+        }
+
+        if (state.mode === "open" && content !== undefined) {
+            createAppConfigFile({
+                projectID: projectId,
+                env: env ?? "",
+                appID: appId,
+                name: values.name,
+                content,
+                base64,
+                inheritable: values.inheritable,
+            });
+        }
+    }
+
+    function handleClose(): void {
+        if (canWrite && hasChanges) {
+            const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+
+        setHasChanges(false);
+        actions.close();
+        dialogOptions?.onClose?.();
+    }
+
+    if (!projectId || !appId) {
+        return null;
+    }
+
+    const isPending = isCreatingAppConfigFile || isUpdatingAppConfigFile;
+
+    const initialValues =
+        state.mode === "edit"
+            ? {
+                  name: state.configFile.name,
+                  valueType: state.configFile.base64 ? ("binary" as const) : ("text" as const),
+                  textValue: state.configFile.base64 ? "" : state.configFile.content,
+                  inheritable: state.configFile.inheritable,
+              }
+            : undefined;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={isOpen => {
+                if (!isOpen) {
+                    handleClose();
+                }
+            }}
+        >
+            <DialogFixedContent className="sm:max-w-[820px]">
+                <DialogHeader>
+                    <DialogTitle>Create or update a config file</DialogTitle>
+                </DialogHeader>
+                <CreateOrEditAppConfigFileForm
+                    isPending={isPending}
+                    onSubmit={onSubmit}
+                    onHasChanges={setHasChanges}
+                    isEditMode={isEditMode}
+                    initialValues={initialValues}
+                    readOnly={!canWrite}
+                    currentBinaryContent={
+                        state.mode === "edit" && state.configFile.base64 ? state.configFile.content : undefined
+                    }
+                />
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

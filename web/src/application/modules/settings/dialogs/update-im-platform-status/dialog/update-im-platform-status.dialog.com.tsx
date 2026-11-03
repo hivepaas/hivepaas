@@ -1,0 +1,176 @@
+import { useEffect, useState } from "react";
+
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { toast } from "sonner";
+import { ProjectImServiceCommands } from "~/projects/data/commands";
+import { ProjectImServiceQueries } from "~/projects/data/queries";
+import { ImServiceCommands } from "~/settings/data/commands";
+import { ImServiceQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
+
+import { UpdateImPlatformStatusForm } from "../form";
+import { useUpdateImPlatformStatusDialogState } from "../hooks";
+import type { UpdateImPlatformStatusFormOutput } from "../schemas";
+
+export function UpdateImPlatformStatusDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useUpdateImPlatformStatusDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = ImServiceCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("IM platform status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+        onError: dialogOptions?.onError,
+    });
+
+    const { mutate: updateProjectStatus, isPending: isUpdatingProject } = ProjectImServiceCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Project IM platform status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+        onError: dialogOptions?.onError,
+    });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = ImServiceQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectImServiceQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const imPlatform = detailQuery.data?.data;
+
+    function onSubmit(values: UpdateImPlatformStatusFormOutput) {
+        if (state.mode !== "open" || !imPlatform) {
+            return;
+        }
+
+        const payload = {
+            updateVer: imPlatform.updateVer,
+            status: values.status,
+            expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            updateProjectStatus({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: imPlatform.id,
+                payload,
+            });
+            return;
+        }
+
+        updateSettingStatus({
+            id: imPlatform.id,
+            payload,
+        });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
+            return;
+        }
+
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "IM Platform"} Status`
+        : "Change status";
+    const isPending = isUpdatingSetting || isUpdatingProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+    const initialValues = imPlatform
+        ? {
+              status: imPlatform.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: imPlatform.expireAt ?? undefined,
+              inheritable: Boolean(imPlatform.inheritable),
+              default: imPlatform.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
+                    <UpdateImPlatformStatusForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

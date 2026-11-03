@@ -71,9 +71,9 @@ vuln:
 
 trivy:
 	@if command -v trivy >/dev/null 2>&1; then \
-		trivy fs --skip-dirs "vendor,.temp,tmp,temp,.appdata" --severity CRITICAL,HIGH .; \
+		trivy fs --skip-dirs "vendor,.temp,tmp,temp,.appdata,web" --severity CRITICAL,HIGH .; \
 	else \
-		docker run --rm -v "$(PWD)":/app -w /app aquasec/trivy:latest fs --skip-dirs "vendor,.temp,tmp,temp" --severity CRITICAL,HIGH .; \
+		docker run --rm -v "$(PWD)":/app -w /app aquasec/trivy:latest fs --skip-dirs "vendor,.temp,tmp,temp,web" --severity CRITICAL,HIGH .; \
 	fi
 
 # ----- Release signing -----
@@ -199,7 +199,7 @@ local-deploy:
 	bash deployment/local/install.sh
 
 local-build-dashboard:
-	@HP_FE_DIR="$(HP_FE_DIR)" ./scripts/dev/local-build-dashboard.sh
+	@./scripts/dev/local-build-dashboard.sh
 
 # ----- Running the local build on the host -----
 # The everyday way to work. See scripts/dev/local-run.sh.

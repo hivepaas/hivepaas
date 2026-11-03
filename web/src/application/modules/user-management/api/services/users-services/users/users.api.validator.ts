@@ -1,0 +1,179 @@
+import { z } from "zod";
+import {
+    type Users_FindManyPaginated_Res,
+    type Users_FindOneById_Res,
+    type Users_InviteOne_Res,
+    type Users_ResetPassword_Res,
+} from "~/user-management/api/services/users-services/users/users.api.contracts";
+import { AccessSchema, ProjectEnvAccessSchema } from "~/user-management/module-shared/schemas";
+
+import { ESecuritySettings, EUserRole } from "@application/shared/enums";
+
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+/**
+ * User schema
+ */
+const UserSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    username: z.string().optional(),
+    fullName: z.string(),
+    photo: z.string().nullable(),
+    position: z.string(),
+    securityOption: z.nativeEnum(ESecuritySettings),
+    status: z.string(),
+    role: z.nativeEnum(EUserRole),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullable(),
+    accessExpireAt: z.coerce.date().nullable(),
+    lastAccess: z.coerce.date().nullable(),
+});
+
+/**
+ * Find many users paginated API response schema
+ */
+const FindManyPaginatedSchema = z.object({
+    data: z.array(UserSchema),
+    meta: PagingMetaApiSchema,
+});
+
+/**
+ * Find one user by id API response schema
+ */
+const ProjectAccessApiSchema = z.object({
+    project: z.object({
+        id: z.string(),
+        name: z.string(),
+    }),
+    envAccesses: z.array(ProjectEnvAccessSchema).nullish(),
+});
+
+const FindOneByIdSchema = z.object({
+    data: UserSchema.extend({
+        projectAccesses: z.array(ProjectAccessApiSchema).nullable(),
+        moduleAccesses: z.array(AccessSchema).nullable(),
+        capabilities: z.array(z.string()).nullish(),
+    }),
+});
+
+/**
+ * Invite one user API response schema
+ */
+const InviteOneSchema = z.object({
+    data: z.object({
+        inviteLink: z.string(),
+    }),
+});
+
+/**
+ * Reset password API response schema
+ */
+const ResetPasswordSchema = z.object({
+    data: z.object({
+        resetPasswordLink: z.string(),
+    }),
+});
+
+export class UsersApiValidator {
+    /**
+     * Validate and transform find many users paginated API response
+     */
+    findManyPaginated = (response: ApiHttpResponse): Users_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindManyPaginatedSchema,
+        });
+
+        return {
+            data: data.map(user => ({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                status: user.status,
+                fullName: user.fullName,
+                photo: user.photo,
+                position: user.position,
+                securityOption: user.securityOption,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                accessExpireAt: user.accessExpireAt,
+                lastAccess: user.lastAccess,
+                username: user.username ?? "",
+                projectAccesses: [],
+                moduleAccesses: [],
+                capabilities: [],
+            })),
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform find one user by id API response
+     */
+    findOneById = (response: ApiHttpResponse): Users_FindOneById_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+                email: data.email,
+                role: data.role,
+                status: data.status,
+                fullName: data.fullName,
+                photo: data.photo,
+                position: data.position,
+                securityOption: data.securityOption,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                accessExpireAt: data.accessExpireAt,
+                lastAccess: data.lastAccess,
+                username: data.username ?? "",
+                // The API nests the project under `project`; flatten it so the form
+                // can bind the project and its envs as one field-array item.
+                projectAccesses: (data.projectAccesses ?? []).map(projectAccess => ({
+                    id: projectAccess.project.id,
+                    name: projectAccess.project.name,
+                    envAccesses: projectAccess.envAccesses ?? [],
+                })),
+                moduleAccesses: data.moduleAccesses ?? [],
+                capabilities: data.capabilities ?? [],
+            },
+        };
+    };
+
+    /**
+     * Validate and transform invite one user API response
+     */
+    inviteOne = (response: ApiHttpResponse): Users_InviteOne_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: InviteOneSchema,
+        });
+
+        return {
+            data: {
+                inviteLink: data.inviteLink,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform reset password API response
+     */
+    resetPassword = (response: ApiHttpResponse): Users_ResetPassword_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: ResetPasswordSchema,
+        });
+
+        return {
+            data: {
+                resetPasswordLink: data.resetPasswordLink,
+            },
+        };
+    };
+}

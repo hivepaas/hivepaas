@@ -1,0 +1,81 @@
+import { z } from "zod";
+import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
+
+const SystemCleanupDBObjectRetentionSchema = z.object({
+    enabled: z.boolean(),
+    tasks: z.string(),
+    sysErrors: z.string(),
+    auditLogs: z.string(),
+    deployments: z.string(),
+    deletedObjects: z.string(),
+});
+
+const SystemCleanupClusterCleanupSchema = z.object({
+    enabled: z.boolean(),
+    generalRetention: z.string(),
+    buildCacheRetention: z.string(),
+    pruneImages: z.boolean(),
+    pruneVolumes: z.boolean(),
+    pruneNetworks: z.boolean(),
+    pruneContainers: z.boolean(),
+    pruneBuildCache: z.boolean(),
+});
+
+const SystemCleanupCacheCleanupSchema = z.object({
+    enabled: z.boolean(),
+    repoCacheRetention: z.string(),
+});
+
+const SystemCleanupFileCleanupSchema = z.object({
+    enabled: z.boolean(),
+});
+
+const SystemCleanupSystemAppsSyncSchema = z
+    .object({
+        enabled: z.boolean(),
+    })
+    .nullish()
+    .transform(value => value ?? { enabled: true });
+
+const SystemCleanupScheduleSchema = z
+    .object({
+        cronExpr: z.string().nullish(),
+        CronExpr: z.string().nullish(),
+        interval: z.string().nullish(),
+        initialTime: z.coerce.date().nullish(),
+    })
+    .transform(({ cronExpr, CronExpr, interval, initialTime }) => ({
+        cronExpr: cronExpr ?? CronExpr ?? "",
+        interval: interval ?? "",
+        initialTime: initialTime ?? null,
+    }))
+    .default({ cronExpr: "", interval: "", initialTime: null });
+
+const SystemCleanupNotificationRefSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+});
+
+const SystemCleanupNotificationSchema = z
+    .object({
+        success: SystemCleanupNotificationRefSchema.nullish().transform(value => value ?? undefined),
+        successUseDefault: z.boolean(),
+        failure: SystemCleanupNotificationRefSchema.nullish().transform(value => value ?? undefined),
+        failureUseDefault: z.boolean(),
+    })
+    .nullable();
+
+export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
+    type: z.string(),
+    schedule: SystemCleanupScheduleSchema,
+    dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
+    clusterCleanup: SystemCleanupClusterCleanupSchema,
+    cacheCleanup: SystemCleanupCacheCleanupSchema,
+    fileCleanup: SystemCleanupFileCleanupSchema,
+    systemAppsSync: SystemCleanupSystemAppsSyncSchema,
+    notification: SystemCleanupNotificationSchema,
+    nextRuns: z
+        .array(z.coerce.date())
+        .nullish()
+        .transform(value => value ?? []),
+});

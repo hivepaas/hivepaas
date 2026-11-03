@@ -1,0 +1,94 @@
+import type { QueryClient } from "@tanstack/react-query";
+
+import { QK } from "../../constants/projects.query-keys";
+
+interface SingleAppCacheScope {
+    projectID: string;
+    appID: string;
+}
+
+export function invalidateSingleAppSummaryQueries(queryClient: QueryClient, scope: SingleAppCacheScope): void {
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.$.find-many-paginated"]],
+    });
+    // A deployment started, or canceled: the header says so at once, not at its
+    // next poll.
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.deployments.$.find-active"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.$.find-one-by-id"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.$.find-one-by-id"], { projectID: scope.projectID }],
+    });
+}
+
+export function invalidateSingleAppConfigurationQueries(queryClient: QueryClient, scope: SingleAppCacheScope): void {
+    invalidateSingleAppSummaryQueries(queryClient, scope);
+
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.env-vars.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.container-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.deployment-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.feature-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.service-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.network-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.resource-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.docker-api-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.storage-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.routing-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.kind-settings.$.find-one"], scope],
+    });
+
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.secrets.$.find-many-paginated"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.secrets.$.find-one-by-id"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.config-files.$.find-many-paginated"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.config-files.$.find-one-by-id"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.setting-mounts.$.find-many-paginated"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.setting-mounts.$.find-one-by-id"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.periodic-jobs.$.find-many-paginated"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.periodic-jobs.$.find-one-by-id"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]],
+    });
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.scheduled-jobs.$.find-one-by-id"]],
+    });
+}

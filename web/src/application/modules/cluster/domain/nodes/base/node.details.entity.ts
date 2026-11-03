@@ -1,0 +1,28 @@
+import type { ENodeAvailability, ENodeState } from "~/cluster/module-shared/enums";
+
+import type { NodeBase } from "./node.base.entity";
+
+export interface NodeDetails extends NodeBase {
+    isLeader: boolean;
+    labels: Record<string, string>;
+    availability: ENodeAvailability;
+    state: ENodeState;
+    platform: {
+        architecture: string;
+        os: string;
+    } | null;
+    resources: {
+        cpus: number;
+        memory: string;
+        memoryBytes: number;
+    } | null;
+
+    engineDesc: {
+        engineVersion: string;
+        labels: Record<string, string> | null;
+        plugins?: { name: string; type: string }[];
+    } | null;
+    updateVer: number;
+    createdAt: Date;
+    updatedAt: Date | null;
+}

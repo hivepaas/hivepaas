@@ -1,0 +1,66 @@
+import { type AppStorageSettings } from "~/projects/domain";
+
+import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
+
+export type AppStorageSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
+export type AppStorageSettings_FindOne_Res = ApiResponseBase<AppStorageSettings>;
+
+export type AppStorageSettings_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    payload: AppStorageSettings & {
+        /**
+         * Deletes what is already in the directories the mounts being added
+         * reach, before they are mounted. It is how the preflight findings are
+         * answered, and it is off unless asked for.
+         */
+        resetStorage?: boolean;
+    };
+}>;
+export type AppStorageSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+/** One mount being added whose directory already holds something. */
+export type AppStorageFinding = {
+    /** The path inside the container, which is how the screen finds the row. */
+    target: string;
+    volume: { id: string; name: string };
+    /** The directory inside the volume, so an operator can go and look. */
+    path: string;
+};
+
+export type AppStorageSettings_Preflight_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    payload: { mounts: AppStorageSettings["mounts"] };
+}>;
+export type AppStorageSettings_Preflight_Res = ApiResponseBase<{
+    storage: AppStorageFinding[];
+    /**
+     * Storage nothing could be seen of, usually a node that could not be
+     * reached. Not the same as there being nothing there.
+     */
+    unchecked: AppStorageFinding[];
+}>;
+
+/**
+ * Who the files of a mount are given to, by number. Without one, every user is
+ * let read and write them instead.
+ */
+export type AppStorageOwner = { uid: number; gid: number };
+
+export type AppStorageSettings_ResetPermissions_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    payload: {
+        /** The mount's key, as the storage settings list it. */
+        key: string;
+        owner?: AppStorageOwner;
+    };
+}>;
+export type AppStorageSettings_ResetPermissions_Res = ApiResponseBase<{
+    /** The directory that was reset, inside its volume. */
+    path: string;
+}>;

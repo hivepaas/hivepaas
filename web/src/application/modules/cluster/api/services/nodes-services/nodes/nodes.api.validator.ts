@@ -1,0 +1,185 @@
+import { z } from "zod";
+import {
+    type Nodes_CreateOne_Res,
+    type Nodes_FindManyPaginated_Res,
+    type Nodes_FindOneById_Res,
+    type Nodes_GetJoinNode_Res,
+} from "~/cluster/api/services/nodes-services/nodes/nodes.api.contracts";
+import { ENodeAvailability, ENodeRole, ENodeState } from "~/cluster/module-shared/enums";
+
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+/**
+ * Node schema
+ */
+const NodeSchema = z.object({
+    id: z.string(),
+    refId: z.string(),
+    name: z.string(),
+    labels: z.record(z.string(), z.string()).nullable(),
+    hostname: z.string(),
+    addr: z.string(),
+    state: z.nativeEnum(ENodeState),
+    availability: z.nativeEnum(ENodeAvailability),
+    role: z.nativeEnum(ENodeRole),
+    isLeader: z.boolean(),
+    platform: z
+        .object({
+            architecture: z.string(),
+            os: z.string(),
+        })
+        .nullable(),
+    resources: z
+        .object({
+            cpus: z.number(),
+            memory: z.string(),
+            memoryBytes: z.number(),
+        })
+        .nullable(),
+    engineDesc: z
+        .object({
+            engineVersion: z.string(),
+            labels: z.record(z.string(), z.string()).nullable(),
+            plugins: z.array(z.object({ name: z.string(), type: z.string() })).optional(),
+        })
+        .nullable(),
+    updateVer: z.number().optional().default(0),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullable(),
+});
+
+/**
+ * Find many nodes paginated API response schema
+ */
+const FindManyPaginatedSchema = z.object({
+    data: z.array(NodeSchema),
+    meta: PagingMetaApiSchema,
+});
+
+/**
+ * Find one node by id API response schema
+ */
+const FindOneByIdSchema = z.object({
+    data: NodeSchema,
+});
+
+/**
+ * Create one node API response schema
+ */
+const CreateOneSchema = z.object({
+    data: NodeSchema,
+});
+
+/**
+ * Get join node API response schema
+ */
+const GetJoinNodeSchema = z.object({
+    data: z.object({
+        command: z.string(),
+    }),
+});
+
+export class NodesApiValidator {
+    /**
+     * Validate and transform find many nodes paginated API response
+     */
+    findManyPaginated = (response: ApiHttpResponse): Nodes_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindManyPaginatedSchema,
+        });
+
+        return {
+            data: data.map(node => ({
+                id: node.id,
+                refId: node.refId,
+                name: node.name === "<unset>" ? "" : node.name,
+                labels: node.labels ?? {},
+                hostname: node.hostname,
+                addr: node.addr,
+                availability: node.availability,
+                state: node.state,
+                role: node.role,
+                isLeader: node.isLeader,
+                platform: node.platform,
+                resources: {
+                    cpus: node.resources?.cpus ?? 0,
+                    memory: node.resources?.memory ?? "",
+                    memoryBytes: node.resources?.memoryBytes ?? 0,
+                },
+                engineDesc: node.engineDesc,
+                updateVer: node.updateVer,
+                createdAt: node.createdAt,
+                updatedAt: node.updatedAt,
+            })),
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform find one node by id API response
+     */
+    findOneById = (response: ApiHttpResponse): Nodes_FindOneById_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+                refId: data.refId,
+                name: data.name === "<unset>" ? "" : data.name,
+                labels: data.labels ?? {},
+                hostname: data.hostname,
+                addr: data.addr,
+                availability: data.availability,
+                state: data.state,
+                role: data.role,
+                isLeader: data.isLeader,
+                platform: data.platform,
+                resources: {
+                    cpus: data.resources?.cpus ?? 0,
+                    memory: data.resources?.memory ?? "",
+                    memoryBytes: data.resources?.memoryBytes ?? 0,
+                },
+                engineDesc: data.engineDesc,
+                updateVer: data.updateVer,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform create one node API response
+     */
+    createOne = (response: ApiHttpResponse): Nodes_CreateOne_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+
+        return {
+            data: {
+                id: data.id,
+            },
+        };
+    };
+
+    /**
+     * Validate and transform get join node API response
+     */
+    getJoinNode = (response: ApiHttpResponse): Nodes_GetJoinNode_Res => {
+        const { data } = parseApiResponse({
+            response,
+            schema: GetJoinNodeSchema,
+        });
+
+        return {
+            data: {
+                command: data.command,
+            },
+        };
+    };
+}

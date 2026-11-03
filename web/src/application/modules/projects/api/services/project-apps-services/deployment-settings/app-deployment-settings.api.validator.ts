@@ -1,0 +1,239 @@
+import { z } from "zod";
+import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
+import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
+
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+import type {
+    AppDeploymentSettings_FindOne_Res,
+    AppDeploymentSettings_GetDockerfileTemplate_Res,
+} from "./app-deployment-settings.api.contracts";
+
+const OptionalStringSchema = z
+    .string()
+    .nullish()
+    .transform(value => value ?? "");
+
+const SettingsRefSchema = SettingsBaseEntitySchema.nullish().transform(value => value ?? null);
+
+const BaseDeploymentSettingsSchema = z.object({
+    image: z
+        .object({ repoName: z.string(), tagPrefix: z.string() })
+        .nullish()
+        .transform(value => value ?? null),
+    entrypoint: OptionalStringSchema.optional(),
+    command: OptionalStringSchema.optional(),
+    workingDir: OptionalStringSchema.optional(),
+    preDeploymentCommand: OptionalStringSchema.optional(),
+    postDeploymentCommand: OptionalStringSchema.optional(),
+    restorePointBeforeDeploy: z
+        .object({ id: z.string() })
+        .nullish()
+        .transform(value => (value?.id ? { id: value.id } : null)),
+    notification: z
+        .object({
+            successUseDefault: z.boolean(),
+            success: z
+                .object({
+                    id: z.string(),
+                    name: z.string(),
+                })
+                .nullish(),
+            failureUseDefault: z.boolean(),
+            failure: z
+                .object({
+                    id: z.string(),
+                    name: z.string(),
+                })
+                .nullish(),
+        })
+        .optional(),
+    updateVer: z.number().optional().default(0),
+});
+
+const DockerfileSchema = z
+    .object({
+        source: z.enum([EDockerfileSource.Manual, EDockerfileSource.Auto]).optional(),
+        path: OptionalStringSchema,
+        content: OptionalStringSchema,
+        scanPath: OptionalStringSchema,
+    })
+    .nullish()
+    .transform(value => ({
+        source: value?.source ?? EDockerfileSource.Manual,
+        path: value?.path ?? "",
+        content: value?.content ?? "",
+        scanPath: value?.scanPath ?? "",
+    }));
+
+const RepoSourceSchema = z.preprocess(
+    value => {
+        if (!value || typeof value !== "object") {
+            return {};
+        }
+
+        const input = value as Record<string, unknown>;
+
+        return {
+            ...input,
+            repoUrl: input["repoUrl"] ?? input["repoURL"],
+        };
+    },
+    z.object({
+        buildTool: z.nativeEnum(EBuildTool).optional().default(EBuildTool.Docker),
+        repoType: z.nativeEnum(ERepoType).optional().default(ERepoType.Git),
+        repoUrl: OptionalStringSchema,
+        repoRef: OptionalStringSchema,
+        commitHash: OptionalStringSchema,
+        repoOptions: z
+            .object({
+                gitSubmodulesEnabled: z.boolean().optional().default(true),
+                gitLfsEnabled: z.boolean().optional().default(true),
+            })
+            .nullish()
+            .transform(val => val ?? { gitSubmodulesEnabled: true, gitLfsEnabled: true }),
+        credentials: SettingsRefSchema,
+        dockerfile: DockerfileSchema,
+        pushToRegistry: SettingsRefSchema,
+        autoDeploy: z.boolean().optional().default(true),
+    }),
+);
+
+const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
+    activeMethod: z.literal(EAppDeploymentMethod.Repo),
+    repoSource: RepoSourceSchema,
+});
+
+const ImageSourceSchema = z.preprocess(
+    value => {
+        if (!value || typeof value !== "object") {
+            return {};
+        }
+
+        return value;
+    },
+    z.object({
+        image: OptionalStringSchema,
+        registryAuth: SettingsRefSchema,
+    }),
+);
+
+const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
+    activeMethod: z.literal(EAppDeploymentMethod.Image),
+    imageSource: ImageSourceSchema,
+});
+
+const FunctionFileSchema = z.object({ path: z.string(), content: OptionalStringSchema });
+
+export const FunctionSourceSchema = z.object({
+    // A runtime a newer HivePaaS added is still a function's runtime.
+    runtime: z.string(),
+    contract: OptionalStringSchema,
+    entrypoint: z
+        .object({ file: OptionalStringSchema, handler: OptionalStringSchema })
+        .nullish()
+        .transform(value => value ?? { file: "", handler: "" }),
+    code: z
+        .object({
+            inline: z
+                .object({
+                    files: z
+                        .array(FunctionFileSchema)
+                        .nullish()
+                        .transform(value => value ?? []),
+                })
+                .nullish()
+                .transform(value => value ?? null),
+            repo: z
+                .preprocess(
+                    value => {
+                        if (!value || typeof value !== "object") {
+                            return value;
+                        }
+                        const input = value as Record<string, unknown>;
+                        return { ...input, repoUrl: input["repoUrl"] ?? input["repoURL"] };
+                    },
+                    z.object({
+                        repoType: OptionalStringSchema,
+                        repoUrl: OptionalStringSchema,
+                        repoRef: OptionalStringSchema,
+                        commitHash: OptionalStringSchema,
+                        credentials: SettingsRefSchema,
+                        autoDeploy: z.boolean().optional().default(false),
+                    }),
+                )
+                .nullish()
+                .transform(value => value ?? null),
+            dir: OptionalStringSchema,
+        })
+        .nullish()
+        .transform(value => value ?? { inline: null, repo: null, dir: "" }),
+    systemPackages: z
+        .array(z.string())
+        .nullish()
+        .transform(value => value ?? []),
+    timeout: OptionalStringSchema,
+    maxConcurrency: z
+        .number()
+        .nullish()
+        .transform(value => value ?? 0),
+    maxBodySize: OptionalStringSchema,
+    pushToRegistry: SettingsRefSchema,
+});
+
+const FunctionMethodSchema = BaseDeploymentSettingsSchema.extend({
+    activeMethod: z.literal(EAppDeploymentMethod.Function),
+    functionSource: FunctionSourceSchema,
+});
+
+const AppDeploymentSettingsSchema = z.preprocess(
+    value => {
+        if (!value || typeof value !== "object") {
+            return {
+                activeMethod: EAppDeploymentMethod.Image,
+                imageSource: {},
+                updateVer: 0,
+            };
+        }
+
+        const input = value as Record<string, unknown>;
+
+        if (
+            input["activeMethod"] === EAppDeploymentMethod.Repo ||
+            input["activeMethod"] === EAppDeploymentMethod.Image ||
+            input["activeMethod"] === EAppDeploymentMethod.Function
+        ) {
+            return input;
+        }
+
+        return {
+            ...input,
+            activeMethod: EAppDeploymentMethod.Image,
+            imageSource: input["imageSource"] ?? {},
+            updateVer: input["updateVer"] ?? 0,
+        };
+    },
+    z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema, FunctionMethodSchema]),
+);
+
+const FindOneSchema = z.object({
+    data: AppDeploymentSettingsSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const GetDockerfileTemplateSchema = z.object({
+    data: z.object({
+        template: OptionalStringSchema,
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+export class AppDeploymentSettingsApiValidator {
+    findOne = (response: ApiHttpResponse): AppDeploymentSettings_FindOne_Res => {
+        return parseApiResponse({ response, schema: FindOneSchema });
+    };
+
+    getDockerfileTemplate = (response: ApiHttpResponse): AppDeploymentSettings_GetDockerfileTemplate_Res => {
+        return parseApiResponse({ response, schema: GetDockerfileTemplateSchema });
+    };
+}

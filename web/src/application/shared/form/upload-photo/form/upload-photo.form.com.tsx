@@ -1,0 +1,123 @@
+import React, { type PropsWithChildren, useRef } from "react";
+
+import classnames from "classnames/bind";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ImageService } from "@infrastructure/services";
+import { Ok, type Result, match } from "oxide.ts";
+import { type FieldErrors, useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import { PhotoEditor, type PhotoEditorRef } from "@application/shared/components/photo-editor/component";
+
+import { DialogBody } from "@/components/ui/dialog";
+
+import {
+    type UploadPhotoFormInput,
+    type UploadPhotoFormOutput,
+    UploadPhotoFormSchema,
+} from "../schemas/upload-photo.form.schema";
+
+import styles from "./upload-photo.form.module.scss";
+
+const cx = classnames.bind(styles);
+
+export function UploadPhotoForm({
+    photo,
+    onSubmit,
+    onEditingStart,
+    onEditingEnd,
+    filename = "profile-photo",
+    children,
+    footer,
+}: Props) {
+    const { handleSubmit: originalHandleSubmit, setValue } = useForm<
+        UploadPhotoFormInput,
+        unknown,
+        UploadPhotoFormOutput
+    >({
+        defaultValues: {
+            photo: null,
+        },
+        resolver: zodResolver(UploadPhotoFormSchema),
+        mode: "onSubmit",
+    });
+
+    const editorRef = useRef<PhotoEditorRef>(null);
+
+    async function getImageFile(): Promise<Result<{ file: File | null }, Error>> {
+        const editor = editorRef.current?.cropper;
+
+        if (!editor) {
+            return Ok({ file: null });
+        }
+
+        const canvas = editor.getCroppedCanvas({
+            width: 512,
+            height: 512,
+        });
+
+        const bitmap = await createImageBitmap(canvas);
+
+        return ImageService.convert(bitmap, {
+            filename,
+            type: "image/webp",
+            quality: 0.9,
+        });
+    }
+
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
+        const result = await getImageFile();
+        match(result, {
+            Ok: ({ file }) => {
+                setValue("photo", file);
+                void originalHandleSubmit(onValid, onInvalid)(event);
+            },
+            Err: error => {
+                toast.error(error.message);
+            },
+        });
+    }
+
+    function onValid(values: UploadPhotoFormOutput) {
+        onSubmit(values);
+    }
+
+    function onInvalid(errors: FieldErrors<UploadPhotoFormInput>) {
+        console.error(errors);
+    }
+
+    return (
+        <form
+            className={`${cx("upload-photo-form")} min-h-0 flex flex-1 flex-col`}
+            onSubmit={event => {
+                event.preventDefault();
+
+                void handleSubmit(event);
+            }}
+        >
+            <DialogBody className="flex flex-col gap-4">
+                <div className={cx("photo")}>
+                    <PhotoEditor
+                        ref={editorRef}
+                        src={photo}
+                        onEditingStart={onEditingStart}
+                        onEditingEnd={onEditingEnd}
+                    />
+                </div>
+
+                {children}
+            </DialogBody>
+            {footer}
+        </form>
+    );
+}
+
+type Props = PropsWithChildren<{
+    photo: string | null;
+    onSubmit: (values: UploadPhotoFormOutput) => void;
+    onEditingStart?: () => void;
+    onEditingEnd?: () => void;
+    filename?: string;
+    footer?: React.ReactNode;
+}>;

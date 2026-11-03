@@ -1,0 +1,205 @@
+export const QK = {
+    /*
+     * Projects
+     */
+    "projects.$.find-many-paginated": "projects.$.find-many-paginated",
+    "projects.$.find-one-by-id": "projects.$.find-one-by-id",
+    "projects.user-accesses.$.find-one": "projects.user-accesses.$.find-one",
+    /*
+     * Project Apps
+     */
+    "projects.apps.$.find-many-paginated": "projects.apps.$.find-many-paginated",
+    "projects.apps.$.find-one-by-id": "projects.apps.$.find-one-by-id",
+    "projects.apps.clone-settings.$.find-one": "projects.apps.clone-settings.$.find-one",
+    "projects.apps.logs.$.get-info": "projects.apps.logs.$.get-info",
+    "projects.apps.logs.$.get-logs": "projects.apps.logs.$.get-logs",
+    "projects.apps.logs.$.get-history": "projects.apps.logs.$.get-history",
+    "projects.apps.function-metrics.$.get": "projects.apps.function-metrics.$.get",
+    "projects.apps.http-metrics.$.get": "projects.apps.http-metrics.$.get",
+    "projects.apps.route-metrics.$.get": "projects.apps.route-metrics.$.get",
+    "projects.apps.dependency-metrics.$.get": "projects.apps.dependency-metrics.$.get",
+    "projects.apps.resource-metrics.$.get": "projects.apps.resource-metrics.$.get",
+    "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",
+    "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
+    "projects.apps.deployments.$.find-one-by-id": "projects.apps.deployments.$.find-one-by-id",
+    "projects.apps.deployments.$.find-active": "projects.apps.deployments.$.find-active",
+    "projects.apps.previews.$.find-many-paginated": "projects.apps.previews.$.find-many-paginated",
+    /*
+     * Project Secrets
+     */
+    "projects.secrets.$.find-many-paginated": "projects.secrets.$.find-many-paginated",
+    "projects.secrets.$.find-one-by-id": "projects.secrets.$.find-one-by-id",
+    "projects.config-files.$.find-many-paginated": "projects.config-files.$.find-many-paginated",
+    "projects.config-files.$.find-one-by-id": "projects.config-files.$.find-one-by-id",
+    "projects.acme-dns-provider.$.find-many-paginated": "projects.acme-dns-provider.$.find-many-paginated",
+    "projects.acme-dns-provider.$.find-one-by-id": "projects.acme-dns-provider.$.find-one-by-id",
+    "projects.basic-auth.$.find-many-paginated": "projects.basic-auth.$.find-many-paginated",
+    "projects.key-auth.$.find-many-paginated": "projects.key-auth.$.find-many-paginated",
+    "projects.basic-auth.$.find-one-by-id": "projects.basic-auth.$.find-one-by-id",
+    "projects.key-auth.$.find-one-by-id": "projects.key-auth.$.find-one-by-id",
+    "projects.github-app.$.find-many-paginated": "projects.github-app.$.find-many-paginated",
+    "projects.github-app.$.find-one-by-id": "projects.github-app.$.find-one-by-id",
+    "projects.repo-webhook.$.find-many-paginated": "projects.repo-webhook.$.find-many-paginated",
+    "projects.repo-webhook.$.find-one-by-id": "projects.repo-webhook.$.find-one-by-id",
+    "projects.env-vars.$.find-one": "projects.env-vars.$.find-one",
+    "projects.domain-settings.$.find-one": "projects.domain-settings.$.find-one",
+    "projects.networks.$.find-many-paginated": "projects.networks.$.find-many-paginated",
+    "projects.networks.$.find-one-by-id": "projects.networks.$.find-one-by-id",
+    "projects.cluster-volumes.$.find-many-paginated": "projects.cluster-volumes.$.find-many-paginated",
+    "projects.cluster-volumes.$.find-one-by-id": "projects.cluster-volumes.$.find-one-by-id",
+    "projects.notifications.$.find-many-paginated": "projects.notifications.$.find-many-paginated",
+    "projects.notifications.$.find-one-by-id": "projects.notifications.$.find-one-by-id",
+    /*
+     * Project App Env Vars
+     */
+    "projects.apps.env-vars.$.find-one": "projects.apps.env-vars.$.find-one",
+    "projects.apps.env-vars.$.find-link-targets": "projects.apps.env-vars.$.find-link-targets",
+    "projects.apps.env-vars.$.find-link-suggestions": "projects.apps.env-vars.$.find-link-suggestions",
+    "projects.apps.env-vars.$.find-self-suggestions": "projects.apps.env-vars.$.find-self-suggestions",
+    /*
+     * Project App Secrets
+     */
+    "projects.apps.secrets.$.find-many-paginated": "projects.apps.secrets.$.find-many-paginated",
+    "projects.apps.secrets.$.find-one-by-id": "projects.apps.secrets.$.find-one-by-id",
+    /*
+     * Project App Config Files
+     */
+    "projects.apps.config-files.$.find-many-paginated": "projects.apps.config-files.$.find-many-paginated",
+    "projects.apps.config-files.$.find-one-by-id": "projects.apps.config-files.$.find-one-by-id",
+    "projects.apps.setting-mounts.$.find-many-paginated": "projects.apps.setting-mounts.$.find-many-paginated",
+    "projects.apps.setting-mounts.$.find-one-by-id": "projects.apps.setting-mounts.$.find-one-by-id",
+    "projects.apps.setting-mounts.$.find-sources": "projects.apps.setting-mounts.$.find-sources",
+    /*
+     * Project App Data Files
+     */
+    "projects.apps.data-files.$.find-many-paginated": "projects.apps.data-files.$.find-many-paginated",
+    "projects.apps.data-files.$.find-one-by-id": "projects.apps.data-files.$.find-one-by-id",
+    /*
+     * Project App Container Settings
+     */
+    "projects.apps.container-settings.$.find-one": "projects.apps.container-settings.$.find-one",
+    /*
+     * Project App Deployment Settings
+     */
+    "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",
+    "projects.apps.deployment-settings.$.dockerfile-template":
+        "projects.apps.deployment-settings.$.dockerfile-template",
+    /*
+     * Project App Feature Settings
+     */
+    "projects.apps.feature-settings.$.find-one": "projects.apps.feature-settings.$.find-one",
+    "projects.apps.managed.$.find-settings": "projects.apps.managed.$.find-settings",
+    "projects.apps.managed.$.find-status": "projects.apps.managed.$.find-status",
+    "projects.apps.managed.$.find-switch": "projects.apps.managed.$.find-switch",
+    "projects.apps.managed.$.find-scripts": "projects.apps.managed.$.find-scripts",
+    /*
+     * Project App Service Settings
+     */
+    "projects.apps.service-settings.$.find-one": "projects.apps.service-settings.$.find-one",
+    "projects.apps.service-tasks.$.find-many": "projects.apps.service-tasks.$.find-many",
+    /*
+     * Project App Network Settings
+     */
+    "projects.apps.network-settings.$.find-one": "projects.apps.network-settings.$.find-one",
+    /*
+     * Project App Resource Settings
+     */
+    "projects.apps.resource-settings.$.find-one": "projects.apps.resource-settings.$.find-one",
+    /*
+     * Project App Docker API Settings
+     */
+    "projects.apps.docker-api-settings.$.find-one": "projects.apps.docker-api-settings.$.find-one",
+    "projects.apps.autoscale.$.find-one": "projects.apps.autoscale.$.find-one",
+    "projects.apps.image-scan.$.find-one": "projects.apps.image-scan.$.find-one",
+    "projects.image-scan.find-project": "projects.image-scan.find-project",
+    /*
+     * Project App Storage Settings
+     */
+    "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",
+    "projects.image-build-settings.$.find-one": "projects.image-build-settings.$.find-one",
+    "projects.image-build-settings.repo-cache.$.find-one": "projects.image-build-settings.repo-cache.$.find-one",
+    /*
+     * Project App Routing Settings
+     */
+    "projects.apps.routing-settings.$.find-one": "projects.apps.routing-settings.$.find-one",
+    /*
+     * Project App Kind Settings
+     */
+    "projects.apps.kind-settings.$.find-one": "projects.apps.kind-settings.$.find-one",
+
+    /*
+     * Project App Periodic Jobs (health checks)
+     */
+    "projects.apps.periodic-jobs.$.find-many-paginated": "projects.apps.periodic-jobs.$.find-many-paginated",
+    "projects.apps.periodic-jobs.$.find-one-by-id": "projects.apps.periodic-jobs.$.find-one-by-id",
+    /*
+     * Project App Scheduled Jobs
+     */
+    "projects.apps.scheduled-jobs.$.find-many-paginated": "projects.apps.scheduled-jobs.$.find-many-paginated",
+    "projects.apps.scheduled-jobs.$.find-one-by-id": "projects.apps.scheduled-jobs.$.find-one-by-id",
+    "projects.apps.scheduled-jobs.tasks.$.find-many-paginated":
+        "projects.apps.scheduled-jobs.tasks.$.find-many-paginated",
+    "projects.apps.scheduled-jobs.tasks.$.find-one-by-id": "projects.apps.scheduled-jobs.tasks.$.find-one-by-id",
+    "projects.apps.scheduled-jobs.tasks.$.get-logs": "projects.apps.scheduled-jobs.tasks.$.get-logs",
+    /*
+     * Project Git Credentials
+     */
+    "projects.git-credentials.$.find-many-paginated": "projects.git-credentials.$.find-many-paginated",
+    "projects.git-credentials.$.find-many-repos": "projects.git-credentials.$.find-many-repos",
+    "projects.git-credentials.$.find-many-branches": "projects.git-credentials.$.find-many-branches",
+    "projects.git-credentials.$.find-many-pull-requests": "projects.git-credentials.$.find-many-pull-requests",
+    /*
+     * Project Registry Auth
+     */
+    "projects.registry-auth.$.find-many-paginated": "projects.registry-auth.$.find-many-paginated",
+    "projects.registry-auth.$.find-one-by-id": "projects.registry-auth.$.find-one-by-id",
+    "projects.ssh-key.$.find-many-paginated": "projects.ssh-key.$.find-many-paginated",
+    "projects.ssh-key.$.find-one-by-id": "projects.ssh-key.$.find-one-by-id",
+    "projects.access-token.$.find-many-paginated": "projects.access-token.$.find-many-paginated",
+    "projects.access-token.$.find-one-by-id": "projects.access-token.$.find-one-by-id",
+    "projects.cloud-storage.$.find-many-paginated": "projects.cloud-storage.$.find-many-paginated",
+    "projects.cloud-storage.$.find-one-by-id": "projects.cloud-storage.$.find-one-by-id",
+    /*
+     * Project IM service
+     */
+    "projects.im-service.$.find-many-paginated": "projects.im-service.$.find-many-paginated",
+    "projects.im-service.$.find-one-by-id": "projects.im-service.$.find-one-by-id",
+    /*
+     * Project Email
+     */
+    "projects.email.$.find-many-paginated": "projects.email.$.find-many-paginated",
+    "projects.email.$.find-one-by-id": "projects.email.$.find-one-by-id",
+    /*
+     * Env Scheduled Jobs: the env's own, and those of its apps
+     */
+    "projects.env.scheduled-jobs.$.find-many-paginated": "projects.env.scheduled-jobs.$.find-many-paginated",
+    "projects.env.scheduled-jobs.$.find-one-by-id": "projects.env.scheduled-jobs.$.find-one-by-id",
+    /*
+     * Project Command Pipes
+     */
+    "projects.command-pipes.$.find-many-paginated": "projects.command-pipes.$.find-many-paginated",
+    "projects.command-pipes.$.find-one-by-id": "projects.command-pipes.$.find-one-by-id",
+    /*
+     * Project Command Templates
+     */
+    "projects.command-templates.$.find-many-paginated": "projects.command-templates.$.find-many-paginated",
+    "projects.command-templates.$.find-one-by-id": "projects.command-templates.$.find-one-by-id",
+    "projects.env.command-templates.$.find-many-paginated": "projects.env.command-templates.$.find-many-paginated",
+    "projects.apps.command-templates.$.build": "projects.apps.command-templates.$.build",
+    /*
+     * Project SSL certs
+     */
+    "projects.ssl-cert.$.find-many-paginated": "projects.ssl-cert.$.find-many-paginated",
+    "projects.ssl-cert.$.find-one-by-id": "projects.ssl-cert.$.find-one-by-id",
+    "projects.ssl-provider.$.find-many-paginated": "projects.ssl-provider.$.find-many-paginated",
+    "projects.ssl-provider.$.find-one-by-id": "projects.ssl-provider.$.find-one-by-id",
+    /*
+     * Project Docker Volumes
+     */
+    "projects.docker-volumes.$.list": "projects.docker-volumes.$.list",
+    /*
+     * Project Backup Repos
+     */
+    "projects.backup-repos.$.find-many-paginated": "projects.backup-repos.$.find-many-paginated",
+    "projects.backup-repos.$.find-one-by-id": "projects.backup-repos.$.find-one-by-id",
+} as const;

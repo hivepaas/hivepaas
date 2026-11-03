@@ -1,0 +1,205 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+
+import { type ApiHttpResponse, BaseApi, parseApiError } from "@infrastructure/api";
+
+import type {
+    SslCert_CreateOne_Req,
+    SslCert_CreateOne_Res,
+    SslCert_DeleteOne_Req,
+    SslCert_DeleteOne_Res,
+    SslCert_DownloadBundle_Req,
+    SslCert_DownloadBundle_Res,
+    SslCert_FindManyPaginated_Req,
+    SslCert_FindManyPaginated_Res,
+    SslCert_FindOneById_Req,
+    SslCert_FindOneById_Res,
+    SslCert_RenewOne_Req,
+    SslCert_RenewOne_Res,
+    SslCert_UpdateOne_Req,
+    SslCert_UpdateOne_Res,
+    SslCert_UpdateStatus_Req,
+    SslCert_UpdateStatus_Res,
+} from "./ssl-cert.api.contracts";
+import type { SslCertApiValidator } from "./ssl-cert.api.validator";
+
+function parseFilenameFromContentDisposition(contentDisposition?: string): string | undefined {
+    if (!contentDisposition) {
+        return undefined;
+    }
+
+    const encodedFilename = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition)?.[1];
+    if (encodedFilename) {
+        return decodeURIComponent(encodedFilename);
+    }
+
+    const filename = /filename="?([^";]+)"?/i.exec(contentDisposition)?.[1];
+    return filename ? decodeURIComponent(filename) : undefined;
+}
+
+function mapDownloadResponse(response: ApiHttpResponse<Blob>): SslCert_DownloadBundle_Res {
+    const headers = response.headers as Record<string, unknown>;
+    const contentDisposition = headers["content-disposition"];
+
+    return {
+        data: {
+            blob: response.data,
+            filename: parseFilenameFromContentDisposition(
+                typeof contentDisposition === "string" ? contentDisposition : undefined,
+            ),
+        },
+    };
+}
+
+export class SslCertApi extends BaseApi {
+    public constructor(private readonly validator: SslCertApiValidator) {
+        super();
+    }
+
+    async findManyPaginated(
+        request: SslCert_FindManyPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_FindManyPaginated_Res, Error>> {
+        const { search, pagination, sorting, domain } = request.data;
+        const query = this.queryBuilder.getInstance();
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        const params = {
+            ...query.build(),
+            ...(domain !== undefined && domain !== "" ? { domain } : {}),
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get("/settings/ssl-certs", {
+                    params,
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findOneById(
+        request: SslCert_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_FindOneById_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/settings/ssl-certs/${id}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async createOne(
+        request: SslCert_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_CreateOne_Res, Error>> {
+        const { payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/settings/ssl-certs", payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: SslCert_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_UpdateOne_Res, Error>> {
+        const { id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/settings/ssl-certs/${id}`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: SslCert_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_UpdateStatus_Res, Error>> {
+        const { id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/settings/ssl-certs/${id}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateStatus),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async deleteOne(request: SslCert_DeleteOne_Req): Promise<Result<SslCert_DeleteOne_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`/settings/ssl-certs/${id}`)).pipe(
+                map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async renewOne(request: SslCert_RenewOne_Req): Promise<Result<SslCert_RenewOne_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/settings/ssl-certs/${id}/renew`, {})).pipe(
+                map(this.validator.renewOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async downloadBundle(
+        request: SslCert_DownloadBundle_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<SslCert_DownloadBundle_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get<Blob>(`/settings/ssl-certs/${id}/download`, {
+                    responseType: "blob",
+                    signal,
+                }),
+            ).pipe(
+                map(mapDownloadResponse),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}

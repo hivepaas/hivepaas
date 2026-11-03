@@ -1,0 +1,343 @@
+import { type SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
+
+import { cn } from "@/lib/utils";
+import type { WebSocketReadyState } from "@infrastructure/websocket";
+import { listBox } from "@lib/styles";
+import { useParams, useSearchParams } from "react-router";
+import invariant from "tiny-invariant";
+import { AppLogsQueries } from "~/projects/data";
+
+import {
+    AppLink,
+    AppLoader,
+    LogViewerActionButtons,
+    type LogsViewerFrame,
+    useLogViewerControls,
+} from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+
+import { AppLogsHistory, AppLogsViewer, DEFAULT_LOG_HISTORY_LINES } from "../building-blocks";
+
+const AGGREGATION_TAB_ID = "aggregation";
+const HISTORY_TAB_ID = "history";
+const DEFAULT_LOG_LINES = 100;
+
+export function AppLogsRoute() {
+    const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
+    // ?search=<text> opens the history, searched for text: a call's request id, say.
+    const [searchParams] = useSearchParams();
+    const initialSearch = searchParams.get("search") ?? "";
+    const [activeTab, setActiveTab] = useState(initialSearch ? HISTORY_TAB_ID : AGGREGATION_TAB_ID);
+    const {
+        isFullscreen,
+        toggleFullscreen,
+        isFullView,
+        toggleFullView,
+        isFullHeight,
+        toggleFullHeight,
+        fontSize,
+        cycleFontSize,
+        themeId,
+        changeTheme,
+    } = useLogViewerControls();
+    const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
+        [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(AGGREGATION_TAB_ID),
+    }));
+
+    invariant(projectID, "projectID must be defined");
+    invariant(env, "env must be defined");
+    invariant(appID, "appID must be defined");
+
+    const { data: infoResponse, isLoading: isInfoLoading } = AppLogsQueries.useGetInfo({
+        projectID,
+        env,
+        appID,
+    });
+    const isLogsEnabled = infoResponse?.data.enabled ?? true;
+
+    const tabs = useMemo<AppLogTab[]>(
+        () => [
+            {
+                id: AGGREGATION_TAB_ID,
+                label: "Aggregation",
+            },
+            ...(infoResponse?.data.tasks ?? []).map((task, index) => ({
+                id: task.id,
+                label: `I${index + 1}`,
+                taskId: task.id,
+            })),
+            {
+                id: HISTORY_TAB_ID,
+                label: "History",
+            },
+        ],
+        [infoResponse?.data.tasks],
+    );
+
+    useEffect(() => {
+        if (!tabs.some(tab => tab.id === activeTab)) {
+            setActiveTab(AGGREGATION_TAB_ID);
+        }
+    }, [activeTab, tabs]);
+
+    useEffect(() => {
+        setTabStates(current => {
+            const tabIDs = new Set(tabs.map(tab => tab.id));
+            const hasMissingTabs = tabs.some(tab => current[tab.id] === undefined);
+            const hasRemovedTabs = Object.keys(current).some(tabID => !tabIDs.has(tabID));
+
+            if (!hasMissingTabs && !hasRemovedTabs) {
+                return current;
+            }
+
+            return Object.fromEntries(
+                tabs.map(tab => [tab.id, current[tab.id] ?? createDefaultAppLogTabState(tab.id)] as const),
+            );
+        });
+    }, [tabs]);
+
+    const updateTabState = useCallback((tabID: string, updater: (current: AppLogTabState) => AppLogTabState) => {
+        setTabStates(current => {
+            const currentTabState = current[tabID] ?? createDefaultAppLogTabState(tabID);
+            const nextTabState = updater(currentTabState);
+
+            if (nextTabState === currentTabState) {
+                return current;
+            }
+
+            return {
+                ...current,
+                [tabID]: nextTabState,
+            };
+        });
+    }, []);
+
+    const handleTabLogsChange = useCallback(
+        (tabID: string, action: SetStateAction<LogsViewerFrame[]>) => {
+            updateTabState(tabID, current => {
+                const logs = resolveSetStateAction(action, current.logs);
+
+                return logs === current.logs ? current : { ...current, logs };
+            });
+        },
+        [updateTabState],
+    );
+
+    const handleTabLinesChange = useCallback(
+        (tabID: string, action: SetStateAction<number | undefined>) => {
+            updateTabState(tabID, current => {
+                const lines = resolveSetStateAction(action, current.lines);
+
+                return lines === current.lines ? current : { ...current, lines };
+            });
+        },
+        [updateTabState],
+    );
+
+    const handleTabSinceChange = useCallback(
+        (tabID: string, action: SetStateAction<Date | undefined>) => {
+            updateTabState(tabID, current => {
+                const since = resolveSetStateAction(action, current.since);
+
+                return since === current.since ? current : { ...current, since };
+            });
+        },
+        [updateTabState],
+    );
+
+    const handleTabDurationChange = useCallback(
+        (tabID: string, action: SetStateAction<string | undefined>) => {
+            updateTabState(tabID, current => {
+                const duration = resolveSetStateAction(action, current.duration);
+
+                return duration === current.duration ? current : { ...current, duration };
+            });
+        },
+        [updateTabState],
+    );
+
+    const handleTabReadyStateChange = useCallback(
+        (tabID: string, readyState: WebSocketReadyState) => {
+            updateTabState(tabID, current => {
+                return current.readyState === readyState ? current : { ...current, readyState };
+            });
+        },
+        [updateTabState],
+    );
+
+    return (
+        <section
+            className={cn(
+                listBox,
+                isFullView && "max-w-none",
+                isFullscreen &&
+                    "!max-w-none !w-auto fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl flex flex-col",
+            )}
+        >
+            {isInfoLoading ? (
+                <AppLoader />
+            ) : isLogsEnabled ? (
+                <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className={cn("gap-2 sm:gap-4", isFullscreen && "flex-1 min-h-0 flex flex-col")}
+                >
+                    <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                        <TabsList className="h-auto flex-wrap gap-1.5 sm:gap-2 p-0 justify-start">
+                            {tabs.map(tab => {
+                                const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
+
+                                return (
+                                    <TabsTrigger
+                                        key={tab.id}
+                                        value={tab.id}
+                                        className="text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2"
+                                    >
+                                        <span>{tab.label}</span>
+                                        {isStreaming && (
+                                            <span
+                                                aria-label={`${tab.label} streaming`}
+                                                className="size-2 sm:size-2.5 rounded-full bg-emerald-500"
+                                            />
+                                        )}
+                                    </TabsTrigger>
+                                );
+                            })}
+                        </TabsList>
+
+                        <div className="flex items-center gap-1">
+                            <LogViewerActionButtons
+                                isFullscreen={isFullscreen}
+                                isFullView={isFullView}
+                                isFullHeight={isFullHeight}
+                                fontSize={fontSize}
+                                themeId={themeId}
+                                onToggleFullscreen={toggleFullscreen}
+                                onToggleFullView={toggleFullView}
+                                onToggleFullHeight={toggleFullHeight}
+                                onCycleFontSize={cycleFontSize}
+                                onSelectTheme={changeTheme}
+                            />
+                        </div>
+                    </div>
+
+                    {tabs.map(tab => {
+                        const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState(tab.id);
+
+                        return (
+                            <TabsContent
+                                key={tab.id}
+                                value={tab.id}
+                                forceMount
+                                className={cn(
+                                    "m-0 data-[state=inactive]:hidden",
+                                    isFullscreen && "flex-1 min-h-0 flex flex-col",
+                                )}
+                            >
+                                {tab.id === HISTORY_TAB_ID ? (
+                                    <AppLogsHistory
+                                        tabID={tab.id}
+                                        projectID={projectID}
+                                        env={env}
+                                        appID={appID}
+                                        initialSearch={initialSearch}
+                                        history={infoResponse?.data.history}
+                                        lines={tabState.lines}
+                                        since={tabState.since}
+                                        duration={tabState.duration}
+                                        isActive={activeTab === tab.id}
+                                        fontSize={fontSize}
+                                        themeId={themeId}
+                                        height={isFullscreen ? "100%" : undefined}
+                                        isFullView={isFullView}
+                                        isFullHeight={isFullHeight}
+                                        onLinesChange={handleTabLinesChange}
+                                        onSinceChange={handleTabSinceChange}
+                                        onDurationChange={handleTabDurationChange}
+                                    />
+                                ) : (
+                                    <AppLogsViewer
+                                        tabID={tab.id}
+                                        projectID={projectID}
+                                        env={env}
+                                        appID={appID}
+                                        tabLabel={tab.label}
+                                        taskId={tab.taskId}
+                                        logs={tabState.logs}
+                                        lines={tabState.lines}
+                                        since={tabState.since}
+                                        duration={tabState.duration}
+                                        webSocketReadyState={tabState.readyState}
+                                        isActive={activeTab === tab.id}
+                                        shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
+                                        fontSize={fontSize}
+                                        themeId={themeId}
+                                        height={isFullscreen ? "100%" : undefined}
+                                        isFullView={isFullView}
+                                        isFullHeight={isFullHeight}
+                                        onLogsChange={handleTabLogsChange}
+                                        onLinesChange={handleTabLinesChange}
+                                        onSinceChange={handleTabSinceChange}
+                                        onDurationChange={handleTabDurationChange}
+                                        onReadyStateChange={handleTabReadyStateChange}
+                                    />
+                                )}
+                            </TabsContent>
+                        );
+                    })}
+                </Tabs>
+            ) : (
+                <p className="text-base">
+                    Logs feature is disabled, enable it in{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectID,
+                            env,
+                            appID,
+                        )}
+                        className="text-link underline-offset-4 hover:underline"
+                    >
+                        Feature Settings
+                    </AppLink.Basic>
+                </p>
+            )}
+        </section>
+    );
+}
+
+/**
+ * Every tab carries the same window, so the toolbar means one thing throughout.
+ * Only the line count differs: a tail for the stream, a page size for stored
+ * logs, where a bigger page is fewer round trips rather than a longer wait.
+ */
+function createDefaultAppLogTabState(tabID: string): AppLogTabState {
+    return {
+        logs: [],
+        lines: tabID === HISTORY_TAB_ID ? DEFAULT_LOG_HISTORY_LINES : DEFAULT_LOG_LINES,
+        since: undefined,
+        duration: undefined,
+        readyState: WebSocket.CLOSED,
+    };
+}
+
+function resolveSetStateAction<T>(action: SetStateAction<T>, current: T): T {
+    return typeof action === "function" ? (action as (current: T) => T)(current) : action;
+}
+
+interface AppLogTab {
+    id: string;
+    label: string;
+    taskId?: string;
+}
+
+interface AppLogTabState {
+    logs: LogsViewerFrame[];
+    lines: number | undefined;
+    since: Date | undefined;
+    duration: string | undefined;
+    readyState: WebSocketReadyState;
+}
+
+type AppLogTabStates = Partial<Record<string, AppLogTabState>>;

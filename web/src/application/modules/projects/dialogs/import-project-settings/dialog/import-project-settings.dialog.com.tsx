@@ -1,0 +1,702 @@
+import { useEffect, useMemo, useState } from "react";
+
+import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import { ClusterNetworksQueries, ClusterVolumesQueries } from "~/cluster/data/queries";
+import { NetworksTableDefs } from "~/cluster/module-shared/definitions/tables/networks/networks-table.defs";
+import { VolumesTableDefs } from "~/cluster/module-shared/definitions/tables/volumes/volumes-table.defs";
+import {
+    PROJECT_SETTINGS_IMPORT_KIND,
+    ProjectSettingsImportCommands,
+    type ProjectSettingsImportKind,
+} from "~/projects/data/commands";
+import {
+    ProjectAccessTokenQueries,
+    ProjectAcmeDnsProviderQueries,
+    ProjectBackupRepoQueries,
+    ProjectBasicAuthQueries,
+    ProjectCloudStorageQueries,
+    ProjectClusterVolumesQueries,
+    ProjectEmailQueries,
+    ProjectGithubAppQueries,
+    ProjectImServiceQueries,
+    ProjectKeyAuthQueries,
+    ProjectNetworksQueries,
+    ProjectNotificationQueries,
+    ProjectRegistryAuthQueries,
+    ProjectRepoWebhookQueries,
+    ProjectSSHKeyQueries,
+    ProjectSslCertQueries,
+    ProjectSslProviderQueries,
+} from "~/projects/data/queries";
+import {
+    AccessTokenQueries,
+    AcmeDnsProviderQueries,
+    BackupRepoQueries,
+    BasicAuthQueries,
+    CloudStorageQueries,
+    EmailQueries,
+    GithubAppQueries,
+    ImServiceQueries,
+    KeyAuthQueries,
+    NotificationQueries,
+    RegistryAuthQueries,
+    RepoWebhookQueries,
+    SSHKeyQueries,
+    SslCertQueries,
+    SslProviderQueries,
+} from "~/settings/data/queries";
+import { AccessTokenTableDefs } from "~/settings/module-shared/components/access-token-table/access-token-table.defs";
+import { AcmeDnsProviderTableDefs } from "~/settings/module-shared/components/acme-dns-provider-table/acme-dns-provider-table.defs";
+import { BackupRepoTableDefs } from "~/settings/module-shared/components/backup-repo-table/backup-repo-table.defs";
+import { BasicAuthTableDefs } from "~/settings/module-shared/components/basic-auth-table/basic-auth-table.defs";
+import { CloudStorageTableDefs } from "~/settings/module-shared/components/cloud-storage-table/cloud-storage-table.defs";
+import { EmailAccountTableDefs } from "~/settings/module-shared/components/email-account-table/email-account-table.defs";
+import { GithubAppTableDefs } from "~/settings/module-shared/components/github-app-table/github-app-table.defs";
+import { ImPlatformTableDefs } from "~/settings/module-shared/components/im-platform-table/im-platform-table.defs";
+import { KeyAuthTableDefs } from "~/settings/module-shared/components/key-auth-table/key-auth-table.defs";
+import { NotificationTargetTableDefs } from "~/settings/module-shared/components/notification-target-table/notification-target-table.defs";
+import { RegistryAuthTableDefs } from "~/settings/module-shared/components/registry-auth-table/registry-auth-table.defs";
+import { RepoWebhookTableDefs } from "~/settings/module-shared/components/repo-webhook-table/repo-webhook-table.defs";
+import { SSHKeyTableDefs } from "~/settings/module-shared/components/ssh-key-table/ssh-key-table.defs";
+import { SslCertTableDefs } from "~/settings/module-shared/components/ssl-cert-table/ssl-cert-table.defs";
+import { SslProviderTableDefs } from "~/settings/module-shared/components/ssl-provider-table/ssl-provider-table.defs";
+
+import { TableActions } from "@application/shared/components";
+import { useTableState } from "@application/shared/hooks/table";
+
+import { Button, Checkbox, DataTable, Separator } from "@/components/ui";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+
+import { useImportProjectSettingsDialogState } from "../hooks";
+
+const IMPORT_DIALOG_PAGINATION = { page: 1, size: 10000 };
+
+type ImportableSetting = {
+    id: string;
+    inherited?: boolean;
+};
+
+const EMPTY_IMPORT_SETTINGS: ImportableSetting[] = [];
+
+const IMPORT_DIALOG_LABELS = {
+    [PROJECT_SETTINGS_IMPORT_KIND.AccessToken]: "Access Tokens",
+    [PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider]: "ACME DNS Providers",
+    [PROJECT_SETTINGS_IMPORT_KIND.BasicAuth]: "Basic Auth",
+    [PROJECT_SETTINGS_IMPORT_KIND.KeyAuth]: "Key Auth",
+    [PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth]: "Registry Auth",
+    [PROJECT_SETTINGS_IMPORT_KIND.SslCert]: "SSL Certificates",
+    [PROJECT_SETTINGS_IMPORT_KIND.SslProvider]: "SSL Providers",
+    [PROJECT_SETTINGS_IMPORT_KIND.Email]: "Email Accounts",
+    [PROJECT_SETTINGS_IMPORT_KIND.ImService]: "IM Platforms",
+    [PROJECT_SETTINGS_IMPORT_KIND.SSHKey]: "SSH Keys",
+    [PROJECT_SETTINGS_IMPORT_KIND.CloudStorage]: "Cloud Storages",
+    [PROJECT_SETTINGS_IMPORT_KIND.Notification]: "Notification Targets",
+    [PROJECT_SETTINGS_IMPORT_KIND.GithubApp]: "Github Apps",
+    [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: "Webhooks",
+    [PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork]: "Cluster Networks",
+    [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: "Cluster Volumes",
+    [PROJECT_SETTINGS_IMPORT_KIND.BackupRepo]: "Backup Repos",
+} as const satisfies Record<ProjectSettingsImportKind, string>;
+
+function castColumns<T extends ImportableSetting>(columns: ColumnDef<T>[]): ColumnDef<ImportableSetting>[] {
+    return columns as unknown as ColumnDef<ImportableSetting>[];
+}
+
+function getColumnId(column: ColumnDef<ImportableSetting>) {
+    if ("id" in column && column.id) {
+        return column.id;
+    }
+
+    if ("accessorKey" in column && column.accessorKey) {
+        return String(column.accessorKey);
+    }
+
+    return "";
+}
+
+function getImportColumns(settingKind: ProjectSettingsImportKind | null): ColumnDef<ImportableSetting>[] {
+    switch (settingKind) {
+        case PROJECT_SETTINGS_IMPORT_KIND.AccessToken:
+            return castColumns(AccessTokenTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider:
+            return castColumns(AcmeDnsProviderTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.BasicAuth:
+            return castColumns(BasicAuthTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.KeyAuth:
+            return castColumns(KeyAuthTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth:
+            return castColumns(RegistryAuthTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.SslCert:
+            return castColumns(SslCertTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.SslProvider:
+            return castColumns(SslProviderTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.Email:
+            return castColumns(EmailAccountTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.ImService:
+            return castColumns(ImPlatformTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.SSHKey:
+            return castColumns(SSHKeyTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.CloudStorage:
+            return castColumns(CloudStorageTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.Notification:
+            return castColumns(NotificationTargetTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.GithubApp:
+            return castColumns(GithubAppTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
+            return castColumns(RepoWebhookTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork:
+            return castColumns(NetworksTableDefs.columns({ type: "cluster" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
+            return castColumns(VolumesTableDefs.columns({ type: "cluster" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.BackupRepo:
+            return castColumns(BackupRepoTableDefs.columns({ type: "settings" }));
+        default:
+            return [];
+    }
+}
+
+function filterImportColumns(columns: ColumnDef<ImportableSetting>[]) {
+    return columns.filter(column => {
+        const columnId = getColumnId(column);
+
+        return columnId !== "view" && columnId !== "actions" && columnId !== "setupIcon";
+    });
+}
+
+export function ImportProjectSettingsDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useImportProjectSettingsDialogState();
+    const { sorting, setSorting, search, setSearch } = useTableState();
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+
+    const open = state.mode !== "closed";
+    const projectId = state.mode === "open" ? state.projectId : "";
+    const env = state.mode === "open" ? (state.env ?? undefined) : undefined;
+    const settingKind = state.mode === "open" ? state.settingKind : null;
+
+    const queryRequest = {
+        pagination: IMPORT_DIALOG_PAGINATION,
+        sorting,
+        search,
+    };
+    const projectListRequest = {
+        projectID: projectId,
+        env,
+        pagination: IMPORT_DIALOG_PAGINATION,
+    };
+
+    const basicAuthSettingsQuery = BasicAuthQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BasicAuth,
+    });
+    const basicAuthProjectQuery = ProjectBasicAuthQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BasicAuth,
+    });
+    const keyAuthSettingsQuery = KeyAuthQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.KeyAuth,
+    });
+    const keyAuthProjectQuery = ProjectKeyAuthQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.KeyAuth,
+    });
+
+    const registryAuthSettingsQuery = RegistryAuthQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth,
+    });
+    const registryAuthProjectQuery = ProjectRegistryAuthQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth,
+    });
+
+    const sslCertSettingsQuery = SslCertQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslCert,
+    });
+    const sslCertProjectQuery = ProjectSslCertQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslCert,
+    });
+
+    const sslProviderSettingsQuery = SslProviderQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslProvider,
+    });
+    const sslProviderProjectQuery = ProjectSslProviderQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SslProvider,
+    });
+
+    const emailSettingsQuery = EmailQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.Email,
+    });
+    const emailProjectQuery = ProjectEmailQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.Email,
+    });
+
+    const imServiceSettingsQuery = ImServiceQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ImService,
+    });
+    const imServiceProjectQuery = ProjectImServiceQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ImService,
+    });
+
+    const sshKeySettingsQuery = SSHKeyQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SSHKey,
+    });
+    const sshKeyProjectQuery = ProjectSSHKeyQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.SSHKey,
+    });
+
+    const accessTokenSettingsQuery = AccessTokenQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AccessToken,
+    });
+    const accessTokenProjectQuery = ProjectAccessTokenQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AccessToken,
+    });
+
+    const acmeDnsProviderSettingsQuery = AcmeDnsProviderQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider,
+    });
+    const acmeDnsProviderProjectQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider,
+    });
+
+    const cloudStorageSettingsQuery = CloudStorageQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.CloudStorage,
+    });
+    const cloudStorageProjectQuery = ProjectCloudStorageQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.CloudStorage,
+    });
+
+    const notificationSettingsQuery = NotificationQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.Notification,
+    });
+    const notificationProjectQuery = ProjectNotificationQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.Notification,
+    });
+
+    const githubAppSettingsQuery = GithubAppQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.GithubApp,
+    });
+    const githubAppProjectQuery = ProjectGithubAppQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.GithubApp,
+    });
+
+    const repoWebhookSettingsQuery = RepoWebhookQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+    const repoWebhookProjectQuery = ProjectRepoWebhookQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook,
+    });
+
+    const clusterNetworkSettingsQuery = ClusterNetworksQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork,
+    });
+    const clusterNetworkProjectQuery = ProjectNetworksQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork,
+    });
+
+    const clusterVolumeSettingsQuery = ClusterVolumesQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume,
+    });
+    const clusterVolumeProjectQuery = ProjectClusterVolumesQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume,
+    });
+
+    const backupRepoSettingsQuery = BackupRepoQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BackupRepo,
+    });
+    const backupRepoProjectQuery = ProjectBackupRepoQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BackupRepo,
+    });
+
+    let settings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
+    let projectSettings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
+    let isFetching = false;
+    let hasError = false;
+    let refetch: () => void = () => undefined;
+
+    switch (settingKind) {
+        case PROJECT_SETTINGS_IMPORT_KIND.BasicAuth:
+            settings = basicAuthSettingsQuery.data?.data ?? [];
+            projectSettings = basicAuthProjectQuery.data?.data ?? [];
+            isFetching = basicAuthSettingsQuery.isFetching || basicAuthProjectQuery.isFetching;
+            hasError = Boolean(basicAuthSettingsQuery.error ?? basicAuthProjectQuery.error);
+            refetch = () => {
+                void basicAuthSettingsQuery.refetch();
+                void basicAuthProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.KeyAuth:
+            settings = keyAuthSettingsQuery.data?.data ?? [];
+            projectSettings = keyAuthProjectQuery.data?.data ?? [];
+            isFetching = keyAuthSettingsQuery.isFetching || keyAuthProjectQuery.isFetching;
+            hasError = Boolean(keyAuthSettingsQuery.error ?? keyAuthProjectQuery.error);
+            refetch = () => {
+                void keyAuthSettingsQuery.refetch();
+                void keyAuthProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth:
+            settings = registryAuthSettingsQuery.data?.data ?? [];
+            projectSettings = registryAuthProjectQuery.data?.data ?? [];
+            isFetching = registryAuthSettingsQuery.isFetching || registryAuthProjectQuery.isFetching;
+            hasError = Boolean(registryAuthSettingsQuery.error ?? registryAuthProjectQuery.error);
+            refetch = () => {
+                void registryAuthSettingsQuery.refetch();
+                void registryAuthProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.SslCert:
+            settings = sslCertSettingsQuery.data?.data ?? [];
+            projectSettings = sslCertProjectQuery.data?.data ?? [];
+            isFetching = sslCertSettingsQuery.isFetching || sslCertProjectQuery.isFetching;
+            hasError = Boolean(sslCertSettingsQuery.error ?? sslCertProjectQuery.error);
+            refetch = () => {
+                void sslCertSettingsQuery.refetch();
+                void sslCertProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.SslProvider:
+            settings = sslProviderSettingsQuery.data?.data ?? [];
+            projectSettings = sslProviderProjectQuery.data?.data ?? [];
+            isFetching = sslProviderSettingsQuery.isFetching || sslProviderProjectQuery.isFetching;
+            hasError = Boolean(sslProviderSettingsQuery.error ?? sslProviderProjectQuery.error);
+            refetch = () => {
+                void sslProviderSettingsQuery.refetch();
+                void sslProviderProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.Email:
+            settings = emailSettingsQuery.data?.data ?? [];
+            projectSettings = emailProjectQuery.data?.data ?? [];
+            isFetching = emailSettingsQuery.isFetching || emailProjectQuery.isFetching;
+            hasError = Boolean(emailSettingsQuery.error ?? emailProjectQuery.error);
+            refetch = () => {
+                void emailSettingsQuery.refetch();
+                void emailProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.ImService:
+            settings = imServiceSettingsQuery.data?.data ?? [];
+            projectSettings = imServiceProjectQuery.data?.data ?? [];
+            isFetching = imServiceSettingsQuery.isFetching || imServiceProjectQuery.isFetching;
+            hasError = Boolean(imServiceSettingsQuery.error ?? imServiceProjectQuery.error);
+            refetch = () => {
+                void imServiceSettingsQuery.refetch();
+                void imServiceProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.SSHKey:
+            settings = sshKeySettingsQuery.data?.data ?? [];
+            projectSettings = sshKeyProjectQuery.data?.data ?? [];
+            isFetching = sshKeySettingsQuery.isFetching || sshKeyProjectQuery.isFetching;
+            hasError = Boolean(sshKeySettingsQuery.error ?? sshKeyProjectQuery.error);
+            refetch = () => {
+                void sshKeySettingsQuery.refetch();
+                void sshKeyProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.AccessToken:
+            settings = accessTokenSettingsQuery.data?.data ?? [];
+            projectSettings = accessTokenProjectQuery.data?.data ?? [];
+            isFetching = accessTokenSettingsQuery.isFetching || accessTokenProjectQuery.isFetching;
+            hasError = Boolean(accessTokenSettingsQuery.error ?? accessTokenProjectQuery.error);
+            refetch = () => {
+                void accessTokenSettingsQuery.refetch();
+                void accessTokenProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider:
+            settings = acmeDnsProviderSettingsQuery.data?.data ?? [];
+            projectSettings = acmeDnsProviderProjectQuery.data?.data ?? [];
+            isFetching = acmeDnsProviderSettingsQuery.isFetching || acmeDnsProviderProjectQuery.isFetching;
+            hasError = Boolean(acmeDnsProviderSettingsQuery.error ?? acmeDnsProviderProjectQuery.error);
+            refetch = () => {
+                void acmeDnsProviderSettingsQuery.refetch();
+                void acmeDnsProviderProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.CloudStorage:
+            settings = cloudStorageSettingsQuery.data?.data ?? [];
+            projectSettings = cloudStorageProjectQuery.data?.data ?? [];
+            isFetching = cloudStorageSettingsQuery.isFetching || cloudStorageProjectQuery.isFetching;
+            hasError = Boolean(cloudStorageSettingsQuery.error ?? cloudStorageProjectQuery.error);
+            refetch = () => {
+                void cloudStorageSettingsQuery.refetch();
+                void cloudStorageProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.Notification:
+            settings = notificationSettingsQuery.data?.data ?? [];
+            projectSettings = notificationProjectQuery.data?.data ?? [];
+            isFetching = notificationSettingsQuery.isFetching || notificationProjectQuery.isFetching;
+            hasError = Boolean(notificationSettingsQuery.error ?? notificationProjectQuery.error);
+            refetch = () => {
+                void notificationSettingsQuery.refetch();
+                void notificationProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.GithubApp:
+            settings = githubAppSettingsQuery.data?.data ?? [];
+            projectSettings = githubAppProjectQuery.data?.data ?? [];
+            isFetching = githubAppSettingsQuery.isFetching || githubAppProjectQuery.isFetching;
+            hasError = Boolean(githubAppSettingsQuery.error ?? githubAppProjectQuery.error);
+            refetch = () => {
+                void githubAppSettingsQuery.refetch();
+                void githubAppProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook:
+            settings = repoWebhookSettingsQuery.data?.data ?? [];
+            projectSettings = repoWebhookProjectQuery.data?.data ?? [];
+            isFetching = repoWebhookSettingsQuery.isFetching || repoWebhookProjectQuery.isFetching;
+            hasError = Boolean(repoWebhookSettingsQuery.error ?? repoWebhookProjectQuery.error);
+            refetch = () => {
+                void repoWebhookSettingsQuery.refetch();
+                void repoWebhookProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork:
+            settings = clusterNetworkSettingsQuery.data?.data ?? [];
+            projectSettings = clusterNetworkProjectQuery.data?.data ?? [];
+            isFetching = clusterNetworkSettingsQuery.isFetching || clusterNetworkProjectQuery.isFetching;
+            hasError = Boolean(clusterNetworkSettingsQuery.error ?? clusterNetworkProjectQuery.error);
+            refetch = () => {
+                void clusterNetworkSettingsQuery.refetch();
+                void clusterNetworkProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
+            settings = clusterVolumeSettingsQuery.data?.data ?? [];
+            projectSettings = clusterVolumeProjectQuery.data?.data ?? [];
+            isFetching = clusterVolumeSettingsQuery.isFetching || clusterVolumeProjectQuery.isFetching;
+            hasError = Boolean(clusterVolumeSettingsQuery.error ?? clusterVolumeProjectQuery.error);
+            refetch = () => {
+                void clusterVolumeSettingsQuery.refetch();
+                void clusterVolumeProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.BackupRepo:
+            settings = backupRepoSettingsQuery.data?.data ?? [];
+            projectSettings = backupRepoProjectQuery.data?.data ?? [];
+            isFetching = backupRepoSettingsQuery.isFetching || backupRepoProjectQuery.isFetching;
+            hasError = Boolean(backupRepoSettingsQuery.error ?? backupRepoProjectQuery.error);
+            refetch = () => {
+                void backupRepoSettingsQuery.refetch();
+                void backupRepoProjectQuery.refetch();
+            };
+            break;
+    }
+
+    const inheritedSettingIds = useMemo(
+        () => new Set(projectSettings.filter(setting => setting.inherited).map(setting => setting.id)),
+        [projectSettings],
+    );
+
+    const importableSettings = useMemo(
+        () => settings.filter(setting => !inheritedSettingIds.has(setting.id)),
+        [inheritedSettingIds, settings],
+    );
+
+    const importableSettingIdsKey = useMemo(
+        () => importableSettings.map(setting => setting.id).join("|"),
+        [importableSettings],
+    );
+
+    const allVisibleSelected =
+        importableSettings.length > 0 && importableSettings.every(setting => selectedIds.has(setting.id));
+    const someVisibleSelected = importableSettings.some(setting => selectedIds.has(setting.id));
+
+    const selectionColumn = useMemo<ColumnDef<ImportableSetting>>(
+        () => ({
+            id: "select",
+            header: () => (
+                <Checkbox
+                    checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                    disabled={importableSettings.length === 0}
+                    onCheckedChange={checked => {
+                        const shouldSelect = checked === true;
+                        setSelectedIds(current => {
+                            const next = new Set(current);
+                            for (const setting of importableSettings) {
+                                if (shouldSelect) {
+                                    next.add(setting.id);
+                                } else {
+                                    next.delete(setting.id);
+                                }
+                            }
+                            return next;
+                        });
+                    }}
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+            size: 48,
+            cell: ({ row: { original } }) => (
+                <Checkbox
+                    checked={selectedIds.has(original.id)}
+                    onCheckedChange={checked => {
+                        setSelectedIds(current => {
+                            const next = new Set(current);
+                            if (checked === true) {
+                                next.add(original.id);
+                            } else {
+                                next.delete(original.id);
+                            }
+                            return next;
+                        });
+                    }}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        }),
+        [allVisibleSelected, importableSettings, selectedIds, someVisibleSelected],
+    );
+
+    const columns = useMemo(
+        () => [selectionColumn, ...filterImportColumns(getImportColumns(settingKind))],
+        [selectionColumn, settingKind],
+    );
+
+    const { mutate: importSettings, isPending } = ProjectSettingsImportCommands.useImportSettings({
+        onSuccess: () => {
+            toast.success("Settings imported successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+        onError: error => {
+            dialogOptions?.onError?.(error);
+        },
+    });
+
+    useEffect(() => {
+        if (open) {
+            return;
+        }
+
+        setSelectedIds(new Set());
+        setSearch("");
+        setSorting([]);
+        clearDialog();
+    }, [clearDialog, open, setSearch, setSorting]);
+
+    useEffect(() => {
+        setSelectedIds(current => {
+            const importableIds = new Set(importableSettings.map(setting => setting.id));
+            const next = new Set([...current].filter(id => importableIds.has(id)));
+
+            if (next.size === current.size) {
+                return current;
+            }
+
+            return next;
+        });
+    }, [importableSettingIdsKey, importableSettings]);
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    function handleImport() {
+        if (state.mode !== "open" || selectedIds.size === 0) {
+            return;
+        }
+
+        importSettings({
+            projectID: state.projectId,
+            env: state.env ?? undefined,
+            settingKind: state.settingKind,
+            payload: {
+                settings: [...selectedIds].map(id => ({ id })),
+                dataViewAllowed: false,
+            },
+        });
+    }
+
+    const title = settingKind ? IMPORT_DIALOG_LABELS[settingKind] : "Settings";
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={nextOpen => {
+                if (!nextOpen) {
+                    handleClose();
+                }
+            }}
+        >
+            <DialogFixedContent className="sm:max-w-[980px]">
+                <DialogHeader>
+                    <DialogTitle>Import {title}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+
+                <DialogBody>
+                    {hasError ? (
+                        <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+                            <span>Unable to load settings.</span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={refetch}
+                            >
+                                Retry
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            <TableActions search={{ value: search, onChange: setSearch, autoFocus: true }} />
+                            <DataTable
+                                columns={columns}
+                                data={importableSettings}
+                                pageSize={10}
+                                manualSorting
+                                enableSorting
+                                enablePagination
+                                isLoading={isFetching}
+                                onSortingChange={setSorting}
+                                showPageSizeSelector={false}
+                                totalCount={importableSettings.length}
+                            />
+                        </div>
+                    )}
+                </DialogBody>
+
+                <DialogActionFooter className="flex justify-end gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={handleClose}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        disabled={selectedIds.size === 0 || hasError}
+                        isLoading={isPending}
+                        onClick={handleImport}
+                    >
+                        Import
+                    </Button>
+                </DialogActionFooter>
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

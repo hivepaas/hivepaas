@@ -1,0 +1,137 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+
+import { BaseApi, parseApiError } from "@infrastructure/api";
+
+import type {
+    ProjectNotification_CreateOne_Req,
+    ProjectNotification_CreateOne_Res,
+    ProjectNotification_DeleteOne_Req,
+    ProjectNotification_DeleteOne_Res,
+    ProjectNotification_FindManyPaginated_Req,
+    ProjectNotification_FindManyPaginated_Res,
+    ProjectNotification_FindOneById_Req,
+    ProjectNotification_FindOneById_Res,
+    ProjectNotification_UpdateOne_Req,
+    ProjectNotification_UpdateOne_Res,
+    ProjectNotification_UpdateStatus_Req,
+    ProjectNotification_UpdateStatus_Res,
+} from "./project-notification.api.contracts";
+import type { ProjectNotificationApiValidator } from "./project-notification.api.validator";
+
+function getProjectNotificationsBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/notifications`;
+    }
+
+    return `/projects/${projectID}/notifications`;
+}
+
+export class ProjectNotificationApi extends BaseApi {
+    public constructor(private readonly validator: ProjectNotificationApiValidator) {
+        super();
+    }
+
+    async findManyPaginated(
+        request: ProjectNotification_FindManyPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNotification_FindManyPaginated_Res, Error>> {
+        const { projectID, env, search, pagination, sorting } = request.data;
+        const query = this.queryBuilder.getInstance();
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(getProjectNotificationsBasePath(projectID, env), {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(response => this.validator.findManyPaginated(response)),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findOneById(
+        request: ProjectNotification_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNotification_FindOneById_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(response => this.validator.findOneById(response)),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async createOne(
+        request: ProjectNotification_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNotification_CreateOne_Res, Error>> {
+        const { projectID, env, payload } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(getProjectNotificationsBasePath(projectID, env), payload, { signal })).pipe(
+                map(response => this.validator.createOne(response)),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: ProjectNotification_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNotification_UpdateOne_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, payload, { signal }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: ProjectNotification_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectNotification_UpdateStatus_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async deleteOne(
+        request: ProjectNotification_DeleteOne_Req,
+    ): Promise<Result<ProjectNotification_DeleteOne_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`${getProjectNotificationsBasePath(projectID, env)}/${id}`)).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}

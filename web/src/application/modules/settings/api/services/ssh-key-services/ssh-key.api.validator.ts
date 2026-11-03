@@ -1,0 +1,81 @@
+import { z } from "zod";
+import { SSHKeySettingEntitySchema } from "~/settings/module-shared/schemas";
+
+import { ESSHKeyType } from "@application/shared/enums";
+
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+import type {
+    SSHKey_CreateOne_Res,
+    SSHKey_DeleteOne_Res,
+    SSHKey_FindManyPaginated_Res,
+    SSHKey_FindOneById_Res,
+    SSHKey_Generate_Res,
+    SSHKey_UpdateOne_Res,
+    SSHKey_UpdateStatus_Res,
+} from "./ssh-key.api.contracts";
+
+const FindManyPaginatedSchema = z.object({
+    data: z.array(SSHKeySettingEntitySchema),
+    meta: PagingMetaApiSchema,
+});
+
+const FindOneByIdSchema = z.object({
+    data: SSHKeySettingEntitySchema,
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const CreateOneSchema = z.object({
+    data: z.object({ id: z.string() }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const GenerateSchema = z.object({
+    data: z.object({
+        keyType: z.nativeEnum(ESSHKeyType),
+        publicKey: z.string(),
+        privateKey: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const MetaOnlySchema = z.object({
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+export class SSHKeyApiValidator {
+    findManyPaginated = (response: ApiHttpResponse): SSHKey_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
+        return { data, meta };
+    };
+
+    findOneById = (response: ApiHttpResponse): SSHKey_FindOneById_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
+        return { data, meta };
+    };
+
+    createOne = (response: ApiHttpResponse): SSHKey_CreateOne_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: CreateOneSchema });
+        return { data, meta };
+    };
+
+    updateOne = (response: ApiHttpResponse): SSHKey_UpdateOne_Res => {
+        parseApiResponse({ response, schema: MetaOnlySchema });
+        return { data: { type: "success" } };
+    };
+
+    updateStatus = (response: ApiHttpResponse): SSHKey_UpdateStatus_Res => {
+        parseApiResponse({ response, schema: MetaOnlySchema });
+        return { data: { type: "success" } };
+    };
+
+    deleteOne = (response: ApiHttpResponse): SSHKey_DeleteOne_Res => {
+        parseApiResponse({ response, schema: MetaOnlySchema });
+        return { data: { type: "success" } };
+    };
+
+    generate = (response: ApiHttpResponse): SSHKey_Generate_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: GenerateSchema });
+        return { data, meta };
+    };
+}

@@ -1,0 +1,20 @@
+import { z } from "zod";
+
+import { SettingsBaseEntitySchema } from "./settings-base.schema";
+
+export const GithubAppSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
+    type: z.string(),
+    clientId: z.string().default(""),
+    clientSecret: z.string().default(""),
+    organization: z.string().default(""),
+    callbackURL: z.string().optional().default(""),
+    webhookURL: z.string().optional().default(""),
+    webhookSecret: z.string().optional().default(""),
+    settingsURL: z.string().optional().default(""),
+    appId: z.coerce.number().default(0),
+    installationId: z.coerce.number().default(0),
+    privateKey: z.string().default(""),
+    ssoEnabled: z.boolean().default(false),
+    secretMasked: z.boolean().optional(),
+    inherited: z.boolean().optional(),
+});

@@ -1,0 +1,77 @@
+import { type PaginationState, type SortingState } from "@infrastructure/data";
+import { type ProjectSecret } from "~/projects/domain";
+import type { EProjectSecretStatus } from "~/projects/module-shared/enums";
+
+import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
+
+/**
+ * Find many project secrets paginated
+ */
+export type ProjectSecrets_FindManyPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type ProjectSecrets_FindManyPaginated_Res = ApiResponsePaginated<ProjectSecret>;
+
+/**
+ * Create project secret
+ */
+export type ProjectSecrets_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    name: string;
+    value: string;
+    base64: boolean;
+    inheritable: boolean;
+}>;
+
+export type ProjectSecrets_CreateOne_Res = ApiResponseBase<{
+    id: string;
+}>;
+
+/**
+ * Find one project secret by id
+ */
+export type ProjectSecrets_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    secretID: string;
+}>;
+
+export type ProjectSecrets_FindOneById_Res = ApiResponseBase<ProjectSecret>;
+
+/**
+ * Delete project secret
+ */
+export type ProjectSecrets_DeleteOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    secretID: string;
+}>;
+
+export type ProjectSecrets_DeleteOne_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Update project secret
+ */
+export type ProjectSecrets_UpdateOne_Req = ApiRequestBase<
+    {
+        projectID: string;
+        env?: string;
+        secretID: string;
+        updateVer: number;
+    } & Partial<Omit<ProjectSecret, "id" | "key" | "status" | "createdAt" | "updatedAt" | "updateVer">> & {
+            status?: EProjectSecretStatus;
+            value?: string;
+        }
+>;
+
+export type ProjectSecrets_UpdateOne_Res = ApiResponseBase<{
+    type: "success";
+}>;

@@ -1,0 +1,174 @@
+import { useEffect, useState } from "react";
+
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { toast } from "sonner";
+import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
+import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
+import { RegistryAuthCommands } from "~/settings/data/commands";
+import { RegistryAuthQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
+
+import { UpdateRegistryAuthStatusForm } from "../form";
+import { useUpdateRegistryAuthStatusDialogState } from "../hooks";
+import type { UpdateRegistryAuthStatusFormOutput } from "../schemas";
+
+export function UpdateRegistryAuthStatusDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useUpdateRegistryAuthStatusDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = RegistryAuthCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Registry auth status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectRegistryAuthCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Project registry auth status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = RegistryAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectRegistryAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const registryAuth = detailQuery.data?.data;
+
+    function onSubmit(values: UpdateRegistryAuthStatusFormOutput) {
+        if (state.mode !== "open" || !registryAuth) {
+            return;
+        }
+
+        const payload = {
+            updateVer: registryAuth.updateVer,
+            status: values.status,
+            expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: registryAuth.id,
+                payload,
+            });
+            return;
+        }
+
+        updateSettingMeta({
+            id: registryAuth.id,
+            payload,
+        });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
+            return;
+        }
+
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Registry Auth"} Status`
+        : "Change status";
+    const isPending = isUpdatingSetting || isUpdatingProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+    const initialValues = registryAuth
+        ? {
+              status: registryAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: registryAuth.expireAt ?? undefined,
+              inheritable: Boolean(registryAuth.inheritable),
+              default: registryAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
+                    <UpdateRegistryAuthStatusForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

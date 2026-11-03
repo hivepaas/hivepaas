@@ -1,0 +1,184 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.fullscreen {
+  position: fixed;
+  inset: 0.375rem;
+  width: auto !important;
+  height: auto !important;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-radius: 0.5rem;
+  padding: 0.625rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+
+  @media (min-width: 768px) {
+    inset: 1rem;
+    padding: 1rem;
+  }
+}
+
+.terminalFrame {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  border-radius: 0.375rem;
+  overflow: hidden;
+
+  &.unwrapped {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    &::-webkit-scrollbar {
+      width: 9px !important;
+      height: 9px !important;
+      background-color: transparent !important;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #334155 !important;
+      border-radius: 9999px !important;
+
+      &:hover {
+        background-color: #475569 !important;
+      }
+    }
+  }
+}
+
+.terminalHost {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background-color: transparent !important;
+
+  &.unwrapped {
+    width: fit-content !important;
+    min-width: 100% !important;
+  }
+
+  :global(.xterm) {
+    height: 100%;
+    padding: 6px 0 6px 8px;
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  :global(.xterm-decoration-overview-ruler) {
+    display: none !important;
+  }
+
+  :global(.xterm-screen) {
+    background: transparent !important;
+    background-color: transparent !important;
+
+    canvas {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+  }
+
+  :global(.xterm-scrollable-element) {
+    :global(.scrollbar) {
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    :global(.shadow) {
+      display: none !important;
+    }
+
+    :global(.scrollbar.vertical) {
+      width: 28px !important;
+      right: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      z-index: 20 !important;
+      touch-action: none !important;
+      pointer-events: auto !important;
+    }
+
+    :global(.scrollbar > .slider) {
+      width: 9px !important;
+      left: auto !important;
+      right: 2px !important;
+      border-radius: 9999px !important;
+      background-color: #334155 !important;
+      border: none !important;
+      touch-action: none !important;
+      pointer-events: auto !important;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: -10px -14px;
+      }
+
+      &:hover,
+      &:active {
+        background-color: #475569 !important;
+      }
+    }
+  }
+
+  :global(.xterm-viewport) {
+    background-color: transparent !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+
+    &::-webkit-scrollbar {
+      width: 9px !important;
+      height: 9px !important;
+      background-color: transparent !important;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #334155 !important;
+      border-radius: 9999px !important;
+
+      &:hover,
+      &:active {
+        background-color: #475569 !important;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    :global(.xterm-scrollable-element) {
+      :global(.scrollbar.vertical) {
+        width: 36px !important;
+      }
+
+      :global(.scrollbar > .slider) {
+        width: 10px !important;
+        right: 2px !important;
+      }
+    }
+
+    :global(.xterm-viewport) {
+      &::-webkit-scrollbar {
+        width: 10px !important;
+        height: 10px !important;
+      }
+    }
+  }
+}

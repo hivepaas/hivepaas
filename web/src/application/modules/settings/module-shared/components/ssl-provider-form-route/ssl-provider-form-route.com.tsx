@@ -1,0 +1,299 @@
+import { useState } from "react";
+
+import { toast } from "sonner";
+import { ProjectSslProviderCommands } from "~/projects/data/commands";
+import { ProjectSslProviderQueries } from "~/projects/data/queries";
+import type { SslProvider_CreateOne_Payload } from "~/settings/api/services/ssl-provider-services";
+import { SslProviderCommands } from "~/settings/data/commands";
+import { SslProviderQueries } from "~/settings/data/queries";
+import type { SettingSslProvider } from "~/settings/domain";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import {
+    CreateOrEditSslProviderForm,
+    SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
+} from "~/settings/module-shared/components/ssl-provider-form";
+import type {
+    CreateOrEditSslProviderFormInput,
+    CreateOrEditSslProviderFormOutput,
+} from "~/settings/module-shared/components/ssl-provider-form";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+import { ESslProviderKind } from "@application/shared/enums";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
+import type { SslProviderTableScope } from "../ssl-provider-table";
+
+type SslProviderFormRouteMode = "create" | "edit";
+
+function getEabValues(sslProvider?: SettingSslProvider) {
+    if (!sslProvider) {
+        return {
+            eabKid: "",
+            eabHmacKey: "",
+        };
+    }
+
+    if (sslProvider.kind === ESslProviderKind.ZeroSSL) {
+        return {
+            eabKid: sslProvider.zeroSSL?.eabKid ?? "",
+            eabHmacKey: sslProvider.zeroSSL?.eabHmacKey ?? "",
+        };
+    }
+
+    if (sslProvider.kind === ESslProviderKind.GoogleTrust) {
+        return {
+            eabKid: sslProvider.googleTrust?.eabKid ?? "",
+            eabHmacKey: sslProvider.googleTrust?.eabHmacKey ?? "",
+        };
+    }
+
+    return {
+        eabKid: "",
+        eabHmacKey: "",
+    };
+}
+
+function createPayload(values: CreateOrEditSslProviderFormOutput): SslProvider_CreateOne_Payload {
+    const defaultKeyType =
+        values.defaultKeyType === SSL_PROVIDER_UNSPECIFIED_KEY_TYPE ? undefined : values.defaultKeyType;
+    const isLetsEncrypt = values.kind === ESslProviderKind.LetsEncrypt;
+    const isZeroSSL = values.kind === ESslProviderKind.ZeroSSL;
+    const isGoogleTrust = values.kind === ESslProviderKind.GoogleTrust;
+    const eabPayload = {
+        eabKid: values.eabKid,
+        eabHmacKey: values.eabHmacKey,
+    };
+
+    return {
+        inheritable: values.inheritable,
+        default: values.default,
+        name: values.name,
+        kind: values.kind,
+        email: values.email,
+        ...(defaultKeyType ? { defaultKeyType } : {}),
+        letsEncrypt: isLetsEncrypt ? {} : null,
+        zeroSSL: isZeroSSL ? eabPayload : null,
+        googleTrust: isGoogleTrust ? eabPayload : null,
+    };
+}
+
+export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
+    const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
+    const { canWrite } = useSettingsScopePermissions(scope);
+    const { navigate } = useAppNavigate();
+
+    const listRoute = getSslProviderListRoute(scope);
+    const isEditMode = mode === "edit";
+    const detailId = isEditMode ? (sslProviderId ?? "") : "";
+
+    function navigateToList() {
+        navigate.modules(listRoute, { ignorePrevPath: true });
+    }
+
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+        navigateToList();
+    }
+
+    const { mutate: createSettingSslProvider, isPending: isCreatingSetting } = SslProviderCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("SSL provider created successfully");
+            markSaved();
+        },
+    });
+    const { mutate: updateSettingSslProvider, isPending: isUpdatingSetting } = SslProviderCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("SSL provider updated successfully");
+            markSaved();
+        },
+    });
+    const { mutate: createProjectSslProvider, isPending: isCreatingProject } = ProjectSslProviderCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("Project SSL provider created successfully");
+            markSaved();
+        },
+    });
+    const { mutate: updateProjectSslProvider, isPending: isUpdatingProject } = ProjectSslProviderCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Project SSL provider updated successfully");
+            markSaved();
+        },
+    });
+
+    const settingDetailQuery = SslProviderQueries.useFindOneById(
+        { id: detailId },
+        { enabled: isEditMode && scope.type === "settings" },
+    );
+    const projectDetailQuery = ProjectSslProviderQueries.useFindOneById(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
+            id: detailId,
+        },
+        { enabled: isEditMode && scope.type === "project" },
+    );
+    const detailQuery = scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const sslProvider = detailQuery.data?.data;
+    const readOnlyInherited = scope.type === "project" && sslProvider?.inherited === true;
+
+    function onSubmit(values: CreateOrEditSslProviderFormOutput) {
+        const payload = createPayload(values);
+
+        if (isEditMode && sslProvider) {
+            const updatePayload = { ...payload, updateVer: sslProvider.updateVer };
+
+            if (scope.type === "project") {
+                updateProjectSslProvider({
+                    projectID: scope.projectId,
+                    env: scope.env,
+                    id: sslProvider.id,
+                    payload: updatePayload,
+                });
+                return;
+            }
+
+            updateSettingSslProvider({ id: sslProvider.id, payload: updatePayload });
+            return;
+        }
+
+        if (scope.type === "project") {
+            createProjectSslProvider({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
+            return;
+        }
+
+        createSettingSslProvider({ payload });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
+            return;
+        }
+
+        navigateToList();
+    }
+
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingSslProvider>({
+        settingType: "ssl-providers",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || sslProvider?.inherited === true,
+        mode,
+    });
+
+    const activeSslProvider = revealedData ?? sslProvider;
+
+    const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
+    const isDetailLoading = isEditMode && detailQuery.isFetching;
+    const initialValues: Partial<CreateOrEditSslProviderFormInput> | undefined =
+        isEditMode && activeSslProvider
+            ? {
+                  name: activeSslProvider.name,
+                  kind: activeSslProvider.kind,
+                  email: activeSslProvider.email,
+                  defaultKeyType: activeSslProvider.defaultKeyType || SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
+                  ...getEabValues(activeSslProvider),
+                  inheritable: Boolean(activeSslProvider.inheritable),
+                  default: activeSslProvider.default ?? false,
+              }
+            : {
+                  kind: ESslProviderKind.LetsEncrypt,
+                  defaultKeyType: SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
+                  inheritable: scope.type === "project" ? true : false,
+                  default: false,
+              };
+    const shouldRenderForm = mode === "create" || Boolean(activeSslProvider);
+    const title = mode === "create" ? "Create SSL Provider" : "Edit SSL Provider";
+
+    return (
+        <div className="flex w-full flex-col">
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
+
+            {isDetailLoading && (
+                <div className="flex min-h-[220px] items-center justify-center">
+                    <AppLoader />
+                </div>
+            )}
+
+            {!isDetailLoading && shouldRenderForm && (
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditSslProviderForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        isEdit={isEditMode}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
+            )}
+        </div>
+    );
+}
+
+function getSslProviderListRoute(scope: SslProviderTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.sslProviders.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.sslProviders.$route;
+}
+
+interface Props {
+    mode: SslProviderFormRouteMode;
+    scope: SslProviderTableScope;
+    sslProviderId?: string;
+}

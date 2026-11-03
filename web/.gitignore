@@ -1,0 +1,28 @@
+# Logs
+# logs
+# *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies are installed with yarn, from yarn.lock: the lockfile the
+# release image is built and scanned with. npm's would drift from it.
+package-lock.json
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

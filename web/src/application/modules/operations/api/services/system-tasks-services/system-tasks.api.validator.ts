@@ -1,0 +1,281 @@
+import { z } from "zod";
+import { SystemTaskPriority, SystemTaskSequenceStepStatus, SystemTaskStatus } from "~/operations/domain";
+
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+import type {
+    SystemTasks_Cancel_Res,
+    SystemTasks_FindManyPaginated_Res,
+    SystemTasks_FindOneById_Res,
+    SystemTasks_FindTargetObjects_Res,
+    SystemTasks_FindTypes_Res,
+} from "./system-tasks.api.contracts";
+
+const NullableDateSchema = z.preprocess(value => {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}, z.date().nullable());
+
+const SystemTaskStatusSchema = z.enum([
+    SystemTaskStatus.NotStarted,
+    SystemTaskStatus.InProgress,
+    SystemTaskStatus.Canceled,
+    SystemTaskStatus.Done,
+    SystemTaskStatus.Failed,
+]);
+
+const SystemTaskPrioritySchema = z
+    .string()
+    .optional()
+    .default(SystemTaskPriority.Default)
+    .transform(value =>
+        Object.values(SystemTaskPriority).includes(value as SystemTaskPriority)
+            ? (value as SystemTaskPriority)
+            : SystemTaskPriority.Default,
+    );
+
+const SystemTaskConfigSchema = z.preprocess(
+    value => value ?? {},
+    z.object({
+        priority: SystemTaskPrioritySchema,
+        maxRetry: z.number().optional().default(0),
+        retry: z.number().optional().default(0),
+        retryDelay: z.string().optional().default(""),
+        timeout: z.string().optional().default(""),
+        controlDisabled: z.boolean().optional().default(false),
+    }),
+);
+
+const SystemTaskTargetJobSchema = z
+    .object({
+        id: z.string().optional().default(""),
+        type: z.string().optional().default(""),
+        kind: z.string().optional().default(""),
+        name: z.string().optional().default(""),
+        status: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const ScopeProjectSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        key: z.string().optional(),
+        photo: z.string().optional(),
+        status: z.string().optional(),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const ScopeAppSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        key: z.string().optional(),
+        photo: z.string().optional(),
+        status: z.string().optional(),
+        env: z.string().optional(),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const ScopeUserSchema = z
+    .object({
+        id: z.string(),
+        username: z.string(),
+        email: z.string().optional(),
+        fullName: z.string().optional(),
+        photo: z.string().optional(),
+        role: z.string().optional(),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const SequenceStepSchema = z.object({
+    job: z.object({ id: z.string().optional().default("") }).catch({ id: "" }),
+    name: z.string().optional().default(""),
+    status: z.nativeEnum(SystemTaskSequenceStepStatus).catch(SystemTaskSequenceStepStatus.Pending),
+    exitCode: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    error: z.string().optional().default(""),
+    attempts: z.number().optional().default(0),
+    startedAt: NullableDateSchema.optional().transform(value => value ?? null),
+    endedAt: NullableDateSchema.optional().transform(value => value ?? null),
+    outputs: z
+        .record(z.string())
+        .nullish()
+        .transform(value => value ?? {}),
+});
+
+const SequenceRunSchema = z
+    .object({
+        currentStep: z.number().optional().default(0),
+        steps: z
+            .array(SequenceStepSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const TriggerSchema = z
+    .object({
+        event: z.string(),
+        app: z
+            .object({ id: z.string().optional().default(""), name: z.string().optional().default("") })
+            .nullish()
+            .transform(value => value ?? { id: "", name: "" }),
+        deploymentId: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const DataBackupSchema = z
+    .object({
+        snapshotId: z.string(),
+        sizeBytes: z.number().optional().default(0),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+/** A response's body, which may not be text: base64 on the wire, bytes here. */
+const Base64BytesSchema = z
+    .string()
+    .nullish()
+    .transform(value => {
+        const binary = atob(value ?? "");
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    });
+
+const FunctionInvokeSchema = z
+    .object({
+        outcome: z.string(),
+        status: z.number().optional().default(0),
+        headers: z
+            .record(z.array(z.string()))
+            .nullish()
+            .transform(value => value ?? {}),
+        body: Base64BytesSchema,
+        bodyTruncated: z.boolean().optional().default(false),
+        requestId: z.string().optional().default(""),
+        durationMs: z.number().optional().default(0),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const BackupRestoreSchema = z
+    .object({
+        snapshotRecordId: z.string().optional().default(""),
+        repoId: z.string().optional().default(""),
+        snapshotId: z.string().optional().default(""),
+        snapshotPath: z.string().optional().default(""),
+        fileName: z.string().optional().default(""),
+        mode: z.string().optional().default(""),
+        stopApp: z.boolean().optional().default(false),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const SystemTaskSchema = z.object({
+    id: z.string(),
+    type: z.string().optional().default(""),
+    status: SystemTaskStatusSchema,
+    config: SystemTaskConfigSchema,
+    targetJob: SystemTaskTargetJobSchema,
+    lastError: z.string().optional().default(""),
+    updateVer: z.number().optional().default(0),
+    scopeProject: ScopeProjectSchema,
+    scopeApp: ScopeAppSchema,
+    scopeUser: ScopeUserSchema,
+    sequenceRun: SequenceRunSchema,
+    trigger: TriggerSchema,
+    dataBackup: DataBackupSchema,
+    functionInvoke: FunctionInvokeSchema,
+    backupRestore: BackupRestoreSchema,
+    runAt: NullableDateSchema,
+    retryAt: NullableDateSchema,
+    startedAt: NullableDateSchema,
+    endedAt: NullableDateSchema,
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+});
+
+const FindManyPaginatedSchema = z.object({
+    data: z.array(SystemTaskSchema),
+    meta: PagingMetaApiSchema,
+});
+
+const FindOneByIdSchema = z.object({
+    data: SystemTaskSchema,
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const FindTypesSchema = z.object({
+    data: z.array(z.string()),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const TargetObjectSchema = z.object({
+    id: z.string(),
+    type: z.string().optional().default(""),
+    name: z.string().optional().default(""),
+});
+
+const FindTargetObjectsSchema = z.object({
+    data: z.array(TargetObjectSchema),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const CancelSchema = z.object({
+    data: z.object({
+        canceled: z.boolean(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+export class SystemTasksApiValidator {
+    findManyPaginated = (response: ApiHttpResponse): SystemTasks_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
+        return { data, meta };
+    };
+
+    findOneById = (response: ApiHttpResponse): SystemTasks_FindOneById_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
+        return { data, meta };
+    };
+
+    findTypes = (response: ApiHttpResponse): SystemTasks_FindTypes_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindTypesSchema });
+        return { data, meta };
+    };
+
+    findTargetObjects = (response: ApiHttpResponse): SystemTasks_FindTargetObjects_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindTargetObjectsSchema });
+        return { data, meta };
+    };
+
+    cancel = (response: ApiHttpResponse): SystemTasks_Cancel_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: CancelSchema });
+        return { data, meta };
+    };
+}

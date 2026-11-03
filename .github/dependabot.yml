@@ -33,7 +33,53 @@ updates:
       - "dependencies"
       - "ci"
 
-  # 3. Docker Base Images (Deployment Dev)
+  # 3. The dashboard (web/yarn.lock). Minor and patch updates come together; a
+  # major update has a pull request of its own. web.yml checks each.
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Ho_Chi_Minh"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "web"
+    ignore:
+      # znv 0.5 imports Node's tty, which a browser build cannot bundle: the
+      # build fails. The dashboard reads its env with 0.4 meanwhile.
+      - dependency-name: "znv"
+        versions: [">=0.5.0"]
+    groups:
+      web-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 4. The dashboard's end-to-end tests (web/e2e/yarn.lock)
+  - package-ecosystem: "npm"
+    directory: "/web/e2e"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Ho_Chi_Minh"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "web"
+    groups:
+      e2e-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 5. Docker Base Images (Deployment Dev)
   - package-ecosystem: "docker"
     directory: "/deployment/dev"
     schedule:
@@ -46,7 +92,7 @@ updates:
       - "dependencies"
       - "docker"
 
-  # 4. Docker Base Images (Tools)
+  # 6. Docker Base Images (Tools)
   - package-ecosystem: "docker"
     directory: "/tools/docker"
     schedule:

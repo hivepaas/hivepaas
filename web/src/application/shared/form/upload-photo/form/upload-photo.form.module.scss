@@ -1,0 +1,11 @@
+@use "sass:math";
+
+.upload-photo-form {
+  position: relative;
+
+  padding-top: 10px;
+
+  .photo {
+    aspect-ratio: 1;
+  }
+}

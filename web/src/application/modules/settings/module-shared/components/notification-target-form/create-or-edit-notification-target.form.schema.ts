@@ -1,0 +1,68 @@
+import { z } from "zod";
+
+export const CreateOrEditNotificationTargetFormSchema = z
+    .object({
+        name: z.string().trim().min(1, "Name is required"),
+        emailEnabled: z.boolean(),
+        emailUseDefault: z.boolean(),
+        senderEmailAccountId: z.string().trim(),
+        notifyAdmins: z.boolean(),
+        notifyProjectOwners: z.boolean(),
+        notifyProjectMembers: z.boolean(),
+        customAddresses: z.string().trim(),
+        slackEnabled: z.boolean(),
+        slackUseDefault: z.boolean(),
+        slackWebhookId: z.string().trim(),
+        discordEnabled: z.boolean(),
+        discordUseDefault: z.boolean(),
+        discordWebhookId: z.string().trim(),
+        telegramEnabled: z.boolean(),
+        telegramUseDefault: z.boolean(),
+        telegramSettingId: z.string().trim(),
+        larkEnabled: z.boolean(),
+        larkUseDefault: z.boolean(),
+        larkWebhookId: z.string().trim(),
+        minSendInterval: z.string().trim().min(1, "Override Min Send Interval is required"),
+        inheritable: z.boolean(),
+        default: z.boolean(),
+    })
+    .superRefine((values, ctx) => {
+        if (values.emailEnabled && !values.emailUseDefault && !values.senderEmailAccountId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["senderEmailAccountId"],
+                message: "Sender Email Account is required",
+            });
+        }
+        if (values.slackEnabled && !values.slackUseDefault && !values.slackWebhookId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["slackWebhookId"],
+                message: "Webhook is required",
+            });
+        }
+        if (values.discordEnabled && !values.discordUseDefault && !values.discordWebhookId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["discordWebhookId"],
+                message: "Webhook is required",
+            });
+        }
+        if (values.telegramEnabled && !values.telegramUseDefault && !values.telegramSettingId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["telegramSettingId"],
+                message: "Telegram Bot is required",
+            });
+        }
+        if (values.larkEnabled && !values.larkUseDefault && !values.larkWebhookId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["larkWebhookId"],
+                message: "Webhook is required",
+            });
+        }
+    });
+
+export type CreateOrEditNotificationTargetFormInput = z.input<typeof CreateOrEditNotificationTargetFormSchema>;
+export type CreateOrEditNotificationTargetFormOutput = z.output<typeof CreateOrEditNotificationTargetFormSchema>;

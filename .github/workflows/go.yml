@@ -1,11 +1,15 @@
 name: 'Go Source Check'
 
+# The dashboard has its own workflows (web.yml, web-e2e.yml, web-osv-scanner.yml):
+# a change under web/ alone does not run this one. A tag runs it whatever it holds.
 on:
   push:
     branches: ['*']
     tags: ['v*']
+    paths-ignore: ['web/**']
   pull_request:
     branches: ['*']
+    paths-ignore: ['web/**']
 
 jobs:
 
@@ -151,7 +155,8 @@ jobs:
           version: 'v0.75.0'
           scan-type: 'fs'
           scan-ref: '.'
-          skip-dirs: 'vendor,.temp,tmp,temp'
+          # web/yarn.lock is OSV-Scanner's (web-osv-scanner.yml).
+          skip-dirs: 'vendor,.temp,tmp,temp,web'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true

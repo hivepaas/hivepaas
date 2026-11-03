@@ -1,0 +1,159 @@
+import { useEffect, useState } from "react";
+
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { toast } from "sonner";
+import { ProjectAccessTokenCommands } from "~/projects/data/commands";
+import { ProjectAccessTokenQueries } from "~/projects/data/queries";
+import { AccessTokenCommands } from "~/settings/data/commands";
+import { AccessTokenQueries } from "~/settings/data/queries";
+import { UpdateSSHKeyStatusForm as UpdateAccessTokenStatusForm } from "~/settings/dialogs/update-ssh-key-status/form";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
+
+import { useUpdateAccessTokenStatusDialogState } from "../hooks";
+import type { UpdateAccessTokenStatusFormOutput } from "../schemas";
+
+export function UpdateAccessTokenStatusDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useUpdateAccessTokenStatusDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = AccessTokenCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Access token status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectAccessTokenCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Project access token status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = AccessTokenQueries.useFindOneById(
+        { id: detailId },
+        { enabled: state.mode === "open" && state.scope.type === "settings" },
+    );
+    const projectDetailQuery = ProjectAccessTokenQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
+            id: detailId,
+        },
+        { enabled: state.mode === "open" && state.scope.type === "project" },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const accessToken = detailQuery.data?.data;
+
+    function onSubmit(values: UpdateAccessTokenStatusFormOutput) {
+        if (state.mode !== "open" || !accessToken) return;
+
+        const payload = {
+            updateVer: accessToken.updateVer,
+            status: values.status,
+            expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: accessToken.id,
+                payload,
+            });
+            return;
+        }
+
+        updateSettingMeta({ id: accessToken.id, payload });
+    }
+
+    function handleClose() {
+        if (isPending) return;
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        )
+            return;
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Access Token"} Status`
+        : "Change status";
+    const isPending = isUpdatingSetting || isUpdatingProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+    const initialValues = accessToken
+        ? {
+              status: accessToken.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: accessToken.expireAt ?? undefined,
+              inheritable: Boolean(accessToken.inheritable),
+              default: accessToken.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
+                    <UpdateAccessTokenStatusForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

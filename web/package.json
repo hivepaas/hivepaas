@@ -50,7 +50,7 @@
     "@radix-ui/react-tooltip": "^1.4.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.105.0",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.3.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@vitejs/plugin-react-swc": "^4.3.3",
     "@vvo/tzdb": "^6.202.0",

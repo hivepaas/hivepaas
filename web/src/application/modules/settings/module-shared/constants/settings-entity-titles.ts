@@ -1,0 +1,15 @@
+export const SETTINGS_ENTITY_TITLES = {
+    acmeDnsProvider: "ACME DNS Provider",
+    basicAuth: "Basic Auth",
+    keyAuth: "Key Auth",
+    registryAuth: "Registry Auth",
+    sslCert: "SSL Certificate",
+    sslProvider: "SSL Provider",
+    emailAccount: "Email Account",
+    imPlatform: "IM Platform",
+    sshKey: "SSH Key",
+    accessToken: "Access Token",
+    cloudStorage: "Cloud Storage",
+    notificationTarget: "Notification Target",
+    backupRepo: "Backup Repository",
+} as const;

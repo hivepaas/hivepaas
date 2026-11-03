@@ -1,0 +1,612 @@
+import { type PropsWithChildren, type ReactNode, useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { NodesQueries } from "~/cluster/data/queries";
+import {
+    EClusterVolumeDriverMode,
+    EClusterVolumeLocalType,
+    EClusterVolumePropagation,
+} from "~/cluster/module-shared/enums";
+import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
+
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { KeyValueList } from "@application/shared/form";
+
+import {
+    Checkbox,
+    FieldError,
+    FieldGroup,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
+
+import {
+    type CreateOrEditVolumeFormInput,
+    type CreateOrEditVolumeFormOutput,
+    CreateOrEditVolumeFormSchema,
+} from "./create-or-edit-volume.form.schema";
+import { CURRENT_NODE_VALUE, DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.constants";
+
+const VOLUME_NODE_NOTE =
+    "Where this volume's data actually lives. Pin it to a node - or to a node label - when the data sits on that machine's disk: the bind directory is created there, and a backup repository kept on this volume runs there. Pick \u201cAll nodes\u201d only when every node reaches the same data, which is true for cluster volumes and for paths backed by shared storage (NFS, Ceph, ...) mounted identically everywhere. A backup repository on such a volume runs on the node HivePaaS runs on, and needs the volume to be a bind directory, the same path on every node. HivePaaS cannot tell shared storage apart from a local directory, so it takes your word for it: choosing it for data that is really on one node leaves the directory uncreated, and a backup repository on it sees different data on each node.";
+
+// Two choices that are not a node id, kept out of the id space so a node can never
+// collide with them.
+const ALL_NODES_OPTION = "__all_nodes__";
+const BY_LABEL_OPTION = "__by_label__";
+
+const propagationOptions = [
+    { value: EClusterVolumePropagation.Default, label: "default" },
+    { value: EClusterVolumePropagation.RPrivate, label: "rprivate" },
+    { value: EClusterVolumePropagation.Private, label: "private" },
+    { value: EClusterVolumePropagation.RShared, label: "rshared" },
+    { value: EClusterVolumePropagation.Shared, label: "shared" },
+    { value: EClusterVolumePropagation.RSlave, label: "rslave" },
+    { value: EClusterVolumePropagation.Slave, label: "slave" },
+] as const;
+
+export function CreateOrEditVolumeForm({
+    initialValues,
+    readOnlyCore = false,
+    readOnlyAvailableInProjects = false,
+    readOnlyDefault = false,
+    readOnlyInherited = false,
+    readOnlyPermission = false,
+    isPending = false,
+    showAvailableInProjects = true,
+    isProjectScope = false,
+    onSubmit,
+    children,
+}: Props) {
+    const methods = useForm<CreateOrEditVolumeFormInput, unknown, CreateOrEditVolumeFormOutput>({
+        defaultValues: {
+            ...DEFAULT_VOLUME_FORM_VALUES,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
+            ...initialValues,
+            bindOptions: {
+                ...DEFAULT_VOLUME_FORM_VALUES.bindOptions,
+                ...initialValues?.bindOptions,
+            },
+            nfsOptions: {
+                ...DEFAULT_VOLUME_FORM_VALUES.nfsOptions,
+                ...initialValues?.nfsOptions,
+            },
+            tmpfsOptions: {
+                ...DEFAULT_VOLUME_FORM_VALUES.tmpfsOptions,
+                ...initialValues?.tmpfsOptions,
+            },
+        },
+        resolver: zodResolver(CreateOrEditVolumeFormSchema),
+        mode: "onSubmit",
+    });
+
+    const {
+        control,
+        handleSubmit,
+        formState: { errors },
+    } = methods;
+
+    const { field: name } = useController({ control, name: "name" });
+    const { field: driverMode } = useController({ control, name: "driverMode" });
+    const { field: customDriverName } = useController({ control, name: "customDriverName" });
+    const { field: localType } = useController({ control, name: "localType" });
+    const { field: nodeId } = useController({ control, name: "nodeId" });
+    const { field: nodeLabel } = useController({ control, name: "nodeLabel" });
+    const { field: bindDirectory } = useController({ control, name: "bindOptions.directory" });
+    const { field: bindPropagation } = useController({ control, name: "bindOptions.propagation" });
+    const { field: bindReadonly } = useController({ control, name: "bindOptions.readonly" });
+    const { field: bindExtraOptions } = useController({ control, name: "bindOptions.extraOptions" });
+    const { field: nfsAddr } = useController({ control, name: "nfsOptions.addr" });
+    const { field: nfsDevice } = useController({ control, name: "nfsOptions.device" });
+    const { field: nfsVersion } = useController({ control, name: "nfsOptions.version" });
+    const { field: nfsReadonly } = useController({ control, name: "nfsOptions.readonly" });
+    const { field: nfsExtraOptions } = useController({ control, name: "nfsOptions.extraOptions" });
+    const { field: tmpfsDevice } = useController({ control, name: "tmpfsOptions.device" });
+    const { field: tmpfsSize } = useController({ control, name: "tmpfsOptions.size" });
+    const { field: tmpfsUid } = useController({ control, name: "tmpfsOptions.uid" });
+    const { field: tmpfsExtraOptions } = useController({ control, name: "tmpfsOptions.extraOptions" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
+    const { field: defaultField } = useController({ control, name: "default" });
+
+    const nodesQuery = NodesQueries.useFindManyPaginated({
+        pagination: {
+            page: 1,
+            size: 100,
+        },
+    });
+    const nodes = nodesQuery.data?.data ?? [];
+
+    const currentDriverMode = useWatch({ control, name: "driverMode" });
+    const currentLocalType = useWatch({ control, name: "localType" });
+    const currentNodeId = useWatch({ control, name: "nodeId" });
+
+    /*
+     * Pinning by label is a mode rather than a value: an empty label would
+     * otherwise read as "all nodes" and snap the selector back while somebody is
+     * still typing.
+     */
+    const [pinByLabel, setPinByLabel] = useState(Boolean(initialValues?.nodeLabel));
+    const nodeSelectValue = pinByLabel ? BY_LABEL_OPTION : currentNodeId || ALL_NODES_OPTION;
+
+    function onNodeSelectChange(value: string) {
+        if (value === BY_LABEL_OPTION) {
+            setPinByLabel(true);
+            nodeId.onChange("");
+            return;
+        }
+
+        // One answer at a time: picking a node - or none at all - drops whatever
+        // label was there, which is also what the server insists on.
+        setPinByLabel(false);
+        nodeLabel.onChange("");
+        nodeId.onChange(value === ALL_NODES_OPTION ? "" : value);
+    }
+
+    const pinningDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
+    const coreDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
+    const inheritableDisabled = readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
+    const defaultDisabled = readOnlyDefault || readOnlyInherited || readOnlyPermission || isPending;
+
+    function onValid(values: CreateOrEditVolumeFormOutput) {
+        if (readOnlyInherited || readOnlyPermission || isPending) {
+            return;
+        }
+
+        onSubmit(values);
+    }
+
+    function onInvalid(_errors: FieldErrors<CreateOrEditVolumeFormInput>) {
+        console.error("Invalid", _errors);
+    }
+
+    return (
+        <FormProvider {...methods}>
+            <form
+                onSubmit={event => {
+                    event.preventDefault();
+                    void handleSubmit(onValid, onInvalid)(event);
+                }}
+                className="min-h-0 flex flex-1 flex-col"
+            >
+                <div className="flex flex-col gap-6">
+                    {readOnlyInherited && <InheritedSettingReadonlyNotice />}
+                    {readOnlyPermission && !readOnlyInherited && <PermissionReadonlyNotice />}
+
+                    <fieldset
+                        disabled={coreDisabled}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <InfoBlock
+                            title="Name"
+                            titleWidth={220}
+                        >
+                            <Input
+                                {...name}
+                                value={name.value}
+                                placeholder="my-volume"
+                                className="max-w-[600px]"
+                                aria-invalid={Boolean(errors.name)}
+                            />
+                            <FieldError errors={[errors.name]} />
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title="Driver"
+                            titleWidth={220}
+                        >
+                            <Tabs
+                                value={driverMode.value}
+                                onValueChange={value => {
+                                    driverMode.onChange(value);
+                                }}
+                            >
+                                <TabsList>
+                                    <TabsTrigger value={EClusterVolumeDriverMode.Local}>local</TabsTrigger>
+                                    <TabsTrigger value={EClusterVolumeDriverMode.Custom}>custom</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </InfoBlock>
+
+                        {currentDriverMode === EClusterVolumeDriverMode.Custom && (
+                            <InfoBlock
+                                title="Driver Name"
+                                titleWidth={220}
+                            >
+                                <Input
+                                    {...customDriverName}
+                                    value={customDriverName.value}
+                                    placeholder="driver"
+                                    className="max-w-[600px]"
+                                    aria-invalid={Boolean(errors.customDriverName)}
+                                />
+                                <FieldError errors={[errors.customDriverName]} />
+                            </InfoBlock>
+                        )}
+
+                        {currentDriverMode === EClusterVolumeDriverMode.Local && (
+                            <>
+                                <InfoBlock
+                                    title="Volume Type"
+                                    titleWidth={220}
+                                >
+                                    <Tabs
+                                        value={localType.value}
+                                        onValueChange={value => {
+                                            localType.onChange(value);
+                                        }}
+                                    >
+                                        <TabsList>
+                                            <TabsTrigger value={EClusterVolumeLocalType.Bind}>bind</TabsTrigger>
+                                            <TabsTrigger value={EClusterVolumeLocalType.Nfs}>nfs</TabsTrigger>
+                                            <TabsTrigger value={EClusterVolumeLocalType.Tmpfs}>tmpfs</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                </InfoBlock>
+
+                                {currentLocalType === EClusterVolumeLocalType.Bind && (
+                                    <FieldGroup>
+                                        <InfoBlock
+                                            title={
+                                                <LabelWithInfo
+                                                    label="Directory"
+                                                    content="Left empty, HivePaaS chooses a directory inside its own storage for this scope. Naming one instead gives whatever app mounts this volume that path of the node."
+                                                />
+                                            }
+                                            titleWidth={220}
+                                        >
+                                            <div className="flex max-w-[600px] flex-col gap-1">
+                                                <Input
+                                                    {...bindDirectory}
+                                                    value={bindDirectory.value}
+                                                    placeholder="auto"
+                                                />
+                                                {/* Said here rather than after the server refuses it: the
+                                                    field looks like any other until you learn otherwise. */}
+                                                <p className="text-xs text-muted-foreground">
+                                                    A directory of your own needs{" "}
+                                                    <span className="font-medium">Write</span> permission on the{" "}
+                                                    <span className="font-medium">Cluster</span> module. The Docker
+                                                    socket, and any directory holding it, is never allowed: an app is
+                                                    given the Docker API through its own Docker API settings.
+                                                </p>
+                                            </div>
+                                        </InfoBlock>
+
+                                        <InfoBlock
+                                            title="Propagation"
+                                            titleWidth={220}
+                                        >
+                                            <Select
+                                                value={bindPropagation.value || "__default__"}
+                                                onValueChange={value => {
+                                                    bindPropagation.onChange(
+                                                        value === "__default__"
+                                                            ? EClusterVolumePropagation.Default
+                                                            : value,
+                                                    );
+                                                }}
+                                            >
+                                                <SelectTrigger className="max-w-[600px]">
+                                                    <SelectValue placeholder="select propagation" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {propagationOptions.map(option => (
+                                                        <SelectItem
+                                                            key={option.label}
+                                                            value={option.value || "__default__"}
+                                                        >
+                                                            {option.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </InfoBlock>
+                                        <CheckboxField
+                                            title="Read-only"
+                                            checked={bindReadonly.value}
+                                            onCheckedChange={checked => {
+                                                bindReadonly.onChange(checked);
+                                            }}
+                                        />
+                                        <InfoBlock
+                                            title="Extra Options"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...bindExtraOptions}
+                                                value={bindExtraOptions.value}
+                                                placeholder="noexec,nosuid,nodev"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                    </FieldGroup>
+                                )}
+
+                                {currentLocalType === EClusterVolumeLocalType.Nfs && (
+                                    <FieldGroup>
+                                        <InfoBlock
+                                            title="Address"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...nfsAddr}
+                                                value={nfsAddr.value}
+                                                placeholder="1.2.3.4"
+                                                className="max-w-[600px]"
+                                                aria-invalid={Boolean(errors.nfsOptions?.addr)}
+                                            />
+                                            <FieldError errors={[errors.nfsOptions?.addr]} />
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="Device"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...nfsDevice}
+                                                value={nfsDevice.value}
+                                                placeholder=":/mnt/shared/data"
+                                                className="max-w-[600px]"
+                                                aria-invalid={Boolean(errors.nfsOptions?.device)}
+                                            />
+                                            <FieldError errors={[errors.nfsOptions?.device]} />
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="Version"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...nfsVersion}
+                                                value={nfsVersion.value}
+                                                placeholder="4"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                        <CheckboxField
+                                            title="Read Only"
+                                            checked={nfsReadonly.value}
+                                            onCheckedChange={checked => {
+                                                nfsReadonly.onChange(checked);
+                                            }}
+                                        />
+                                        <InfoBlock
+                                            title="Extra Options"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...nfsExtraOptions}
+                                                value={nfsExtraOptions.value}
+                                                placeholder="nolock,soft"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                    </FieldGroup>
+                                )}
+
+                                {currentLocalType === EClusterVolumeLocalType.Tmpfs && (
+                                    <FieldGroup>
+                                        <InfoBlock
+                                            title="Device"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...tmpfsDevice}
+                                                value={tmpfsDevice.value}
+                                                placeholder="device"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="Size"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...tmpfsSize}
+                                                value={tmpfsSize.value}
+                                                placeholder="1gb"
+                                                className="max-w-[600px]"
+                                                aria-invalid={Boolean(errors.tmpfsOptions?.size)}
+                                            />
+                                            <FieldError errors={[errors.tmpfsOptions?.size]} />
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="UID"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...tmpfsUid}
+                                                value={tmpfsUid.value}
+                                                placeholder="0"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="Extra Options"
+                                            titleWidth={220}
+                                        >
+                                            <Input
+                                                {...tmpfsExtraOptions}
+                                                value={tmpfsExtraOptions.value}
+                                                placeholder="noexec,nosuid,nodev"
+                                                className="max-w-[600px]"
+                                            />
+                                        </InfoBlock>
+                                    </FieldGroup>
+                                )}
+                            </>
+                        )}
+
+                        <InfoBlock
+                            title="Labels"
+                            titleWidth={220}
+                        >
+                            <KeyValueList<CreateOrEditVolumeFormInput>
+                                name="labels"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className="max-w-[800px]"
+                                disabled={coreDisabled}
+                                enableValueEditing
+                            />
+                            <FieldError errors={[errors.labels]} />
+                        </InfoBlock>
+                        <InfoBlock
+                            title="Options"
+                            titleWidth={220}
+                        >
+                            <KeyValueList<CreateOrEditVolumeFormInput>
+                                name="options"
+                                checkDuplicates
+                                keyPlaceholder="name"
+                                valuePlaceholder="value"
+                                className="max-w-[800px]"
+                                disabled={coreDisabled}
+                                enableValueEditing
+                            />
+                            <FieldError errors={[errors.options]} />
+                        </InfoBlock>
+                    </fieldset>
+
+                    <fieldset
+                        disabled={pinningDisabled}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <div className={cn(dashedBorderBox)}>
+                            <span className="font-semibold text-orange-500">Note:</span> {VOLUME_NODE_NOTE}
+                        </div>
+
+                        <InfoBlock
+                            title="Node"
+                            titleWidth={220}
+                        >
+                            <Select
+                                value={nodeSelectValue}
+                                onValueChange={onNodeSelectChange}
+                            >
+                                <SelectTrigger className="max-w-[600px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={CURRENT_NODE_VALUE}>Current node</SelectItem>
+                                    <SelectItem value={ALL_NODES_OPTION}>All nodes (shared storage)</SelectItem>
+                                    <SelectItem value={BY_LABEL_OPTION}>By node label...</SelectItem>
+                                    {nodes.map(node => {
+                                        const nodeName = node.name || node.hostname || node.refId;
+                                        return (
+                                            <SelectItem
+                                                key={node.refId || node.id}
+                                                value={node.refId || node.id}
+                                            >
+                                                {nodeName !== node.refId ? `${nodeName} (${node.refId})` : node.refId}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.nodeId]} />
+                        </InfoBlock>
+
+                        {pinByLabel ? (
+                            <InfoBlock
+                                title="Node Label"
+                                titleWidth={220}
+                            >
+                                <Input
+                                    {...nodeLabel}
+                                    value={nodeLabel.value}
+                                    placeholder="key=value or key"
+                                    className="max-w-[600px]"
+                                    aria-invalid={Boolean(errors.nodeLabel)}
+                                />
+                                <FieldError errors={[errors.nodeLabel]} />
+                            </InfoBlock>
+                        ) : null}
+                    </fieldset>
+
+                    {showAvailableInProjects ? (
+                        <fieldset
+                            disabled={inheritableDisabled}
+                            className="border-0 p-0 m-0 min-w-0"
+                        >
+                            <CheckboxField
+                                title={
+                                    <LabelWithInfo
+                                        label={isProjectScope ? "Available in Apps" : "Available in Projects"}
+                                    />
+                                }
+                                checked={inheritable.value}
+                                onCheckedChange={checked => {
+                                    inheritable.onChange(checked);
+                                }}
+                                extra={isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            />
+                        </fieldset>
+                    ) : null}
+
+                    <fieldset
+                        disabled={defaultDisabled}
+                        className="border-0 p-0 m-0 min-w-0"
+                    >
+                        <CheckboxField
+                            title={<LabelWithInfo label="Default" />}
+                            checked={defaultField.value}
+                            onCheckedChange={checked => {
+                                defaultField.onChange(checked);
+                            }}
+                        />
+                    </fieldset>
+                </div>
+                {children}
+            </form>
+        </FormProvider>
+    );
+}
+
+function CheckboxField({ title, checked, onCheckedChange, extra }: CheckboxFieldProps) {
+    return (
+        <InfoBlock
+            title={title}
+            titleWidth={220}
+        >
+            <div className="flex items-center gap-3">
+                <Checkbox
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                {extra}
+            </div>
+        </InfoBlock>
+    );
+}
+
+interface CheckboxFieldProps {
+    title: string | ReactNode;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    extra?: ReactNode;
+}
+
+interface Props extends PropsWithChildren {
+    initialValues?: Partial<CreateOrEditVolumeFormInput>;
+    readOnlyCore?: boolean;
+    readOnlyAvailableInProjects?: boolean;
+    readOnlyDefault?: boolean;
+    readOnlyInherited?: boolean;
+    readOnlyPermission?: boolean;
+    isPending?: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
+    onSubmit: (values: CreateOrEditVolumeFormOutput) => void;
+}

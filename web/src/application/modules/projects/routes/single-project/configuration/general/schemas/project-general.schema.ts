@@ -1,0 +1,58 @@
+import { z } from "zod";
+import { EProjectEnvStatus } from "~/projects/module-shared/enums";
+
+const MAX_PROJECT_ENVS = 10;
+
+const ProjectEnvFormSchema = z.object({
+    id: z.string().optional(),
+    name: z
+        .string()
+        .trim()
+        .min(1, "Environment name is required")
+        .max(50, "Environment name must be 50 characters or less")
+        .regex(/^[a-z][a-z0-9-]*$/, "Environment name must be lowercase (letters, numbers, hyphens)"),
+    color: z.string(),
+    status: z.nativeEnum(EProjectEnvStatus).optional(),
+    updateVer: z.number().optional(),
+});
+
+const ProjectPhotoUploadSchema = z
+    .union([
+        z.object({
+            fileName: z.string(),
+            dataBase64: z.string(),
+        }),
+        z.object({
+            delete: z.literal(true),
+        }),
+    ])
+    .nullable();
+
+export const ProjectGeneralFormSchema = z.object({
+    photo: z.string().nullable(),
+    photoUpload: ProjectPhotoUploadSchema,
+    name: z.string().min(1, "Name is required"),
+    ownerId: z.string().min(1, "Project owner is required"),
+    envs: z
+        .array(ProjectEnvFormSchema)
+        .min(1, "At least 1 environment is required")
+        .max(MAX_PROJECT_ENVS, `Maximum ${MAX_PROJECT_ENVS} environments`)
+        .superRefine((envs, ctx) => {
+            const names = new Set<string>();
+            envs.forEach((env, index) => {
+                if (names.has(env.name)) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Environment names must be unique",
+                        path: [index, "name"],
+                    });
+                }
+                names.add(env.name);
+            });
+        }),
+    tags: z.array(z.string()),
+    note: z.string(),
+});
+
+export type ProjectGeneralFormSchemaInput = z.input<typeof ProjectGeneralFormSchema>;
+export type ProjectGeneralFormSchemaOutput = z.output<typeof ProjectGeneralFormSchema>;

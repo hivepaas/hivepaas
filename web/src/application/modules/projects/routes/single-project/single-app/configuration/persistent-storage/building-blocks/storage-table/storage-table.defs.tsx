@@ -1,0 +1,259 @@
+import React, { type ReactNode } from "react";
+
+import { Badge, type BadgeTone } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+import { type ColumnDef } from "@tanstack/react-table";
+import { EyeIcon, KeyRound, MoreVertical, Trash2Icon, TriangleAlert } from "lucide-react";
+import type { AppStorageMount } from "~/projects/domain";
+import { EMountType } from "~/projects/module-shared/enums";
+
+import { PopConfirm } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
+type StorageMountWithId = AppStorageMount & { _id: string };
+
+const MOUNT_TYPE_BADGE_TONE: BadgeTone = "cyan";
+
+// A volume HivePaaS made is its id to docker: it is shown by its name.
+function getSourceDisplay(mount: AppStorageMount): ReactNode {
+    return mount.sourceName ?? mount.source ?? "-";
+}
+
+function getOptionsDisplay(mount: AppStorageMount): string {
+    const options: string[] = [];
+    const volumeOpts = mount.volumeOptions ?? mount.clusterOptions;
+
+    if (volumeOpts?.subpath) {
+        options.push(`Subpath: ${volumeOpts.subpath}`);
+    }
+
+    if (volumeOpts?.noCopy) {
+        options.push("No Copy");
+    }
+
+    if (mount.readOnly) {
+        options.push("Read-only");
+    }
+
+    if (mount.type === "tmpfs") {
+        if (mount.tmpfsOptions?.size) {
+            options.push(`Size: ${mount.tmpfsOptions.size}`);
+        }
+        if (mount.tmpfsOptions?.mode) {
+            options.push(`Mode: ${mount.tmpfsOptions.mode}`);
+        }
+    }
+
+    return options.join("\n") || "-";
+}
+
+/**
+ * Whether a mount's permissions can be reset: a saved mount of the app's own
+ * directory. What reaches another app's directory is that app's to reset, and
+ * tmpfs and the like hold nothing on disk.
+ */
+function canResetPermissions(mount: AppStorageMount): boolean {
+    if (!mount.key || mount.sourceApp) {
+        return false;
+    }
+    return mount.type === EMountType.Volume || mount.type === EMountType.Cluster || mount.type === EMountType.Bind;
+}
+
+export function createStorageTableColumns(
+    onEdit: (mount: StorageMountWithId) => void,
+    onDelete: (mount: StorageMountWithId) => Promise<void> | void,
+    onResetPermissions: (mount: StorageMountWithId) => void,
+    canWrite: boolean,
+    /** The targets a managed database's engine relies on: they stay as they are. */
+    lockedTargets: string[] = [],
+): ColumnDef<StorageMountWithId>[] {
+    const isLocked = (mount: StorageMountWithId) => mount.target !== undefined && lockedTargets.includes(mount.target);
+
+    return [
+        {
+            id: "view",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row }) => (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-link hover:opacity-50"
+                    onClick={() => {
+                        onEdit(row.original);
+                    }}
+                >
+                    <EyeIcon className="size-5" />
+                    <span className="sr-only">Edit storage mount</span>
+                </Button>
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
+        {
+            accessorKey: "type",
+            header: "Type",
+            cell: ({ row }) => {
+                const { type } = row.original;
+                if (!type) return <div className="font-medium">-</div>;
+
+                return <Badge tone={MOUNT_TYPE_BADGE_TONE}>{type}</Badge>;
+            },
+            meta: {
+                align: "left",
+            },
+        },
+        {
+            accessorKey: "source",
+            header: "Source",
+            cell: ({ row }) => {
+                const { sourceApp } = row.original;
+                return (
+                    <div className="flex flex-col gap-0.5">
+                        <div className="text-sm break-all">{getSourceDisplay(row.original)}</div>
+                        {sourceApp && (
+                            <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                                <TriangleAlert className="size-3 shrink-0" />
+                                <span className="break-all">
+                                    {sourceApp.dangling
+                                        ? `data of a deleted app (${sourceApp.name ?? "unknown"})`
+                                        : `data of ${sourceApp.name ?? "another app"}`}
+                                    {sourceApp.write ? ", writable" : ", read-only"}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                );
+            },
+            meta: {
+                align: "left",
+            },
+        },
+        {
+            accessorKey: "target",
+            header: "Target",
+            cell: ({ row }) => (
+                <div className="flex flex-wrap items-center gap-1.5 text-sm break-all">
+                    {row.original.target ?? "-"}
+                    {isLocked(row.original) && (
+                        <Badge
+                            tone="violet"
+                            className="text-[10px]"
+                            title="The managed database's engine relies on this mount"
+                        >
+                            Managed
+                        </Badge>
+                    )}
+                </div>
+            ),
+            meta: {
+                align: "left",
+            },
+        },
+        {
+            accessorKey: "options",
+            header: "Options",
+            cell: ({ row }) => (
+                <div className="text-sm text-muted-foreground whitespace-pre-line break-all">
+                    {getOptionsDisplay(row.original)}
+                </div>
+            ),
+            meta: {
+                align: "left",
+            },
+        },
+        {
+            id: "actions",
+            header: "",
+            cell: ({ row }) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        asChild
+                        className="h-8 w-8"
+                    >
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                        >
+                            <MoreVertical className="size-4" />
+                            <span className="sr-only">Actions menu</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <div className="flex flex-col gap-0">
+                            {canResetPermissions(row.original) && (
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                    triggerClassName="w-full"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            className="justify-start py-1.5 w-full"
+                                            variant="ghost"
+                                            disabled={isDenied || !canWrite}
+                                            onClick={() => {
+                                                onResetPermissions(row.original);
+                                            }}
+                                        >
+                                            <KeyRound className="mr-2 size-4" />
+                                            Reset permissions
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                            )}
+                            {isLocked(row.original) ? null : canWrite ? (
+                                <PopConfirm
+                                    title="Remove Storage Mount"
+                                    variant="destructive"
+                                    confirmText="Remove"
+                                    cancelText="Cancel"
+                                    description="Are you sure you want to remove this storage mount?"
+                                    onConfirm={() => {
+                                        void onDelete(row.original);
+                                    }}
+                                >
+                                    <Button
+                                        className="justify-start py-1.5"
+                                        variant="ghost"
+                                    >
+                                        <Trash2Icon className="mr-2 size-4" />
+                                        Remove
+                                    </Button>
+                                </PopConfirm>
+                            ) : (
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                    triggerClassName="w-full"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            className="justify-start py-1.5 w-full"
+                                            variant="ghost"
+                                            disabled={isDenied}
+                                        >
+                                            <Trash2Icon className="mr-2 size-4" />
+                                            Remove
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                            )}
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ),
+            meta: {
+                align: "right",
+            },
+        },
+    ];
+}

@@ -1,0 +1,444 @@
+// The assertions type the form calls by the form's own values: without them
+// TypeScript infers from the generic Path<T>, and the calls do not type-check -
+// whatever typescript-eslint says of the receiver.
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@components/ui/button";
+import { Checkbox } from "@components/ui/checkbox";
+import { Field, FieldError } from "@components/ui/field";
+import { Input } from "@components/ui/input";
+import { Textarea } from "@components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
+import { Plus, Trash2, WrapText } from "lucide-react";
+import { type Path, get, useFieldArray, useFormContext, useWatch } from "react-hook-form";
+
+import {
+    type EnvVarRecord,
+    MULTILINE_ENV_SEPARATOR,
+    parseEnvVars,
+    reconcileEnvVarsWithReadOnlySnapshot,
+    snapshotReadOnlyEnvVars,
+    stringifyEnvVars,
+} from "@application/shared/utils/env-vars";
+
+const MERGE_VIEW_PLACEHOLDER = `KEY_1=VALUE_1
+${MULTILINE_ENV_SEPARATOR}
+KEY_2=
+value line
+${MULTILINE_ENV_SEPARATOR}`;
+
+// What Literal does: shown beside its checkbox, and read with it.
+const LITERAL_HINT = "Used as written: ${...} references in it are not replaced";
+
+function View<T>({
+    name,
+    search = "",
+    viewMode = "individual",
+    isRevealed = false,
+    readOnly = false,
+    extraActions,
+}: Props<T>) {
+    const {
+        control,
+        register,
+        formState: { errors },
+    } = useFormContext<Record<string, EnvVarRecord[]>>();
+
+    const { fields, append, remove, replace, update } = useFieldArray({
+        control,
+        name: name as string,
+    });
+
+    const fieldValuesWatch = useWatch({
+        control,
+        name: name as string,
+    });
+
+    const fieldValues = useMemo(() => {
+        return fieldValuesWatch;
+    }, [fieldValuesWatch]);
+
+    const hintId = useId();
+    const literalHintId = `${hintId}-literal`;
+    const mergeHintId = `${hintId}-merge`;
+
+    const previousViewModeRef = useRef<"merge" | "individual">(viewMode);
+    const readOnlySnapshotRef = useRef(snapshotReadOnlyEnvVars([]));
+    const [mergeText, setMergeText] = useState<string | null>(null);
+    const [multilineFieldIds, setMultilineFieldIds] = useState<Set<string>>(() => new Set());
+
+    useEffect(() => {
+        setMultilineFieldIds(previousIds => {
+            const nextIds = new Set(previousIds);
+            let changed = false;
+            const currentFieldIds = new Set(fields.map(field => field.id));
+
+            for (const fieldId of Array.from(nextIds)) {
+                if (!currentFieldIds.has(fieldId)) {
+                    nextIds.delete(fieldId);
+                    changed = true;
+                }
+            }
+
+            fields.forEach((field, index) => {
+                const record = fieldValues[index];
+
+                if (record?.value.includes("\n") && !nextIds.has(field.id)) {
+                    nextIds.add(field.id);
+                    changed = true;
+                }
+            });
+
+            return changed ? nextIds : previousIds;
+        });
+    }, [fields, fieldValues]);
+
+    // Filter records based on search query
+    const filteredFields = useMemo(() => {
+        if (!search || search.trim() === "") {
+            return fields.map((_field, index) => index);
+        }
+
+        const searchLower = search.toLowerCase().trim();
+        return fields
+            .map((_field, index) => index)
+            .filter(index => {
+                const record = fieldValues[index];
+                if (!record) return false;
+
+                const keyMatch = record.key.toLowerCase().includes(searchLower);
+                const valueMatch = record.value.toLowerCase().includes(searchLower);
+                return keyMatch || valueMatch;
+            });
+    }, [fields, fieldValues, search]);
+
+    const applyParsedMergeText = useCallback(
+        (text: string) => {
+            const parsedArray = parseEnvVars(text);
+            const reconciled = reconcileEnvVarsWithReadOnlySnapshot(parsedArray, readOnlySnapshotRef.current);
+            replace(reconciled);
+        },
+        [replace],
+    );
+
+    // Handle view mode switching
+    useEffect(() => {
+        // When switching from individual to merge
+        if (previousViewModeRef.current === "individual" && viewMode === "merge") {
+            readOnlySnapshotRef.current = snapshotReadOnlyEnvVars(fieldValues);
+            const text = stringifyEnvVars(fieldValues);
+            setMergeText(text);
+        }
+
+        // When switching from merge to individual
+        if (previousViewModeRef.current === "merge" && viewMode === "individual") {
+            if (readOnly) {
+                previousViewModeRef.current = viewMode;
+                return;
+            }
+
+            const text = mergeText ?? stringifyEnvVars(fieldValues);
+            applyParsedMergeText(text);
+        }
+
+        previousViewModeRef.current = viewMode;
+    }, [viewMode, fieldValues, mergeText, readOnly, applyParsedMergeText]);
+
+    // Handle merge textarea changes
+    const handleMergeTextChange = (value: string) => {
+        if (readOnly) {
+            return;
+        }
+
+        setMergeText(value);
+    };
+
+    const syncMergeTextToFields = () => {
+        if (readOnly) {
+            return;
+        }
+
+        const text = mergeText ?? "";
+        applyParsedMergeText(text);
+    };
+
+    // Get merge text value
+    const mergeTextValue = useMemo(() => {
+        if (viewMode === "merge") {
+            if (mergeText !== null) {
+                return mergeText;
+            }
+            return stringifyEnvVars(fieldValues);
+        }
+        return "";
+    }, [viewMode, fieldValues, mergeText]);
+
+    const handleAdd = () => {
+        if (readOnly) {
+            return;
+        }
+
+        append({ key: "", value: "", isLiteral: false, isSystem: false, isReadOnly: false });
+    };
+
+    const handleMultilineToggle = (fieldId: string, value: string, rowReadOnly: boolean) => {
+        if (readOnly || rowReadOnly) {
+            return;
+        }
+
+        const isMultiline = multilineFieldIds.has(fieldId) || value.includes("\n");
+
+        if (isMultiline) {
+            if (value.includes("\n")) {
+                return;
+            }
+
+            setMultilineFieldIds(previousIds => {
+                const nextIds = new Set(previousIds);
+                nextIds.delete(fieldId);
+                return nextIds;
+            });
+            return;
+        }
+
+        setMultilineFieldIds(previousIds => {
+            const nextIds = new Set(previousIds);
+            nextIds.add(fieldId);
+            return nextIds;
+        });
+    };
+
+    return viewMode === "individual" ? (
+        <div className="flex flex-col gap-4">
+            {/* Individual Records List */}
+            {filteredFields.length > 0 ? (
+                <div className="space-y-3">
+                    {filteredFields.map(index => {
+                        const record = fieldValues[index];
+                        const field = fields[index];
+                        if (!field || !record) return null;
+
+                        const rowReadOnly = readOnly || record.isReadOnly === true;
+                        const hasMultilineValue = record.value.includes("\n");
+                        const isMultiline = multilineFieldIds.has(field.id) || hasMultilineValue;
+                        const cannotDisableMultiline = isMultiline && hasMultilineValue;
+
+                        return (
+                            <div
+                                key={field.id}
+                                role="group"
+                                aria-label={record.key.trim() || "New variable"}
+                                className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-0 rounded-lg sm:rounded-none bg-muted/20 sm:bg-transparent border sm:border-0"
+                            >
+                                {/* Key & Value Inputs */}
+                                <div className="flex flex-1 items-start gap-2 sm:gap-3 min-w-0 w-full">
+                                    {/* Key Input */}
+                                    <div className="min-w-0 flex-1">
+                                        <Field>
+                                            <Input
+                                                id={`${name}-${index}-key`}
+                                                {...register(`${name}.${index}.key`)}
+                                                placeholder="Key"
+                                                aria-label="Key"
+                                                aria-invalid={!!get(errors, `${name}.${index}.key`)}
+                                                disabled={rowReadOnly}
+                                            />
+                                            <FieldError errors={[get(errors, `${name}.${index}.key`)]} />
+                                        </Field>
+                                    </div>
+
+                                    {/* Value Input */}
+                                    <div className="min-w-0 flex-1">
+                                        <Field>
+                                            {isMultiline ? (
+                                                <Textarea
+                                                    id={`${name}-${index}-value`}
+                                                    {...register(`${name}.${index}.value`)}
+                                                    aria-label="Value"
+                                                    aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                    disabled={rowReadOnly}
+                                                    minRows={4}
+                                                    maxRows={0}
+                                                    className={cn(
+                                                        "min-h-24 resize-y",
+                                                        !isRevealed && "[-webkit-text-security:disc]",
+                                                    )}
+                                                />
+                                            ) : (
+                                                <Input
+                                                    id={`${name}-${index}-value`}
+                                                    type={isRevealed ? "text" : "password"}
+                                                    {...register(`${name}.${index}.value`)}
+                                                    aria-label="Value"
+                                                    aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                    disabled={rowReadOnly}
+                                                />
+                                            )}
+                                            <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
+                                        </Field>
+                                    </div>
+                                </div>
+
+                                {/* Controls: Literal Checkbox & Actions */}
+                                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
+                                    {/* Literal Checkbox */}
+                                    <div className="flex h-9 items-center gap-2">
+                                        <Checkbox
+                                            id={`${name}-${index}-literal`}
+                                            checked={record.isLiteral}
+                                            onCheckedChange={checked => {
+                                                if (rowReadOnly) {
+                                                    return;
+                                                }
+
+                                                update(index, {
+                                                    ...record,
+                                                    isLiteral: checked === true,
+                                                    isSystem: record.isSystem ?? false,
+                                                    isReadOnly: record.isReadOnly ?? false,
+                                                });
+                                            }}
+                                            disabled={rowReadOnly}
+                                            aria-describedby={literalHintId}
+                                        />
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <label
+                                                    htmlFor={`${name}-${index}-literal`}
+                                                    className="text-sm cursor-pointer select-none text-muted-foreground sm:text-foreground"
+                                                >
+                                                    Literal
+                                                </label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">{LITERAL_HINT}</TooltipContent>
+                                        </Tooltip>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        {/* Multi-line Toggle */}
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant={isMultiline ? "secondary" : "ghost"}
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        handleMultilineToggle(field.id, record.value, rowReadOnly);
+                                                    }}
+                                                    disabled={rowReadOnly}
+                                                    aria-label="Multi-line value"
+                                                    aria-pressed={isMultiline}
+                                                    aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
+                                                    className={cn(
+                                                        "size-9 text-muted-foreground",
+                                                        isMultiline && "text-foreground",
+                                                        cannotDisableMultiline && "cursor-not-allowed opacity-50",
+                                                    )}
+                                                >
+                                                    <WrapText className="size-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">Multi-line value</TooltipContent>
+                                        </Tooltip>
+
+                                        {/* Delete Button */}
+                                        {rowReadOnly && !readOnly ? (
+                                            <div className="size-9" />
+                                        ) : (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            if (rowReadOnly) {
+                                                                return;
+                                                            }
+
+                                                            remove(index);
+                                                        }}
+                                                        disabled={rowReadOnly}
+                                                        aria-label="Remove variable"
+                                                        className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">Remove variable</TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    <p
+                        id={literalHintId}
+                        hidden
+                    >
+                        {LITERAL_HINT}
+                    </p>
+                </div>
+            ) : (
+                <div className="text-sm text-muted-foreground py-4 text-center">
+                    {search ? "No records match your search" : "No results"}
+                </div>
+            )}
+
+            {/* Add Button */}
+            <div className="flex flex-wrap items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAdd}
+                    disabled={readOnly}
+                    className="w-fit"
+                >
+                    <Plus className="size-4" />
+                    Add
+                </Button>
+                {extraActions}
+            </div>
+        </div>
+    ) : (
+        <div className="flex flex-col gap-2">
+            {/* Merge View Textarea */}
+            <Textarea
+                value={mergeTextValue}
+                onChange={e => {
+                    handleMergeTextChange(e.target.value);
+                }}
+                onBlur={() => {
+                    syncMergeTextToFields();
+                }}
+                placeholder={MERGE_VIEW_PLACEHOLDER}
+                aria-label="Env variables"
+                aria-describedby={mergeHintId}
+                rows={10}
+                className="font-mono text-sm min-h-[500px]"
+                disabled={readOnly}
+            />
+            <p
+                id={mergeHintId}
+                className="text-xs text-muted-foreground"
+            >
+                Enter environment variables in key=value format, one per line
+            </p>
+            {extraActions ? <div className="flex flex-wrap items-center gap-2">{extraActions}</div> : null}
+        </div>
+    );
+}
+
+type Props<T> = {
+    name: Path<T>;
+    search?: string;
+    viewMode?: "merge" | "individual";
+    isRevealed?: boolean;
+    readOnly?: boolean;
+    extraActions?: React.ReactNode;
+};
+
+export const ConfigVariables = React.memo(View) as typeof View;

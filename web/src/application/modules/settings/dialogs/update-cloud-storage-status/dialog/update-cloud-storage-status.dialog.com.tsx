@@ -1,0 +1,159 @@
+import { useEffect, useState } from "react";
+
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { toast } from "sonner";
+import { ProjectCloudStorageCommands } from "~/projects/data/commands";
+import { ProjectCloudStorageQueries } from "~/projects/data/queries";
+import { CloudStorageCommands } from "~/settings/data/commands";
+import { CloudStorageQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
+
+import { UpdateCloudStorageStatusForm } from "../form";
+import { useUpdateCloudStorageStatusDialogState } from "../hooks";
+import type { UpdateCloudStorageStatusFormOutput } from "../schemas";
+
+export function UpdateCloudStorageStatusDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useUpdateCloudStorageStatusDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = CloudStorageCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Cloud storage status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectCloudStorageCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Project cloud storage status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = CloudStorageQueries.useFindOneById(
+        { id: detailId },
+        { enabled: state.mode === "open" && state.scope.type === "settings" },
+    );
+    const projectDetailQuery = ProjectCloudStorageQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
+            id: detailId,
+        },
+        { enabled: state.mode === "open" && state.scope.type === "project" },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const cloudStorage = detailQuery.data?.data;
+
+    function onSubmit(values: UpdateCloudStorageStatusFormOutput) {
+        if (state.mode !== "open" || !cloudStorage) return;
+
+        const payload = {
+            updateVer: cloudStorage.updateVer,
+            status: values.status,
+            expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: cloudStorage.id,
+                payload,
+            });
+            return;
+        }
+
+        updateSettingMeta({ id: cloudStorage.id, payload });
+    }
+
+    function handleClose() {
+        if (isPending) return;
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        )
+            return;
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Cloud Storage"} Status`
+        : "Change status";
+    const isPending = isUpdatingSetting || isUpdatingProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+    const initialValues = cloudStorage
+        ? {
+              status: cloudStorage.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: cloudStorage.expireAt ?? undefined,
+              inheritable: Boolean(cloudStorage.inheritable),
+              default: cloudStorage.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
+                    <UpdateCloudStorageStatusForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

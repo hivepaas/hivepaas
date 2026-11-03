@@ -1,0 +1,98 @@
+import { type PaginationState, type SortingState } from "@infrastructure/data";
+import { type NodeBase, type NodeDetails } from "~/cluster/domain";
+import { type ENodeAvailability } from "~/cluster/module-shared/enums";
+
+import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
+
+/**
+ * Find many nodes paginated
+ */
+export type Nodes_FindManyPaginated_Req = ApiRequestBase<{
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type Nodes_FindManyPaginated_Res = ApiResponsePaginated<NodeDetails>;
+
+/**
+ * Find one node by id
+ */
+export type Nodes_FindOneById_Req = ApiRequestBase<{
+    id: string;
+}>;
+
+export type Nodes_FindOneById_Res = ApiResponseBase<NodeDetails>;
+
+/**
+ * Delete one node
+ */
+export type Nodes_DeleteOne_Req = ApiRequestBase<{
+    id: string;
+    force: boolean;
+}>;
+
+export type Nodes_DeleteOne_Res = ApiResponseBase<{
+    id: string;
+}>;
+
+/**
+ * Update one node
+ */
+export type Nodes_UpdateOne_Req = ApiRequestBase<{
+    id: string;
+    name: string;
+    labels: { key: string; value: string }[];
+    availability: ENodeAvailability;
+    updateVer: number;
+}>;
+
+export type Nodes_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+/**
+ * Create a node
+ */
+export type Nodes_CreateOne_Req = ApiRequestBase<{
+    node: Omit<NodeBase, "id" | "refId" | "createdAt" | "updatedAt">;
+}>;
+
+export type Nodes_CreateOne_Res = ApiResponseBase<{
+    id: string;
+}>;
+
+/**
+ * Get join node command
+ */
+export type Nodes_GetJoinNode_Req = ApiRequestBase<{
+    joinAsManager: boolean;
+}>;
+
+export type Nodes_GetJoinNode_Res = ApiResponseBase<{
+    command: string;
+}>;
+
+/**
+ * Join node
+ */
+export type Nodes_JoinNode_Req = ApiRequestBase<{
+    sshKey: { id: string };
+    host: string;
+    port: number;
+    user: string;
+    joinAsManager: boolean;
+}>;
+
+export type Nodes_JoinNode_Res = ApiResponseBase<{
+    type: "success";
+}>;
+
+/**
+ * Set manager nodes
+ */
+export type Nodes_SetManagers_Req = ApiRequestBase<{
+    nodes: { id: string }[];
+}>;
+
+export type Nodes_SetManagers_Res = ApiResponseBase<{
+    type: "success";
+}>;

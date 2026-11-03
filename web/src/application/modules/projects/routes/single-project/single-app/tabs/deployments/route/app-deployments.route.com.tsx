@@ -1,0 +1,137 @@
+import { useMemo } from "react";
+
+import { cn } from "@/lib/utils";
+import { listBox } from "@lib/styles";
+import { useParams } from "react-router";
+import invariant from "tiny-invariant";
+import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
+import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
+
+import { AppLink, TableActions } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
+import { useTableState } from "@application/shared/hooks/table";
+
+import { TablePagination } from "@/components/ui";
+
+import { DeploymentSummaryCard, DeploymentSummaryCardSkeleton, useDeploymentCurrentTime } from "../building-blocks";
+import { showDeploymentCancelToast } from "../utils";
+
+const DEPLOYMENTS_REFETCH_INTERVAL_MS = 5_000;
+
+export function AppDeploymentsRoute() {
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
+    const { pagination, setPagination, sorting, search, setSearch } = useTableState();
+    const { navigate } = useAppNavigate();
+
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+    invariant(appId, "appId must be defined");
+
+    // The list is read again every few seconds: a deployment started elsewhere (a
+    // webhook, another tab) appears, and one that is running moves on, without a
+    // reload. The skeleton is for the first load only, not for these refreshes.
+    const { data: { data: deployments, meta } = DEFAULT_PAGINATED_DATA, isLoading } =
+        AppDeploymentsQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                env,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            { refetchInterval: DEPLOYMENTS_REFETCH_INTERVAL_MS },
+        );
+
+    const hasActiveDeployment = useMemo(
+        () => deployments.some(deployment => deployment.status === EAppDeploymentStatus.InProgress),
+        [deployments],
+    );
+    const now = useDeploymentCurrentTime(hasActiveDeployment);
+    const pageCount = Math.max(1, Math.ceil(meta.page.total / pagination.size));
+
+    const { mutate: cancelDeployment, isPending: isCancelling } = AppDeploymentsCommands.useCancel({
+        onSuccess: response => {
+            showDeploymentCancelToast(response);
+        },
+    });
+
+    return (
+        <section className={cn(listBox)}>
+            <div className="flex flex-col gap-5">
+                <TableActions
+                    search={{ value: search, onChange: setSearch }}
+                    renderActions={
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
+                                projectId,
+                                env,
+                                appId,
+                            )}
+                            className="text-sm font-medium text-link underline-offset-4 hover:underline"
+                        >
+                            Go to Deployment Settings
+                        </AppLink.Basic>
+                    }
+                />
+
+                <div className="flex flex-col gap-4">
+                    {isLoading && deployments.length === 0 ? (
+                        <>
+                            <DeploymentSummaryCardSkeleton />
+                            <DeploymentSummaryCardSkeleton />
+                            <DeploymentSummaryCardSkeleton />
+                        </>
+                    ) : deployments.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                            No deployments found.
+                        </div>
+                    ) : (
+                        deployments.map(deployment => (
+                            <DeploymentSummaryCard
+                                key={deployment.id}
+                                deployment={deployment}
+                                now={now}
+                                isCancelling={isCancelling}
+                                onClick={() => {
+                                    navigate.modules(
+                                        ROUTE.projects.single.apps.single.deployments.details.$route(
+                                            projectId,
+                                            env,
+                                            appId,
+                                            deployment.id,
+                                        ),
+                                    );
+                                }}
+                                onCancel={deploymentID => {
+                                    cancelDeployment({
+                                        projectID: projectId,
+                                        env,
+                                        appID: appId,
+                                        deploymentID,
+                                    });
+                                }}
+                            />
+                        ))
+                    )}
+                </div>
+
+                {meta.page.total > 0 && (
+                    <TablePagination
+                        pageIndex={pagination.page - 1}
+                        pageSize={pagination.size}
+                        pageCount={pageCount}
+                        totalCount={meta.page.total}
+                        onPageChange={pageIndex => {
+                            setPagination(prev => ({ ...prev, page: pageIndex + 1 }));
+                        }}
+                        onPageSizeChange={pageSize => {
+                            setPagination(prev => ({ ...prev, size: pageSize, page: 1 }));
+                        }}
+                    />
+                )}
+            </div>
+        </section>
+    );
+}

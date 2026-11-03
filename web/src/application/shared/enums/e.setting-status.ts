@@ -1,0 +1,10 @@
+export const ESettingStatus = {
+    None: "",
+    Active: "active",
+    Pending: "pending",
+    Disabled: "disabled",
+    Expired: "expired",
+    Missing: "missing",
+} as const;
+
+export type ESettingStatus = (typeof ESettingStatus)[keyof typeof ESettingStatus];

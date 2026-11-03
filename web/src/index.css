@@ -1,0 +1,247 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  /* The page ground behind cards. Distinct from --background because in light
+     the canvas is grey and the cards on it are white, while in dark that order
+     reverses: the canvas is the darkest surface and cards sit above it. */
+  --canvas: #f5f5f5;
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #1e293b;
+  --primary-foreground: oklch(0.985 0 0);
+  /* Warm accent lifted from the logo's inner deck. Used on top of --primary
+     surfaces, never as a surface itself, so it never collides with the amber
+     that already means "warning" across the app. */
+  --primary-accent: #f59e0b;
+  /* Primary as a line rather than a surface. It exists because --primary has to
+     be a button ground first, and in dark that makes it a near-white: correct
+     behind label text, wrong as a 1px rule, where it reads as a bare hairline
+     with no identity. Light keeps the ink, so nothing there changes. */
+  --primary-stroke: #1e293b;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: #d23b3b;
+  /* Links are blue because primary no longer can be. Primary is a near-body
+     slate, so a link painted with it differs from the sentence around it by
+     underline alone - and an underline reads as emphasis, not as something you
+     can click. Blue is the one hue the web has trained everyone to read as a
+     link, and it is free here: it collides with neither the slate primary nor
+     the amber accent. Deep enough to clear 4.5:1 on the tinted note grounds,
+     not only on white. */
+  --link: #0958d9;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  /* Status colours, for the toast icons and anything else that has to say
+     good/bad without words. Error and info are not new colours: the app already
+     has one red it uses for danger and one blue it uses for links, and a second
+     red or blue would only ask the reader to work out whether the difference
+     meant something.
+
+     They were pure RGB - #ff0000, #00ff00, #0000ff - which is why the toast
+     icons read as neon. Pure blue in particular came to 1.3:1 on the dark
+     popover, i.e. invisible; every value below clears 3:1 on both grounds. */
+  --color-error: var(--destructive);
+  --color-info: var(--link);
+  --color-warning: #b45309;
+  --color-success: #15803d;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Elevation runs the opposite way to the usual dark-mode convention, and that
+     is deliberate: the shell around the work (canvas, sidebar, popovers) is the
+     lighter surface, and the views the operator actually reads - cards, tables,
+     forms - are the darkest. Dense tabular data is easier to scan on the deeper
+     ground, and the shell reads as a frame around it rather than another panel
+     competing for attention.
+
+     Every grey carries a little chroma at hue 265, picked up from the logo's
+     #111827: neutral grey reads as colour switched off, a slight cast reads as
+     colour chosen. */
+  --canvas: oklch(0.305 0.01 265);
+  --background: oklch(0.265 0.009 265);
+  --card: oklch(0.265 0.009 265);
+  --popover: oklch(0.3 0.011 265);
+  --foreground: oklch(0.955 0.004 265);
+  --card-foreground: oklch(0.955 0.004 265);
+  --popover-foreground: oklch(0.955 0.004 265);
+
+  /* Cool near-white rather than a sterile neutral. The primary button stays a
+     light surface here - the inverse of the ink it is in light mode - but
+     anything drawing a primary-coloured stroke (dashed note boxes, selected
+     borders) reads as periwinkle, the hue Darkreader produced by inverting
+     #111827 and the reason those borders looked right. */
+  --primary: oklch(0.87 0.04 268);
+  --primary-foreground: oklch(0.245 0.012 265);
+  --primary-accent: #b45309;
+  /* Periwinkle, not the near-white --primary: this is the hue Darkreader used
+     to produce by inverting the ink #111827 while holding its hue, and the
+     reason those dashed note boxes read as deliberate rather than leftover. */
+  --primary-stroke: oklch(0.62 0.13 278);
+
+  /* Lifts off --card, so table headers and subtle panels separate from the rows
+     beneath them without going bright. */
+  --secondary: oklch(0.3 0.011 265);
+  --secondary-foreground: oklch(0.955 0.004 265);
+  --muted: oklch(0.3 0.011 265);
+  /* Lifted from 0.735. Dark mode carries a lot on this one token - sidebar
+     icons and section headings, form field labels, placeholders, timestamps -
+     and at 0.735 the parts of it that are not really secondary text, the field
+     labels above all, read as greyed out rather than quiet. Still a clear step
+     below --foreground at 0.955, so the hierarchy it exists to draw survives. */
+  --muted-foreground: oklch(0.8 0.014 265);
+  --accent: oklch(0.335 0.012 265);
+  --accent-foreground: oklch(0.955 0.004 265);
+  --destructive: #e05252;
+  /* The light blue is far too dark to read on these grounds; a link token that
+     does not flip is the usual way dark mode loses its links. */
+  --link: #69b1ff;
+  /* --color-error and --color-info follow --destructive and --link, which are
+     already redefined here, so only these two need a dark value of their own. */
+  --color-warning: #fbbf24;
+  --color-success: #4ade80;
+  --border: oklch(1 0 0 / 13%);
+  --input: oklch(1 0 0 / 17%);
+  --ring: oklch(0.65 0.03 268);
+
+  --chart-1: oklch(0.62 0.19 265);
+  --chart-2: oklch(0.7 0.15 162);
+  --chart-3: oklch(0.77 0.17 70);
+  --chart-4: oklch(0.65 0.24 304);
+  --chart-5: oklch(0.66 0.2 16);
+
+  /* The rail takes exactly --card. Sidebar and content cards become one
+     material, and --canvas - the lighter ground they both sit on - is the only
+     thing separating them. The shell stops being a third surface competing for
+     attention: what the operator sees is two panels of the same stock, framed
+     by the space between them. */
+  --sidebar: oklch(0.265 0.009 265);
+  --sidebar-foreground: oklch(0.955 0.004 265);
+  --sidebar-primary: oklch(0.62 0.19 265);
+  --sidebar-primary-foreground: oklch(0.955 0.004 265);
+  --sidebar-accent: oklch(0.315 0.01 265);
+  --sidebar-accent-foreground: oklch(0.955 0.004 265);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.65 0.03 268);
+}
+
+@theme inline {
+  /* Geist, bundled with the dashboard (see main.tsx): a self-hosted install
+     loads no font from a third party. */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-accent: var(--primary-accent);
+  --color-primary-stroke: var(--primary-stroke);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-link: var(--link);
+}
+
+@layer components {
+  /* A fill whose text and edge are worked out from the fill itself.
+     Give it --env-color and it does the rest: CSS relative colour syntax reads
+     that colour's OKLCH lightness, and the clamp turns it into 1 (white) below
+     the threshold or 0 (black) above it.
+
+     White is the intended look and the threshold sits high on purpose, so it
+     stays white for every saturated colour someone is likely to pick - violet,
+     fuchsia, green, orange all keep it. The flip is an escape hatch for the pale
+     end only, where the background has come close enough to white that white
+     text is simply gone: amber-400 and lighter. Chasing WCAG here would have
+     flipped mid-tones like fuchsia to black, which reads as a glitch. */
+  /* Doubled selector on purpose. The computed colour is the point of this rule,
+     so a text-* utility arriving through a className prop overriding it is always
+     a bug - and it silently was one, because utilities layer after components.
+     Two classes outrank the single-class utility and close that off. */
+  .env-fill.env-fill {
+    background-color: var(--env-color);
+    color: oklch(from var(--env-color) clamp(0, (0.8 - l) * 1000, 1) 0 0);
+    border-color: oklch(from var(--env-color) clamp(0, (0.8 - l) * 1000, 1) 0 0 / 0.25);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground text-sm;
+  }
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(300%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}

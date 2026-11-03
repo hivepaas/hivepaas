@@ -1,0 +1,259 @@
+import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useProjectsApi } from "~/projects/api/hooks";
+import type {
+    Projects_CreateOne_Req,
+    Projects_CreateOne_Res,
+    Projects_DeleteEnv_Req,
+    Projects_DeleteEnv_Res,
+    Projects_DeleteOne_Req,
+    Projects_DeleteOne_Res,
+    Projects_UpdateEnvStatus_Req,
+    Projects_UpdateEnvStatus_Res,
+    Projects_UpdateOne_Req,
+    Projects_UpdateOne_Res,
+    Projects_UpdatePhoto_Req,
+    Projects_UpdatePhoto_Res,
+    Projects_UpdateStatus_Req,
+    Projects_UpdateStatus_Res,
+} from "~/projects/api/services";
+import { QK } from "~/projects/data/constants";
+
+/**
+ * Create a project command
+ */
+type CreateOneReq = Projects_CreateOne_Req["data"];
+type CreateOneRes = Projects_CreateOne_Res;
+type CreateOneOptions = Omit<UseMutationOptions<CreateOneRes, Error, CreateOneReq>, "mutationFn">;
+
+function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createOne,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Delete a project command
+ */
+type DeleteOneReq = Projects_DeleteOne_Req["data"];
+type DeleteOneRes = Projects_DeleteOne_Res;
+type DeleteOneOptions = Omit<UseMutationOptions<DeleteOneRes, Error, DeleteOneReq>, "mutationFn">;
+
+function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deleteOne,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project command
+ */
+type UpdateOneReq = Projects_UpdateOne_Req["data"];
+type UpdateOneRes = Projects_UpdateOne_Res;
+type UpdateOneOptions = Omit<UseMutationOptions<UpdateOneRes, Error, UpdateOneReq>, "mutationFn">;
+
+function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateOne,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project status command
+ */
+type UpdateStatusReq = Projects_UpdateStatus_Req["data"];
+type UpdateStatusRes = Projects_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
+
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateStatus,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project photo command
+ */
+type UpdatePhotoReq = Projects_UpdatePhoto_Req["data"];
+type UpdatePhotoRes = Projects_UpdatePhoto_Res;
+type UpdatePhotoOptions = Omit<UseMutationOptions<UpdatePhotoRes, Error, UpdatePhotoReq>, "mutationFn">;
+
+function useUpdatePhoto({ onSuccess, ...options }: UpdatePhotoOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updatePhoto,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Update a project env status command
+ */
+type UpdateEnvStatusReq = Projects_UpdateEnvStatus_Req["data"];
+type UpdateEnvStatusRes = Projects_UpdateEnvStatus_Res;
+type UpdateEnvStatusOptions = Omit<UseMutationOptions<UpdateEnvStatusRes, Error, UpdateEnvStatusReq>, "mutationFn">;
+
+function useUpdateEnvStatus({ onSuccess, ...options }: UpdateEnvStatusOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updateEnvStatus,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Delete a project env command
+ */
+type DeleteEnvReq = Projects_DeleteEnv_Req["data"];
+type DeleteEnvRes = Projects_DeleteEnv_Res;
+type DeleteEnvOptions = Omit<UseMutationOptions<DeleteEnvRes, Error, DeleteEnvReq>, "mutationFn">;
+
+function useDeleteEnv({ onSuccess, ...options }: DeleteEnvOptions = {}) {
+    const { mutations } = useProjectsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.deleteEnv,
+        onSuccess: (response, request, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-one-by-id"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+export const ProjectsCommands = Object.freeze({
+    useCreateOne,
+    useDeleteOne,
+    useUpdateOne,
+    useUpdateStatus,
+    useUpdatePhoto,
+    useUpdateEnvStatus,
+    useDeleteEnv,
+});

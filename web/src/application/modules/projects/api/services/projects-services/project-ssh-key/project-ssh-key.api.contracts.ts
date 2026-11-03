@@ -1,0 +1,61 @@
+import type { PaginationState, SortingState } from "@infrastructure/data";
+import type {
+    SSHKey_CreateOne_Payload,
+    SSHKey_UpdateOne_Payload,
+    SSHKey_UpdateStatus_Payload,
+} from "~/settings/api/services";
+import type { SettingSSHKey } from "~/settings/domain";
+
+import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
+
+export type ProjectSSHKey_FindManyPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type ProjectSSHKey_FindManyPaginated_Res = ApiResponsePaginated<SettingSSHKey>;
+
+export type ProjectSSHKey_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectSSHKey_FindOneById_Res = ApiResponseBase<SettingSSHKey>;
+
+export type ProjectSSHKey_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    payload: SSHKey_CreateOne_Payload;
+}>;
+
+export type ProjectSSHKey_CreateOne_Res = ApiResponseBase<{ id: string }>;
+
+export type ProjectSSHKey_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: SSHKey_UpdateOne_Payload;
+}>;
+
+export type ProjectSSHKey_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectSSHKey_UpdateStatus_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: SSHKey_UpdateStatus_Payload;
+}>;
+
+export type ProjectSSHKey_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectSSHKey_DeleteOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectSSHKey_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;

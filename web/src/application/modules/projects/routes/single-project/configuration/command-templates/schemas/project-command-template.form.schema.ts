@@ -1,0 +1,127 @@
+import { z } from "zod";
+import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
+
+export const PROJECT_COMMAND_TEMPLATE_COMMAND_MODE = {
+    Command: "command",
+    Script: "script",
+} as const;
+
+const COMMAND_TEMPLATE_MAX_SIZE = 300 * 1024;
+const COMMAND_TEMPLATE_LINK_MIN_LEN = 3;
+const COMMAND_TEMPLATE_LINK_MAX_LEN = 500;
+const COMMAND_TEMPLATE_DESC_MAX_LEN = 1000;
+
+const KeyValueSchema = z.object({
+    key: z.string(),
+    value: z.string(),
+    isLiteral: z.boolean().optional(),
+});
+
+const ArgSchema = z.object({
+    use: z.boolean(),
+    name: z.string().trim(),
+    value: z.string(),
+});
+
+const ArgGroupSchema = z.object({
+    enabled: z.boolean(),
+    exportEnv: z.string().trim(),
+    separator: z.enum([EAppScheduledJobArgSeparator.Equal, EAppScheduledJobArgSeparator.Whitespace]),
+    args: z.array(ArgSchema),
+});
+
+export const ProjectCommandTemplateFormSchema = z
+    .object({
+        name: z.string().trim().min(1, "Name is required"),
+        kind: z.string().trim().min(1, "Type is required"),
+        link: z
+            .string()
+            .trim()
+            .max(COMMAND_TEMPLATE_LINK_MAX_LEN, `Link must be at most ${COMMAND_TEMPLATE_LINK_MAX_LEN} characters`)
+            .refine(value => value.length === 0 || value.length >= COMMAND_TEMPLATE_LINK_MIN_LEN, {
+                message: `Link must be at least ${COMMAND_TEMPLATE_LINK_MIN_LEN} characters`,
+            }),
+        desc: z
+            .string()
+            .trim()
+            .max(
+                COMMAND_TEMPLATE_DESC_MAX_LEN,
+                `Description must be at most ${COMMAND_TEMPLATE_DESC_MAX_LEN} characters`,
+            ),
+        commandMode: z.enum([
+            PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,
+            PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script,
+        ]),
+        command: z.string().trim(),
+        script: z.string(),
+        workingDir: z.string().trim(),
+        tty: z.boolean(),
+        consoleSize: z.object({
+            width: z.coerce.number().int().min(1, "Width must be at least 1"),
+            height: z.coerce.number().int().min(1, "Height must be at least 1"),
+        }),
+        envVars: z.array(KeyValueSchema),
+        argGroups: z.array(ArgGroupSchema),
+        inheritable: z.boolean(),
+        default: z.boolean(),
+    })
+    .superRefine((value, ctx) => {
+        if (value.commandMode === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command) {
+            if (!value.command) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["command"],
+                    message: "Command is required",
+                });
+            }
+
+            if (value.command.length > COMMAND_TEMPLATE_MAX_SIZE) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["command"],
+                    message: "Command must be at most 300kb",
+                });
+            }
+        }
+
+        if (value.commandMode === PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script) {
+            if (!value.script.trim()) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["script"],
+                    message: "Script is required",
+                });
+            }
+
+            if (value.script.length > COMMAND_TEMPLATE_MAX_SIZE) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["script"],
+                    message: "Script must be at most 300kb",
+                });
+            }
+        }
+
+        value.argGroups.forEach((group, groupIndex) => {
+            if (group.enabled && !group.exportEnv) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ["argGroups", groupIndex, "exportEnv"],
+                    message: "Export Env is required",
+                });
+            }
+
+            group.args.forEach((arg, argIndex) => {
+                if (arg.use && !arg.name) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        path: ["argGroups", groupIndex, "args", argIndex, "name"],
+                        message: "Arg name is required",
+                    });
+                }
+            });
+        });
+    });
+
+export type ProjectCommandTemplateFormInput = z.input<typeof ProjectCommandTemplateFormSchema>;
+export type ProjectCommandTemplateFormOutput = z.output<typeof ProjectCommandTemplateFormSchema>;

@@ -1,0 +1,115 @@
+import { z } from "zod";
+import type {
+    AppConfigFiles_CreateOne_Res,
+    AppConfigFiles_FindManyPaginated_Res,
+    AppConfigFiles_FindOneById_Res,
+    AppConfigFiles_GetDownloadToken_Res,
+} from "~/projects/api/services/project-apps-services";
+
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+/**
+ * App config file schema
+ */
+const AppConfigFileSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    content: z.string().optional().default(""),
+    base64: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
+    type: z.string().optional().default("config-file"),
+    status: z.string(),
+    inherited: z.boolean().optional().default(false),
+    updateVer: z.number(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date().nullable(),
+    expireAt: z.coerce.date().nullable().optional().default(null),
+});
+
+/**
+ * Find many app config files paginated API response schema
+ */
+const FindManyPaginatedSchema = z.object({
+    data: z.array(AppConfigFileSchema),
+    meta: PagingMetaApiSchema,
+});
+
+/**
+ * Create app config file API response schema
+ */
+const CreateOneSchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+/**
+ * Find one app config file by id API response schema
+ */
+const FindOneByIdSchema = z.object({
+    data: AppConfigFileSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+/**
+ * Get app config file download token API response schema
+ */
+const GetDownloadTokenSchema = z.object({
+    data: z.object({
+        token: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+export class AppConfigFilesApiValidator {
+    /**
+     * Validate and transform find many app config files paginated API response
+     */
+    findManyPaginated = (response: ApiHttpResponse): AppConfigFiles_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindManyPaginatedSchema,
+        });
+
+        return {
+            data,
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform create app config file API response
+     */
+    createOne = (response: ApiHttpResponse): AppConfigFiles_CreateOne_Res => {
+        return parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+    };
+
+    /**
+     * Validate and transform find one app config file by id API response
+     */
+    findOneById = (response: ApiHttpResponse): AppConfigFiles_FindOneById_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+
+        return {
+            data,
+            meta,
+        };
+    };
+
+    /**
+     * Validate and transform get app config file download token API response
+     */
+    getDownloadToken = (response: ApiHttpResponse): AppConfigFiles_GetDownloadToken_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetDownloadTokenSchema,
+        });
+    };
+}

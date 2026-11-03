@@ -1,0 +1,124 @@
+import React from "react";
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@components/ui/accordion";
+import { Button } from "@components/ui/button";
+import { Link2, Sparkles } from "lucide-react";
+
+import { ConfigVariables } from "@application/shared/form";
+
+function View({
+    search,
+    viewMode,
+    isRevealed,
+    title,
+    name,
+    readOnly = false,
+    alwaysExpanded = false,
+    notice,
+    onShowFinalValues,
+    onLinkApp,
+    onSuggestEnv,
+}: Props) {
+    const extraActions =
+        onShowFinalValues || onLinkApp || onSuggestEnv ? (
+            <div className="flex items-center gap-2">
+                {onSuggestEnv && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onSuggestEnv}
+                        className="w-fit"
+                    >
+                        <Sparkles className="size-4" />
+                        Suggest Env
+                    </Button>
+                )}
+                {onLinkApp && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onLinkApp}
+                        className="w-fit"
+                    >
+                        <Link2 className="size-4" />
+                        Link App
+                    </Button>
+                )}
+                {onShowFinalValues && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onShowFinalValues}
+                        className="w-fit"
+                    >
+                        Show Final Values
+                    </Button>
+                )}
+            </div>
+        ) : undefined;
+
+    const content = (
+        <div className="flex flex-col gap-4">
+            {notice}
+            <ConfigVariables
+                name={name as never}
+                search={search}
+                viewMode={viewMode}
+                isRevealed={isRevealed}
+                readOnly={readOnly}
+                extraActions={extraActions}
+            />
+        </div>
+    );
+
+    if (alwaysExpanded) {
+        return (
+            <div className="w-full">
+                <div className="bg-accent px-3 py-2 text-sm font-medium sticky top-14 z-10 rounded-md shadow-xs">
+                    {title}
+                </div>
+                <div className="pt-4 pb-0 pl-3">{content}</div>
+            </div>
+        );
+    }
+
+    return (
+        <Accordion
+            type="single"
+            collapsible
+            className="w-full"
+            defaultValue="build-time-env-vars"
+        >
+            <AccordionItem
+                value="build-time-env-vars"
+                className=""
+            >
+                <AccordionTrigger
+                    headerClassName="sticky top-14 z-10"
+                    className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent rounded-md shadow-xs"
+                >
+                    {title}
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-0 pl-3">{content}</AccordionContent>
+            </AccordionItem>
+        </Accordion>
+    );
+}
+
+type Props = {
+    search: string;
+    viewMode: "merge" | "individual";
+    isRevealed: boolean;
+    title: React.ReactNode;
+    name: "buildtime" | "runtime" | "shared";
+    readOnly?: boolean;
+    alwaysExpanded?: boolean;
+    notice?: React.ReactNode;
+    onShowFinalValues?: () => void;
+    /** Opens the Link App dialog: the app screen only. */
+    onLinkApp?: () => void;
+    /** Opens the Suggest Env dialog: the app screen's runtime variables only. */
+    onSuggestEnv?: () => void;
+};
+
+export const EnvVarsBaseForm = React.memo(View);

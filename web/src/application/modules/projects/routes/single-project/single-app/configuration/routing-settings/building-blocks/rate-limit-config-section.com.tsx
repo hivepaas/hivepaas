@@ -1,0 +1,231 @@
+import { useEffect, useState } from "react";
+
+import { Button, Checkbox, FieldError, Input } from "@components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
+import { InputNumber } from "@components/ui/input-number";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { useController, useFormContext } from "react-hook-form";
+
+import { InfoBlock } from "@application/shared/components";
+
+import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
+
+interface RateLimitConfigSectionProps {
+    prefix: string;
+    /** Whether the limit is on the domain, or on a path that is all of it ("/" as a prefix). */
+    coversWholeDomain?: boolean;
+    autoExpandToken?: number;
+    readOnly?: boolean;
+    onRemove?: () => void;
+}
+
+export function RateLimitConfigSection({
+    prefix,
+    coversWholeDomain = false,
+    autoExpandToken,
+    readOnly = false,
+    onRemove,
+}: RateLimitConfigSectionProps) {
+    const [open, setOpen] = useState(false);
+    useEffect(() => {
+        if (autoExpandToken !== undefined) {
+            setOpen(true);
+        }
+    }, [autoExpandToken]);
+
+    const { control } = useFormContext<
+        AppConfigHttpSettingsFormSchemaInput,
+        unknown,
+        AppConfigHttpSettingsFormSchemaOutput
+    >();
+
+    const {
+        field: average,
+        fieldState: { error: averageError, invalid: averageInvalid },
+    } = useController({ control, name: `${prefix}.average` as never });
+    const {
+        field: period,
+        fieldState: { error: periodError, invalid: periodInvalid },
+    } = useController({ control, name: `${prefix}.period` as never });
+    const {
+        field: burst,
+        fieldState: { error: burstError, invalid: burstInvalid },
+    } = useController({ control, name: `${prefix}.burst` as never });
+    const {
+        field: maxInFlightReq,
+        fieldState: { error: maxInFlightReqError, invalid: maxInFlightReqInvalid },
+    } = useController({ control, name: `${prefix}.maxInFlightReq` as never });
+    const { field: enabled } = useController({ control, name: `${prefix}.enabled` as never });
+    const isEnabled = Boolean(enabled.value);
+
+    return (
+        <Collapsible
+            open={open}
+            onOpenChange={setOpen}
+        >
+            <div className="sticky top-11 z-10 flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg shadow-xs">
+                <CollapsibleTrigger asChild>
+                    <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium hover:bg-accent"
+                    >
+                        {open ? (
+                            <ChevronDown className="size-4 shrink-0" />
+                        ) : (
+                            <ChevronRight className="size-4 shrink-0" />
+                        )}
+                        <span>Rate Limit Configuration</span>
+                        <span className="text-xs font-normal">
+                            (docs{" "}
+                            <a
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
+                            >
+                                [1]
+                            </a>
+                            {", "}
+                            <a
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
+                                href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
+                            >
+                                [2]
+                            </a>
+                            {") "}
+                        </span>
+                    </button>
+                </CollapsibleTrigger>
+                {onRemove && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-fit"
+                        title="Remove section"
+                        onClick={() => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            onRemove();
+                        }}
+                        disabled={readOnly}
+                    >
+                        <X className="size-4" />
+                    </Button>
+                )}
+            </div>
+            <CollapsibleContent>
+                <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
+                        <Checkbox
+                            checked={isEnabled}
+                            onCheckedChange={value => {
+                                if (readOnly) {
+                                    return;
+                                }
+
+                                enabled.onChange(value);
+                            }}
+                            disabled={readOnly}
+                        />
+                    </InfoBlock>
+                    {isEnabled && (
+                        <>
+                            {/* A page view is not one request: its scripts, stylesheets, images and API
+                                calls each count, so a limit sized for an API turns away ordinary
+                                visitors when it is on the whole domain. */}
+                            {coversWholeDomain && (
+                                <div className={cn(dashedBorderBox, "text-sm")}>
+                                    <span className="font-semibold text-orange-500">Note:</span> This limit counts every
+                                    request to the domain, per client IP: each page, script, stylesheet and image as
+                                    well as API calls. One page view of a web app can make dozens of them, so a low
+                                    limit here turns away ordinary visitors. Set it generously, or put a tighter limit
+                                    on a path such as <code>/api</code> instead.
+                                </div>
+                            )}
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Average"
+                            >
+                                <InputNumber
+                                    value={average.value}
+                                    onValueChange={average.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={averageInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[averageError]} />
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Period"
+                            >
+                                <Input
+                                    value={period.value}
+                                    onChange={v => {
+                                        period.onChange(v);
+                                    }}
+                                    placeholder="1s"
+                                    className="max-w-[100px]"
+                                    aria-invalid={periodInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[periodError]} />
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Burst"
+                            >
+                                <InputNumber
+                                    value={burst.value}
+                                    onValueChange={burst.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={burstInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[burstError]} />
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Max In-Flight Requests"
+                            >
+                                <InputNumber
+                                    value={maxInFlightReq.value}
+                                    onValueChange={maxInFlightReq.onChange}
+                                    placeholder="100"
+                                    className="max-w-[100px]"
+                                    useGrouping={false}
+                                    aria-invalid={maxInFlightReqInvalid}
+                                    disabled={readOnly}
+                                />
+                                <FieldError errors={[maxInFlightReqError]} />
+                            </InfoBlock>
+                        </>
+                    )}
+                </div>
+            </CollapsibleContent>
+        </Collapsible>
+    );
+}

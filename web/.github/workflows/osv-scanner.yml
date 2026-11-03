@@ -1,0 +1,42 @@
+name: OSV-Scanner
+
+# The dependencies' known flaws, from the lockfile the release image is built
+# with (yarn.lock); findings go to Security > Code scanning. A pull request
+# fails on the flaws it brings in; main, and a weekly run for the advisories
+# published since, on any. One reviewed and accepted goes in osv-scanner.toml,
+# with why and until when.
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    schedule:
+        - cron: "30 2 * * 1"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    scan:
+        if: github.event_name != 'pull_request'
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+        uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        with:
+            scan-args: |-
+                --lockfile=./yarn.lock
+
+    scan-pr:
+        if: github.event_name == 'pull_request'
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+        uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        with:
+            scan-args: |-
+                --lockfile=./yarn.lock

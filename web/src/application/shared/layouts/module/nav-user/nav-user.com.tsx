@@ -1,0 +1,188 @@
+import { cn } from "@/lib/utils";
+import {
+    BookOpen,
+    ChevronsUpDown,
+    LogOut,
+    type LucideIcon,
+    MessageSquarePlus,
+    MessagesSquare,
+    Monitor,
+    Moon,
+    Sun,
+} from "lucide-react";
+import invariant from "tiny-invariant";
+
+import { type ColorMode, useColorModeContext } from "@application/shared/color-mode";
+import { DOCS_URL } from "@application/shared/constants";
+import { useProfileContext } from "@application/shared/context";
+import { SessionCommands } from "@application/shared/data/commands";
+import { useCreateFeedbackDialog } from "@application/shared/dialogs";
+import type { Profile } from "@application/shared/entities";
+
+import { useAuthContext } from "@application/authentication/context";
+
+import { Avatar } from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
+
+const colorModeOptions: {
+    value: ColorMode;
+    label: string;
+    icon: LucideIcon;
+}[] = [
+    {
+        value: "dark",
+        label: "Dark",
+        icon: Moon,
+    },
+    {
+        value: "light",
+        label: "Light",
+        icon: Sun,
+    },
+    {
+        value: "system",
+        label: "System",
+        icon: Monitor,
+    },
+];
+
+export function NavUser({ user }: { user: Profile }) {
+    const { isMobile } = useSidebar();
+    const { profile, clearProfile } = useProfileContext();
+    const { clear: clearAuth } = useAuthContext();
+    const colorMode = useColorModeContext(state => state.mode);
+    const setColorMode = useColorModeContext(state => state.setMode);
+    const createFeedbackDialog = useCreateFeedbackDialog();
+
+    const { mutate: logout, isPending } = SessionCommands.useLogout({
+        onSuccess: () => {
+            clearProfile();
+            clearAuth();
+            // deleteToken();
+        },
+        onSessionInvalid: () => {
+            clearProfile();
+            clearAuth();
+        },
+    });
+
+    function handleLogout() {
+        logout();
+    }
+
+    invariant(profile, "profile must be defined");
+
+    return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        >
+                            <Avatar
+                                className="h-8 w-8"
+                                name={user.fullName ?? ""}
+                                src={user.photo ?? undefined}
+                            />
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">{user.fullName}</span>
+                                <span className="truncate text-xs">{user.email}</span>
+                            </div>
+                            <ChevronsUpDown className="ml-auto size-4" />
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        side={isMobile ? "bottom" : "right"}
+                        align="end"
+                        sideOffset={4}
+                    >
+                        <DropdownMenuLabel className="p-0 font-normal">
+                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                <Avatar
+                                    className="h-8 w-8"
+                                    name={user.fullName ?? ""}
+                                    src={user.photo ?? undefined}
+                                />
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-medium">{user.fullName}</span>
+                                    <span className="truncate text-xs">{user.email}</span>
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup className="grid grid-cols-3 gap-1 p-1">
+                            {colorModeOptions.map(option => {
+                                const Icon = option.icon;
+                                const isSelected = colorMode === option.value;
+
+                                return (
+                                    <DropdownMenuItem
+                                        key={option.value}
+                                        className={cn(
+                                            "flex h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-xs",
+                                            isSelected && "bg-accent text-accent-foreground",
+                                        )}
+                                        onSelect={event => {
+                                            event.preventDefault();
+                                            setColorMode(option.value);
+                                        }}
+                                    >
+                                        <Icon className="size-5 text-current" />
+                                        <span className="truncate leading-none">{option.label}</span>
+                                    </DropdownMenuItem>
+                                );
+                            })}
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href={DOCS_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <BookOpen />
+                                    Documentation
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href="https://discord.gg/2TgD3zDb2e"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <MessagesSquare />
+                                    Join our community chat
+                                </a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={createFeedbackDialog.actions.open}>
+                                <MessageSquarePlus />
+                                Feedback
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={handleLogout}
+                            disabled={isPending}
+                        >
+                            <LogOut />
+                            Log out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    );
+}

@@ -1,0 +1,204 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+import type {
+    AppLogsApiValidator,
+    AppLogs_GetDependencyMetrics_Req,
+    AppLogs_GetDependencyMetrics_Res,
+    AppLogs_GetFunctionMetrics_Req,
+    AppLogs_GetFunctionMetrics_Res,
+    AppLogs_GetHistory_Req,
+    AppLogs_GetHistory_Res,
+    AppLogs_GetHttpMetrics_Req,
+    AppLogs_GetHttpMetrics_Res,
+    AppLogs_GetInfo_Req,
+    AppLogs_GetInfo_Res,
+    AppLogs_GetLogs_Req,
+    AppLogs_GetLogs_Res,
+    AppLogs_GetResourceMetrics_Req,
+    AppLogs_GetResourceMetrics_Res,
+    AppLogs_GetRouteMetrics_Req,
+    AppLogs_GetRouteMetrics_Res,
+} from "~/projects/api/services";
+
+import { BaseApi, parseApiError } from "@infrastructure/api";
+
+export type AppLogsQueryParams = Record<string, string | number | boolean>;
+
+export function buildAppLogsQueryParams(request: AppLogs_GetLogs_Req["data"]): AppLogsQueryParams {
+    const { taskId, follow, tail, since, duration, timestamps } = request;
+
+    return {
+        ...(taskId ? { taskId } : {}),
+        ...(follow === undefined ? {} : { follow }),
+        ...(tail === undefined ? {} : { tail }),
+        ...(since ? { since: since.toISOString() } : {}),
+        ...(duration ? { duration } : {}),
+        ...(timestamps === undefined ? {} : { timestamps }),
+    };
+}
+
+export class AppLogsApi extends BaseApi {
+    public constructor(private readonly validator: AppLogsApiValidator) {
+        super();
+    }
+
+    async getInfo(request: AppLogs_GetInfo_Req, signal?: AbortSignal): Promise<Result<AppLogs_GetInfo_Res, Error>> {
+        const { projectID, env, appID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs/info`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getInfo),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getLogs(request: AppLogs_GetLogs_Req, signal?: AbortSignal): Promise<Result<AppLogs_GetLogs_Res, Error>> {
+        const { projectID, env, appID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs`, {
+                    params: buildAppLogsQueryParams({ ...request.data, follow: false }),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getLogs),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getHistory(
+        request: AppLogs_GetHistory_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetHistory_Res, Error>> {
+        const { projectID, env, appID, start, end, limit, search, regex, matchCase, levels, streams } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs/history`, {
+                    params: {
+                        ...(start ? { start: start.toISOString() } : {}),
+                        ...(end ? { end: typeof end === "string" ? end : end.toISOString() } : {}),
+                        ...(limit ? { limit } : {}),
+                        ...(search ? { search, regex: Boolean(regex), matchCase: Boolean(matchCase) } : {}),
+                        ...(levels?.length ? { levels: levels.join(",") } : {}),
+                        ...(streams?.length ? { streams: streams.join(",") } : {}),
+                    },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getHistory),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getResourceMetrics(
+        request: AppLogs_GetResourceMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetResourceMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/resource-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getResourceMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getHttpMetrics(
+        request: AppLogs_GetHttpMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetHttpMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/http-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getHttpMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getRouteMetrics(
+        request: AppLogs_GetRouteMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetRouteMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/route-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getRouteMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getDependencyMetrics(
+        request: AppLogs_GetDependencyMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetDependencyMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/dependency-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getDependencyMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getFunctionMetrics(
+        request: AppLogs_GetFunctionMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetFunctionMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/function-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getFunctionMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}

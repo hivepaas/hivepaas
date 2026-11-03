@@ -1,0 +1,155 @@
+import { useRef } from "react";
+
+import { useParams } from "react-router";
+import { toast } from "sonner";
+import invariant from "tiny-invariant";
+import { AppResourceSettingsCommands, AppResourceSettingsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
+import { type AppResourceSettings } from "~/projects/domain";
+import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+
+import { AppLoader, FormActionBar } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
+
+import { isValidationException } from "@infrastructure/api";
+
+import { ValidationException } from "@infrastructure/exceptions/validation";
+
+import { AppConfigResourcesForm } from "../form";
+import { type AppConfigResourcesFormSchemaOutput } from "../schemas";
+import { type AppConfigResourcesFormRef } from "../types";
+
+function normalizeMemoryValue(value: string | undefined): string | undefined {
+    const trimmedValue = value?.trim();
+    if (!trimmedValue) {
+        return undefined;
+    }
+    return trimmedValue;
+}
+
+function mapFormValuesToPayload(
+    values: AppConfigResourcesFormSchemaOutput,
+    server: AppResourceSettings | undefined,
+): AppResourceSettings {
+    const reservationMemory = normalizeMemoryValue(values.reservations.memory);
+    const limitMemory = normalizeMemoryValue(values.limits.memory);
+    const swapMemory = normalizeMemoryValue(values.memory.swap);
+    const shmSize = normalizeMemoryValue(values.memory.shmSize);
+    const sysctls: Record<string, string> = {};
+    for (const row of values.capabilities.sysctls) {
+        sysctls[row.name] = row.value;
+    }
+
+    return {
+        reservations:
+            values.reservations.cpus != null || reservationMemory || values.reservations.genericResources.length > 0
+                ? {
+                      cpus: values.reservations.cpus,
+                      memory: reservationMemory,
+                      genericResources: values.reservations.genericResources.map(item => ({
+                          kind: item.kind,
+                          value: item.value,
+                      })),
+                  }
+                : null,
+        limits:
+            values.limits.cpus != null || limitMemory || values.limits.pids != null
+                ? {
+                      cpus: values.limits.cpus,
+                      memory: limitMemory,
+                      pids: values.limits.pids,
+                  }
+                : null,
+        memory:
+            swapMemory || values.memory.swappiness != null || shmSize
+                ? {
+                      swap: swapMemory,
+                      swappiness: values.memory.swappiness,
+                      shmSize,
+                  }
+                : null,
+        ulimits: values.ulimits.map(item => ({
+            name: item.name,
+            hard: item.hard,
+            soft: item.soft,
+        })),
+        capabilities: {
+            capabilityAdd: values.capabilities.capabilityAdd ? values.capabilities.capabilityAdd.split(" ") : [],
+            capabilityDrop: values.capabilities.capabilityDrop ? values.capabilities.capabilityDrop.split(" ") : [],
+            oomScoreAdj: values.capabilities.oomScoreAdj,
+            sysctls,
+        },
+        updateVer: server?.updateVer ?? 0,
+    };
+}
+
+export function AppConfigResourcesRoute() {
+    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
+    const formRef = useRef<AppConfigResourcesFormRef>(null);
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+
+    invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
+    invariant(appId, "appId must be defined");
+
+    const { data, isLoading } = AppResourceSettingsQueries.useFindOne(
+        {
+            projectID: projectId,
+            env,
+            appID: appId,
+        },
+        APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+
+    const { mutate: update, isPending } = AppResourceSettingsCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Resource settings updated");
+        },
+        onError: err => {
+            if (isValidationException(err)) {
+                formRef.current?.onError(ValidationException.fromHttp(err));
+            } else if (err instanceof Error) {
+                toast.error(err.message);
+            } else {
+                toast.error("Failed to update resource settings");
+            }
+        },
+    });
+
+    function handleSubmit(values: AppConfigResourcesFormSchemaOutput) {
+        if (!canWrite) {
+            return;
+        }
+
+        invariant(projectId, "projectId must be defined");
+        invariant(env, "env must be defined");
+        invariant(appId, "appId must be defined");
+
+        update({
+            projectID: projectId,
+            env,
+            appID: appId,
+            payload: mapFormValuesToPayload(values, data?.data),
+        });
+    }
+
+    if (isLoading) {
+        return <AppLoader />;
+    }
+
+    return (
+        <div className="flex flex-col gap-4">
+            <AppConfigResourcesForm
+                ref={formRef}
+                defaultValues={data?.data}
+                onSubmit={handleSubmit}
+                readOnly={!canWrite}
+            >
+                <FormActionBar>
+                    <ProjectPermissionSubmitButton isPending={isPending} />
+                </FormActionBar>
+            </AppConfigResourcesForm>
+        </div>
+    );
+}

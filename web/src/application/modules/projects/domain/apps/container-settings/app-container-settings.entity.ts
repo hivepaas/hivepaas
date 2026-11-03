@@ -1,0 +1,80 @@
+import type {
+    EAppArmorMode,
+    EHealthcheckMode,
+    ERestartPolicyCondition,
+    ESeccompMode,
+} from "~/projects/module-shared/enums";
+
+export type AppContainerSettings = ContainerSpec & {
+    updateVer: number;
+};
+
+export type ContainerSpec = {
+    serviceLabels: Record<string, string>;
+    containerLabels: Record<string, string>;
+    image: string;
+    entrypoint: string;
+    command: string;
+    workingDir: string;
+    hostname: string;
+    user: string;
+    groups: string[];
+    stopSignal: string;
+    tty: boolean;
+    /** null: not decided - the image's own init decides at the next deployment. */
+    init: boolean | null;
+    openStdin: boolean;
+    readOnly: boolean;
+    stopGracePeriod: string | null;
+    privileges: Privileges | null;
+    healthcheck: Healthcheck | null;
+    restartPolicy: RestartPolicy | null;
+    logDriver: LogDriver | null;
+};
+
+export type RestartPolicy = {
+    condition?: ERestartPolicyCondition;
+    delay?: string | null;
+    maxAttempts?: number | null;
+    window?: string | null;
+};
+
+export type Healthcheck = {
+    enabled?: boolean;
+    mode?: EHealthcheckMode;
+    command?: string;
+    interval?: string;
+    timeout?: string;
+    startPeriod?: string;
+    startInterval?: string;
+    retries?: number;
+};
+
+export type LogDriver = {
+    name: string;
+    options: Record<string, string>;
+};
+
+export type SELinuxContext = {
+    disable?: boolean;
+    user?: string;
+    role?: string;
+    type?: string;
+    level?: string;
+};
+
+export type SeccompOpts = {
+    mode?: ESeccompMode;
+    profile?: string;
+};
+
+export type AppArmorOpts = {
+    mode?: EAppArmorMode;
+};
+
+export type Privileges = {
+    seLinuxContext?: SELinuxContext | null;
+    seccomp?: SeccompOpts | null;
+    appArmor?: AppArmorOpts | null;
+    noNewPrivileges?: boolean;
+};

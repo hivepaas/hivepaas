@@ -1,0 +1,273 @@
+import { useState } from "react";
+
+import { toast } from "sonner";
+import { ProjectAccessTokenCommands } from "~/projects/data/commands";
+import { ProjectAccessTokenQueries } from "~/projects/data/queries";
+import { AccessTokenCommands } from "~/settings/data/commands";
+import { AccessTokenQueries } from "~/settings/data/queries";
+import type { SettingAccessToken } from "~/settings/domain";
+import { CreateOrEditAccessTokenForm } from "~/settings/module-shared/components/access-token-form";
+import type {
+    CreateOrEditAccessTokenFormInput,
+    CreateOrEditAccessTokenFormOutput,
+} from "~/settings/module-shared/components/access-token-form";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+import { EAccessTokenKind } from "@application/shared/enums";
+import { useAppNavigate } from "@application/shared/hooks/router";
+
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import type { AccessTokenTableScope } from "../access-token-table";
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
+
+type AccessTokenFormRouteMode = "create" | "edit";
+
+export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
+    const [hasChanges, setHasChanges] = useState(false);
+    const [saveRevision, setSaveRevision] = useState(0);
+    const [testStatus, setTestStatus] = useState<"idle" | "succeeded" | "failed">("idle");
+    const { canWrite } = useSettingsScopePermissions(scope);
+    const { navigate } = useAppNavigate();
+
+    const listRoute = getAccessTokenListRoute(scope);
+    const isEditMode = mode === "edit";
+    const detailId = isEditMode ? (accessTokenId ?? "") : "";
+
+    function navigateToList() {
+        navigate.modules(listRoute, { ignorePrevPath: true });
+    }
+
+    function markSaved() {
+        setHasChanges(false);
+        setSaveRevision(revision => revision + 1);
+        navigateToList();
+    }
+
+    const { mutate: createSettingAccessToken, isPending: isCreatingSetting } = AccessTokenCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("Access token created successfully");
+            markSaved();
+        },
+    });
+    const { mutate: updateSettingAccessToken, isPending: isUpdatingSetting } = AccessTokenCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Access token updated successfully");
+            markSaved();
+        },
+    });
+    const { mutate: createProjectAccessToken, isPending: isCreatingProject } = ProjectAccessTokenCommands.useCreateOne({
+        onSuccess: () => {
+            toast.success("Project access token created successfully");
+            markSaved();
+        },
+    });
+    const { mutate: updateProjectAccessToken, isPending: isUpdatingProject } = ProjectAccessTokenCommands.useUpdateOne({
+        onSuccess: () => {
+            toast.success("Project access token updated successfully");
+            markSaved();
+        },
+    });
+    const { mutate: testConnection, isPending: isTesting } = AccessTokenCommands.useTestConn({
+        onSuccess: () => {
+            setTestStatus("succeeded");
+        },
+        onError: () => {
+            setTestStatus("failed");
+        },
+    });
+
+    const settingDetailQuery = AccessTokenQueries.useFindOneById(
+        { id: detailId },
+        { enabled: isEditMode && scope.type === "settings" },
+    );
+    const projectDetailQuery = ProjectAccessTokenQueries.useFindOneById(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
+            id: detailId,
+        },
+        { enabled: isEditMode && scope.type === "project" },
+    );
+    const detailQuery = scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const accessToken = detailQuery.data?.data;
+    const readOnlyInherited = scope.type === "project" && accessToken?.inherited === true;
+
+    function createPayload(values: CreateOrEditAccessTokenFormOutput) {
+        return {
+            inheritable: values.inheritable,
+            default: values.default,
+            expireAt: values.expireAt,
+            kind: values.kind,
+            name: values.name,
+            user: values.user,
+            token: values.token,
+            baseURL: values.baseURL,
+        };
+    }
+
+    function onSubmit(values: CreateOrEditAccessTokenFormOutput) {
+        const payload = createPayload(values);
+
+        if (isEditMode && accessToken) {
+            const updatePayload = { ...payload, updateVer: accessToken.updateVer };
+
+            if (scope.type === "project") {
+                updateProjectAccessToken({
+                    projectID: scope.projectId,
+                    env: scope.env,
+                    id: accessToken.id,
+                    payload: updatePayload,
+                });
+                return;
+            }
+
+            updateSettingAccessToken({ id: accessToken.id, payload: updatePayload });
+            return;
+        }
+
+        if (scope.type === "project") {
+            createProjectAccessToken({ projectID: scope.projectId, env: scope.env, payload });
+            return;
+        }
+
+        createSettingAccessToken({ payload });
+    }
+
+    function onTestConnection(values: CreateOrEditAccessTokenFormOutput) {
+        setTestStatus("idle");
+        testConnection({
+            payload: {
+                expireAt: values.expireAt,
+                kind: values.kind,
+                name: values.name,
+                user: values.user,
+                token: values.token,
+                baseURL: values.baseURL,
+            },
+        });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
+            return;
+        }
+
+        navigateToList();
+    }
+
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingAccessToken>({
+        settingType: "access-tokens",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || accessToken?.inherited === true,
+        mode,
+    });
+
+    const activeAccessToken = revealedData ?? accessToken;
+
+    const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
+    const isDetailLoading = isEditMode && detailQuery.isFetching;
+    const initialValues: Partial<CreateOrEditAccessTokenFormInput> | undefined = activeAccessToken
+        ? {
+              name: activeAccessToken.name,
+              kind: activeAccessToken.kind ?? EAccessTokenKind.Github,
+              user: activeAccessToken.user,
+              token: activeAccessToken.token,
+              baseURL: activeAccessToken.baseURL,
+              expireAt: activeAccessToken.expireAt ?? null,
+              inheritable: Boolean(activeAccessToken.inheritable),
+              default: activeAccessToken.default ?? false,
+          }
+        : undefined;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
+    const title = mode === "create" ? "Create Access Token" : "Edit Access Token";
+
+    return (
+        <div className="flex w-full flex-col">
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
+
+            {isDetailLoading && (
+                <div className="flex min-h-[220px] items-center justify-center">
+                    <AppLoader />
+                </div>
+            )}
+
+            {!isDetailLoading && shouldRenderForm && (
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditAccessTokenForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestConnection={onTestConnection}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
+            )}
+        </div>
+    );
+}
+
+function getAccessTokenListRoute(scope: AccessTokenTableScope) {
+    if (scope.type === "project") {
+        return ROUTE.projects.single.providerConfiguration.accessTokens.$route(scope.projectId);
+    }
+
+    return ROUTE.settings.accessTokens.$route;
+}
+
+interface Props {
+    mode: AccessTokenFormRouteMode;
+    scope: AccessTokenTableScope;
+    accessTokenId?: string;
+}

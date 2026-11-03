@@ -1,0 +1,183 @@
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "./pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+
+export interface TablePaginationProps {
+    pageIndex: number;
+    pageSize: number;
+    pageCount: number;
+    totalCount?: number;
+    onPageChange: (pageIndex: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    pageSizeOptions?: number[];
+    className?: string;
+    showPageSizeSelector?: boolean;
+    showTotalCount?: boolean;
+    maxPageButtons?: number;
+}
+
+// Helper function to generate page numbers with ellipsis
+function generatePageNumbers(currentPage: number, totalPages: number, maxButtons: number = 7): (number | "ellipsis")[] {
+    if (totalPages <= maxButtons) {
+        return Array.from({ length: totalPages }, (_, i) => i);
+    }
+
+    const pages: (number | "ellipsis")[] = [];
+    const sideButtons = Math.floor((maxButtons - 3) / 2); // 3 for first, last, and one ellipsis
+
+    // Always show first page
+    pages.push(0);
+
+    if (currentPage <= sideButtons + 1) {
+        // Near the start
+        for (let i = 1; i < maxButtons - 2; i++) {
+            pages.push(i);
+        }
+        pages.push("ellipsis");
+        pages.push(totalPages - 1);
+    } else if (currentPage >= totalPages - sideButtons - 2) {
+        // Near the end
+        pages.push("ellipsis");
+        for (let i = totalPages - maxButtons + 2; i < totalPages; i++) {
+            pages.push(i);
+        }
+    } else {
+        // In the middle
+        pages.push("ellipsis");
+        for (let i = currentPage - sideButtons; i <= currentPage + sideButtons; i++) {
+            pages.push(i);
+        }
+        pages.push("ellipsis");
+        pages.push(totalPages - 1);
+    }
+
+    return pages;
+}
+
+function TablePagination({
+    pageIndex,
+    pageSize,
+    pageCount,
+    totalCount,
+    onPageChange,
+    onPageSizeChange,
+    pageSizeOptions = [10, 20, 30, 50, 100],
+    className,
+    showPageSizeSelector = true,
+    showTotalCount = true,
+    maxPageButtons = 7,
+}: TablePaginationProps) {
+    const canPreviousPage = pageIndex > 0;
+    const canNextPage = pageIndex < pageCount - 1;
+
+    const startRow = totalCount && totalCount > 0 ? pageIndex * pageSize + 1 : 0;
+    const endRow = Math.min((pageIndex + 1) * pageSize, totalCount ?? (pageIndex + 1) * pageSize);
+
+    const pageNumbers = React.useMemo(
+        () => generatePageNumbers(pageIndex, pageCount, maxPageButtons),
+        [pageIndex, pageCount, maxPageButtons],
+    );
+
+    return (
+        <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2 py-4", className)}>
+            <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-start">
+                {showPageSizeSelector && onPageSizeChange && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                        <Select
+                            value={pageSize.toString()}
+                            onValueChange={value => {
+                                onPageSizeChange(Number(value));
+                            }}
+                        >
+                            <SelectTrigger
+                                size="sm"
+                                aria-label="Rows per page"
+                                className="h-8 w-[70px] shrink-0"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {pageSizeOptions.map(size => (
+                                    <SelectItem
+                                        key={size}
+                                        value={size.toString()}
+                                    >
+                                        {size}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                {showTotalCount && totalCount !== undefined && (
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {startRow}-{endRow} of {totalCount}
+                    </span>
+                )}
+            </div>
+
+            <Pagination className="justify-center sm:justify-end">
+                <PaginationContent>
+                    <PaginationItem>
+                        <PaginationPrevious
+                            href="#"
+                            onClick={e => {
+                                e.preventDefault();
+                                if (canPreviousPage) {
+                                    onPageChange(pageIndex - 1);
+                                }
+                            }}
+                            className={cn(!canPreviousPage && "pointer-events-none opacity-50")}
+                        />
+                    </PaginationItem>
+
+                    {pageNumbers.map((page, index) => (
+                        <PaginationItem key={`page-${index}`}>
+                            {page === "ellipsis" ? (
+                                <PaginationEllipsis />
+                            ) : (
+                                <PaginationLink
+                                    href="#"
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        onPageChange(page);
+                                    }}
+                                    isActive={pageIndex === page}
+                                >
+                                    {page + 1}
+                                </PaginationLink>
+                            )}
+                        </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                        <PaginationNext
+                            href="#"
+                            onClick={e => {
+                                e.preventDefault();
+                                if (canNextPage) {
+                                    onPageChange(pageIndex + 1);
+                                }
+                            }}
+                            className={cn(!canNextPage && "pointer-events-none opacity-50")}
+                        />
+                    </PaginationItem>
+                </PaginationContent>
+            </Pagination>
+        </div>
+    );
+}
+
+export { TablePagination };

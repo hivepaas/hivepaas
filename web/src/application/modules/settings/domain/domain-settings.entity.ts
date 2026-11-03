@@ -1,0 +1,20 @@
+import type { ESslCertType, ESslKeyType } from "@application/shared/enums";
+
+import type { SettingsBaseEntity } from "./settings.base.entity";
+
+export interface DomainCertSettings {
+    certType: ESslCertType;
+    keyType?: ESslKeyType;
+    /** Duration string from API (e.g. `720h`, `30d`). */
+    validPeriod?: string;
+    email: string;
+    autoRenew?: boolean;
+    /** Get a certificate automatically for a domain nothing already covers. */
+    autoObtain?: boolean;
+}
+
+export interface SettingDomainSettings extends SettingsBaseEntity {
+    rootDomain: string;
+    allowedDomains: string[];
+    certSettings?: DomainCertSettings | null;
+}

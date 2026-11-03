@@ -1,0 +1,164 @@
+import { useEffect } from "react";
+
+import { cn } from "@/lib/utils";
+import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertTriangle } from "lucide-react";
+import { type FieldErrors, useForm } from "react-hook-form";
+import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
+
+import { Button, Checkbox, Field, FieldError, Input } from "@/components/ui";
+
+import {
+    type ConfirmProjectDangerActionFormInput,
+    type ConfirmProjectDangerActionFormOutput,
+    createConfirmProjectDangerActionFormSchema,
+} from "../schemas";
+import { ProjectDangerAction } from "../types";
+
+const actionCopy: Record<
+    ProjectDangerAction,
+    {
+        bodyAction: string;
+        buttonLabel: string;
+        buttonVariant: "default" | "destructive";
+        warning?: string;
+    }
+> = {
+    [ProjectDangerAction.Disable]: {
+        bodyAction: "disabling",
+        buttonLabel: "Disable this Project",
+        buttonVariant: "destructive",
+    },
+    [ProjectDangerAction.ReEnable]: {
+        bodyAction: "re-enabling",
+        buttonLabel: "Re-enable this Project",
+        buttonVariant: "default",
+    },
+    [ProjectDangerAction.Delete]: {
+        bodyAction: "deleting",
+        buttonLabel: "Delete this Project",
+        buttonVariant: "destructive",
+        warning: "This action is permanent and cannot be undone.",
+    },
+};
+
+export function ConfirmProjectDangerActionForm({
+    action,
+    projectName,
+    isPending = false,
+    readOnly = false,
+    onSubmit,
+}: Props) {
+    const {
+        formState: { errors },
+        handleSubmit,
+        register,
+        reset,
+        setValue,
+        watch,
+    } = useForm<ConfirmProjectDangerActionFormInput, unknown, ConfirmProjectDangerActionFormOutput>({
+        defaultValues: {
+            projectName: "",
+            removeStorage: false,
+        },
+        resolver: zodResolver(createConfirmProjectDangerActionFormSchema(projectName)),
+        mode: "onSubmit",
+    });
+
+    useEffect(() => {
+        reset({
+            projectName: "",
+            removeStorage: false,
+        });
+    }, [action, projectName, reset]);
+
+    const enteredProjectName = watch("projectName");
+    const isConfirmed = enteredProjectName === projectName;
+    const removeStorage = watch("removeStorage");
+    const copy = actionCopy[action];
+
+    function onInvalid(_errors: FieldErrors<ConfirmProjectDangerActionFormInput>) {
+        return undefined;
+    }
+
+    return (
+        <form
+            className="min-h-0 flex flex-1 flex-col"
+            onSubmit={event => {
+                event.preventDefault();
+                if (readOnly) {
+                    return;
+                }
+
+                void handleSubmit(onSubmit, onInvalid)(event);
+            }}
+        >
+            <DialogBody className={cn("flex flex-col", copy.warning ? "gap-4" : "gap-7")}>
+                <p className="text-sm font-medium leading-6 text-foreground">
+                    To confirm {copy.bodyAction} the project, please type{" "}
+                    <ConfirmDangerTargetBadge text={projectName} /> into the text box below.
+                </p>
+
+                {copy.warning && (
+                    <div className="flex items-center gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium">
+                        <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                        <span>Warning: {copy.warning}</span>
+                    </div>
+                )}
+
+                {action === ProjectDangerAction.Delete && (
+                    <label
+                        className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                        htmlFor="project-remove-storage"
+                    >
+                        <Checkbox
+                            id="project-remove-storage"
+                            className="mt-1"
+                            checked={removeStorage}
+                            disabled={readOnly || isPending}
+                            onCheckedChange={checked => {
+                                setValue("removeStorage", checked === true);
+                            }}
+                        />
+                        <span>
+                            <span className="block">Also delete the stored data</span>
+                            <span className="block text-xs text-muted-foreground leading-normal">
+                                The volumes this project owns, and what is on them, are kept unless you tick this.
+                            </span>
+                        </span>
+                    </label>
+                )}
+
+                <Field>
+                    <Input
+                        aria-invalid={Boolean(errors.projectName)}
+                        disabled={readOnly || isPending}
+                        {...register("projectName")}
+                    />
+                    <FieldError errors={[errors.projectName]} />
+                </Field>
+            </DialogBody>
+
+            <DialogActionFooter>
+                <Button
+                    type="submit"
+                    variant={copy.buttonVariant}
+                    disabled={readOnly || isPending || !isConfirmed}
+                    isLoading={isPending}
+                    className="min-w-[120px]"
+                >
+                    {copy.buttonLabel}
+                </Button>
+            </DialogActionFooter>
+        </form>
+    );
+}
+
+interface Props {
+    action: ProjectDangerAction;
+    projectName: string;
+    isPending?: boolean;
+    readOnly?: boolean;
+    onSubmit: (values: ConfirmProjectDangerActionFormOutput) => void;
+}

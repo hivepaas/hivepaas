@@ -1,0 +1,94 @@
+import type { SystemCleanupSettings } from "~/system-settings/domain";
+import { getScheduleModeFromCronExpr } from "~/system-settings/module-shared";
+
+import { ESettingStatus } from "@application/shared/enums";
+
+import { type SystemCleanupConfigurationFormInput, SystemCleanupScheduleMode } from "../schemas";
+
+export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigurationFormInput = {
+    status: ESettingStatus.Active,
+    scheduleMode: SystemCleanupScheduleMode.Interval,
+    scheduleInterval: "24h",
+    scheduleCronExpr: "",
+    scheduleFrom: null,
+    dbObjectRetention: {
+        enabled: true,
+        tasks: "180d",
+        deployments: "180d",
+        sysErrors: "180d",
+        auditLogs: "180d",
+        deletedObjects: "180d",
+    },
+    clusterCleanup: {
+        enabled: true,
+        generalRetention: "180d",
+        buildCacheRetention: "180d",
+        pruneImages: true,
+        pruneVolumes: true,
+        pruneNetworks: true,
+        pruneContainers: true,
+        pruneBuildCache: true,
+    },
+    cacheCleanup: {
+        enabled: true,
+        repoCacheRetention: "30d",
+    },
+    fileCleanup: {
+        enabled: true,
+    },
+    systemAppsSync: {
+        enabled: true,
+    },
+    notification: {
+        successUseDefault: true,
+        success: undefined,
+        failureUseDefault: true,
+        failure: undefined,
+    },
+};
+
+export function mapSystemCleanupSettingsToFormInput(
+    settings: SystemCleanupSettings,
+): SystemCleanupConfigurationFormInput {
+    return {
+        status: settings.status === ESettingStatus.Active ? ESettingStatus.Active : ESettingStatus.Disabled,
+        scheduleMode: getScheduleModeFromCronExpr(settings.schedule.cronExpr, SystemCleanupScheduleMode),
+        scheduleInterval: settings.schedule.interval,
+        scheduleCronExpr: settings.schedule.cronExpr,
+        scheduleFrom: settings.schedule.initialTime ?? null,
+        dbObjectRetention: {
+            enabled: settings.dbObjectRetention.enabled,
+            tasks: settings.dbObjectRetention.tasks,
+            deployments: settings.dbObjectRetention.deployments,
+            sysErrors: settings.dbObjectRetention.sysErrors,
+            auditLogs: settings.dbObjectRetention.auditLogs,
+            deletedObjects: settings.dbObjectRetention.deletedObjects,
+        },
+        clusterCleanup: {
+            enabled: settings.clusterCleanup.enabled,
+            generalRetention: settings.clusterCleanup.generalRetention,
+            buildCacheRetention: settings.clusterCleanup.buildCacheRetention,
+            pruneImages: settings.clusterCleanup.pruneImages,
+            pruneVolumes: settings.clusterCleanup.pruneVolumes,
+            pruneNetworks: settings.clusterCleanup.pruneNetworks,
+            pruneContainers: settings.clusterCleanup.pruneContainers,
+            pruneBuildCache: settings.clusterCleanup.pruneBuildCache,
+        },
+        cacheCleanup: {
+            enabled: settings.cacheCleanup.enabled,
+            repoCacheRetention: settings.cacheCleanup.repoCacheRetention || "30d",
+        },
+        fileCleanup: {
+            enabled: settings.fileCleanup.enabled,
+        },
+        systemAppsSync: {
+            enabled: settings.systemAppsSync.enabled,
+        },
+        notification: {
+            successUseDefault: settings.notification?.successUseDefault ?? true,
+            success: settings.notification?.success,
+            failureUseDefault: settings.notification?.failureUseDefault ?? true,
+            failure: settings.notification?.failure,
+        },
+    };
+}

@@ -1,0 +1,148 @@
+import React, { type PropsWithChildren, useImperativeHandle } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FieldPath, FormProvider, useForm } from "react-hook-form";
+import { useUpdateEffect } from "react-use";
+import { type AppServiceSettings } from "~/projects/domain";
+
+import { EServiceMode } from "@application/modules/projects/module-shared/enums";
+
+import { type ValidationException } from "@infrastructure/exceptions/validation";
+
+import { PlacementConstraintsFields, PlacementPreferencesFields, ServiceModeFields } from "../building-blocks";
+import {
+    AppConfigAvailabilitySchema,
+    type AppConfigAvailabilitySchemaInput,
+    type AppConfigAvailabilitySchemaOutput,
+} from "../schemas";
+import { type AppConfigAvailabilityFormRef } from "../types";
+
+type SchemaInput = AppConfigAvailabilitySchemaInput;
+type SchemaOutput = AppConfigAvailabilitySchemaOutput;
+
+export function AppConfigAvailabilityForm({
+    ref,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    autoscaled = false,
+    children,
+}: Props) {
+    // A stopped app is a replicated service scaled to 0. The backend refuses to switch mode in that
+    // state, so the UI must not offer it either.
+    const isAppStopped =
+        defaultValues?.modeSpec.mode === EServiceMode.Replicated && (defaultValues.modeSpec.serviceReplicas ?? 0) === 0;
+
+    const methods = useForm<SchemaInput, unknown, SchemaOutput>({
+        defaultValues: {
+            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Replicated,
+            serviceReplicas:
+                defaultValues?.modeSpec.mode === EServiceMode.Replicated
+                    ? defaultValues.modeSpec.serviceReplicas
+                    : null,
+            jobMaxConcurrent:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobMaxConcurrent
+                    : null,
+            jobTotalCompletions:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobTotalCompletions
+                    : null,
+            constraints: defaultValues?.placement?.constraints ?? [],
+            preferences: defaultValues?.placement?.preferences ?? [],
+        },
+        resolver: zodResolver(AppConfigAvailabilitySchema),
+        mode: "onSubmit",
+    });
+
+    useUpdateEffect(() => {
+        methods.reset({
+            mode: defaultValues?.modeSpec.mode ?? EServiceMode.Global,
+            serviceReplicas:
+                defaultValues?.modeSpec.mode === EServiceMode.Replicated
+                    ? defaultValues.modeSpec.serviceReplicas
+                    : null,
+            jobMaxConcurrent:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobMaxConcurrent
+                    : null,
+            jobTotalCompletions:
+                defaultValues?.modeSpec.mode === EServiceMode.ReplicatedJob
+                    ? defaultValues.modeSpec.jobTotalCompletions
+                    : null,
+            constraints: defaultValues?.placement?.constraints ?? [],
+            preferences: defaultValues?.placement?.preferences ?? [],
+        });
+    }, [defaultValues]);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            setValues: (values: Partial<SchemaInput>) => {
+                methods.reset({
+                    ...methods.getValues(),
+                    ...values,
+                } as SchemaInput);
+            },
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as FieldPath<SchemaInput>,
+                        { message, type: "manual" },
+                        {
+                            shouldFocus: index === 0,
+                        },
+                    );
+                });
+            },
+        }),
+        [methods],
+    );
+
+    return (
+        <div className="pt-2">
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={event => {
+                        event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
+                        void methods.handleSubmit(onSubmit)(event);
+                    }}
+                    className="flex flex-col gap-3"
+                >
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ServiceModeFields
+                            savedMode={defaultValues?.modeSpec.mode}
+                            isAppStopped={isAppStopped}
+                            autoscaled={autoscaled}
+                        />
+                        <div className="h-px bg-muted" />
+                        <PlacementConstraintsFields />
+                        <div className="h-px bg-muted" />
+                        <PlacementPreferencesFields />
+                        {children}
+                    </fieldset>
+                </form>
+            </FormProvider>
+        </div>
+    );
+}
+
+type Props = PropsWithChildren<{
+    ref?: React.Ref<AppConfigAvailabilityFormRef>;
+    defaultValues?: AppServiceSettings;
+    onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
+    /** A function whose replicas autoscale sets. */
+    autoscaled?: boolean;
+}>;

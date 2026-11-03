@@ -1,0 +1,43 @@
+import { Outlet, createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
+
+import { ApplicationProfileInit, AuthRouteProtection } from "@application/root";
+
+import { AppLoader } from "@application/shared/components/loaders";
+import { Page404NotFound } from "@application/shared/pages";
+
+import { authenticationRouter } from "@application/authentication";
+
+import { modulesRouter } from "@application/modules";
+
+const router = createBrowserRouter([
+    {
+        element: (
+            <ApplicationProfileInit>
+                <AuthRouteProtection>
+                    <Outlet />
+                </AuthRouteProtection>
+            </ApplicationProfileInit>
+        ),
+        HydrateFallback: AppLoader,
+        children: [
+            {
+                children: [authenticationRouter],
+            },
+
+            {
+                element: <Outlet />,
+                children: [modulesRouter],
+            },
+
+            {
+                path: "*",
+                Component: Page404NotFound,
+            },
+        ],
+    },
+]);
+
+export function Startup() {
+    return <RouterProvider router={router} />;
+}

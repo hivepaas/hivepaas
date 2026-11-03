@@ -1,0 +1,323 @@
+import React, { useEffect, useState } from "react";
+
+import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
+import { useConditionalModule } from "@/application/shared/permissions";
+import { Boxes, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import {
+    ProjectBackupRepoQueries,
+    ProjectCloudStorageQueries,
+    ProjectClusterVolumesQueries,
+    ProjectKeyAuthQueries,
+    ProjectsQueries,
+} from "~/projects/data/queries";
+
+import { ErrorBoundary } from "@application/shared/components";
+import { openPlanLimitReachedDialog } from "@application/shared/dialogs";
+
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import {
+    type CreateAppFromTemplateReq,
+    type CreateAppFromTemplateResp,
+    type PreflightIssue,
+    type PreflightResult,
+    type PreflightStorageFinding,
+} from "../../../api";
+import { TemplateRenderError } from "../../../components/template-render-error.com";
+import { useCreateAppFromTemplate, useGetAppTemplate, usePreflightAppFromTemplate } from "../../../data";
+import { DeployTemplateForm, type ManagedArchiveOption } from "../form";
+import { useDeployTemplateDialogState } from "../hooks";
+
+import { StorageInUseDialog } from "./storage-in-use.dialog.com";
+
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 1000 };
+
+export function DeployTemplateDialog() {
+    const { state, props: dialogOptions, ...actions } = useDeployTemplateDialogState();
+    const navigate = useNavigate();
+    const [imageError, setImageError] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+    const open = state.mode !== "closed";
+    const { projectId, templateName } = state;
+
+    // 1. Fetch template detail
+    const {
+        data: template,
+        isLoading: isTemplateLoading,
+        error: templateError,
+        refetch: refetchTemplate,
+    } = useGetAppTemplate(templateName ?? undefined);
+
+    // 2. Fetch project environments
+    const { data: projectData } = ProjectsQueries.useFindOneById(
+        { projectID: projectId ?? "" },
+        { enabled: Boolean(projectId) },
+    );
+    const envs = projectData?.data.envs ?? [];
+
+    // 3. Fetch cluster volumes
+    const { data: clusterVolumesData } = ProjectClusterVolumesQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", pagination: LIST_ALL_PAGE },
+        { enabled: Boolean(projectId) },
+    );
+    const clusterVolumes =
+        clusterVolumesData?.data.map(v => ({
+            id: v.id,
+            name: v.name,
+        })) ?? [];
+
+    // 4. Where a managed template's engine can archive, and the keys it can archive with.
+    // The environment's: an app uses what its environment sees - its own, and
+    // the project's and the installation's that are inheritable.
+    const isManaged = Boolean(template?.managed);
+    const [archiveEnv, setArchiveEnv] = useState("");
+    const listsEnabled = Boolean(projectId) && isManaged && archiveEnv !== "";
+    const { data: backupReposData } = ProjectBackupRepoQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const { data: cloudStoragesData } = ProjectCloudStorageQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const { data: keyAuthsData } = ProjectKeyAuthQueries.useFindManyPaginated(
+        { projectID: projectId ?? "", env: archiveEnv, pagination: LIST_ALL_PAGE },
+        { enabled: listsEnabled },
+    );
+    const managedArchives: ManagedArchiveOption[] = [
+        ...(backupReposData?.data ?? []).map(repo => ({
+            id: repo.id,
+            name: repo.name,
+            kind: "repo" as const,
+            onVolume: Boolean(repo.volume?.id),
+        })),
+        ...(cloudStoragesData?.data ?? []).map(storage => ({
+            id: storage.id,
+            name: storage.name,
+            kind: "storage" as const,
+            onVolume: false,
+        })),
+    ];
+    const keyAuths = (keyAuthsData?.data ?? []).map(key => ({ id: key.id, name: key.name }));
+
+    // 5. Create App From Template Mutation
+    const { mutate: createAppFromTemplate, isPending } = useCreateAppFromTemplate({
+        onSuccess: (res: CreateAppFromTemplateResp, variables: CreateAppFromTemplateReq) => {
+            toast.success(`Application "${variables.name}" deployed successfully!`);
+            // Where a managed database's archive is from it, said once: the settings show it read-only after.
+            const placement = res.data.managed?.placement;
+            if (placement === "same-node") {
+                toast.warning("The archive is on the database's own node", {
+                    description: "Losing the node loses both. Object storage keeps it off-site.",
+                });
+            } else if (placement === "shared") {
+                toast.info("The archive is on shared storage", {
+                    description: "It is only as safe as that storage is apart from the database's disk.",
+                });
+            }
+            setInUse(null);
+            actions.close();
+            if (projectId && variables.projectEnv && res.data.app.id) {
+                // Navigate to newly created app
+                void navigate(
+                    ROUTE.projects.single.apps.single.deployments.$route(
+                        projectId,
+                        variables.projectEnv,
+                        res.data.app.id,
+                    ),
+                );
+            }
+        },
+        onError: (err: Error) => {
+            // A creation the plan in force does not allow gets the plan-limit
+            // dialog. This call does not go through notifyError, which would
+            // open it, so it is opened here.
+            if (openPlanLimitReachedDialog(err)) {
+                return;
+            }
+
+            toast.error(err.message !== "" ? err.message : "Failed to deploy application from template");
+        },
+    });
+
+    // Held while the operator answers for what a previous install left behind.
+    const [inUse, setInUse] = useState<{
+        values: CreateAppFromTemplateReq;
+        findings: PreflightStorageFinding[];
+        issues: PreflightIssue[];
+    } | null>(null);
+
+    const { mutate: preflight, isPending: isChecking } = usePreflightAppFromTemplate({
+        onSuccess: (result: PreflightResult, values: CreateAppFromTemplateReq) => {
+            // Storage nothing could be seen of is said out loud rather than read
+            // as "there is nothing there": that reading is what lets a deploy
+            // land on a database whose password nobody has any more.
+            if (result.unchecked.length > 0) {
+                toast.warning(`Could not check the storage of ${result.unchecked.map(item => item.app).join(", ")}.`, {
+                    description: "If these apps ran here before, their data is still in place.",
+                });
+            }
+            if (result.storage.length === 0 && result.issues.length === 0) {
+                createAppFromTemplate(values);
+                return;
+            }
+            setInUse({ values, findings: result.storage, issues: result.issues });
+        },
+        // The check is advisory. One that cannot answer must not stop a creation
+        // that would have worked: the creation reports its own failures.
+        onError: (_err: Error, values: CreateAppFromTemplateReq) => {
+            createAppFromTemplate(values);
+        },
+    });
+
+    const handleSubmit = (values: CreateAppFromTemplateReq) => {
+        if (!projectId || !canWrite || isPending || isChecking) return;
+        preflight(values);
+    };
+
+    // Reset hasChanges when dialog closes
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+        }
+    }, [state.mode]);
+
+    const handleClose = () => {
+        if (canWrite && hasChanges) {
+            const userConfirmed = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+        setHasChanges(false);
+        actions.close();
+    };
+
+    if (!projectId || !templateName) {
+        return null;
+    }
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent
+                className="sm:max-w-[800px] w-full"
+                onPointerDownOutside={event => {
+                    event.preventDefault();
+                }}
+                onInteractOutside={event => {
+                    event.preventDefault();
+                }}
+            >
+                <DialogHeader className="border-b border-border/50 px-3.5 py-4">
+                    <div className="flex items-center gap-3.5">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/30 p-2 overflow-hidden shadow-2xs">
+                            {!imageError && template?.iconUrl ? (
+                                <img
+                                    src={template.iconUrl}
+                                    alt={template.title}
+                                    onError={() => {
+                                        setImageError(true);
+                                    }}
+                                    className="size-full object-contain"
+                                />
+                            ) : (
+                                <Boxes className="size-5 text-amber-500" />
+                            )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                            <DialogTitle className="text-base font-semibold text-foreground tracking-tight">
+                                Deploy Template: {template?.title ?? templateName}
+                            </DialogTitle>
+                            {template?.tagline && (
+                                <p className="text-xs text-muted-foreground mt-0.5 truncate">{template.tagline}</p>
+                            )}
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                {templateError && !template ? (
+                    // Without the template there is no form to show: say why, rather
+                    // than load forever.
+                    <div className="px-3.5 py-6">
+                        <TemplateRenderError
+                            title="This template could not be loaded"
+                            message={templateError.message}
+                            onRetry={() => {
+                                void refetchTemplate();
+                            }}
+                        />
+                    </div>
+                ) : isTemplateLoading || !template ? (
+                    <div className="px-3.5 py-6 space-y-4">
+                        <div className="flex items-center justify-center py-8 gap-3 text-sm text-muted-foreground">
+                            <Loader2 className="size-5 animate-spin text-amber-500" />
+                            <span>Loading template configuration...</span>
+                        </div>
+                        <Skeleton className="h-20 w-full rounded-xl" />
+                        <Skeleton className="h-40 w-full rounded-xl" />
+                    </div>
+                ) : (
+                    // A form this dashboard cannot draw for a template costs the form,
+                    // not the page the dialog was opened from.
+                    <ErrorBoundary
+                        resetKeys={[templateName]}
+                        fallback={({ error, reset }) => (
+                            <div className="px-3.5 py-6">
+                                <TemplateRenderError
+                                    title="This template's form cannot be shown"
+                                    message={error.message}
+                                    onRetry={reset}
+                                />
+                            </div>
+                        )}
+                    >
+                        <DeployTemplateForm
+                            template={template}
+                            projectId={projectId}
+                            envs={envs}
+                            clusterVolumes={clusterVolumes}
+                            managedArchives={managedArchives}
+                            keyAuths={keyAuths}
+                            initialEnv={dialogOptions.initialEnv}
+                            initialVersion={dialogOptions.initialVersion}
+                            initialVariant={dialogOptions.initialVariant}
+                            isPending={isPending || isChecking}
+                            readOnly={!canWrite}
+                            onSubmit={handleSubmit}
+                            onCancel={handleClose}
+                            onHasChanges={setHasChanges}
+                            onEnvChange={setArchiveEnv}
+                        />
+                    </ErrorBoundary>
+                )}
+            </DialogFixedContent>
+
+            <StorageInUseDialog
+                open={inUse !== null}
+                findings={inUse?.findings ?? []}
+                issues={inUse?.issues ?? []}
+                isPending={isPending}
+                onOpenChange={nextOpen => {
+                    if (!nextOpen) {
+                        setInUse(null);
+                    }
+                }}
+                onConfirm={resetStorage => {
+                    if (inUse) {
+                        createAppFromTemplate({ ...inUse.values, resetStorage });
+                    }
+                }}
+            />
+        </Dialog>
+    );
+}

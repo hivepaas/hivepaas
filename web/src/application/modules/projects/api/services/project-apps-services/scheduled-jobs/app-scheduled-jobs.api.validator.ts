@@ -1,0 +1,446 @@
+import { z } from "zod";
+import type {
+    AppScheduledJobTasks_FindManyPaginated_Res,
+    AppScheduledJobTasks_FindOneById_Res,
+    AppScheduledJobTasks_GetLogs_Res,
+    AppScheduledJobs_CreateOne_Res,
+    AppScheduledJobs_FindManyPaginated_Res,
+    AppScheduledJobs_FindOneById_Res,
+    AppScheduledJobs_RunNow_Res,
+} from "~/projects/api/services/project-apps-services";
+import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
+import {
+    EAppScheduledJobArgSeparator,
+    EAppScheduledJobTaskPriority,
+    EAppScheduledJobType,
+    ESchedJobDataBackupSource,
+    ESchedJobSeqMode,
+    ESchedJobSeqOnFailure,
+    ESchedJobTriggerEvent,
+} from "~/projects/module-shared/enums";
+
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+
+const NamedRefSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const NullableDateSchema = z.preprocess(value => {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}, z.date().nullable());
+
+const ScheduleSchema = z
+    .object({
+        cronExpr: z.string().optional().default(""),
+        interval: z.string().optional().default(""),
+        initialTime: z.coerce.date(),
+        endTime: NullableDateSchema,
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const SequenceStepSchema = z.object({
+    job: z.object({
+        id: z.string(),
+        name: z.string().optional().default(""),
+        kind: z.string().optional().default(""),
+        status: z.string().optional().default(""),
+    }),
+    app: NamedRefSchema,
+    name: z.string().optional().default(""),
+});
+
+const SequenceSchema = z
+    .object({
+        mode: z.nativeEnum(ESchedJobSeqMode).catch(ESchedJobSeqMode.Sequential),
+        onFailure: z.nativeEnum(ESchedJobSeqOnFailure).catch(ESchedJobSeqOnFailure.Stop),
+        steps: z
+            .array(SequenceStepSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const EnvVarSchema = z.object({
+    key: z.string(),
+    value: z.string(),
+    isLiteral: z.boolean().optional().default(false),
+});
+
+const ArgSchema = z.object({
+    use: z.boolean().optional().default(false),
+    name: z.string().optional().default(""),
+    value: z.string().optional().default(""),
+});
+
+const ArgGroupSchema = z.object({
+    enabled: z.boolean().optional().default(false),
+    exportEnv: z.string().optional().default(""),
+    separator: z
+        .string()
+        .optional()
+        .default(EAppScheduledJobArgSeparator.Whitespace)
+        .transform(value =>
+            value === EAppScheduledJobArgSeparator.Equal
+                ? EAppScheduledJobArgSeparator.Equal
+                : EAppScheduledJobArgSeparator.Whitespace,
+        ),
+    args: z
+        .array(ArgSchema)
+        .nullish()
+        .transform(value => value ?? []),
+});
+
+const ConsoleSizeSchema = z
+    .object({
+        width: z.number(),
+        height: z.number(),
+    })
+    .nullish()
+    .transform(value => value ?? { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE });
+
+const CommandSchema = z
+    .object({
+        runInShell: z.string().optional().default(""),
+        command: z.string().optional().default(""),
+        script: z.string().optional().default(""),
+        workingDir: z.string().optional().default(""),
+        consoleSize: ConsoleSizeSchema,
+        tty: z.boolean().optional().default(false),
+        envVars: z
+            .array(EnvVarSchema)
+            .nullish()
+            .transform(value => value ?? []),
+        argGroups: z
+            .array(ArgGroupSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const CommandOutputSaveToFileSchema = z
+    .object({
+        fileName: z.string().optional().default(""),
+        filePath: z.string().optional().default(""),
+        fileKind: z.string().optional().default(""),
+        storage: NamedRefSchema,
+        bucket: z.string().optional().default(""),
+        compressionFormat: z.string().optional().default(""),
+        encryptionFormat: z.string().optional().default(""),
+        encryptionSecret: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const PipeToAppCommandSchema = z
+    .object({
+        runInShell: z.string().optional().default(""),
+        command: z.string().optional().default(""),
+        script: z.string().optional().default(""),
+        workingDir: z.string().optional().default(""),
+        consoleSize: ConsoleSizeSchema,
+        tty: z.boolean().optional().default(false),
+        envVars: z
+            .array(EnvVarSchema)
+            .nullish()
+            .transform(value => value ?? []),
+        argGroups: z
+            .array(ArgGroupSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const CommandOutputPipeToAppSchema = z
+    .object({
+        targetApp: z
+            .object({ id: z.string(), name: z.string() })
+            .nullish()
+            .transform(v => v ?? { id: "", name: "" }),
+        command: PipeToAppCommandSchema,
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const CommandOutputSchema = z
+    .object({
+        enabled: z.boolean().optional().default(false),
+        saveToFile: CommandOutputSaveToFileSchema,
+        pipeToApp: CommandOutputPipeToAppSchema,
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
+const NotificationSchema = z
+    .object({
+        successUseDefault: z.boolean(),
+        success: NamedRefSchema,
+        failureUseDefault: z.boolean(),
+        failure: NamedRefSchema,
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const SettingRefSchema = z.object({
+    id: z.string(),
+    name: z.string().optional().default(""),
+    status: z.string().optional().default(""),
+});
+
+const DataBackupSchema = z
+    .object({
+        source: z.nativeEnum(ESchedJobDataBackupSource),
+        sourceCommand: CommandSchema,
+        sourceFileName: z.string().optional().default(""),
+        restoreCommand: CommandSchema,
+        sourceVolume: SettingRefSchema.nullish().transform(value => value ?? null),
+        sourceVolumeSubpath: z.string().optional().default(""),
+        targetRepository: SettingRefSchema,
+        tags: z
+            .record(z.string())
+            .nullish()
+            .transform(value => value ?? {}),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const FunctionInvokeSchema = z
+    .object({
+        method: z.string(),
+        path: z.string(),
+        headers: z
+            .record(z.array(z.string()))
+            .nullish()
+            .transform(value => value ?? {}),
+        body: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const TriggerSchema = z.object({
+    event: z.nativeEnum(ESchedJobTriggerEvent),
+    apps: z
+        .array(z.object({ id: z.string(), name: z.string().optional().default("") }))
+        .nullish()
+        .transform(value => value ?? []),
+    wait: z.boolean().optional().default(false),
+});
+
+export const AppScheduledJobSchema = z.object({
+    id: z.string(),
+    type: z.string(),
+    name: z.string(),
+    kind: z.string().optional(),
+    status: z.string(),
+    inherited: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
+    default: z.boolean().optional().default(false),
+    updateVer: z.number(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+    expireAt: z.coerce.date().nullable().optional().default(null),
+    jobType: z.nativeEnum(EAppScheduledJobType),
+    schedule: ScheduleSchema,
+    app: NamedRefSchema,
+    priority: z.nativeEnum(EAppScheduledJobTaskPriority),
+    maxRetry: z.number().optional().default(0),
+    retryDelay: z.string().optional().default(""),
+    retryDelayIncr: z.string().optional().default(""),
+    retryBackoff: z.boolean().optional().default(false),
+    retryDelayMax: z.string().optional().default(""),
+    timeout: z.string().optional().default(""),
+    controlDisabled: z.boolean().optional().default(false),
+    command: CommandSchema,
+    commandOutput: CommandOutputSchema,
+    notification: NotificationSchema,
+    sequence: SequenceSchema,
+    dataBackup: DataBackupSchema,
+    functionInvoke: FunctionInvokeSchema,
+    // An event the dashboard does not know yet is left out, not a failed list.
+    triggers: z
+        .array(z.unknown())
+        .nullish()
+        .transform(value =>
+            (value ?? []).flatMap(item => {
+                const parsed = TriggerSchema.safeParse(item);
+                return parsed.success ? [parsed.data] : [];
+            }),
+        ),
+    nextRuns: z
+        .array(z.coerce.date())
+        .nullish()
+        .transform(value => value ?? []),
+    managedBy: z
+        .object({ id: z.string() })
+        .nullish()
+        .transform(value => (value?.id ? { id: value.id } : undefined)),
+});
+
+const AppScheduledJobTaskPrioritySchema = z
+    .string()
+    .optional()
+    .default(EAppScheduledJobTaskPriority.Default)
+    .transform(value =>
+        Object.values(EAppScheduledJobTaskPriority).includes(value as EAppScheduledJobTaskPriority)
+            ? (value as EAppScheduledJobTaskPriority)
+            : EAppScheduledJobTaskPriority.Default,
+    );
+
+const AppScheduledJobTaskConfigSchema = z.preprocess(
+    value => value ?? {},
+    z.object({
+        priority: AppScheduledJobTaskPrioritySchema,
+        maxRetry: z.number().optional().default(0),
+        retry: z.number().optional().default(0),
+        retryDelay: z.string().optional().default(""),
+        timeout: z.string().optional().default(""),
+        controlDisabled: z.boolean().optional().default(false),
+    }),
+);
+
+export const AppScheduledJobTaskSchema = z.object({
+    id: z.string(),
+    type: z.string().optional().default(""),
+    status: z.string(),
+    config: AppScheduledJobTaskConfigSchema,
+    lastError: z.string().optional().default(""),
+    updateVer: z.number(),
+    runAt: NullableDateSchema,
+    retryAt: NullableDateSchema,
+    startedAt: NullableDateSchema,
+    endedAt: NullableDateSchema,
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+});
+
+const AppScheduledJobTaskLogFrameSchema = z.object({
+    type: z.enum(["in", "out", "err", "warn", "debug"]),
+    data: z.string(),
+    ts: NullableDateSchema,
+});
+
+const FindManyPaginatedSchema = z.object({
+    data: z.array(AppScheduledJobSchema),
+    meta: PagingMetaApiSchema,
+});
+
+const FindTasksManyPaginatedSchema = z.object({
+    data: z.array(AppScheduledJobTaskSchema),
+    meta: PagingMetaApiSchema,
+});
+
+const FindOneByIdSchema = z.object({
+    data: AppScheduledJobSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const FindTaskByIdSchema = z.object({
+    data: AppScheduledJobTaskSchema,
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const CreateOneSchema = z.object({
+    data: z.object({
+        id: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const RunNowSchema = z.object({
+    data: z.object({
+        task: z.object({
+            id: z.string(),
+        }),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const GetTaskLogsSchema = z.object({
+    data: z
+        .object({
+            logs: z
+                .array(AppScheduledJobTaskLogFrameSchema)
+                .nullish()
+                .transform(value => value ?? []),
+        })
+        .nullish()
+        .transform(value => value ?? { logs: [] }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+export class AppScheduledJobsApiValidator {
+    findManyPaginated = (response: ApiHttpResponse): AppScheduledJobs_FindManyPaginated_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindManyPaginatedSchema,
+        });
+    };
+
+    findOneById = (response: ApiHttpResponse): AppScheduledJobs_FindOneById_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+    };
+
+    findTasksManyPaginated = (response: ApiHttpResponse): AppScheduledJobTasks_FindManyPaginated_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindTasksManyPaginatedSchema,
+        });
+    };
+
+    findTaskById = (response: ApiHttpResponse): AppScheduledJobTasks_FindOneById_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindTaskByIdSchema,
+        });
+    };
+
+    createOne = (response: ApiHttpResponse): AppScheduledJobs_CreateOne_Res => {
+        return parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+    };
+
+    runNow = (response: ApiHttpResponse): AppScheduledJobs_RunNow_Res => {
+        return parseApiResponse({
+            response,
+            schema: RunNowSchema,
+        });
+    };
+
+    getTaskLogs = (response: ApiHttpResponse): AppScheduledJobTasks_GetLogs_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: GetTaskLogsSchema,
+        });
+
+        return {
+            data: data.logs,
+            meta,
+        };
+    };
+}

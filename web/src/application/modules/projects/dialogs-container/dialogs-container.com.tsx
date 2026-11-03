@@ -1,0 +1,232 @@
+import React from "react";
+
+import { useLocation, useUpdateEffect } from "react-use";
+import {
+    UpdateNetworkStatusDialog,
+    UpdateVolumeStatusDialog,
+    useUpdateNetworkStatusDialogState,
+    useUpdateVolumeStatusDialogState,
+} from "~/cluster/dialogs";
+import {
+    ConfirmAppDangerActionDialog,
+    useConfirmAppDangerActionDialogState,
+} from "~/projects/dialogs/confirm-app-danger-action";
+import {
+    ConfirmEnvDangerActionDialog,
+    useConfirmEnvDangerActionDialogState,
+} from "~/projects/dialogs/confirm-env-danger-action";
+import {
+    ConfirmProjectDangerActionDialog,
+    useConfirmProjectDangerActionDialogState,
+} from "~/projects/dialogs/confirm-project-danger-action";
+import { CreateFunctionDialog, useCreateFunctionDialogState } from "~/projects/dialogs/create-function";
+import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
+import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
+import {
+    DockerApiPermissionsGuideDialog,
+    useDockerApiPermissionsGuideDialogState,
+} from "~/projects/dialogs/docker-api-permissions-guide";
+import {
+    ExportContainerFilesDialog,
+    useExportContainerFilesDialogState,
+} from "~/projects/dialogs/export-container-files";
+import {
+    ImportFilesToContainerDialog,
+    useImportFilesToContainerDialogState,
+} from "~/projects/dialogs/import-files-to-container";
+import {
+    ImportProjectSettingsDialog,
+    useImportProjectSettingsDialogState,
+} from "~/projects/dialogs/import-project-settings";
+import { ManagedRestoreDialog, useManagedRestoreDialogState } from "~/projects/dialogs/managed-restore";
+import { ManagedRestorePointDialog, useManagedRestorePointDialogState } from "~/projects/dialogs/managed-restore-point";
+import { ManagedUnmanageDialog, useManagedUnmanageDialogState } from "~/projects/dialogs/managed-unmanage";
+import { ProjectUserAccessesDialog, useProjectUserAccessesDialogState } from "~/projects/dialogs/project-user-accesses";
+import {
+    QuickInstallSslCertDialog,
+    useQuickInstallSslCertDialogState,
+} from "~/projects/dialogs/quick-install-ssl-cert";
+import { RunNowTaskCreatedDialog, useRunNowTaskCreatedDialogState } from "~/projects/dialogs/run-now-task-created";
+import {
+    UpdateAppHealthCheckStatusDialog,
+    useUpdateAppHealthCheckStatusDialogState,
+} from "~/projects/dialogs/update-app-health-check-status";
+import {
+    UpdateAppScheduledJobStatusDialog,
+    useUpdateAppScheduledJobStatusDialogState,
+} from "~/projects/dialogs/update-app-scheduled-job-status";
+import {
+    UpdateProjectCommandPipeStatusDialog,
+    useUpdateProjectCommandPipeStatusDialogState,
+} from "~/projects/dialogs/update-project-command-pipe-status";
+import {
+    UpdateProjectCommandTemplateStatusDialog,
+    useUpdateProjectCommandTemplateStatusDialogState,
+} from "~/projects/dialogs/update-project-command-template-status";
+import {
+    ProvisionGithubAppDialog,
+    UpdateAccessTokenStatusDialog,
+    UpdateAcmeDnsProviderStatusDialog,
+    UpdateBackupRepoPasswordDialog,
+    UpdateBackupRepoStatusDialog,
+    UpdateBasicAuthStatusDialog,
+    UpdateCloudStorageStatusDialog,
+    UpdateEmailAccountStatusDialog,
+    UpdateGithubAppStatusDialog,
+    UpdateImPlatformStatusDialog,
+    UpdateKeyAuthStatusDialog,
+    UpdateNotificationTargetStatusDialog,
+    UpdateRegistryAuthStatusDialog,
+    UpdateRepoWebhookStatusDialog,
+    UpdateSSHKeyStatusDialog,
+    UpdateSslCertStatusDialog,
+    UpdateSslProviderStatusDialog,
+    useProvisionGithubAppDialogState,
+    useUpdateAccessTokenStatusDialogState,
+    useUpdateAcmeDnsProviderStatusDialogState,
+    useUpdateBackupRepoPasswordDialogState,
+    useUpdateBackupRepoStatusDialogState,
+    useUpdateBasicAuthStatusDialogState,
+    useUpdateCloudStorageStatusDialogState,
+    useUpdateEmailAccountStatusDialogState,
+    useUpdateGithubAppStatusDialogState,
+    useUpdateImPlatformStatusDialogState,
+    useUpdateKeyAuthStatusDialogState,
+    useUpdateNotificationTargetStatusDialogState,
+    useUpdateRegistryAuthStatusDialogState,
+    useUpdateRepoWebhookStatusDialogState,
+    useUpdateSSHKeyStatusDialogState,
+    useUpdateSslCertStatusDialogState,
+    useUpdateSslProviderStatusDialogState,
+} from "~/settings/dialogs";
+
+function View() {
+    const location = useLocation();
+    const createProjectDialog = useCreateProjectDialogState();
+    const createProjectAppDialog = useCreateProjectAppDialogState();
+    const createFunctionDialog = useCreateFunctionDialogState();
+    const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
+    const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
+    const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
+    const dockerApiPermissionsGuideDialog = useDockerApiPermissionsGuideDialogState();
+    const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
+    const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
+    const confirmEnvDangerActionDialog = useConfirmEnvDangerActionDialogState();
+    const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
+    const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
+    const updateKeyAuthStatusDialog = useUpdateKeyAuthStatusDialogState();
+    const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
+    const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
+    const updateSslProviderStatusDialog = useUpdateSslProviderStatusDialogState();
+    const updateImPlatformStatusDialog = useUpdateImPlatformStatusDialogState();
+    const updateEmailAccountStatusDialog = useUpdateEmailAccountStatusDialogState();
+    const updateSSHKeyStatusDialog = useUpdateSSHKeyStatusDialogState();
+    const updateAccessTokenStatusDialog = useUpdateAccessTokenStatusDialogState();
+    const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
+    const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
+    const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
+    const updateBackupRepoStatusDialog = useUpdateBackupRepoStatusDialogState();
+    const updateBackupRepoPasswordDialog = useUpdateBackupRepoPasswordDialogState();
+    const projectUserAccessesDialog = useProjectUserAccessesDialogState();
+    const provisionGithubAppDialog = useProvisionGithubAppDialogState();
+    const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
+    const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
+    const importProjectSettingsDialog = useImportProjectSettingsDialogState();
+    const updateNetworkStatusDialog = useUpdateNetworkStatusDialogState();
+    const updateVolumeStatusDialog = useUpdateVolumeStatusDialogState();
+    const updateProjectCommandPipeStatusDialog = useUpdateProjectCommandPipeStatusDialogState();
+    const updateProjectCommandTemplateStatusDialog = useUpdateProjectCommandTemplateStatusDialogState();
+    const exportContainerFilesDialog = useExportContainerFilesDialogState();
+    const importFilesToContainerDialog = useImportFilesToContainerDialogState();
+    const managedRestoreDialog = useManagedRestoreDialogState();
+    const managedRestorePointDialog = useManagedRestorePointDialogState();
+    const managedUnmanageDialog = useManagedUnmanageDialogState();
+
+    useUpdateEffect(() => {
+        createProjectDialog.destroy();
+        createProjectAppDialog.destroy();
+        createFunctionDialog.destroy();
+        updateAppHealthCheckStatusDialog.destroy();
+        updateAppScheduledJobStatusDialog.destroy();
+        runNowTaskCreatedDialog.destroy();
+        dockerApiPermissionsGuideDialog.destroy();
+        quickInstallSslCertDialog.destroy();
+        confirmAppDangerActionDialog.destroy();
+        confirmEnvDangerActionDialog.destroy();
+        confirmProjectDangerActionDialog.destroy();
+        updateBasicAuthStatusDialog.destroy();
+        updateKeyAuthStatusDialog.destroy();
+        updateRegistryAuthStatusDialog.destroy();
+        updateSslCertStatusDialog.destroy();
+        updateSslProviderStatusDialog.destroy();
+        updateImPlatformStatusDialog.destroy();
+        updateEmailAccountStatusDialog.destroy();
+        updateSSHKeyStatusDialog.destroy();
+        updateAccessTokenStatusDialog.destroy();
+        updateAcmeDnsProviderStatusDialog.destroy();
+        updateCloudStorageStatusDialog.destroy();
+        updateNotificationTargetStatusDialog.destroy();
+        updateBackupRepoStatusDialog.destroy();
+        updateBackupRepoPasswordDialog.destroy();
+        projectUserAccessesDialog.destroy();
+        provisionGithubAppDialog.destroy();
+        updateGithubAppStatusDialog.destroy();
+        updateRepoWebhookStatusDialog.destroy();
+        importProjectSettingsDialog.destroy();
+        updateNetworkStatusDialog.destroy();
+        updateVolumeStatusDialog.destroy();
+        updateProjectCommandPipeStatusDialog.destroy();
+        updateProjectCommandTemplateStatusDialog.destroy();
+        exportContainerFilesDialog.destroy();
+        importFilesToContainerDialog.destroy();
+        managedRestoreDialog.destroy();
+        managedRestorePointDialog.destroy();
+        managedUnmanageDialog.destroy();
+    }, [location]);
+
+    return (
+        <>
+            <CreateProjectDialog />
+            <CreateProjectAppDialog />
+            <CreateFunctionDialog />
+            <UpdateAppHealthCheckStatusDialog />
+            <UpdateAppScheduledJobStatusDialog />
+            <RunNowTaskCreatedDialog />
+            <DockerApiPermissionsGuideDialog />
+            <QuickInstallSslCertDialog />
+            <ConfirmAppDangerActionDialog />
+            <ConfirmEnvDangerActionDialog />
+            <ConfirmProjectDangerActionDialog />
+            <UpdateBasicAuthStatusDialog />
+            <UpdateKeyAuthStatusDialog />
+            <UpdateRegistryAuthStatusDialog />
+            <UpdateSslCertStatusDialog />
+            <UpdateSslProviderStatusDialog />
+            <UpdateImPlatformStatusDialog />
+            <UpdateEmailAccountStatusDialog />
+            <UpdateSSHKeyStatusDialog />
+            <UpdateAccessTokenStatusDialog />
+            <UpdateAcmeDnsProviderStatusDialog />
+            <UpdateCloudStorageStatusDialog />
+            <UpdateBackupRepoStatusDialog />
+            <UpdateBackupRepoPasswordDialog />
+            <UpdateNotificationTargetStatusDialog />
+            <ProjectUserAccessesDialog />
+            <ProvisionGithubAppDialog />
+            <UpdateGithubAppStatusDialog />
+            <UpdateRepoWebhookStatusDialog />
+            <ImportProjectSettingsDialog />
+            <UpdateNetworkStatusDialog />
+            <UpdateVolumeStatusDialog />
+            <UpdateProjectCommandPipeStatusDialog />
+            <UpdateProjectCommandTemplateStatusDialog />
+            <ExportContainerFilesDialog />
+            <ManagedRestoreDialog />
+            <ManagedRestorePointDialog />
+            <ManagedUnmanageDialog />
+            <ImportFilesToContainerDialog />
+        </>
+    );
+}
+
+export const ProjectsDialogsContainer = React.memo(View);

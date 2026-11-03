@@ -1,0 +1,214 @@
+import React, { type PropsWithChildren, useCallback, useEffect, useImperativeHandle, useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FieldPath, FormProvider, useForm } from "react-hook-form";
+import { type AppContainerSettings } from "~/projects/domain";
+
+import { type ValidationException } from "@infrastructure/exceptions/validation";
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+import {
+    GeneralFields,
+    HealthcheckFields,
+    LabelsFields,
+    LogDriverFields,
+    RestartPolicyFields,
+    SecurityFields,
+} from "../building-blocks";
+import {
+    AppConfigContainerSettingsFormSchema,
+    type AppConfigContainerSettingsFormSchemaInput,
+    type AppConfigContainerSettingsFormSchemaOutput,
+    emptyAppConfigContainerSettingsFormDefaults,
+} from "../schemas";
+import { type AppConfigContainerSettingsFormRef } from "../types";
+
+import { mapAppContainerSettingsToFormInput } from "./app-config-container-settings.form-mappers";
+
+type SchemaInput = AppConfigContainerSettingsFormSchemaInput;
+type SchemaOutput = AppConfigContainerSettingsFormSchemaOutput;
+type SectionValue = "general" | "labels" | "restart-policy" | "security" | "log-driver" | "healthcheck";
+
+const SECTION_BY_FIELD: Record<keyof SchemaInput, SectionValue> = {
+    general: "general",
+    serviceLabels: "labels",
+    containerLabels: "labels",
+    restartPolicy: "restart-policy",
+    privileges: "security",
+    logDriver: "log-driver",
+    healthcheck: "healthcheck",
+};
+
+function LogDriverSectionTitle() {
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            <span>Log Driver</span>
+            <a
+                className="text-xs text-blue-500 hover:text-blue-600"
+                href="https://docs.docker.com/engine/logging/configure/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={event => {
+                    event.stopPropagation();
+                }}
+            >
+                (docs)
+            </a>
+        </span>
+    );
+}
+
+function containerSettingsSections(
+    labelsToolbar: React.ReactNode,
+    managedLock: React.ReactNode,
+): {
+    value: SectionValue;
+    title: React.ReactNode;
+    content: React.ReactNode;
+}[] {
+    return [
+        { value: "general", title: "General", content: <GeneralFields managedLock={managedLock} /> },
+        { value: "labels", title: "Labels", content: <LabelsFields toolbar={labelsToolbar} /> },
+        { value: "restart-policy", title: "Restart Policy", content: <RestartPolicyFields /> },
+        { value: "security", title: "Security", content: <SecurityFields /> },
+        { value: "log-driver", title: <LogDriverSectionTitle />, content: <LogDriverFields /> },
+        { value: "healthcheck", title: "Healthcheck", content: <HealthcheckFields /> },
+    ];
+}
+
+function getSectionValueFromPath(path: string): SectionValue | undefined {
+    const [field] = path.split(".");
+
+    return SECTION_BY_FIELD[field as keyof SchemaInput];
+}
+
+export function AppConfigContainerSettingsForm({
+    ref,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    labelsToolbar,
+    managedLock,
+    children,
+}: Props) {
+    const methods = useForm<SchemaInput, unknown, SchemaOutput>({
+        defaultValues: defaultValues
+            ? mapAppContainerSettingsToFormInput(defaultValues)
+            : emptyAppConfigContainerSettingsFormDefaults,
+        resolver: zodResolver(AppConfigContainerSettingsFormSchema),
+        mode: "onSubmit",
+    });
+    const [openSections, setOpenSections] = useState<SectionValue[]>(["general"]);
+
+    const openSectionsForPaths = useCallback((paths: string[]) => {
+        const nextSections = paths.flatMap(path => {
+            const section = getSectionValueFromPath(path);
+
+            return section ? [section] : [];
+        });
+
+        if (nextSections.length === 0) {
+            return;
+        }
+
+        setOpenSections(current => Array.from(new Set([...current, ...nextSections])));
+    }, []);
+
+    useEffect(() => {
+        if (methods.formState.submitCount === 0) {
+            return;
+        }
+
+        openSectionsForPaths(Object.keys(methods.formState.errors));
+    }, [methods.formState.errors, methods.formState.submitCount, openSectionsForPaths]);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            setValues: (values: Partial<SchemaInput>) => {
+                methods.reset({
+                    ...methods.getValues(),
+                    ...values,
+                });
+            },
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as FieldPath<SchemaInput>,
+                        { message, type: "manual" },
+                        {
+                            shouldFocus: index === 0,
+                        },
+                    );
+                });
+                openSectionsForPaths(error.errors.map(({ path }) => path));
+            },
+        }),
+        [methods, openSectionsForPaths],
+    );
+
+    return (
+        <div className="pt-2">
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={event => {
+                        event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
+                        void methods.handleSubmit(onSubmit)(event);
+                    }}
+                    className="flex flex-col gap-6"
+                >
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <Accordion
+                            type="multiple"
+                            value={openSections}
+                            onValueChange={value => {
+                                setOpenSections(value as SectionValue[]);
+                            }}
+                            className="w-full flex flex-col gap-4"
+                        >
+                            {containerSettingsSections(labelsToolbar, managedLock).map(section => (
+                                <AccordionItem
+                                    key={section.value}
+                                    value={section.value}
+                                    className="border-none"
+                                >
+                                    <AccordionTrigger
+                                        headerClassName="sticky top-0 z-10"
+                                        className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent rounded-md shadow-xs"
+                                    >
+                                        {section.title}
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 pb-0 pl-4">{section.content}</AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                        {children}
+                    </fieldset>
+                </form>
+            </FormProvider>
+        </div>
+    );
+}
+
+type Props = PropsWithChildren<{
+    ref?: React.Ref<AppConfigContainerSettingsFormRef>;
+    defaultValues?: AppContainerSettings;
+    onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
+    /** Sits at the top of the Labels section. */
+    labelsToolbar?: React.ReactNode;
+    /** Why a managed database's entrypoint and user are its engine's. */
+    managedLock?: React.ReactNode;
+}>;

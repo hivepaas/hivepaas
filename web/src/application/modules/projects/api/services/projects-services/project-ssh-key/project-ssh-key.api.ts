@@ -1,0 +1,144 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+
+import { BaseApi, parseApiError } from "@infrastructure/api";
+
+import type {
+    ProjectSSHKey_CreateOne_Req,
+    ProjectSSHKey_CreateOne_Res,
+    ProjectSSHKey_DeleteOne_Req,
+    ProjectSSHKey_DeleteOne_Res,
+    ProjectSSHKey_FindManyPaginated_Req,
+    ProjectSSHKey_FindManyPaginated_Res,
+    ProjectSSHKey_FindOneById_Req,
+    ProjectSSHKey_FindOneById_Res,
+    ProjectSSHKey_UpdateOne_Req,
+    ProjectSSHKey_UpdateOne_Res,
+    ProjectSSHKey_UpdateStatus_Req,
+    ProjectSSHKey_UpdateStatus_Res,
+} from "./project-ssh-key.api.contracts";
+import type { ProjectSSHKeyApiValidator } from "./project-ssh-key.api.validator";
+
+function getProjectSSHKeyBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/ssh-keys`;
+    }
+
+    return `/projects/${projectID}/ssh-keys`;
+}
+
+export class ProjectSSHKeyApi extends BaseApi {
+    public constructor(private readonly validator: ProjectSSHKeyApiValidator) {
+        super();
+    }
+
+    async findManyPaginated(
+        request: ProjectSSHKey_FindManyPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSSHKey_FindManyPaginated_Res, Error>> {
+        const { projectID, env, search, pagination, sorting } = request.data;
+        const query = this.queryBuilder.getInstance();
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(getProjectSSHKeyBasePath(projectID, env), {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findOneById(
+        request: ProjectSSHKey_FindOneById_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSSHKey_FindOneById_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async createOne(
+        request: ProjectSSHKey_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSSHKey_CreateOne_Res, Error>> {
+        const { projectID, env, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(getProjectSSHKeyBasePath(projectID, env), payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: ProjectSSHKey_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSSHKey_UpdateOne_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateStatus(
+        request: ProjectSSHKey_UpdateStatus_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSSHKey_UpdateStatus_Res, Error>> {
+        const { projectID, env, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`${getProjectSSHKeyBasePath(projectID, env)}/${id}/status`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateStatus),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async deleteOne(request: ProjectSSHKey_DeleteOne_Req): Promise<Result<ProjectSSHKey_DeleteOne_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.delete(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`)).pipe(
+                map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}

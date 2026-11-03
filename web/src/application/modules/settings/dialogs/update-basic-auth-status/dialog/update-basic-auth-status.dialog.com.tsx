@@ -1,0 +1,174 @@
+import { useEffect, useState } from "react";
+
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { toast } from "sonner";
+import { ProjectBasicAuthCommands } from "~/projects/data/commands";
+import { ProjectBasicAuthQueries } from "~/projects/data/queries";
+import { BasicAuthCommands } from "~/settings/data/commands";
+import { BasicAuthQueries } from "~/settings/data/queries";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { AppLoader } from "@application/shared/components";
+import { ESettingStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
+
+import { UpdateBasicAuthStatusForm } from "../form";
+import { useUpdateBasicAuthStatusDialogState } from "../hooks";
+import type { UpdateBasicAuthStatusFormOutput } from "../schemas";
+
+export function UpdateBasicAuthStatusDialog() {
+    const {
+        state,
+        props: dialogOptions,
+        close: closeDialog,
+        clear: clearDialog,
+    } = useUpdateBasicAuthStatusDialogState();
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
+    const { canWrite } = useSettingsScopePermissions(permissionScope);
+
+    const { mutate: updateSettingStatus, isPending: isUpdatingSetting } = BasicAuthCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Basic auth status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    const { mutate: updateProjectStatus, isPending: isUpdatingProject } = ProjectBasicAuthCommands.useUpdateStatus({
+        onSuccess: () => {
+            toast.success("Project basic auth status updated successfully");
+            closeDialog();
+            dialogOptions?.onSuccess?.();
+        },
+    });
+
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+            clearDialog();
+        }
+    }, [clearDialog, state.mode]);
+
+    const detailId = state.mode === "open" ? state.id : "";
+    const settingDetailQuery = BasicAuthQueries.useFindOneById(
+        { id: detailId },
+        {
+            enabled: state.mode === "open" && state.scope.type === "settings",
+        },
+    );
+    const projectDetailQuery = ProjectBasicAuthQueries.useFindOneById(
+        {
+            projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
+            id: detailId,
+        },
+        {
+            enabled: state.mode === "open" && state.scope.type === "project",
+        },
+    );
+    const detailQuery =
+        state.mode === "open" && state.scope.type === "project" ? projectDetailQuery : settingDetailQuery;
+    const basicAuth = detailQuery.data?.data;
+
+    function onSubmit(values: UpdateBasicAuthStatusFormOutput) {
+        if (state.mode !== "open" || !basicAuth) {
+            return;
+        }
+
+        const payload = {
+            updateVer: basicAuth.updateVer,
+            status: values.status,
+            expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
+            default: values.default,
+        };
+
+        if (state.scope.type === "project") {
+            updateProjectStatus({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: basicAuth.id,
+                payload,
+            });
+            return;
+        }
+
+        updateSettingStatus({
+            id: basicAuth.id,
+            payload,
+        });
+    }
+
+    function handleClose() {
+        if (isPending) {
+            return;
+        }
+
+        if (
+            !readOnlyInherited &&
+            canWrite &&
+            hasChanges &&
+            !window.confirm("Are you sure you want to close without saving changes?")
+        ) {
+            return;
+        }
+
+        closeDialog();
+        dialogOptions?.onClose?.();
+    }
+
+    const open = state.mode !== "closed";
+    const resolvedDialogOptions = dialogOptions ?? {};
+    const readOnlyInherited = resolvedDialogOptions.readOnlyInherited === true;
+    const dialogTitle = readOnlyInherited
+        ? `${resolvedDialogOptions.entityTitle ?? "Basic Auth"} Status`
+        : "Change status";
+    const isPending = isUpdatingSetting || isUpdatingProject;
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
+    const initialValues = basicAuth
+        ? {
+              status: basicAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
+              expireAt: basicAuth.expireAt ?? undefined,
+              inheritable: Boolean(basicAuth.inheritable),
+              default: basicAuth.default ?? false,
+          }
+        : undefined;
+    const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={handleClose}
+        >
+            <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
+                {isDetailLoading && (
+                    <DialogBody>
+                        <AppLoader />
+                    </DialogBody>
+                )}
+                {state.mode === "open" && !isDetailLoading && initialValues && (
+                    <UpdateBasicAuthStatusForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                )}
+            </DialogFixedContent>
+        </Dialog>
+    );
+}

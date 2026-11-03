@@ -1,0 +1,153 @@
+import { Err, Ok, type Result } from "oxide.ts";
+import { catchError, from, lastValueFrom, map, of } from "rxjs";
+import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+
+import { BaseApi, parseApiError } from "@infrastructure/api";
+
+import {
+    type AppDeploymentSettings_FindOne_Req,
+    type AppDeploymentSettings_FindOne_Res,
+    type AppDeploymentSettings_GetDockerfileTemplate_Req,
+    type AppDeploymentSettings_GetDockerfileTemplate_Res,
+    type AppDeploymentSettings_UpdateOne_Req,
+    type AppDeploymentSettings_UpdateOne_Res,
+    type FunctionSourcePayload,
+} from "./app-deployment-settings.api.contracts";
+import { type AppDeploymentSettingsApiValidator } from "./app-deployment-settings.api.validator";
+
+export class AppDeploymentSettingsApi extends BaseApi {
+    constructor(private readonly validator: AppDeploymentSettingsApiValidator) {
+        super();
+    }
+
+    async findOne(
+        req: AppDeploymentSettings_FindOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeploymentSettings_FindOne_Res, Error>> {
+        const { projectID, env, appID } = req.data;
+        const query = this.queryBuilder.getInstance();
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/deployment-settings`, {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        req: AppDeploymentSettings_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeploymentSettings_UpdateOne_Res, Error>> {
+        const { projectID, env, appID, updateVer, payload } = req.data;
+        if (payload.activeMethod === EAppDeploymentMethod.Function) {
+            return lastValueFrom(
+                from(
+                    this.client.v1.put(
+                        `/projects/${projectID}/${env}/apps/${appID}/deployment-settings`,
+                        { ...payload, updateVer, functionSource: functionSourceToJson(payload.functionSource) },
+                        { signal },
+                    ),
+                ).pipe(
+                    map(() => Ok({ data: { type: "success" } } as const)),
+                    catchError(error => of(Err(parseApiError(error)))),
+                ),
+            );
+        }
+
+        const json =
+            payload.activeMethod === EAppDeploymentMethod.Repo
+                ? {
+                      ...payload,
+                      updateVer,
+                      repoSource: {
+                          buildTool: payload.repoSource.buildTool,
+                          repoType: payload.repoSource.repoType,
+                          repoURL: payload.repoSource.repoUrl,
+                          repoRef: payload.repoSource.repoRef,
+                          commitHash: payload.repoSource.commitHash,
+                          repoOptions: payload.repoSource.repoOptions,
+                          credentials: payload.repoSource.credentials,
+                          autoDeploy: payload.repoSource.autoDeploy,
+                          dockerfile: {
+                              source: payload.repoSource.dockerfile.source,
+                              path: payload.repoSource.dockerfile.path,
+                              ...(payload.repoSource.dockerfile.content
+                                  ? { content: payload.repoSource.dockerfile.content }
+                                  : {}),
+                              ...(payload.repoSource.dockerfile.scanPath
+                                  ? { scanPath: payload.repoSource.dockerfile.scanPath }
+                                  : {}),
+                          },
+                          pushToRegistry: payload.repoSource.pushToRegistry,
+                      },
+                  }
+                : { ...payload, updateVer };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/deployment-settings`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getDockerfileTemplate(
+        req: AppDeploymentSettings_GetDockerfileTemplate_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeploymentSettings_GetDockerfileTemplate_Res, Error>> {
+        const { projectID, env, appID, type } = req.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(
+                    `/projects/${projectID}/${env}/apps/${appID}/deployment-settings/dockerfile-template`,
+                    {
+                        params: { type },
+                        signal,
+                    },
+                ),
+            ).pipe(
+                map(this.validator.getDockerfileTemplate),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+}
+
+/**
+ * A function's source as the API reads it: the repository's URL is `repoURL`.
+ */
+export function functionSourceToJson(source: FunctionSourcePayload): Record<string, unknown> {
+    const { repo, ...code } = source.code;
+
+    return {
+        ...source,
+        code: {
+            ...code,
+            ...(repo
+                ? {
+                      repo: {
+                          repoType: repo.repoType,
+                          repoURL: repo.repoUrl,
+                          repoRef: repo.repoRef,
+                          commitHash: repo.commitHash,
+                          credentials: repo.credentials,
+                          autoDeploy: repo.autoDeploy,
+                      },
+                  }
+                : {}),
+        },
+    };
+}

@@ -1,0 +1,197 @@
+import { AxiosError, isAxiosError } from "axios";
+import { type z } from "zod";
+
+import { type ApiHttpResponse, ProblemApiResponse, ValidationProblemApiResponse } from "@infrastructure/api/types";
+import { ProblemApiResponseSchema, ValidationProblemApiResponseSchema } from "@infrastructure/api/validation";
+
+import { UnexpectedApiErrorException, UnexpectedApiResponseException } from "@infrastructure/exceptions/api";
+import { CancelException } from "@infrastructure/exceptions/cancel";
+import {
+    Http400Exception,
+    Http401Exception,
+    Http403Exception,
+    Http404Exception,
+    Http406Exception,
+    Http409Exception,
+    Http422Exception,
+    Http500Exception,
+    HttpException,
+} from "@infrastructure/exceptions/http";
+import { NetworkException } from "@infrastructure/exceptions/network";
+import { RouteNotFoundException } from "@infrastructure/exceptions/not-found";
+import { TimeoutException } from "@infrastructure/exceptions/timeout";
+
+interface ParseApiResponseParams<T extends z.SomeZodObject> {
+    response: ApiHttpResponse;
+    schema: T;
+}
+
+/**
+ * Parse api response
+ * @throws Error
+ */
+export function parseApiResponse<T extends z.SomeZodObject>(params: ParseApiResponseParams<T>): z.output<T> {
+    const { response, schema } = params;
+
+    const parsed = schema.safeParse(response.data);
+
+    if (!parsed.success) {
+        if (import.meta.env["NODE_ENV"] !== "production") {
+            console.warn(response.data, parsed.error.format());
+        }
+
+        throw new UnexpectedApiResponseException();
+    }
+
+    return parsed.data;
+}
+
+/**
+ * Parse api error
+ */
+export function parseApiError(error: unknown): Error {
+    /**
+     * Unexpected API response
+     * @see parseApiResponse
+     */
+    if (error instanceof UnexpectedApiResponseException) {
+        return error;
+    }
+
+    /**
+     * Should never happen!
+     */
+    if (!isAxiosError(error)) {
+        return new UnexpectedApiErrorException();
+    }
+
+    /**
+     * Network error
+     */
+    if (error.code === AxiosError.ERR_NETWORK && !error.response) {
+        return new NetworkException(error.message);
+    }
+
+    /**
+     * Timeout error
+     */
+    if (error.code === AxiosError.ETIMEDOUT) {
+        return new TimeoutException(error.message);
+    }
+
+    /**
+     * Cancel error
+     */
+    if (error.code === AxiosError.ERR_CANCELED) {
+        return new CancelException(error.message);
+    }
+
+    const data: unknown = error.response?.data;
+
+    /**
+     * Route not found error
+     */
+    if (error.status === 404 && typeof data !== "object") {
+        return new RouteNotFoundException(error.config?.url ?? "");
+    }
+
+    return parseApiProblem(data, error.config?.url) ?? new UnexpectedApiErrorException();
+}
+
+/**
+ * The exception a problem the server answered stands for: the body of a failed
+ * request, or the error a stream ends with. Undefined when data is no problem.
+ */
+export function parseApiProblem(data: unknown, requestUrl?: string): Error | undefined {
+    /**
+     * Validation problem
+     */
+    const parsedValidationProblem = ValidationProblemApiResponseSchema.safeParse(data);
+
+    if (parsedValidationProblem.success) {
+        const problem = new ValidationProblemApiResponse(parsedValidationProblem.data);
+
+        return new Http400Exception(problem);
+    }
+
+    /**
+     * Problem
+     */
+    const parsedProblem = ProblemApiResponseSchema.safeParse(data);
+
+    if (parsedProblem.success) {
+        const problem = new ProblemApiResponse(parsedProblem.data);
+
+        if (problem.status === 400) {
+            return new Http400Exception(problem);
+        }
+
+        if (problem.status === 401) {
+            return new Http401Exception(problem);
+        }
+
+        if (problem.status === 403) {
+            return new Http403Exception(problem);
+        }
+
+        if (problem.status === 404) {
+            return new Http404Exception(problem);
+        }
+
+        if (problem.status === 406) {
+            return new Http406Exception(problem);
+        }
+
+        if (problem.status === 409) {
+            return new Http409Exception(problem);
+        }
+
+        if (problem.status === 422) {
+            return new Http422Exception(problem);
+        }
+
+        if (problem.status === 500) {
+            return new Http500Exception(problem);
+        }
+
+        // The catch-all branch, which is where ERR_SETTING_IN_USE lands: it maps to
+        // 412, and only the statuses above have a class of their own. The request
+        // URL rides along because a refusal about the resource is answered far
+        // from the call site - see HttpException.requestUrl.
+        return new HttpException({
+            status: problem.status,
+            problem,
+            requestUrl,
+        });
+    }
+
+    return undefined;
+}
+
+/**
+ * parseApiError for an endpoint that returns a blob.
+ *
+ * A failing blob request still carries a JSON error body, but axios has already
+ * wrapped it as a Blob because responseType said so - so parseApiError alone
+ * would report the transport failure and lose the message the server sent.
+ * This reads the blob back as text first.
+ */
+export async function parseBlobApiError(error: unknown): Promise<Error> {
+    if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
+        return parseApiError(error);
+    }
+
+    try {
+        const text = await error.response.data.text();
+        const data: unknown = JSON.parse(text);
+        const nextError = new AxiosError(error.message, error.code, error.config, error.request, {
+            ...error.response,
+            data,
+        });
+        nextError.status = error.status;
+
+        return parseApiError(nextError);
+    } catch {
+        return parseApiError(error);
+    }
+}

@@ -1,0 +1,105 @@
+import { createContext } from "react";
+
+import {
+    AccessTokenApi,
+    AccessTokenApiValidator,
+    AcmeDnsProviderApi,
+    AcmeDnsProviderApiValidator,
+    AppPlacementSettingsApi,
+    AppPlacementSettingsApiValidator,
+    BackupRepoApi,
+    BackupRepoApiValidator,
+    BackupSnapshotApi,
+    BackupSnapshotApiValidator,
+    BasicAuthApi,
+    BasicAuthApiValidator,
+    CloudStorageApi,
+    CloudStorageApiValidator,
+    DomainSettingsApi,
+    DomainSettingsApiValidator,
+    EmailApi,
+    EmailApiValidator,
+    GitCredentialsApi,
+    GitCredentialsApiValidator,
+    GithubAppApi,
+    GithubAppApiValidator,
+    ImServiceApi,
+    ImServiceApiValidator,
+    ImageBuildSettingsApi,
+    ImageBuildSettingsApiValidator,
+    KeyAuthApi,
+    KeyAuthApiValidator,
+    NotificationsApi,
+    NotificationsApiValidator,
+    OAuthApi,
+    OAuthApiValidator,
+    RegistryAuthApi,
+    RegistryAuthApiValidator,
+    RepoWebhookApi,
+    RepoWebhookApiValidator,
+    SSHKeyApi,
+    SSHKeyApiValidator,
+    SslCertApi,
+    SslCertApiValidator,
+    SslProviderApi,
+    SslProviderApiValidator,
+    StorageSettingsApi,
+    StorageSettingsApiValidator,
+} from "../services";
+
+function createApi() {
+    /**
+     * Settings
+     */
+    const notificationsValidator = new NotificationsApiValidator();
+    const acmeDnsProviderValidator = new AcmeDnsProviderApiValidator();
+    const basicAuthValidator = new BasicAuthApiValidator();
+    const keyAuthValidator = new KeyAuthApiValidator();
+    const domainSettingsValidator = new DomainSettingsApiValidator();
+    const storageSettingsValidator = new StorageSettingsApiValidator();
+    const gitCredentialsValidator = new GitCredentialsApiValidator();
+    const registryAuthValidator = new RegistryAuthApiValidator();
+    const sslCertValidator = new SslCertApiValidator();
+    const sslProviderValidator = new SslProviderApiValidator();
+    const imServiceValidator = new ImServiceApiValidator();
+    const emailValidator = new EmailApiValidator();
+    const sshKeyValidator = new SSHKeyApiValidator();
+    const accessTokenValidator = new AccessTokenApiValidator();
+    const cloudStorageValidator = new CloudStorageApiValidator();
+    const oauthValidator = new OAuthApiValidator();
+    const githubAppValidator = new GithubAppApiValidator();
+    const repoWebhookValidator = new RepoWebhookApiValidator();
+    const imageBuildSettingsValidator = new ImageBuildSettingsApiValidator();
+    const appPlacementSettingsValidator = new AppPlacementSettingsApiValidator();
+
+    return {
+        settings: {
+            notifications: new NotificationsApi(notificationsValidator),
+            acmeDnsProvider: new AcmeDnsProviderApi(acmeDnsProviderValidator),
+            basicAuth: new BasicAuthApi(basicAuthValidator),
+            keyAuth: new KeyAuthApi(keyAuthValidator),
+            domainSettings: new DomainSettingsApi(domainSettingsValidator),
+            storageSettings: new StorageSettingsApi(storageSettingsValidator),
+            gitCredentials: new GitCredentialsApi(gitCredentialsValidator),
+            registryAuth: new RegistryAuthApi(registryAuthValidator),
+            sslCert: new SslCertApi(sslCertValidator),
+            sslProvider: new SslProviderApi(sslProviderValidator),
+            imService: new ImServiceApi(imServiceValidator),
+            email: new EmailApi(emailValidator),
+            sshKey: new SSHKeyApi(sshKeyValidator),
+            accessToken: new AccessTokenApi(accessTokenValidator),
+            cloudStorage: new CloudStorageApi(cloudStorageValidator),
+            oauth: new OAuthApi(oauthValidator),
+            githubApp: new GithubAppApi(githubAppValidator),
+            repoWebhook: new RepoWebhookApi(repoWebhookValidator),
+            imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
+            appPlacementSettings: new AppPlacementSettingsApi(appPlacementSettingsValidator),
+            backupRepo: new BackupRepoApi(new BackupRepoApiValidator()),
+            backupSnapshot: new BackupSnapshotApi(new BackupSnapshotApiValidator()),
+        },
+    };
+}
+
+export const SettingsApiContext = createContext({
+    api: createApi(),
+});

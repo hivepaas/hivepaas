@@ -1,7 +1,7 @@
 # kopia, the backup engine: built from source into an image of its own
 # (deployment/kopia/Dockerfile) and pinned by digest - the same one in the
 # release's and the dev's Dockerfiles, app and agent (docs/RELEASING.md).
-ARG KOPIA_IMAGE=ghcr.io/hivepaas/kopia:0.23.1-2@sha256:b98b6a5f14746f7007acebe0e0b9c0e50b2a59cb209320c94e208380eabb2b36
+ARG KOPIA_IMAGE=ghcr.io/hivepaas/kopia:0.23.1-3@sha256:7b35c78c1b8269afec2da6ebe0cc8a5db1d2b2efb8d56e35cf65a1d269538f7e
 FROM ${KOPIA_IMAGE} AS kopia
 
 ############################################################

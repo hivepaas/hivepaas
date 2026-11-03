@@ -2,7 +2,7 @@
 
 ## Project Root
 
-Work from `hivepaas-dashboard/` for frontend tasks.
+Work from `web/` for frontend tasks.
 
 Install dependencies with `yarn install`: `yarn.lock` is the lockfile the
 release image is built and scanned with, and `npm install` would write a
@@ -14,7 +14,6 @@ Common scripts:
 - `npm run lint:ci`
 - `npm run build`
 - `npm run format:src`
-- `npm run agents:check`
 - `npm run e2e` - the end-to-end tests, against a running backend: see
   `e2e/README.md`
 
@@ -22,20 +21,20 @@ Common scripts:
 
 For Codex/Cursor frontend work:
 
-- Start from `hivepaas-dashboard/`.
-- Read this file first, then load only the matching `.cursor/rules/*.mdc`.
+- Start from `web/`.
+- Read this file first, then load only the matching `../.cursor/rules/web-*.mdc`.
 - Use `$fe-dev` for frontend implementation/review.
 - Use `$convention-enforcer` before and after frontend edits.
 - Use `$api-layer-review` for API services, validators, hooks, query keys, queries, and commands.
-- Run `npm run agents:check` after changing skills, Cursor rules, or agent-facing docs.
 
 ## Rule Map
 
-- `frontend-architecture.mdc`: module ownership, folder shape, imports, TypeScript/React, styling.
-- `api-data-layer.mdc`: contracts, validators, services, API hooks, query keys, queries, commands, generated API.
-- `routing-dialogs-ui.mdc`: route wiring, navigation wrappers, dialogs, forms, tables, UI composition.
-- `quality-checks.mdc`: validation commands, dependency boundaries, generated files, formatting scope.
-- Root `.cursor/rules/hivepaas-dashboard-fe.mdc`: parent-workspace pointer to this app and these rules.
+The rules are in the repository root's `.cursor/rules/`:
+
+- `web-frontend-architecture.mdc`: module ownership, folder shape, imports, TypeScript/React, styling.
+- `web-api-data-layer.mdc`: contracts, validators, services, API hooks, query keys, queries, commands, generated API.
+- `web-routing-dialogs-ui.mdc`: route wiring, navigation wrappers, dialogs, forms, tables, UI composition.
+- `web-quality-checks.mdc`: validation commands, dependency boundaries, generated files, formatting scope.
 
 ## Architecture
 
@@ -118,7 +117,6 @@ Key boundaries:
 
 Use the smallest check that covers the risk:
 
-- `npm run agents:check` after skills/rules/docs setup changes.
 - `npm run lint:ci` for TypeScript and ESLint.
 - `npm run build` after route/module/API context/build config changes.
 - `npm run dev` plus browser verification for visible UI changes.

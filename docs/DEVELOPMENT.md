@@ -10,7 +10,7 @@ run the backend you want for the change you are making.
 | The supporting cluster (once) | `make local-deploy`                         | postgres, redis, traefik, agent |
 | The backend, fast loop | `make local-app-run`                        | http://localhost:10000 |
 | The dashboard, bundled | `make local-build-dashboard`                       | served by the backend above |
-| The dashboard, hot reload | `yarn dev` in `../hivepaas-dashboard`       | http://localhost:4321 |
+| The dashboard, hot reload | `yarn dev` in `web/`                        | http://localhost:4321 |
 | The backend as a real swarm service | `make local-app-up` + `make local-agent-up` | https://localhost |
 | Extra swarm nodes | `make local-node-up` | `docker node ls` |
 | A configuration snapshot | `GET /api/spec/export` | a `.tar.gz` of YAML, §6 |
@@ -24,8 +24,6 @@ Sign in with `admin` / `abc123`.
 - **Docker Engine 24+ with swarm mode.** Docker Desktop is fine; the install
   script runs `docker swarm init` for you.
 - **Node and yarn**, only if you are touching the dashboard.
-- **The dashboard repo checked out beside this one**, at `../hivepaas-dashboard`.
-  Override with `HP_FE_DIR` if it lives somewhere else.
 - **`make init`** once. It builds the `hivepaas-devtools` image, which is what
   `make lint`, `make gen-go` and every `make migrate-*` target actually run
   inside - you do not need `sql-migrate`, `psql` or `golangci-lint` on your host.
@@ -128,15 +126,13 @@ collector runs in the swarm and writes by service name.
 make local-build-dashboard
 ```
 
-Runs `git pull`, `yarn install` and `yarn build` in `$HP_FE_DIR` (default
-`../hivepaas-dashboard`), then moves the output to `dist-dashboard/`, which the Go
-binary serves. Do this at least once, or the dashboard is a blank page.
-
-It pulls that repo, so commit or stash your dashboard work first.
+Runs `yarn install` and `yarn build` in `web/`, then moves the output to
+`dist-dashboard/`, which the Go binary serves. Do this at least once, or the
+dashboard is a blank page.
 
 ### Hot reload, for dashboard work
 
-Run the backend as in §2, then in the dashboard repo:
+Run the backend as in §2, then in `web/`:
 
 ```bash
 yarn dev

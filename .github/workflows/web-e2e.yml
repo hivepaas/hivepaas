@@ -1,10 +1,10 @@
-name: E2E
+name: Web E2E
 
-# The end-to-end tests against a throwaway HivePaaS, which e2e/env/up.sh makes on
-# the runner: the backend and app-templates checked out beside the dashboard, as
-# it expects them, built, and run inside dind. Levels 0 and 1 on every push and
-# pull request; every level every night - when the backend may have moved - and
-# by hand.
+# The dashboard's end-to-end tests against a throwaway HivePaaS, which
+# web/e2e/env/up.sh makes on the runner: the backend of the same commit, and
+# app-templates checked out beside the repository, as it expects it, built, and
+# run inside dind. Levels 0 and 1 on every push and pull request; every level
+# every night - when app-templates may have moved - and by hand.
 
 on:
     push:
@@ -28,15 +28,9 @@ jobs:
         timeout-minutes: 90
         env:
             HP_E2E_BASE_URL: http://localhost:10010
-            # The API bodies test reads the backend's request types from here.
-            HP_BACKEND_DIR: ${{ github.workspace }}/hivepaas
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  path: hivepaas-dashboard
-            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  repository: hivepaas/hivepaas
                   path: hivepaas
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
@@ -53,31 +47,31 @@ jobs:
                   node-version: "26"
                   cache: yarn
                   cache-dependency-path: |
-                      hivepaas-dashboard/yarn.lock
-                      hivepaas-dashboard/e2e/yarn.lock
+                      hivepaas/web/yarn.lock
+                      hivepaas/web/e2e/yarn.lock
 
             - name: The backend's devtools image, which migrates the database
               working-directory: hivepaas
               run: make init
             - name: The dashboard's packages
-              working-directory: hivepaas-dashboard
+              working-directory: hivepaas/web
               run: yarn install --frozen-lockfile
             - name: The tests' packages, and their browser
-              working-directory: hivepaas-dashboard/e2e
+              working-directory: hivepaas/web/e2e
               run: |
                   yarn install --frozen-lockfile
                   npx playwright install --with-deps chromium
             - name: A throwaway HivePaaS
-              working-directory: hivepaas-dashboard/e2e
+              working-directory: hivepaas/web/e2e
               run: ./env/up.sh
 
             - name: Levels 0 and 1
               if: github.event_name == 'push' || github.event_name == 'pull_request'
-              working-directory: hivepaas-dashboard/e2e
+              working-directory: hivepaas/web/e2e
               run: yarn test tests/level-0 tests/level-1
             - name: Every level
               if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-              working-directory: hivepaas-dashboard/e2e
+              working-directory: hivepaas/web/e2e
               run: yarn test
 
             - name: What the backend and its agent logged
@@ -91,10 +85,10 @@ jobs:
               with:
                   name: playwright-report
                   path: |
-                      hivepaas-dashboard/e2e/playwright-report
-                      hivepaas-dashboard/e2e/test-results
+                      hivepaas/web/e2e/playwright-report
+                      hivepaas/web/e2e/test-results
                   retention-days: 14
             - name: Down
               if: always()
-              working-directory: hivepaas-dashboard/e2e
+              working-directory: hivepaas/web/e2e
               run: ./env/down.sh

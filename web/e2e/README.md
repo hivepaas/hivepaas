@@ -40,10 +40,10 @@ machine's swarm, which it checks before it says the stack is up. It installs
 a Colony license for dind's swarm, signed by the backend's development key
 (`tools/licensesign/devkeys`), since the suite makes more than the free plan
 allows. It needs the
-backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
+backend, at the repository's root (or `HP_BACKEND_DIR`), Go, and the backend's
 `hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
 10010 (not 10100: that is the HivePaaS Portal's); `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
-app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
+app-templates repo beside this repository (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind lists two GPUs of no hardware, `NVIDIA-GPU=GPU-e2e0` and
 `AMD_GPU=0xe2e1`, for the apps that reserve one. dind is also given kopia, the backup engine, from
 its pinned image, and Git repositories to build apps from, on dind's loopback,
@@ -78,7 +78,7 @@ not fails the health check of an app's domain.
 
 ### On the local backend (level 0)
 
-Against the local backend - see the backend repo's `docs/DEVELOPMENT.md`:
+Against the local backend - see `docs/DEVELOPMENT.md` at the repository's root:
 
 ```bash
 make local-deploy           # once: the cluster, and the seeded admin / abc123
@@ -109,10 +109,10 @@ servers, is enough for the sign-in tests alone.
 
 ### In CI
 
-`.github/workflows/e2e.yml` checks the backend and app-templates out beside the
-dashboard, makes the throwaway HivePaaS with `env/up.sh` on the runner, and runs
-levels 0 and 1 on every push and pull request, every level every night and by
-hand (Run workflow). A failed run keeps its report, traces and videos as the
+`.github/workflows/web-e2e.yml`, at the repository's root, checks app-templates
+out beside the repository, makes the throwaway HivePaaS with `env/up.sh` on the
+runner, and runs levels 0 and 1 on every push and pull request, every level
+every night and by hand (Run workflow). A failed run keeps its report, traces and videos as the
 `playwright-report` artifact, and shows the end of the backend's log.
 
 ## Writing tests

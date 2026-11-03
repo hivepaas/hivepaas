@@ -1,9 +1,10 @@
 name: 'Release'
 
-# A release tag (v1.0.0, v1.0.0-beta1) builds that release's images and drafts
-# its GitHub Release. It publishes nothing an installation acts on: release.json
-# is signed offline and reaches the `release` branch by hand, and the draft is
-# published by hand, both after the checks in docs/RELEASING.md.
+# A release tag (v1.0.0, v1.0.0-beta1) builds that release's images - the app's
+# with the dashboard (web/) of the same commit - and drafts its GitHub Release.
+# It publishes nothing an installation acts on: release.json is signed offline
+# and reaches the `release` branch by hand, and the draft is published by hand,
+# both after the checks in docs/RELEASING.md.
 
 on:
   push:
@@ -54,11 +55,6 @@ jobs:
 
       - name: The tag is the version compiled into the binary
         run: RELEASE_TAG="$GITHUB_REF_NAME" go test -count=1 -run TestReleaseTagIsTheCompiledVersion ./hivepaas_app/base/
-
-      - name: The dashboard has the same tag
-        run: |
-          git ls-remote --exit-code --tags https://github.com/hivepaas/hivepaas-dashboard.git "refs/tags/$GITHUB_REF_NAME" >/dev/null ||
-            { echo "::error::hivepaas-dashboard has no tag $GITHUB_REF_NAME: tag the dashboard first"; exit 1; }
 
       - name: The installer pins a release verifier
         run: |
@@ -134,7 +130,6 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           load: true
           build-args: |
-            DASHBOARD_REF=${{ github.ref_name }}
             VERSION=${{ needs.check.outputs.version }}
             REVISION=${{ github.sha }}
           tags: release-scan:${{ matrix.arch }}
@@ -166,7 +161,6 @@ jobs:
           provenance: mode=max
           sbom: true
           build-args: |
-            DASHBOARD_REF=${{ github.ref_name }}
             VERSION=${{ needs.check.outputs.version }}
             REVISION=${{ github.sha }}
           tags: ${{ matrix.image }}:${{ needs.check.outputs.version }}-${{ matrix.arch }}

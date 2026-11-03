@@ -1,8 +1,7 @@
-# The HivePaaS app image of a release: the backend, and the dashboard of the same
-# version, built from the tag the release workflow passes as DASHBOARD_REF.
+# The HivePaaS app image of a release: the backend, and the dashboard (web/) of
+# the same commit.
 #
 # It differs from deployment/dev/Dockerfile in what makes a release a release:
-# - the dashboard is its tag, not whatever main held when the image was built;
 # - the binary is a production build (make build-prod);
 # - what it ships beside the binary is pinned: sql-migrate and the x/crypto it
 #   is built with by version, kopia's image by digest;
@@ -19,20 +18,22 @@ FROM ${KOPIA_IMAGE} AS kopia
 ############################################################
 # Build dashboard
 FROM node:26-alpine AS dashboard_builder
-ARG DASHBOARD_REF
-RUN test -n "$DASHBOARD_REF" || { echo "DASHBOARD_REF (the dashboard's release tag) is required" >&2; exit 1; }
-RUN apk update && apk upgrade --no-cache && apk add --update --no-cache git yarn
+RUN apk update && apk upgrade --no-cache && apk add --update --no-cache yarn
 
-WORKDIR /build
+WORKDIR /web
 
+# The dependencies first, from the lockfile, so that a change of the sources
+# alone does not install them again.
+COPY web/package.json web/yarn.lock ./
 RUN --mount=type=cache,target=/tmp/yarn-cache \
-    git clone --depth=1 --branch "$DASHBOARD_REF" https://github.com/hivepaas/hivepaas-dashboard.git && \
-    cd hivepaas-dashboard && \
     yarn config set network-timeout 300000 && \
     yarn config set cache-folder /tmp/yarn-cache && \
-    yarn install --frozen-lockfile && \
-    yarn build && \
-    mv dist /dist-dashboard
+    yarn install --frozen-lockfile
+
+# A developer's checkout may hold its own build, modules and *.local env files
+# (git ignores them): only what a clean checkout holds is built.
+COPY --exclude=node_modules --exclude=dist --exclude=**/*.local web/ .
+RUN yarn build && mv dist /dist-dashboard
 
 ############################################################
 # Build backend
@@ -46,7 +47,9 @@ ENV CGO_ENABLED=0
 
 WORKDIR /build
 
-COPY . .
+# The dashboard is the stage above's: without it here, a change to it alone does
+# not build the backend again.
+COPY --exclude=web . .
 
 RUN make mod
 RUN make build-prod

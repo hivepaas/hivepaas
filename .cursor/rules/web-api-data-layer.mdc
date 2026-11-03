@@ -1,6 +1,6 @@
 ---
 description: HivePaaS Dashboard API services, validators, hooks, queries, and commands
-globs: src/application/**/{api,data}/**/*.{ts,tsx},src/infrastructure/api/**/*.{ts,tsx}
+globs: web/src/application/**/{api,data}/**/*.{ts,tsx},web/src/infrastructure/api/**/*.{ts,tsx}
 alwaysApply: false
 ---
 

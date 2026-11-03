@@ -26,7 +26,7 @@ export const canSignLicenses = [signer, edKey, mlKey].every(file => fs.existsSyn
 // noSigner says why keys cannot be signed, for a test that skips without them.
 export const noSigner =
     `no license signer at ${signer}, or no development keys at ${devKeys}: ` +
-    "env/up.sh builds the signer, from the backend repo beside this one or HP_BACKEND_DIR";
+    "env/up.sh builds the signer, from the backend at the repository's root or HP_BACKEND_DIR";
 
 export interface LicenseUsage {
     limit: string;

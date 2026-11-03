@@ -4,7 +4,7 @@
 # touching nothing else on it:
 #   - postgres and redis as plain containers on a network of their own;
 #   - docker itself in a dind container, made a swarm;
-#   - the backend and its agent built from the backend repo and run INSIDE dind;
+#   - the backend and its agent built from the repository's root and run INSIDE dind;
 #   - Traefik, the release's, as the stack's proxy inside dind: the apps'
 #     domains answer on this machine at 10180 (HTTP) and 10443 (HTTPS);
 #   - a Colony license for dind's swarm, signed by the development key that
@@ -17,9 +17,9 @@
 # dind's. The script checks that before it says the stack is up.
 #
 # Usage: env/up.sh            (from e2e/; yarn env:up)
-#   HP_BACKEND_DIR   the backend repo, default ../../hivepaas beside the dashboard
+#   HP_BACKEND_DIR   the backend, default the repository's root, web/'s parent
 #   HP_TEMPLATES_SRC the app-templates repo the catalog is read from, default
-#                    ../../app-templates beside the dashboard; none if missing
+#                    ../../../app-templates beside this repository; none if missing
 #   HP_E2E_PORT      where the dashboard answers, default 10010 - not 10100, the
 #                    HivePaaS Portal's own port, so both can run on one machine
 #   HP_E2E_HTTP_PORT, HP_E2E_HTTPS_PORT
@@ -30,8 +30,8 @@ set -euo pipefail
 
 ENV_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$ENV_DIR/../.." && pwd)"
-BACKEND_DIR="$(cd "${HP_BACKEND_DIR:-$DASHBOARD_DIR/../hivepaas}" && pwd)"
-TEMPLATES_SRC="${HP_TEMPLATES_SRC:-$DASHBOARD_DIR/../app-templates}"
+BACKEND_DIR="$(cd "${HP_BACKEND_DIR:-$DASHBOARD_DIR/..}" && pwd)"
+TEMPLATES_SRC="${HP_TEMPLATES_SRC:-$DASHBOARD_DIR/../../app-templates}"
 PORT="${HP_E2E_PORT:-10010}"
 HTTP_PORT="${HP_E2E_HTTP_PORT:-10180}"
 HTTPS_PORT="${HP_E2E_HTTPS_PORT:-10443}"

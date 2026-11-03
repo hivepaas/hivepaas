@@ -20,7 +20,8 @@ ENV CGO_ENABLED=0
 
 WORKDIR /build
 
-COPY . .
+# The dashboard is the app's, not the agent's.
+COPY --exclude=web . .
 
 RUN make mod
 RUN make build-agent-prod

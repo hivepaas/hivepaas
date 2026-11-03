@@ -1,9 +1,9 @@
 import path from "node:path";
 
 // Where and as whom the tests run. The defaults are the local backend and its
-// seeded admin (the backend repo's docs/DEVELOPMENT.md). Point them at another
-// installation only if its data does not matter: the tests make what they need
-// there, and remove it.
+// seeded admin (docs/DEVELOPMENT.md at the repository's root). Point them at
+// another installation only if its data does not matter: the tests make what
+// they need there, and remove it.
 export const env = {
     baseURL: process.env["HP_E2E_BASE_URL"] ?? "http://localhost:10000",
     username: process.env["HP_E2E_USERNAME"] ?? "admin",
@@ -46,10 +46,10 @@ export function isDevServer(url: string): boolean {
     return LOOPBACK.includes(hostname) && port === DEV_SERVER_PORT;
 }
 
-// backendDir is the backend's repo: beside this one, or where HP_BACKEND_DIR
-// says - as for env/up.sh. Tests read its OpenAPI document and its development
-// license keys there.
-export const backendDir = process.env["HP_BACKEND_DIR"] ?? path.join(import.meta.dirname, "..", "..", "..", "hivepaas");
+// backendDir is the backend: the repository's root, web/'s parent, or where
+// HP_BACKEND_DIR says - as for env/up.sh. Tests read its OpenAPI document and
+// its development license keys there.
+export const backendDir = process.env["HP_BACKEND_DIR"] ?? path.join(import.meta.dirname, "..", "..", "..");
 
 // runId is one for the whole run: the config sets it before the workers start,
 // and they inherit it. What the tests make is named with it.

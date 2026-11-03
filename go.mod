@@ -10,10 +10,10 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/aws/aws-sdk-go-v2 v1.47.5
-	github.com/aws/aws-sdk-go-v2/config v1.33.12
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.12
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.1
-	github.com/aws/aws-sdk-go-v2/service/ecr v1.67.1
+	github.com/aws/aws-sdk-go-v2/config v1.33.13
+	github.com/aws/aws-sdk-go-v2/credentials v1.20.13
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.2
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.67.2
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.6
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.6
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
@@ -25,8 +25,8 @@ require (
 	github.com/darkrockmountain/gomail v0.6.1
 	github.com/distribution/reference v0.6.0
 	github.com/docker/go-units v0.5.0
-	github.com/gin-contrib/cors v1.7.9
-	github.com/gin-contrib/logger v1.2.9
+	github.com/gin-contrib/cors v1.7.10
+	github.com/gin-contrib/logger v1.2.10
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-acme/lego/v5 v5.6.0
 	github.com/go-co-op/gocron/v2 v2.23.0
@@ -40,7 +40,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hivepaas/dockerfile-generator v0.0.0-20261016125902-6b9ab270cb4b
 	github.com/itchyny/timefmt-go v0.1.9
-	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jackc/pgx/v5 v5.12.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/jinzhu/configor v1.2.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
@@ -111,9 +111,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.70.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.12.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.39.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.44.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.12.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.39.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.44.1 // indirect
 	github.com/aws/smithy-go v1.28.7 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/baidubce/bce-sdk-go v0.9.277 // indirect
@@ -168,7 +168,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jackc/puddle/v2 v2.2.3 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect

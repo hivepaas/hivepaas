@@ -2,10 +2,20 @@
 # and expires, so that it is looked at again.
 
 [[IgnoredVulns]]
-# braces 3.0.3, the latest: a stack overflow on deeply nested patterns. Only
-# the lint tooling has it (eslint-import-resolver-typescript > fast-glob >
-# micromatch), on the repository's own globs; the bundle the browser loads
-# does not.
-id = "GHSA-vfj7-8cjw-p6xm"
+# minimatch 3.1.5 and 10.2.6: a pattern can amplify its own preprocessing into
+# a denial of service. Only the lint tooling has it (eslint, its plugins,
+# typescript-eslint), on the repository's own patterns; the bundle the browser
+# loads does not. The fix is minimatch 11, which none of them takes yet.
+id = "GHSA-g3hv-75wg-m249"
 ignoreUntil = 2027-01-05T00:00:00Z
-reason = "lint tooling only, on the repository's own globs; no fixed release yet"
+reason = "lint tooling only, on the repository's own patterns; the fix is a major its users do not take"
+
+[[IgnoredVulns]]
+# zod 3.25.76: a large array failing an array schema with no length bound
+# collects an issue per element, and can exhaust memory. The dashboard parses
+# its own backend's responses with it, in the browser: the most it can do is
+# stop the tab of a user whose backend sends such a response. The fix is zod
+# 4.6.6, a major the validators are to move to.
+id = "GHSA-mrhx-c7xc-m3w5"
+ignoreUntil = 2027-01-05T00:00:00Z
+reason = "parses the backend's own responses in the browser: at most one tab; the fix is zod 4, a migration of its own"

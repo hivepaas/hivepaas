@@ -1411,6 +1411,234 @@ test_sudo_rs_not_stuck() {
   check_fails "a process that is gone" sudo_rs_stuck 101
 }
 
+# -------------------------------------------------------------------- Reset
+
+# A stand-in for docker's listings: each `ls`/`ps` answers what DOCKER_LS_<kind>
+# holds for the filter it is given, or every line when it has none.
+fake_docker_listing() {
+  docker() {
+    local kind=$1 filter='' lines
+    shift
+    while [ $# -gt 0 ]; do
+      if [ "$1" = --filter ]; then filter=$2; fi
+      shift
+    done
+    case "$kind" in
+      service) lines=${DOCKER_LS_service:-} ;;
+      ps) lines=${DOCKER_LS_container:-} ;;
+      config) lines=${DOCKER_LS_config:-} ;;
+      secret) lines=${DOCKER_LS_secret:-} ;;
+      network) lines=${DOCKER_LS_network:-} ;;
+      volume) lines=${DOCKER_LS_volume:-} ;;
+    esac
+    if [ -n "$filter" ]; then lines=$(printf '%s' "$lines" | grep -F "[$filter]"); fi
+    printf '%s\n' "$lines" | cut -d' ' -f1-3 | grep . || true
+  }
+}
+
+test_reset_objects() {
+  fake_docker_listing
+  DOCKER_LS_service='service s1 shop_web [label=hivepaas.app.info]
+service s2 hivepaas_app [label=hivepaas.app.info]
+service s3 hivepaas-svc-ab12 [label=hivepaas.system.temp]
+'
+  DOCKER_LS_container='container c1 hivepaas-obi [label=hivepaas.component]
+container c2 buildx_buildkit_hivepaas_builder0 [name=^buildx_buildkit_hivepaas_builder]
+'
+  DOCKER_LS_config='config g1 shop_mount_env_0_ab [label=hivepaas.settingMount.entry]
+'
+  DOCKER_LS_network='network n1 shop_prod_net [label=hivepaas.project.id]
+network n2 hivepaas_net
+network n3 hivepaas_netx
+network n4 someone_else
+'
+  DOCKER_LS_volume='volume 01M49ULID 01M49ULID [label=hivepaas.volume.name]
+volume hivepaas_db hivepaas_db
+volume hivepaas_db_18 hivepaas_db_18
+volume hivepaas_dbx hivepaas_dbx
+volume buildx_buildkit_hivepaas_builder0_state buildx_buildkit_hivepaas_builder0_state
+'
+  check "every kind, services first, and only HivePaaS's by name" \
+    "service s1 shop_web
+service s2 hivepaas_app
+service s3 hivepaas-svc-ab12
+container c1 hivepaas-obi
+container c2 buildx_buildkit_hivepaas_builder0
+config g1 shop_mount_env_0_ab
+network n1 shop_prod_net
+network n2 hivepaas_net
+volume 01M49ULID 01M49ULID
+volume buildx_buildkit_hivepaas_builder0_state buildx_buildkit_hivepaas_builder0_state
+volume hivepaas_db hivepaas_db
+volume hivepaas_db_18 hivepaas_db_18" "$(reset_objects)"
+}
+
+test_reset_dirs() {
+  local data=$TMP/reset-dirs/data
+  service_env() { printf '%s' "${SERVICE_ENV:-}"; }
+  # The tests' directories are under /tmp, which valid_data_dir refuses.
+  valid_data_dir() { [ "$1" != / ] && [ "$1" != /etc ]; }
+  mkdir -p "$data/project_data" "$TMP/reset-dirs/projects"
+  check "nothing of HivePaaS's in it" "" "$(HIVEPAAS_DATA_DIR=$data reset_dirs)"
+  : >"$data/hivepaas.toml"
+  check "the projects' directory inside it goes with it" "$data" "$(HIVEPAAS_DATA_DIR=$data reset_dirs)"
+  check "and one outside it, besides" "$data
+$TMP/reset-dirs/projects" "$(HIVEPAAS_DATA_DIR=$data HIVEPAAS_PROJECT_DATA_DIR=$TMP/reset-dirs/projects/ reset_dirs)"
+  check "as the app's service says" "$data
+$TMP/reset-dirs/projects" "$(SERVICE_ENV="HP_ENV=beta
+HP_STORAGE_HOST_DIR=$data
+HP_STORAGE_PROJECT_DATA_HOST_DIR=$TMP/reset-dirs/projects" reset_dirs)"
+  check "a projects' directory that is not there" "$data" \
+    "$(HIVEPAAS_DATA_DIR=$data HIVEPAAS_PROJECT_DATA_DIR=$TMP/reset-dirs/none reset_dirs)"
+}
+
+test_reset_dirs_never_a_system_dir() {
+  service_env() { :; }
+  hivepaas_data_dir() { return 0; }
+  check "not the root" "" "$(HIVEPAAS_DATA_DIR=/ reset_dirs)"
+  check "not /etc" "" "$(HIVEPAAS_DATA_DIR=/etc reset_dirs)"
+  check "not /var" "" "$(HIVEPAAS_DATA_DIR=/var/ reset_dirs)"
+  check "not /home" "" "$(HIVEPAAS_DATA_DIR=/home reset_dirs)"
+}
+
+test_describe_reset() {
+  local out
+  out=$(describe_reset "service 1 a
+service 2 b
+service 3 c
+service 4 d
+service 5 e
+service 6 f
+service 7 g
+volume v hivepaas_db" "/var/lib/hivepaas
+/data/projects")
+  check_contains "services, the first five" "$out" "services (7): a b c d e and 2 more"
+  check_contains "volumes" "$out" "volumes (1): hivepaas_db"
+  check_contains "the app data directory" "$out" "the directory /var/lib/hivepaas, and all in it"
+  check_contains "the projects' directory" "$out" "the directory /data/projects, and all in it"
+  check_lacks "no kind it has none of" "$out" "networks"
+}
+
+# reset_stubs: a reset that records what it was given, over a HivePaaS found.
+reset_stubs() {
+  docker_answers() { return 0; }
+  reset_objects() { printf 'service s1 hivepaas_app\n'; }
+  reset_dirs() { printf '/var/lib/hivepaas\n'; }
+  reset_install() { printf '%s|%s\n' "$1" "$2" >"$TMP/reset-install"; }
+  restart_installer() { printf 'restarted\n' >"$TMP/restart"; }
+  rm -f "$TMP/reset-install" "$TMP/restart"
+  # The test's own subshell is where the installer runs.
+  RESET_SUBSHELL=$BASH_SUBSHELL RESET_OFFERED=0
+}
+
+test_offer_reset_typed() {
+  reset_stubs
+  answers y reset
+  offer_reset >/dev/null 2>&1
+  check "reset what was found" "service s1 hivepaas_app|/var/lib/hivepaas" "$(cat "$TMP/reset-install" 2>/dev/null)"
+  check "then started again" restarted "$(cat "$TMP/restart" 2>/dev/null)"
+}
+
+test_offer_reset_not_typed() {
+  reset_stubs
+  answers y yes
+  offer_reset >/dev/null 2>&1
+  check_fails "a y is not the word" test -f "$TMP/reset-install"
+  reset_stubs
+  answers ''
+  offer_reset >/dev/null 2>&1
+  check_fails "no is the default" test -f "$TMP/reset-install"
+}
+
+test_offer_reset_not_offered() {
+  reset_stubs
+  answers y reset
+  ASSUME_YES=1
+  offer_reset >"$TMP/offer-out" 2>&1
+  check "--yes never takes it" "" "$(cat "$TMP/offer-out")"
+  reset_stubs
+  ASSUME_YES=0 HAVE_TTY=0
+  offer_reset >"$TMP/offer-out" 2>&1
+  check "nor a run without a terminal" "" "$(cat "$TMP/offer-out")"
+  reset_stubs
+  answers y reset
+  RESET_OFFERED=1
+  offer_reset >/dev/null 2>&1
+  check_fails "nor a second time" test -f "$TMP/reset-install"
+  reset_stubs
+  answers y reset
+  reset_objects() { :; }
+  reset_dirs() { :; }
+  offer_reset >"$TMP/offer-out" 2>&1
+  check "nor where nothing of HivePaaS is" "" "$(cat "$TMP/offer-out")"
+  reset_stubs
+  answers y reset
+  docker_answers() { return 1; }
+  offer_reset >/dev/null 2>&1
+  check_fails "nor without Docker" test -f "$TMP/reset-install"
+  reset_stubs
+  answers y reset
+  (offer_reset >/dev/null 2>&1)
+  check_fails "nor in a subshell, whose caller offers it" test -f "$TMP/reset-install"
+}
+
+test_die_offers_reset_halt_does_not() {
+  offer_reset() { printf 'offered\n' >>"$TMP/offered"; }
+  rm -f "$TMP/offered"
+  (die "Cannot read the secret.") 2>/dev/null
+  check "an error offers it" offered "$(cat "$TMP/offered" 2>/dev/null)"
+  rm -f "$TMP/offered"
+  (halt "Stopped; HivePaaS was not installed.") 2>/dev/null
+  check_fails "a no does not" test -f "$TMP/offered"
+}
+
+test_remove_objects() {
+  local out
+  sleep() { :; }
+  : >"$TMP/rm"
+  docker() {
+    case "$2" in
+      rm) printf '%s %s\n' "$1" "$*" >>"$TMP/rm" ;;
+      # The network n2 stays in use.
+      inspect) [ "$3" = n2 ] ;;
+    esac
+  }
+  HIVEPAAS_RESET_TRIES=3
+  out=$(remove_objects network "service s1 a
+network n1 one
+network n2 two" 2>&1)
+  check "each tried, the one in use again" "network network rm n1
+network network rm n2
+network network rm n2
+network network rm n2" "$(cat "$TMP/rm")"
+  check_contains "and what is left said" "$out" "Could not delete the networks n2"
+  : >"$TMP/rm"
+  remove_objects container "container c1 x" >/dev/null 2>&1
+  check "containers by force" "container container rm -f c1" "$(cat "$TMP/rm")"
+}
+
+test_reset_install() {
+  local out
+  : >"$TMP/kinds"
+  remove_objects() { printf '%s ' "$1" >>"$TMP/kinds"; }
+  reset_objects() { :; }
+  service_containers() { :; }
+  mkdir -p "$TMP/reset/data/ssl" "$TMP/reset/projects/shop"
+  out=$(reset_install "service s1 a" "$TMP/reset/data
+$TMP/reset/projects" 2>&1)
+  check "services first, the volumes last" "service container container config secret network volume " \
+    "$(cat "$TMP/kinds")"
+  check_fails "the app data directory deleted" test -e "$TMP/reset/data"
+  check_fails "the projects' directory deleted" test -e "$TMP/reset/projects"
+  check_contains "and said" "$out" "Deleted $TMP/reset/data."
+}
+
+test_parse_args_reset() {
+  parse_args --reset --yes
+  check "--reset" 1 "$RESET"
+  check "with --yes" 1 "$ASSUME_YES"
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

@@ -15,8 +15,11 @@
 # <app data>/hivepaas.toml, the rest in the environment of its services, where a
 # second run reads them back. Running it again finishes an interrupted install
 # or re-checks the host: it never resets a swarm, removes a service, network or
-# volume, or generates a secret a second time. For a silent install, fill in
-# deployment/release/install.env and pass it with --config; see --help.
+# volume, or generates a secret a second time - unless told to reset: after an
+# error, at a terminal, it offers to delete an earlier HivePaaS and all it ran
+# and install from scratch, and --reset does that up front. For a silent
+# install, fill in deployment/release/install.env and pass it with --config;
+# see --help.
 #
 # For tests only:
 #   HIVEPAAS_INSTALL_LIB=1       define the functions and stop (install_test.sh)
@@ -71,6 +74,14 @@ warn() {
 die() {
   printf '\n%s✘ %s%s\n' "$C_RED" "$*" "$C_RESET" >&2
   log_line "error: $*"
+  offer_reset
+  exit 1
+}
+# halt: a stop the person asked for, by answering no. Not an error, so no reset
+# is offered.
+halt() {
+  printf '\n%s%s%s\n' "$C_YELLOW" "$*" "$C_RESET" >&2
+  log_line "stopped: $*"
   exit 1
 }
 step() {
@@ -86,6 +97,7 @@ on_error() {
   printf '\n%s✘ The installer stopped at line %s (exit status %s).%s\n' "$C_RED" "$2" "$1" "$C_RESET" >&2
   log_line "error: the installer stopped at line $2 (exit status $1)"
   printf '  Fix what the output above says, then run it again: it picks up where it stopped.\n' >&2
+  offer_reset
   exit "$1"
 }
 
@@ -2384,11 +2396,249 @@ print_done() {
   printf '\n'
 }
 
+# -------------------------------------------------------------------- Reset
+
+# A reset deletes the HivePaaS on this server and everything it ran, then
+# installs from scratch. It is offered after any error, at a terminal, when
+# something of an earlier HivePaaS is here; --reset asks for it up front.
+# Docker, the swarm, the swap file, earlyoom and the images stay.
+
+# RESET=1: --reset. RESET_OFFERED=1 once a reset was offered or has run: an
+# error after that is not offered another. RESET_SUBSHELL: the subshell level
+# the installer runs at; an error in a subshell deeper than it is reported by
+# its caller, which offers the reset.
+RESET=0
+RESET_OFFERED=0
+RESET_SUBSHELL=0
+# INSTALLER_PATH: this script, run again after a reset; empty when it came
+# through a pipe. INSTALLER_ARGS: the arguments it ran with.
+INSTALLER_PATH=''
+if [ -f "${BASH_SOURCE[0]:-}" ]; then
+  INSTALLER_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+fi
+INSTALLER_ARGS=()
+
+docker_answers() {
+  command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1
+}
+
+# reset_objects: what of HivePaaS's Docker on this node holds, one
+# "KIND ID NAME" a line, in the order a reset deletes them: the services of
+# HivePaaS and of its apps, its helper containers, the configs and secrets of
+# apps' setting mounts, its networks, and its volumes and its apps'. An app
+# volume whose mount had labels of its own carries none of HivePaaS's and is
+# not found, nor is what other nodes hold.
+reset_objects() {
+  local filter
+  for filter in label=hivepaas.app.info label=hivepaas.system.temp; do
+    docker service ls --filter "$filter" --format 'service {{.ID}} {{.Name}}' 2>/dev/null || true
+  done | LC_ALL=C sort -u
+  for filter in label=hivepaas.system.temp label=hivepaas.dockerApi.app label=hivepaas.component \
+    name=^buildx_buildkit_hivepaas_builder; do
+    docker ps -a --filter "$filter" --format 'container {{.ID}} {{.Names}}' 2>/dev/null || true
+  done | LC_ALL=C sort -u
+  docker config ls --filter label=hivepaas.settingMount.entry --format 'config {{.ID}} {{.Name}}' \
+    2>/dev/null || true
+  docker secret ls --filter label=hivepaas.settingMount.entry --format 'secret {{.ID}} {{.Name}}' \
+    2>/dev/null || true
+  {
+    for filter in label=hivepaas.project.id label=hivepaas.dockerApi.network; do
+      docker network ls --filter "$filter" --format 'network {{.ID}} {{.Name}}' 2>/dev/null || true
+    done
+    docker network ls --format 'network {{.ID}} {{.Name}}' 2>/dev/null |
+      awk '$3 == "hivepaas_net" || $3 == "hivepaas_local_net" || $3 == "hivepaas_docker_proxy_net"' || true
+  } | LC_ALL=C sort -u
+  {
+    for filter in label=hivepaas.volume.name label=hivepaas.dockerApi.socket; do
+      docker volume ls --filter "$filter" --format 'volume {{.Name}} {{.Name}}' 2>/dev/null || true
+    done
+    docker volume ls --format 'volume {{.Name}} {{.Name}}' 2>/dev/null |
+      awk '$3 ~ /^hivepaas_db(_[0-9]+)?$/ || $3 ~ /^buildx_buildkit_hivepaas_builder[0-9]*_state$/' || true
+  } | LC_ALL=C sort -u
+}
+
+# env_value KEY ENV: KEY's value in ENV, one VAR=VALUE a line.
+env_value() {
+  printf '%s\n' "$2" | sed -n "s/^$1=//p" | head -n 1
+}
+
+# hivepaas_data_dir DIR: DIR holds what HivePaaS keeps in its app data directory.
+hivepaas_data_dir() {
+  local name
+  for name in hivepaas.toml credentials.txt config.toml first-boot.env traefik ssl system; do
+    if [ -e "$1/$name" ]; then return 0; fi
+  done
+  return 1
+}
+
+# reset_dirs: the data directories of the HivePaaS here, one a line - the app
+# data directory, as the settings, the app's service or the default say, when
+# it holds what HivePaaS keeps there, and the projects' data directory when it
+# is not inside it. Never one valid_data_dir refuses: the root, or one of the
+# system's.
+reset_dirs() {
+  local env data project
+  env=$(service_env app)
+  data=${HIVEPAAS_DATA_DIR:-$(env_value HP_STORAGE_HOST_DIR "$env")}
+  data=$(normalize_dir "${data:-/var/lib/hivepaas}")
+  project=${HIVEPAAS_PROJECT_DATA_DIR:-$(env_value HP_STORAGE_PROJECT_DATA_HOST_DIR "$env")}
+  project=$(normalize_dir "${project:-$data/project_data}")
+  if ! valid_data_dir "$data" || ! hivepaas_data_dir "$data"; then return 0; fi
+  printf '%s\n' "$data"
+  case "$project/" in
+    "$data"/*) return 0 ;;
+  esac
+  if [ -d "$project" ] && valid_data_dir "$project"; then printf '%s\n' "$project"; fi
+}
+
+# objects_of KIND OBJECTS: the IDs of OBJECTS (reset_objects's lines) of KIND.
+objects_of() {
+  printf '%s\n' "$2" | awk -v kind="$1" '$1 == kind { print $2 }'
+}
+
+# describe_reset OBJECTS DIRS: what a reset deletes, a line a kind.
+describe_reset() {
+  local kind names count more dir
+  for kind in service container config secret network volume; do
+    names=$(printf '%s\n' "$1" | awk -v kind="$kind" '$1 == kind { print $3 }')
+    if [ -z "$names" ]; then continue; fi
+    count=$(printf '%s\n' "$names" | wc -l | tr -d ' ')
+    more=''
+    if [ "$count" -gt 5 ]; then more=" and $((count - 5)) more"; fi
+    info "  ${kind}s ($count): $(printf '%s\n' "$names" | head -n 5 | tr '\n' ' ' | sed 's/ $//')$more"
+  done
+  while IFS= read -r dir; do
+    if [ -n "$dir" ]; then info "  the directory $dir, and all in it"; fi
+  done <<<"$2"
+}
+
+# confirm_reset: the word typed, not a y: what a reset deletes does not come
+# back.
+confirm_reset() {
+  local reply
+  ask reply "Type reset to delete it all: "
+  if [ "$reply" = reset ]; then return 0; fi
+  info "Not reset; nothing was deleted."
+  return 1
+}
+
+# remove_objects KIND OBJECTS: each of OBJECTS of KIND deleted, and tried again
+# for a while: a network or a volume is in use until the containers of the
+# services just removed are gone. What is left is said, not fatal.
+remove_objects() {
+  local kind=$1 ids id left tries=0 force=''
+  if [ "$kind" = container ]; then force=-f; fi
+  ids=$(objects_of "$kind" "$2")
+  while [ -n "$ids" ]; do
+    left=''
+    for id in $ids; do
+      docker "$kind" rm $force "$id" >/dev/null 2>&1 || true
+      if docker "$kind" inspect "$id" >/dev/null 2>&1; then left="$left $id"; fi
+    done
+    ids=${left# }
+    tries=$((tries + 1))
+    if [ -z "$ids" ] || [ "$tries" -ge "${HIVEPAAS_RESET_TRIES:-30}" ]; then break; fi
+    sleep 2
+  done
+  if [ -n "$ids" ]; then warn "Could not delete the ${kind}s $ids; delete them by hand."; fi
+}
+
+# reset_install OBJECTS DIRS: the services first, so that nothing holds what
+# comes after them, then the rest, then the data directories.
+reset_install() {
+  local dir count
+  RESET_OFFERED=1
+  remove_objects service "$1"
+  remove_objects container "$1"
+  # A service's containers go after the service, and keep its networks and
+  # volumes until they do.
+  for count in $(seq 1 "${HIVEPAAS_RESET_TRIES:-30}"); do
+    if [ -z "$(objects_of service "$(reset_objects)")$(service_containers "$1")" ]; then break; fi
+    sleep 2
+  done
+  remove_objects container "$(reset_objects)"
+  remove_objects config "$1"
+  remove_objects secret "$1"
+  remove_objects network "$1"
+  remove_objects volume "$1"
+  while IFS= read -r dir; do
+    if [ -z "$dir" ]; then continue; fi
+    if rm -rf -- "$dir"; then ok "Deleted $dir."; else warn "Could not delete $dir; delete it by hand."; fi
+  done <<<"$2"
+  count=$(printf '%s\n' "$1" | grep -c . || true)
+  ok "Reset: deleted what an earlier HivePaaS left here ($count Docker objects)."
+}
+
+# service_containers OBJECTS: the containers still running a task of the
+# services in OBJECTS.
+service_containers() {
+  local id
+  for id in $(objects_of service "$1"); do
+    docker ps -aq --filter "label=com.docker.swarm.service.id=$id" 2>/dev/null || true
+  done
+}
+
+# restart_installer: the install from scratch, run as this one was - or, for
+# an installer that came through a pipe, what to run.
+restart_installer() {
+  if [ -z "$INSTALLER_PATH" ]; then
+    info "Run the installer again to install HivePaaS from scratch."
+    return 0
+  fi
+  info "The installer starts again."
+  cleanup
+  trap - EXIT
+  exec bash "$INSTALLER_PATH" ${INSTALLER_ARGS[@]+"${INSTALLER_ARGS[@]}"}
+}
+
+# offer_reset: after an error, at a terminal, the choice to delete the
+# HivePaaS on this server and install from scratch - when there is one, and
+# Docker answers to delete it. Offered once, and --yes never takes it.
+offer_reset() {
+  local objects dirs
+  if [ "$RESET_OFFERED" = 1 ] || [ "${BASH_SUBSHELL:-0}" -ne "$RESET_SUBSHELL" ] || [ "$HAVE_TTY" != 1 ] ||
+    [ "$ASSUME_YES" = 1 ]; then
+    return 0
+  fi
+  RESET_OFFERED=1
+  docker_answers || return 0
+  objects=$(reset_objects)
+  dirs=$(reset_dirs)
+  if [ -z "$objects$dirs" ]; then return 0; fi
+  printf '\n'
+  info "This server has an earlier HivePaaS. A reset deletes it and all it ran, then installs"
+  info "from scratch. It deletes:"
+  describe_reset "$objects" "$dirs"
+  offer "Reset?" || return 0
+  confirm_reset || return 0
+  reset_install "$objects" "$dirs"
+  restart_installer
+}
+
+# reset_requested: --reset, before the settings are read: a run that resets,
+# then installs from scratch. --yes answers it; otherwise the word is typed.
+reset_requested() {
+  local objects dirs
+  objects=$(reset_objects)
+  dirs=$(reset_dirs)
+  if [ -z "$objects$dirs" ]; then
+    ok "No earlier HivePaaS here to reset."
+    return 0
+  fi
+  info "--reset deletes the HivePaaS on this server and all it ran:"
+  describe_reset "$objects" "$dirs"
+  if [ "$ASSUME_YES" != 1 ]; then
+    if [ "$HAVE_TTY" != 1 ]; then die "--reset without --yes needs a terminal to confirm on."; fi
+    confirm_reset || halt "Stopped; nothing was deleted."
+  fi
+  reset_install "$objects" "$dirs"
+}
+
 # --------------------------------------------------------------------- Main
 
 usage() {
   cat <<'USAGE'
-Usage: install.sh [--yes] [--config FILE] [--redeploy]
+Usage: install.sh [--yes] [--config FILE] [--redeploy] [--reset]
 
 Installs HivePaaS on this server, as root. The app secret is written to
 <app data>/hivepaas.toml - back that file up - and every other setting is the
@@ -2401,6 +2651,12 @@ Options:
   --config FILE    read settings from FILE: KEY=VALUE lines, never executed
   --redeploy       deploy the stack again on an installed server. What HivePaaS
                    changed on its own services since goes back to the stack file.
+  --reset          delete the HivePaaS on this server first - its services and
+                   its apps', their networks and volumes, its app data and
+                   project data directories - then install from scratch.
+                   Docker, the swarm and the images stay. Asks to type 'reset';
+                   --yes answers it. After an error, at a terminal, the
+                   installer offers the same.
   -h, --help       show this help
 
 Settings, from the environment or --config (the environment wins):
@@ -2446,6 +2702,7 @@ parse_args() {
     case "$1" in
       -y | --yes) ASSUME_YES=1 ;;
       --redeploy) REDEPLOY=1 ;;
+      --reset) RESET=1 ;;
       --config)
         if [ $# -lt 2 ]; then die "--config needs a file."; fi
         CONFIG_FILE=$2
@@ -2486,6 +2743,7 @@ main() {
   set -Eeuo pipefail
   trap 'on_error $? $LINENO' ERR
   trap cleanup EXIT
+  INSTALLER_ARGS=("$@")
   parse_args "$@"
   setup_colors
   if sudo_rs=$(sudo_rs_stuck "$$"); then refuse_sudo_rs "$sudo_rs" "$@"; fi
@@ -2501,6 +2759,7 @@ main() {
   ensure_docker
 
   step "Settings"
+  if [ "$RESET" = 1 ]; then reset_requested; fi
   load_settings "$(service_env app)"
   detect_install_state
   if [ "$INSTALL_STATE" = fresh ] && ! service_exists traefik; then check_ports; fi
@@ -2518,11 +2777,11 @@ main() {
     if [ "$REDEPLOY" = 1 ]; then
       warn "--redeploy puts HivePaaS's services back as the stack file has them: Traefik's settings, the"
       info "  worker and updater replicas and the app's routing labels, if HivePaaS changed them since."
-      confirm "Redeploy the stack?" || die "Stopped; the stack was not redeployed."
+      confirm "Redeploy the stack?" || halt "Stopped; the stack was not redeployed."
     fi
   else
     print_summary
-    confirm "Install HivePaaS with these settings?" || die "Stopped; HivePaaS was not installed."
+    confirm "Install HivePaaS with these settings?" || halt "Stopped; HivePaaS was not installed."
   fi
 
   step "Host memory"

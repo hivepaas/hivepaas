@@ -8,7 +8,9 @@
 # with another app secret and one without hivepaas.toml that must stop, one
 # after an address changed, a --redeploy, and after `docker stack rm` the
 # database left behind: a silent run stops until told to keep or reset it, a
-# wrong password stops keeping it, the right one keeps it, and reset starts over.
+# wrong password stops keeping it, the right one keeps it, and reset starts over;
+# last, --reset over a running HivePaaS with an app, which deletes them and
+# their data, leaves what is not HivePaaS's, and installs from scratch.
 #
 #   make test-installer-e2e     (bash deployment/release/install_e2e.sh)
 #
@@ -261,5 +263,26 @@ expect "where the new admin signs in" 200 "$(login "$DOMAIN" new-password-456)"
 expect "its first boot deleted first-boot.env too" no "$(in_dind \
   'test -e /var/lib/hivepaas/first-boot.env && echo yes || echo no')"
 expect "and the old one does not" 401 "$(login "$DOMAIN" "$PASSWORD")"
+
+# An app's service, as HivePaaS labels it, a service that is not HivePaaS's,
+# and a file an app left in the projects' data - on the redis image, pulled.
+in_dind 'image=$(docker service inspect hivepaas_redis --format "{{.Spec.TaskTemplate.ContainerSpec.Image}}")
+  docker service create -d -q --name shop_web --label "hivepaas.app.info={}" "$image" sleep 1d >/dev/null
+  docker service create -d -q --name not_hivepaas "$image" sleep 1d >/dev/null
+  touch /var/lib/hivepaas/project_data/left-by-an-app'
+OTHER_SECRET=fedcba98765432100123456789abcdeffedcba98765432100123456789abcdef
+in_dind "HIVEPAAS_APP_SECRET=$OTHER_SECRET $INSTALL --reset --config /root/install.env >/root/install10.log 2>&1" || {
+  in_dind 'tail -n 40 /root/install10.log' >&2
+  fail "--reset over a running HivePaaS"
+}
+pass "--reset over a running HivePaaS installs from scratch"
+expect "the app's service went with it, and the one not HivePaaS's stayed" not_hivepaas \
+  "$(in_dind 'docker service ls --format "{{.Name}}" | grep -v "^hivepaas_" | sort | xargs')"
+expect "the projects' data went" no "$(in_dind \
+  'test -e /var/lib/hivepaas/project_data/left-by-an-app && echo yes || echo no')"
+expect "hivepaas.toml holds the new secret" 1 "$(in_dind \
+  "grep -c '^secret = \"$OTHER_SECRET\"\$' /var/lib/hivepaas/hivepaas.toml")"
+expect "the admin of install.env signs in" 200 "$(login "$DOMAIN" "$PASSWORD")"
+expect "and the one before the reset does not" 401 "$(login "$DOMAIN" new-password-456)"
 
 printf 'all end-to-end checks passed\n'

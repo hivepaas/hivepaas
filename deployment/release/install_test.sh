@@ -1411,6 +1411,36 @@ test_sudo_rs_not_stuck() {
   check_fails "a process that is gone" sudo_rs_stuck 101
 }
 
+test_service_update_tries_again_out_of_sequence() {
+  local out
+  sleep() { :; }
+  printf '0' >"$TMP/update-calls"
+  # shellcheck disable=SC2329 # service_update calls it, before the next stands in
+  docker() {
+    local n
+    n=$(($(cat "$TMP/update-calls") + 1))
+    printf '%s' "$n" >"$TMP/update-calls"
+    printf '%s\n' "$*" >"$TMP/update-args"
+    if [ "$n" -lt 3 ]; then
+      printf 'Error response from daemon: rpc error: code = Unknown desc = update out of sequence\n' >&2
+      return 1
+    fi
+  }
+  check_ok "taken the third time" service_update hivepaas_db --detach --oom-score-adj -500
+  check "after two out of sequence" 3 "$(cat "$TMP/update-calls")"
+  check "the arguments, then the service" "service update --detach --oom-score-adj -500 hivepaas_db" \
+    "$(cat "$TMP/update-args")"
+  printf '0' >"$TMP/update-calls"
+  HIVEPAAS_UPDATE_TRIES=2
+  check_fails "not for ever" service_update hivepaas_db --detach
+  docker() {
+    printf 'Error response from daemon: no such service\n' >&2
+    return 1
+  }
+  if out=$(service_update hivepaas_db --detach 2>&1); then record fail; else record pass; fi
+  check "another error is shown at once" "Error response from daemon: no such service" "$out"
+}
+
 # -------------------------------------------------------------------- Reset
 
 # A stand-in for docker's listings: each `ls`/`ps` answers what DOCKER_LS_<kind>

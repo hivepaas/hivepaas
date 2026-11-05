@@ -1414,18 +1414,19 @@ test_sudo_rs_not_stuck() {
 test_service_update_tries_again_out_of_sequence() {
   local out
   sleep() { :; }
-  printf '0' >"$TMP/update-calls"
-  # shellcheck disable=SC2329 # service_update calls it, before the next stands in
+  # docker fails with UPDATE_ERROR until its UPDATE_OK-th call.
   docker() {
     local n
     n=$(($(cat "$TMP/update-calls") + 1))
     printf '%s' "$n" >"$TMP/update-calls"
     printf '%s\n' "$*" >"$TMP/update-args"
-    if [ "$n" -lt 3 ]; then
-      printf 'Error response from daemon: rpc error: code = Unknown desc = update out of sequence\n' >&2
+    if [ "$n" -lt "$UPDATE_OK" ]; then
+      printf 'Error response from daemon: %s\n' "$UPDATE_ERROR" >&2
       return 1
     fi
   }
+  printf '0' >"$TMP/update-calls"
+  UPDATE_OK=3 UPDATE_ERROR='rpc error: code = Unknown desc = update out of sequence'
   check_ok "taken the third time" service_update hivepaas_db --detach --oom-score-adj -500
   check "after two out of sequence" 3 "$(cat "$TMP/update-calls")"
   check "the arguments, then the service" "service update --detach --oom-score-adj -500 hivepaas_db" \
@@ -1433,12 +1434,11 @@ test_service_update_tries_again_out_of_sequence() {
   printf '0' >"$TMP/update-calls"
   HIVEPAAS_UPDATE_TRIES=2
   check_fails "not for ever" service_update hivepaas_db --detach
-  docker() {
-    printf 'Error response from daemon: no such service\n' >&2
-    return 1
-  }
+  printf '0' >"$TMP/update-calls"
+  UPDATE_ERROR='no such service'
   if out=$(service_update hivepaas_db --detach 2>&1); then record fail; else record pass; fi
   check "another error is shown at once" "Error response from daemon: no such service" "$out"
+  check "and not tried again" 1 "$(cat "$TMP/update-calls")"
 }
 
 # -------------------------------------------------------------------- Reset

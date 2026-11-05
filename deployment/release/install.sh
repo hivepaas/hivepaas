@@ -1844,6 +1844,28 @@ service_exists() {
   docker service inspect "${STACK}_$1" >/dev/null 2>&1
 }
 
+# service_update SERVICE ARGS...: docker service update ARGS on SERVICE, tried
+# again while swarm answers "update out of sequence": right after a deploy it
+# updates the services it just created - their virtual IPs - between the CLI's
+# reading a service and its update. Another error is shown, and fails.
+service_update() {
+  local svc=$1 err tries=0
+  shift
+  while ! err=$(docker service update "$@" "$svc" 2>&1 >/dev/null); do
+    tries=$((tries + 1))
+    case "$err" in
+      *"update out of sequence"*)
+        if [ "$tries" -lt "${HIVEPAAS_UPDATE_TRIES:-10}" ]; then
+          sleep 1
+          continue
+        fi
+        ;;
+    esac
+    printf '%s\n' "$err" >&2
+    return 1
+  done
+}
+
 # db_volumes: the volumes a HivePaaS database is on - hivepaas_db, and the
 # hivepaas_db_<major> a Postgres major upgrade moves it to.
 db_volumes() {
@@ -2056,7 +2078,7 @@ start_app() {
   replicas=$(docker service inspect "${STACK}_app" --format '{{.Spec.Mode.Replicated.Replicas}}' 2>/dev/null) ||
     replicas=''
   if [ "$replicas" != 0 ]; then return 0; fi
-  docker service update --detach --quiet --replicas 1 "${STACK}_app" >/dev/null || die "Could not start ${STACK}_app."
+  service_update "${STACK}_app" --detach --quiet --replicas 1 || die "Could not start ${STACK}_app."
   info "Starting HivePaaS..."
 }
 
@@ -2166,10 +2188,10 @@ update_ip_routes() {
   current=$(docker service inspect "${STACK}_app" \
     --format '{{index .Spec.Labels "traefik.http.routers.x-custom-router-ip.rule"}}' 2>/dev/null) || return 0
   if [ "$current" = "$HIVEPAAS_IP_RULE" ]; then return 0; fi
-  docker service update --detach --quiet \
+  service_update "${STACK}_app" --detach --quiet \
     --label-add "traefik.http.routers.x-custom-router-ip.rule=$HIVEPAAS_IP_RULE" \
-    --label-add "traefik.http.routers.x-custom-router-ip-http.rule=$HIVEPAAS_IP_RULE" \
-    "${STACK}_app" >/dev/null || die "Could not update the routes by address."
+    --label-add "traefik.http.routers.x-custom-router-ip-http.rule=$HIVEPAAS_IP_RULE" ||
+    die "Could not update the routes by address."
   ok "Routes by address now: $HIVEPAAS_IP_RULE"
 }
 
@@ -2325,7 +2347,7 @@ tune_services() {
     if [ "${#UPDATE_ARGS[@]}" -eq 0 ]; then continue; fi
     old_task=$(running_task "$svc") || old_task=''
     info "Updating ${STACK}_$svc..."
-    docker service update --detach --quiet "${UPDATE_ARGS[@]}" "${STACK}_$svc" >/dev/null ||
+    service_update "${STACK}_$svc" --detach --quiet "${UPDATE_ARGS[@]}" ||
       die "Could not update ${STACK}_$svc."
     if [ -n "$old_task" ]; then
       wait_for_new_task "$svc" "$old_task" ||

@@ -127,7 +127,11 @@ echo "payload:                 identical to $IN"
 
 for key in "${KEY_FILES[@]}"; do
   key_id="$(basename "$key" .key)"
-  key_type="$("$OPENSSL" pkey -in "$key" -noout -text | head -1)"
+  # The whole text, then its first line: `| head -1` closes the pipe while
+  # openssl is still writing an ML-DSA key's 20 KB, and openssl, which ignores
+  # SIGPIPE, exits 1 on the failed write - under pipefail, a silent stop.
+  key_type="$("$OPENSSL" pkey -in "$key" -noout -text)"
+  key_type="${key_type%%$'\n'*}"
   case "$key_type" in
   ED25519*) opts=(-pkeyopt instance:Ed25519ctx -pkeyopt "context-string:$SIGN_CONTEXT") ;;
   ML-DSA-65*) opts=(-pkeyopt "context-string:$SIGN_CONTEXT") ;;

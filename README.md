@@ -24,6 +24,7 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 * **Deploy anything:** from a Docker image or a Git repository - with your Dockerfile, or one written for you for 15+ languages and frameworks - with deploy on push and pull request previews.
 * **Functions:** write a handler in Node.js/TypeScript, Bun, Python, PHP or Go; HivePaaS builds and runs it, over HTTP or on a schedule.
 * **App Store:** 300+ one-click templates - databases, CMSs, analytics, monitoring, automation.
+* **Managed DBs:** managed database templates (currently Postgres and MariaDB) with WAL-G integrated supporting auto-backup, scheduled restores, Point-In-Time-Recovery.
 * **Domains & TLS:** Traefik v3 with automatic certificates (Let's Encrypt, ZeroSSL, Google Trust Services; wildcards through DNS), and redirects, basic auth, IP and rate limits per app.
 * **Run & scale:** health checks, resource limits, placement, autoscaling on requests and CPU, scheduled jobs, and multi-node Swarm clusters.
 * **Observe:** live logs and log history, a terminal into containers, CPU and memory metrics, and metrics of HTTP routes and outgoing calls through eBPF - no code changes.

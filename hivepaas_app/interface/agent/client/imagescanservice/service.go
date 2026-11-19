@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -34,7 +33,7 @@ type grpcImageScanServiceClient struct {
 
 //nolint:ireturn // the client is used through its interface, which tests replace
 func NewImageScanServiceClient(agentAddr string) (ImageScanServiceClient, error) {
-	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := client.Dial(agentAddr)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

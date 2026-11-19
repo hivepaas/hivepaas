@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
@@ -36,7 +35,7 @@ type grpcDockerAPIServiceClient struct {
 }
 
 func NewDockerAPIServiceClient(agentAddr string) (DockerAPIServiceClient, error) {
-	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := client.Dial(agentAddr)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

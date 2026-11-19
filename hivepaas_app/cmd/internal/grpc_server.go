@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"net"
-	"os"
 	"strconv"
 	"time"
 
@@ -39,6 +38,12 @@ func InitGrpcServer(
 	logger logging.Logger,
 	registerFn GrpcRegistrar,
 ) {
+	// An agent with no secret refuses every call outside dev mode. Say so once
+	// here, rather than leaving it to be found one failed call at a time.
+	if cfg.Agent.SecretToken == "" && !cfg.DevMode.Enabled {
+		logger.Error("HP_AGENT_SECRET_TOKEN is not set: the agent refuses every call")
+	}
+
 	// 1. Setup keepalive parameters to maintain healthy long-lived connections
 	keepaliveParams := keepalive.ServerParameters{
 		MaxConnectionIdle:     maxConnectionIdle, // Close connections if idle
@@ -162,10 +167,30 @@ func streamLoggingAndRecoveryInterceptor(logger logging.Logger) grpc.StreamServe
 	}
 }
 
+// validateAuthToken checks a call's bearer token against the agent's configured
+// secret, the one the deployment sets as HP_AGENT_SECRET_TOKEN and the control
+// plane sends on every call. Reading it from the config rather than from the
+// environment keeps one name for it: an agent that read a name of its own went
+// unauthenticated everywhere while the control plane dutifully sent the token.
+//
+// A secret that is not configured is a misconfiguration, not permission to skip
+// the check. The agent holds its node's docker socket and the node's filesystem,
+// so one reachable without a token is one anyone on its network can exec in.
+// Only dev and local, where the token is optional by design, pass without one.
 func validateAuthToken(ctx context.Context) error {
-	secretToken := os.Getenv("AGENT_SECRET_TOKEN")
+	cfg := config.Current()
+	if cfg == nil {
+		// Unreachable in the running agent - the server is started well after the
+		// config is loaded - and refusing the call is the only safe answer to it.
+		return status.Errorf(codes.Unauthenticated, "agent configuration is not loaded")
+	}
+
+	secretToken := cfg.Agent.SecretToken
 	if secretToken == "" {
-		return nil // No token configured, skip authentication (for local dev)
+		if cfg.DevMode.Enabled {
+			return nil
+		}
+		return status.Errorf(codes.Unauthenticated, "agent secret token is not configured")
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)

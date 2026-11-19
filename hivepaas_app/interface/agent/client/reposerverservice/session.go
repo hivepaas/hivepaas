@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
@@ -34,7 +33,7 @@ type Session struct {
 // Open asks the agent at agentAddr to run a repository server, and returns once
 // it listens. The server stops when the session is closed or ctx ends.
 func Open(ctx context.Context, agentAddr string, req *reposerveragentuc.RunReq) (*Session, error) {
-	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := client.Dial(agentAddr)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

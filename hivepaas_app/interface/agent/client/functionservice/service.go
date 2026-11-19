@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -33,7 +32,7 @@ type grpcFunctionServiceClient struct {
 }
 
 func NewFunctionServiceClient(agentAddr string) (FunctionServiceClient, error) {
-	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := client.Dial(agentAddr)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

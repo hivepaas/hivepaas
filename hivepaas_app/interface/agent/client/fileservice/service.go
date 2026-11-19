@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -20,6 +20,13 @@ import (
 
 // writeChunkSize is what one message of a write carries.
 const writeChunkSize = 64 * 1024
+
+// unaryCallTimeout bounds FileRemove and FileStat, this service's only unary
+// methods: one is an os.Stat and the other an os.Remove of a single file, so a
+// call still running after this is a call that is never coming back. The reads
+// and writes are streams, which the bound leaves alone - they are as long as the
+// file they carry.
+const unaryCallTimeout = 2 * time.Minute
 
 // FileServiceClient reaches the files inside root, a volume's directory on the
 // agent's node. path is relative to root.
@@ -37,7 +44,7 @@ type grpcFileServiceClient struct {
 }
 
 func NewFileServiceClient(agentAddr string) (FileServiceClient, error) {
-	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := client.Dial(agentAddr, client.WithDefaultCallTimeout(unaryCallTimeout))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

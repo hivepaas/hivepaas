@@ -31,6 +31,30 @@ lint-local:
 	# FASTER golangci-lint --timeout=$(LINT_TIMEOUT) run -v --new-from-rev=HEAD~1
 	golangci-lint --timeout=$(LINT_TIMEOUT) run -v ./...
 
+# ----- The agent's gRPC contract -----
+
+# PROTO_DIR is given to `buf breaking` twice: once as the input, and once as the
+# subdirectory to root the baseline at. The baseline commit can predate buf.yaml
+# - every commit before this target was added does - so it cannot say where its
+# own module is, and left to guess buf roots it at the repository and then
+# cannot resolve `import "image_build.proto"`.
+PROTO_DIR := hivepaas_app/interface/agent/proto
+
+# PROTO_BASE is the commit the contract is compared against, in buf's git
+# syntax. The default suits a branch headed for main. CI overrides it: a
+# checkout there has no local `main` to name, and a push to main has to be
+# compared against the commit before it rather than against itself.
+PROTO_BASE ?= branch=main
+
+# Lints the agent's protos, and reports anything in them an agent from the
+# previous release could not go on serving. buf.yaml says why that is a
+# question worth asking, and which rules answer it.
+lint-proto:
+	# Run this cmd locally once to install the buf binary
+	# go install github.com/bufbuild/buf/cmd/buf@v1.75.0
+	buf lint
+	buf breaking $(PROTO_DIR) --against '.git#$(PROTO_BASE),subdir=$(PROTO_DIR)'
+
 # The everyday one. Cached: a package nothing touched is not run again.
 test:
 	@go test ./...

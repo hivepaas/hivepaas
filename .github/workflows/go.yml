@@ -130,6 +130,63 @@ jobs:
           fi
           make -C hivepaas-cli spec-check SPEC="${GITHUB_WORKSPACE}/hivepaas/docs/openapi/swagger.json"
 
+  # The agent's gRPC contract. The agent is a global service, one task per node,
+  # and a rolling update replaces those tasks one at a time while the control
+  # plane is already new: for the length of that window a new control plane
+  # calls old agents, and an agent image that lands first means an old control
+  # plane calling new agents. A change that moves the wire format is caught
+  # here or in a half-working cluster.
+  #
+  # Nothing else notices, which is the point of a job of its own: the .pb.go
+  # files are generated and committed, so `go build` only ever sees the two
+  # sides of the call agreeing with each other.
+  proto:
+    name: Agent proto contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+
+      # The whole history: the baseline is a commit, and the default shallow
+      # checkout has no commit to compare against.
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # The version `make lint-proto` names, so that CI and a local run agree.
+      - name: Install buf
+        run: go install github.com/bufbuild/buf/cmd/buf@v1.75.0
+
+      # What the protos are compared against. A pull request is compared with
+      # the branch it is headed for. A push to main is compared with the commit
+      # before it - main against main passes anything, and this repository is
+      # pushed to directly. Anything else is compared with main.
+      #
+      # origin/main rather than main: a checkout here leaves no local branch of
+      # that name, only the remote ref.
+      - name: Pick the baseline
+        id: baseline
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT" = 'pull_request' ]; then
+            echo "base=ref=origin/${PR_BASE}" >> "$GITHUB_OUTPUT"
+          elif [ "$BRANCH" = 'main' ]; then
+            echo 'base=ref=HEAD~1' >> "$GITHUB_OUTPUT"
+          else
+            echo 'base=ref=origin/main' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint the protos, and check them against the baseline
+        env:
+          BASE: ${{ steps.baseline.outputs.base }}
+        run: make lint-proto PROTO_BASE="$BASE"
+
   govulncheck:
     name: Govulncheck
     runs-on: ubuntu-latest

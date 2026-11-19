@@ -17,6 +17,9 @@ The two are changed together whenever the wire format moves.
 - `golangci-lint run ./...` — the **whole** repo, not just the packages you touched.
   It enforces a 120-character line limit and US spelling, and both are easy to miss.
 - `go test ./...`
+- `make lint-proto` if any `.proto` under `hivepaas_app/interface/agent/proto/` changed. It needs `buf`
+  (the target says how to install it) and compares the agent's contract against `main`'s: an agent from the
+  previous release goes on serving the new control plane for the length of a rolling update.
 - `make gen-swag` if any DTO or handler swag comment changed. `docs/openapi/swagger.json` is generated and
   committed, and CI fails when it is not current.
 - If the wire format changed, the matching dashboard change belongs in the same piece of work.

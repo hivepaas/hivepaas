@@ -1,0 +1,55 @@
+# The agent's gRPC contract, checked by `make lint-proto` and by the
+# "Agent proto contract" job in .github/workflows/go.yml.
+#
+# Why a breaking-change gate at all: the agent runs as a global service, one
+# task per node, and a rolling update replaces those tasks one at a time while
+# the control plane is already new. For the length of that update a new control
+# plane calls old agents, and - the other way around, when the agent image
+# updates first - an old control plane calls new agents. A change that moves
+# the wire format is a cluster that half works, and nothing else here notices:
+# the .pb.go files are generated and committed, so `go build` only ever sees
+# the two sides agreeing with each other.
+version: v2
+
+modules:
+  - path: hivepaas_app/interface/agent/proto
+
+lint:
+  use:
+    - BASIC
+  except:
+    # Would have the files moved into an "agent/" directory to match their
+    # package. The package name is on the wire - it is the first half of every
+    # method's full name, "/agent.FileService/FileStat" - so the directory is
+    # the only part of this that could move, and moving it buys nothing: this
+    # repository has one proto package and will not grow a second.
+    #
+    # STANDARD is not used for the same reason, one step further: it asks for
+    # the package to be "agent.v1" and for every XReq/XResp to be renamed
+    # XRequest/XResponse. The first is the breaking change this file exists to
+    # prevent, and the second is 50 renames across the generated code for
+    # nothing a caller can see.
+    - PACKAGE_DIRECTORY_MATCH
+
+breaking:
+  use:
+    # PACKAGE rather than FILE: it covers every deletion and every change of
+    # type, name, number, oneof or streaming mode, and it tracks declarations
+    # by package instead of by file. Everything here generates into one Go
+    # package, so moving a message from one .proto to another is free, and
+    # FILE would call it a break.
+    #
+    # Not WIRE_JSON, which was the first choice and is too weak: it checks that
+    # messages stay compatible and lets a deleted rpc through. An rpc the agent
+    # no longer serves answers UNIMPLEMENTED to the control plane that still
+    # calls it, which is exactly the rolling-update failure this is here for.
+    - PACKAGE
+    # Retiring a field is allowed, the proto way: take the field out and
+    # reserve its number, so that nothing later claims the number and starts
+    # reading one kind of value as another. PACKAGE's own FIELD_NO_DELETE does
+    # not accept the reservation, which leaves no way to retire a field at all.
+    - FIELD_NO_DELETE_UNLESS_NUMBER_RESERVED
+    - ENUM_VALUE_NO_DELETE_UNLESS_NUMBER_RESERVED
+  except:
+    - FIELD_NO_DELETE
+    - ENUM_VALUE_NO_DELETE

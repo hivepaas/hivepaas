@@ -222,7 +222,10 @@ ssh-keygen -A >/dev/null
 REPOS
 docker exec -d "$DIND" socat OPENSSL-LISTEN:8443,bind=127.0.0.1,reuseaddr,fork,cert=/hp/git-https/server.pem,verify=0 \
 	TCP:127.0.0.1:8081
-docker cp "$DIND:/hp/git-ssh-key" "$BUILD/git-ssh-key" >/dev/null
+# Through this shell rather than docker cp: where docker runs as root, through
+# sudo, docker cp leaves the key root's and 0600, and the tests cannot read it.
+rm -f "$BUILD/git-ssh-key"
+(umask 077 && docker exec "$DIND" cat /hp/git-ssh-key >"$BUILD/git-ssh-key")
 in_dind git daemon --base-path=/hp/git --export-all --reuseaddr --listen=127.0.0.1 --detach
 
 say "Starting the agent and the backend inside dind"

@@ -74,11 +74,15 @@ jobs:
               working-directory: hivepaas/web/e2e
               run: yarn test
 
-            - name: What the backend and its agent logged
+            - name: What the backend, its agent and dind's docker logged
               if: failure()
               run: |
                   docker exec hp-e2e-dind tail -n 400 /hp/app.log || true
                   docker exec hp-e2e-dind tail -n 100 /hp/agent.log || true
+                  # A task swarm refused - "Pool overlaps with other one on this
+                  # address space", say - is told only here: the app sees an app
+                  # that does not start.
+                  docker logs hp-e2e-dind 2>&1 | grep -E 'level=(error|warning)' | tail -n 100 || true
             - name: The report, with each failed test's trace, screenshot and video
               if: failure()
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

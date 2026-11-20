@@ -228,6 +228,23 @@ rm -f "$BUILD/git-ssh-key"
 (umask 077 && docker exec "$DIND" cat /hp/git-ssh-key >"$BUILD/git-ssh-key")
 in_dind git daemon --base-path=/hp/git --export-all --reuseaddr --listen=127.0.0.1 --detach
 
+say "Resolving the apps' domains inside dind"
+# The backend reaches an app at its domain - a health check of it, a Slack
+# target that is an app - through Traefik on dind's own 80 and 443, so every
+# *.localhost name must be 127.0.0.1 inside dind. Docker's DNS asks this
+# machine's resolver, and not every resolver answers .localhost: GitHub's runner
+# answered it on one run and said "no such host" on the next. dnsmasq answers it
+# here and passes every other name to Docker's DNS, as before.
+in_dind apk add --no-cache -q dnsmasq >/dev/null
+in_dind dnsmasq --listen-address=127.0.0.1 --bind-interfaces --no-resolv --no-hosts \
+	--server=127.0.0.11 --address=/localhost/127.0.0.1
+in_dind sh -c 'echo "nameserver 127.0.0.1" >/etc/resolv.conf'
+# Asked over DNS, as the backend asks: musl's getent answers .localhost itself.
+dns_a() { in_dind nslookup -type=a "$1" 2>/dev/null | awk '/^Name:/ {n = 1} n && /^Address/ {print $NF}'; }
+resolved="$(dns_a e2e-dns-check.localhost || true)"
+[ "$resolved" = "127.0.0.1" ] || fail "*.localhost does not resolve to 127.0.0.1 inside dind (got \"$resolved\")."
+[ -n "$(dns_a registry-1.docker.io || true)" ] || fail "Other names no longer resolve inside dind."
+
 say "Starting the agent and the backend inside dind"
 sed "s/__PORT__/$PORT/" "$ENV_DIR/config.toml" >"$BUILD/config.toml"
 in_dind mkdir -p /hp/appdata

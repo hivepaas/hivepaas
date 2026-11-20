@@ -1,11 +1,11 @@
 {
   "beta": {
-    "releaseDate": "2026-11-03",
-    "appVersion": "v1.0.0-beta6",
-    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta6@sha256:691cb0e5627797baa721ffdac5d7505aa4ec5309707423f797b12e8873900638",
-    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta6@sha256:e504ee4135c073c8d41bf1bbf468d6081ccf11c9ec464cc03d54ac790dea538a",
+    "releaseDate": "2026-11-21",
+    "appVersion": "v1.0.0-beta7",
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta7",
+    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta7",
     "redisImage": "redis:8.10.2-alpine@sha256:9f8d2d789b9a1d1e3f283f979aa9cbf393373806472e1ccd460e2f9c869b833b",
-    "dbImage": "postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5",
+    "dbImage": "postgres:18.6-alpine@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b",
     "traefikImage": "traefik:v3.7.13@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0",
     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.53.0@sha256:251121fa882af99b95ba0c230a4a2f412ea602d2698c64a96c58dc9842bb755d",
     "vlagentImage": "victoriametrics/vlagent:v1.53.0@sha256:a82f93ffecc153fb068606903e512368b070272739d823abe99fad0eff6e1849",
@@ -26,8 +26,8 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "73015a4be6211e53c913299c226c4e0ea374aab5",
-      "indexSha256": "30bb19b4f0d189ba055960f8006a66910262eb1d0e8a1223d200e31e403b608f"
+      "commit": "f7e8ab683c8949e065b84dcb0b83a958bbf2e0f8",
+      "indexSha256": "42747ff1db15c7b6582e9f5d5d52a0be9e20b779660a4dd423cec254945fce83"
     }
   }
 }

@@ -132,7 +132,9 @@ func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *e
 		}
 	}
 
-	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+	// And wait for its containers to stop: until they have, the app's networks
+	// are still attached on the node, and so are its volumes.
+	err = s.clusterService.ServiceRemoveAndWait(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

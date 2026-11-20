@@ -20,6 +20,9 @@ type Service interface {
 	ServiceUpdate(ctx context.Context, serviceID string, version *swarm.Version, service *swarm.ServiceSpec,
 		options ...docker.ServiceUpdateOption) (*client.ServiceUpdateResult, error)
 	ServiceRemove(ctx context.Context, serviceID string, retryMax int, retryDelay time.Duration) error
+	// ServiceRemoveAndWait removes the service, then waits for its containers to
+	// stop, so that its networks and volumes can go after it: see the method.
+	ServiceRemoveAndWait(ctx context.Context, serviceID string, retryMax int, retryDelay time.Duration) error
 	// VerifyPortsAvailable refuses a port another service already publishes.
 	// ignoreServiceIDs are the services whose own ports do not count - the one
 	// being updated.

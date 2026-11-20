@@ -586,6 +586,8 @@ test("image scanning: a volume pinned by a node label runs scans on a node carry
 
         await page.goto(appPage(app, "security"));
         await page.getByRole("button", { name: "Scan now" }).click();
+        // Queued before the first reload, which would cancel the request.
+        await expect(page.getByText("Scan queued")).toBeVisible();
         await expect(async () => {
             await page.reload();
             await expect(page.getByText(said)).toBeVisible({ timeout: 5_000 });

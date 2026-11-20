@@ -91,5 +91,7 @@ test("deleting an app asks for its name, then removes it", async ({ page, api, c
     await dialog.getByRole("checkbox", { name: /Also delete the stored data/ }).check();
     await confirm.click();
 
-    await expect.poll(() => findApp(api, app)).toBeUndefined();
+    // The deletion waits for the app's containers to stop - SIGTERM, then up to
+    // the stop grace period - before it removes the app's networks and volumes.
+    await expect.poll(() => findApp(api, app), { timeout: 60_000 }).toBeUndefined();
 });

@@ -210,6 +210,9 @@ test("a scheduled job that fails tells its notification target", async ({ page, 
     const row = page.getByRole("row", { name: /e2e-breaks/ });
     await row.getByRole("button", { name: "Actions menu" }).click();
     await page.getByRole("button", { name: "Run Now" }).click();
+    // The run is made before slackMessages navigates away: a navigation right
+    // after the click can leave before the request does.
+    await expect(page.getByRole("dialog", { name: "Task created" })).toBeVisible();
 
     const ofJob = async () => (await slackMessages(page, hook)).filter(m => field(m, "Scheduled Job") === "e2e-breaks");
     await expect

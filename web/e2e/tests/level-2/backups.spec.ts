@@ -342,6 +342,8 @@ test("a snapshot's file is downloaded, and the snapshot deleted stays so after a
     const dialog = page.getByRole("dialog", { name: "Delete Backup Snapshot" });
     await dialog.getByRole("textbox").fill(snapshot?.shortId ?? "");
     await dialog.getByRole("button", { name: "Delete" }).click();
+    // Deleted, not only gone from the table, before repoAction navigates away.
+    await expect(page.getByText("Backup snapshot deleted")).toBeVisible();
     await expect(row).toHaveCount(0);
 
     await repoAction(page, repo, "Repo Sync");

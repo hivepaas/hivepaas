@@ -5,6 +5,7 @@
 # HivePaaS
 
 **A lightweight, self-hosted, and modern Platform-as-a-Service (PaaS) built on Docker Swarm.**
+**For both server production and localhost development.**
 
 An open-source, resource-efficient alternative to Heroku, Render, and Coolify for managing and deploying applications on your own servers.
 
@@ -39,7 +40,7 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 ## 🌐 Website & Demo
 
 * **Website:** [hivepaas.com](https://hivepaas.com)
-* **Demo servers:** [Demo1 (EU)](https://demo1.hivepaas.com) · [Demo2 (Asia)](https://demo2.hivepaas.com) · [Demo3 (US)](https://demo3.hivepaas.com)
+* **Demo servers:** [Demo1 (Asia)](https://demo2.hivepaas.com) · [Demo2 (US)](https://demo3.hivepaas.com)
 * **Sign in with:** username `demo` · password `HivePaaS@2026` (a read-only account)
 
 ---

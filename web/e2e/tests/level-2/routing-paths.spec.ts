@@ -133,6 +133,8 @@ test("the load balancer's strategy decides which replicas answer", async ({ page
     await page.goto(appPage(app, "availability-and-scaling"));
     await page.getByRole("group", { name: "Replicas" }).getByRole("textbox").fill("2");
     await page.getByRole("button", { name: "Save", exact: true }).click();
+    // Saved before expectInstances navigates away, which would cancel the request.
+    await expect(page.getByText("Availability and scaling settings updated")).toBeVisible();
     await expectInstances(page, app, "2/2");
     const domain = domainFor("balanced");
     const url = `https://${domain}/`;

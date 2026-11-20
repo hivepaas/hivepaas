@@ -68,7 +68,8 @@ test("a template that depends on a database deploys both, the app connected to i
         .getByRole("button", { name: "Deploy", exact: true })
         .click();
     const dialog = page.getByRole("dialog", { name: "Deploy Template: Atuin" });
-    await expect(dialog.getByRole("textbox", { name: "e.g. my-app" })).toHaveValue("atuin");
+    // The form is drawn once the template's detail is fetched.
+    await expect(dialog.getByRole("textbox", { name: "e.g. my-app" })).toHaveValue("atuin", { timeout: 30_000 });
     // What comes with it, before anything is made.
     await expect(dialog.getByText("Dependent Services")).toBeVisible();
     await expect(dialog.getByText("Database (postgres)")).toBeVisible();

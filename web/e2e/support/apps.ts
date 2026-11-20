@@ -104,10 +104,16 @@ export const mountRow = (page: Page, target: string) =>
 // restart restarts the app from its header: its containers are made anew, on
 // the same spec. A re-deploy of an unchanged app changes nothing for swarm to
 // act on.
+//
+// It returns once the dashboard says the restart started. What comes next is
+// usually a page.goto - expectLogs, expectInstances - and a navigation right
+// after the click can leave before the request does: the restart is then never
+// asked for, and the test waits for a container that never comes.
 export async function restart(page: Page, app: App): Promise<void> {
     await page.goto(appPage(app, "general"));
     await page.getByRole("button", { name: "Restart", exact: true }).click();
     await page.getByRole("dialog", { name: "Restart app" }).getByRole("button", { name: "Restart" }).click();
+    await expect(page.getByText("Restart started")).toBeVisible();
 }
 
 // expectInstances reads, after a reload, how many of the app's replicas run

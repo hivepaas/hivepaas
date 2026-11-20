@@ -235,6 +235,9 @@ async function removeMount(page: Page, app: App, target: string): Promise<void> 
     await mountRow(page, target).getByRole("button", { name: "Actions menu" }).click();
     await page.getByRole("button", { name: "Remove" }).click();
     await page.getByRole("dialog", { name: "Remove Storage Mount" }).getByRole("button", { name: "Remove" }).click();
+    // Saved, not only gone from the table: the row can go before the request
+    // does, and the expectLogs after this navigates away (see restart).
+    await expect(page.getByText("Storage mount removed")).toBeVisible();
     await expect(mountRow(page, target)).toHaveCount(0);
 }
 

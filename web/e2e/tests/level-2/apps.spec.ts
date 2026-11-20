@@ -54,6 +54,8 @@ test("scaled to two, an app runs two replicas", async ({ page, api, cleanup }) =
 
     await page.getByRole("group", { name: "Replicas" }).getByRole("textbox").fill("2");
     await page.getByRole("button", { name: "Save", exact: true }).click();
+    // Saved before expectInstances navigates away: see restart.
+    await expect(page.getByText("Availability and scaling settings updated")).toBeVisible();
 
     await expectInstances(page, app, "2/2");
 });
@@ -67,9 +69,11 @@ test("a stopped app runs no replica, and runs again once started", async ({ page
     // Names matched whole: "Start" is in "Restart".
     await page.getByRole("button", { name: "Stop", exact: true }).click();
     await page.getByRole("dialog", { name: "Stop app" }).getByRole("button", { name: "Stop", exact: true }).click();
+    await expect(page.getByText("App stop requested")).toBeVisible();
     await expectInstances(page, app, "0/0");
 
     await page.getByRole("button", { name: "Start", exact: true }).click();
+    await expect(page.getByText("App start requested")).toBeVisible();
     await expectInstances(page, app, "1/1");
 });
 

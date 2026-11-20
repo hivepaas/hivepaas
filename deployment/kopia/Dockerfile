@@ -18,10 +18,10 @@ ARG KOPIA_VERSION=0.23.1
 # to its latest; grpc, compress and go-jose, which kopia's server, its
 # compression and its JWTs run on, to the first release with the fix only.
 ARG KOPIA_MODULES="\
-golang.org/x/crypto@v0.58.0 \
-golang.org/x/mod@v0.42.0 \
-golang.org/x/net@v0.61.0 \
-golang.org/x/text@v0.43.0 \
+golang.org/x/crypto@v0.59.0 \
+golang.org/x/mod@v0.43.0 \
+golang.org/x/net@v0.63.0 \
+golang.org/x/text@v0.44.0 \
 google.golang.org/grpc@v1.83.2 \
 github.com/klauspost/compress@v1.18.7 \
 github.com/go-jose/go-jose/v4@v4.1.6"

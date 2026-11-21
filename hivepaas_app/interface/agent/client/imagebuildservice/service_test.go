@@ -78,7 +78,9 @@ func startAgent(t *testing.T, svc *builds) (ImageBuildServiceClient, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server := grpc.NewServer()
+	// Stop waits for the handlers: a build the client gave up on still removes
+	// its source under tempBase, and t.TempDir's cleanup must come after it.
+	server := grpc.NewServer(grpc.WaitForHandlers(true))
 	if svc != nil {
 		agentproto.RegisterImageBuildServiceServer(server, &agentBuilds{
 			uc: imagebuildagentuc.New(&mocks.Logger{}, nil, nil, nil, svc).WithTempBaseDir(tempBase),

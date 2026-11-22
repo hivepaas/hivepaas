@@ -45,19 +45,6 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 
 ---
 
-## 💳 Plans
-
-HivePaaS is Apache 2.0 and free to self-host. Without a license key it runs on Bee, the free plan, with no time
-limit: 2 nodes, 2 users, 20 apps, 20 functions and 2 previews at a time. Paid plans lift those limits, and Hive can be
-tried for 14 days without a card. A limit only stops creating; it never stops what runs. A key is checked offline.
-HivePaaS sends no telemetry: with a key installed, a daily check for a newer one sends only the key and the
-installation's ID, and can be turned off.
-
-See [pricing](https://hivepaas.com/pricing), and [Plans and licenses](https://docs.hivepaas.com/plans-and-licenses)
-in the docs.
-
----
-
 ## 🏗️ Architecture
 
 HivePaaS uses a clean two-tier network and node topology for maximum security and simplicity:
